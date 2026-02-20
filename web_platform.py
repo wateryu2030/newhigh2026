@@ -127,6 +127,18 @@ HTML_TEMPLATE = """
       <h2>📊 回测结果</h2>
       <div id="resultSummary" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;"></div>
       <div id="resultCurve" style="height: 220px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
+      <div id="resultCockpit" style="display: none; margin-top: 20px;">
+        <h3 style="color: #0f9; margin-bottom: 12px;">📈 决策驾驶舱</h3>
+        <div id="resultKline" style="height: 320px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
+        <div id="resultFutureTrend" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; display: none;">
+          <div style="color: #888; font-size: 12px; margin-bottom: 8px;">未来趋势（概率，非预测）</div>
+          <div id="resultFutureProb" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;"></div>
+          <div id="resultFutureRange" style="margin-top: 8px; color: #0f9; font-size: 13px;"></div>
+        </div>
+        <div id="resultCurveCompare" style="height: 220px; margin-top: 12px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
+        <div id="resultSignalList" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        <div id="resultSignalReason" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; min-height: 50px; color: #888; font-size: 13px;">点击下方买卖信号可查看原因</div>
+      </div>
     </div>
     
     <div class="card full-width">
@@ -149,6 +161,7 @@ HTML_TEMPLATE = """
     </div>
   </div>
   
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

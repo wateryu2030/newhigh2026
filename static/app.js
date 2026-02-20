@@ -1,11 +1,138 @@
 (function() {
   var selectedStrategy = '';
+  var cockpitKlineChart = null;
+  var cockpitCurveChart = null;
 
   function handleError(error, context) {
     try {
       var log = document.getElementById('log');
       if (log) log.textContent = '错误: ' + (error.message || error.toString());
     } catch (e) {}
+  }
+
+  function renderCockpit(result) {
+    if (!result) return;
+    var cockpitEl = document.getElementById('resultCockpit');
+    var klineEl = document.getElementById('resultKline');
+    var curveCompareEl = document.getElementById('resultCurveCompare');
+    var signalReasonEl = document.getElementById('resultSignalReason');
+    if (!cockpitEl || !klineEl || !curveCompareEl) return;
+    if (cockpitKlineChart) { cockpitKlineChart.dispose(); cockpitKlineChart = null; }
+    if (cockpitCurveChart) { cockpitCurveChart.dispose(); cockpitCurveChart = null; }
+    var hasKline = result.kline && result.kline.length > 0;
+    var hasHold = result.holdCurve && result.holdCurve.length > 0 && result.curve && result.curve.length > 0;
+    if (!hasKline && !hasHold) {
+      cockpitEl.style.display = 'none';
+      return;
+    }
+    cockpitEl.style.display = 'block';
+    if (typeof echarts === 'undefined') return;
+    var dark = { backgroundColor: 'transparent', textStyle: { color: '#888' } };
+    if (hasKline) {
+      var kline = result.kline;
+      var dates = kline.map(function(k) { return k.date; });
+      var ohlc = kline.map(function(k) { return [k.open, k.close, k.low, k.high]; });
+      var dateToIdx = {};
+      dates.forEach(function(d, i) { dateToIdx[d] = i; });
+      var markArea = [];
+      (result.buyZones || []).forEach(function(z) {
+        var a = dateToIdx[z.start], b = dateToIdx[z.end];
+        if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(0,255,100,0.15)' } }, { xAxis: b }]);
+      });
+      (result.sellZones || []).forEach(function(z) {
+        var a = dateToIdx[z.start], b = dateToIdx[z.end];
+        if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(255,80,80,0.15)' } }, { xAxis: b }]);
+      });
+      var opt = {
+        backgroundColor: 'transparent',
+        grid: { left: 48, right: 24, top: 24, bottom: 32 },
+        xAxis: { type: 'category', data: dates, axisLabel: { color: '#888', fontSize: 10 }, splitLine: { show: false } },
+        yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
+        series: [
+          { type: 'candlestick', data: ohlc, itemStyle: { color: '#0f9', borderColor: '#0f9', color0: '#f55', borderColor0: '#f55' }, markArea: markArea.length ? { silent: true, data: markArea } : undefined }
+        ]
+      };
+      cockpitKlineChart = echarts.init(klineEl);
+      cockpitKlineChart.setOption(opt);
+    }
+    if (hasHold) {
+      var curve = result.curve;
+      var holdCurve = result.holdCurve;
+      var curveDates = curve.map(function(p) { return p.date; });
+      var curveVals = curve.map(function(p) { return p.value; });
+      var holdMap = {};
+      (holdCurve || []).forEach(function(p) { holdMap[p.date] = p.value; });
+      var holdVals = curveDates.map(function(d) { return holdMap[d] != null ? holdMap[d] : null; });
+      cockpitCurveChart = echarts.init(curveCompareEl);
+      cockpitCurveChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { left: 48, right: 24, top: 24, bottom: 32 },
+        legend: { data: ['策略净值', '持有净值'], textStyle: { color: '#888' }, top: 0 },
+        xAxis: { type: 'category', data: curveDates, axisLabel: { color: '#888', fontSize: 10 } },
+        yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
+        series: [
+          { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } },
+          { name: '持有净值', type: 'line', data: holdVals, smooth: true, symbol: 'none', lineStyle: { color: '#f90' } }
+        ]
+      });
+    }
+    var futureTrendEl = document.getElementById('resultFutureTrend');
+    var futureProbEl = document.getElementById('resultFutureProb');
+    var futureRangeEl = document.getElementById('resultFutureRange');
+    if (futureTrendEl && futureProbEl && futureRangeEl) {
+      var prob = result.futureProbability;
+      var range = result.futurePriceRange;
+      var hasProb = prob && (prob.up != null || prob.sideways != null || prob.down != null);
+      var hasRange = range && range.low != null && range.high != null;
+      if (hasProb || hasRange) {
+        futureTrendEl.style.display = 'block';
+        if (hasProb) {
+          var up = (prob.up != null ? Math.round(prob.up * 100) : 0);
+          var side = (prob.sideways != null ? Math.round(prob.sideways * 100) : 0);
+          var down = (prob.down != null ? Math.round(prob.down * 100) : 0);
+          futureProbEl.innerHTML = '<span style="color:#0f9;">上涨 ' + up + '%</span><span style="color:#888;">震荡 ' + side + '%</span><span style="color:#f55;">下跌 ' + down + '%</span>';
+        } else futureProbEl.innerHTML = '';
+        if (hasRange) {
+          futureRangeEl.textContent = '预计区间（' + (range.horizonDays || 5) + ' 日）: ' + range.low + ' — ' + range.high;
+        } else futureRangeEl.textContent = '';
+      } else {
+        futureTrendEl.style.display = 'none';
+      }
+    }
+    var signalListEl = document.getElementById('resultSignalList');
+    if (signalListEl) {
+      signalListEl.innerHTML = '';
+      var signals = result.signals || [];
+      if (signals.length > 0) {
+        signals.forEach(function(sig, idx) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'signal-pill';
+          btn.style.cssText = 'padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;border:1px solid ' + (sig.type === 'buy' ? '#0f9' : '#f55') + ';background:transparent;color:' + (sig.type === 'buy' ? '#0f9' : '#f55') + ';';
+          btn.textContent = sig.date + ' ' + (sig.type === 'buy' ? 'BUY' : 'SELL');
+          btn.onclick = (function(s) {
+            return function() {
+              var reasonEl = document.getElementById('resultSignalReason');
+              if (!reasonEl) return;
+              var parts = [];
+              if (s.type === 'buy') parts.push('买入信号');
+              else parts.push('卖出信号');
+              parts.push('日期: ' + s.date);
+              if (s.reasons && s.reasons.length) parts.push('原因: ' + s.reasons.join('；'));
+              if (s.winRate != null) parts.push('历史胜率: ' + (s.winRate * 100).toFixed(1) + '%');
+              if (s.avgReturn != null) parts.push('平均收益: ' + (s.avgReturn * 100).toFixed(2) + '%');
+              if (s.score != null) parts.push('评分: ' + s.score);
+              reasonEl.innerHTML = parts.join('<br>');
+            };
+          })(sig);
+          signalListEl.appendChild(btn);
+        });
+      }
+    }
+    if (signalReasonEl) {
+      if (!result.signals || result.signals.length === 0) signalReasonEl.textContent = '暂无买卖信号记录';
+      else signalReasonEl.textContent = '点击上方买卖信号可查看原因';
+    }
   }
 
   async function loadStrategies() {
@@ -176,6 +303,7 @@
           } else {
             curveEl.innerHTML = '<div style="padding:20px;color:#888;">无净值曲线数据</div>';
           }
+          renderCockpit(data.result);
         } else {
           var card = document.getElementById('resultCard');
           if (card) card.style.display = 'none';
@@ -312,6 +440,11 @@
   window.syncPoolStocks = syncPoolStocks;
   window.loadStrategy = loadStrategy;
   window.saveStrategy = saveStrategy;
+
+  window.addEventListener('resize', function() {
+    if (cockpitKlineChart) cockpitKlineChart.resize();
+    if (cockpitCurveChart) cockpitCurveChart.resize();
+  });
 
   document.addEventListener('DOMContentLoaded', function() {
     var loadBtn = document.getElementById('loadBtn');

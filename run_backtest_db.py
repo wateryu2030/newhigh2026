@@ -99,11 +99,15 @@ if hasattr(strategy_module, "after_trading") and strategy_module.after_trading i
 try:
     result = run_func(config=config, **user_funcs)
     print("\\n✅ 回测完成！")
-    # 写出 JSON 供 Web 展示（指标 + 净值曲线）
+    # 写出 JSON 供 Web 展示（指标 + 净值曲线 + 决策驾驶舱）
     import json
     import pickle
+    import datetime as _dt
     pkl_path = os.path.join(root, "output", "last_backtest_result.pkl")
     json_path = os.path.join(root, "output", "last_backtest_result.json")
+    start_date = {repr(start_date)}
+    end_date = {repr(end_date)}
+    stock_code = os.environ.get("STOCK_CODE", "")
     if os.path.exists(pkl_path):
         with open(pkl_path, "rb") as f:
             rd = pickle.load(f)
@@ -117,8 +121,7 @@ try:
             if isinstance(v, (list, tuple)): return [_to_json(x) for x in v]
             if isinstance(v, dict): return {{k: _to_json(x) for k, x in v.items()}}
             if isinstance(v, float) and (v != v or abs(v) == 1e300): return None
-            import datetime
-            if isinstance(v, (datetime.date, datetime.datetime)): return str(v)
+            if isinstance(v, (_dt.date, _dt.datetime)): return str(v)[:10]
             if hasattr(v, "start_date") and hasattr(v, "end_date"): return {{"start_date": str(v.start_date), "end_date": str(v.end_date)}}
             try: json.dumps(v); return v
             except (TypeError, ValueError): return str(v)
@@ -135,6 +138,92 @@ try:
                 out["curve"] = []
         else:
             out["curve"] = []
+        out["buyZones"] = []
+        out["sellZones"] = []
+        out["signals"] = []
+        out["holdCurve"] = []
+        out["kline"] = []
+        out["futureProbability"] = {{"up": None, "sideways": None, "down": None}}
+        out["futurePriceRange"] = {{"low": None, "high": None, "horizonDays": 5}}
+        # Phase 4: 简单未来区间与概率（ATR 区间 + 占位概率）
+        def _future_from_kline(kline_list, horizon_days=5):
+            if not kline_list or len(kline_list) < 5: return None, None
+            k = kline_list
+            last_close = float(k[-1].get("close", 0))
+            if last_close <= 0: return None, None
+            n = min(14, len(k) - 1)
+            ranges = [abs(float(k[-1-i].get("high", 0)) - float(k[-1-i].get("low", 0))) for i in range(n)]
+            atr = sum(ranges) / len(ranges) if ranges else last_close * 0.02
+            low = round(last_close - 2 * atr, 2)
+            high = round(last_close + 2 * atr, 2)
+            price_range = {{"low": low, "high": high, "horizonDays": horizon_days}}
+            trend = (float(k[-1].get("close", 0)) - float(k[-5].get("close", 0))) / float(k[-5].get("close", 1)) if k[-5].get("close") else 0
+            if trend > 0.02: prob = {{"up": 0.5, "sideways": 0.3, "down": 0.2}}
+            elif trend < -0.02: prob = {{"up": 0.2, "sideways": 0.3, "down": 0.5}}
+            else: prob = {{"up": 0.33, "sideways": 0.34, "down": 0.33}}
+            return price_range, prob
+        # Phase 1: K 线 + 持有曲线 + 从成交推导买卖区间与信号
+        if stock_code:
+            try:
+                sys.path.insert(0, root)
+                from database.db_schema import StockDatabase
+                db = StockDatabase(os.path.join(root, "data", "astock.db"))
+                df = db.get_daily_bars(stock_code, start_date, end_date)
+                if df is not None and len(df) > 0:
+                    kline = []
+                    for idx, row in df.iterrows():
+                        d = str(idx)[:10]
+                        kline.append({{"date": d, "open": float(row.get("open", 0)), "high": float(row.get("high", 0)), "low": float(row.get("low", 0)), "close": float(row.get("close", 0)), "volume": float(row.get("volume", 0))}})
+                    out["kline"] = kline
+                    nav = 1.0
+                    out["holdCurve"] = [{{"date": kline[0]["date"], "value": 1.0}}]
+                    for i in range(1, len(kline)):
+                        if kline[i-1]["close"] and kline[i-1]["close"] != 0:
+                            nav *= kline[i]["close"] / kline[i-1]["close"]
+                        out["holdCurve"].append({{"date": kline[i]["date"], "value": round(nav, 6)}})
+                    pr, prob = _future_from_kline(out["kline"])
+                    if pr: out["futurePriceRange"] = pr
+                    if prob: out["futureProbability"] = prob
+            except Exception as _e:
+                pass
+        # 从 trades 推导 buyZones / sellZones / signals（RQAlpha pkl 可能含 trades DataFrame）
+        try:
+            trades = rd.get("trades") or (rd.get("sys_analyser") or {{}}).get("trades")
+            if trades is not None and hasattr(trades, "iterrows"):
+                buy_dates = []
+                sell_dates = []
+                for _, row in trades.iterrows():
+                    dt = row.get("datetime") or row.get("trading_datetime") or row.get("date")
+                    if dt is None: continue
+                    d = str(dt)[:10]
+                    qty = row.get("quantity", 0) or row.get("amount", 0) or 0
+                    try: qty = float(qty)
+                    except (TypeError, ValueError): continue
+                    if qty > 0:
+                        buy_dates.append(d)
+                        out["signals"].append({{"date": d, "type": "buy", "score": None, "winRate": None, "avgReturn": None, "reasons": ["策略买入信号"]}})
+                    elif qty < 0:
+                        sell_dates.append(d)
+                        out["signals"].append({{"date": d, "type": "sell", "score": None, "winRate": None, "avgReturn": None, "reasons": ["策略卖出信号"]}})
+                def _merge_zones(dates):
+                    if not dates: return []
+                    dates = sorted(set(dates))
+                    zones = []
+                    start = end = dates[0]
+                    for d in dates[1:]:
+                        try:
+                            delta = (_dt.datetime.strptime(d, "%Y-%m-%d") - _dt.datetime.strptime(end, "%Y-%m-%d")).days
+                            if delta <= 3: end = d
+                            else:
+                                zones.append({{"start": start, "end": end}})
+                                start = end = d
+                        except Exception: start = end = d
+                    zones.append({{"start": start, "end": end}})
+                    return zones
+                out["buyZones"] = _merge_zones(buy_dates)
+                out["sellZones"] = _merge_zones(sell_dates)
+        except Exception:
+            pass
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
 except Exception as e:
