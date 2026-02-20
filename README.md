@@ -442,6 +442,12 @@ python run_backtest.py strategies/strategy_wentai_demo.py 2024-01-01 2024-12-31
 3. **数据量**：单只股票一年约 250 条日线数据，注意数据库大小
 4. **商业使用**：RQAlpha 仅限非商业使用，商业使用需联系 ricequant
 
+## 十二、版本控制与 Git 上传
+
+- **不要提交**：`data/*.db`、`data/**/*.csv`（体积大，且 GitHub 单文件限制 100MB）。详见 `.gitignore`。
+- **克隆后**：需自行安装 akshare、rqalpha（`pip install akshare rqalpha`），数据库可运行 `scripts/import_all_a_stocks.py` 或通过 Web 平台按需拉取。
+- **推送前**：确认无大文件（如 `data/astock.db`），避免 `remote rejected`。
+
 ---
 
 **项目状态**：✅ 已配置完成，可直接使用。支持自主完善、调整和扩展。

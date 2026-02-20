@@ -1,0 +1,1 @@
+# 保持 output 目录存在，回测结果 *.json / *.pkl 已由 .gitignore 排除
