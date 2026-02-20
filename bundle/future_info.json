@@ -1,0 +1,9 @@
+[
+  {
+    "order_book_id": "TEST",
+    "underlying_symbol": "TEST",
+    "margin_rate": 0.1,
+    "commission_type": "by_volume",
+    "commission": 0.0
+  }
+]

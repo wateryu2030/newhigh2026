@@ -1,0 +1,24 @@
+# 虚拟环境（若在 astock 根目录做版本管理）
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# 本地配置（按需取消注释）
+.env
+*.local
+
+# 数据库与行情数据（超过 GitHub 100MB 限制，不提交）
+data/*.db
+data/**/*.csv
+
+# 嵌套仓库（如需提交请改为 submodule）
+akshare/
+rqalpha/
