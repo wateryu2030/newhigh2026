@@ -1,0 +1,11 @@
+# 机构级 + 顶级量化模块依赖
+# 安装: pip install -r requirements-institutional.txt
+torch>=2.0
+fastapi>=0.100
+uvicorn[standard]>=0.22
+# 顶级扩展：RL / AutoML / 风险
+gymnasium>=0.29
+stable-baselines3>=2.0
+optuna>=3.0
+xgboost>=2.0
+scikit-learn>=1.0

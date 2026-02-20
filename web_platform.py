@@ -14,6 +14,13 @@ import glob
 _static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 app = Flask(__name__, static_folder=_static_dir)
 
+# 注册 API 层（组合回测、TradingView K 线、股票池）
+try:
+    from api import register_routes
+    register_routes(app)
+except Exception:
+    pass
+
 # 添加 CORS 支持（简单版本）
 @app.after_request
 def after_request(response):
@@ -58,6 +65,7 @@ HTML_TEMPLATE = """
     .status.error { background: #f55; color: #fff; }
     .full-width { grid-column: 1 / -1; }
     @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .result-layout { grid-template-columns: 1fr !important; } }
   </style>
 </head>
 <body>
@@ -112,32 +120,68 @@ HTML_TEMPLATE = """
           <input type="number" id="initialCash" value="1000000" step="10000">
         </div>
         <div class="form-group">
+          <label>周期</label>
+          <select id="timeframe">
+            <option value="D">日线</option>
+            <option value="W">周线</option>
+            <option value="M">月线</option>
+          </select>
+          <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">插件策略（MA/RSI/MACD/Breakout）支持多周期</small>
+        </div>
+        <div class="form-group">
           <label>数据源</label>
           <select id="dataSource">
             <option value="database">数据库（推荐，离线）</option>
             <option value="akshare">AKShare（需要网络）</option>
           </select>
         </div>
-        <button onclick="runBacktest()" id="runBtn">🚀 运行回测</button>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <button onclick="runBacktest()" id="runBtn">🚀 运行回测</button>
+          <button type="button" onclick="scanMarket()" id="scanBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #0f9; border-radius: 4px; cursor: pointer;">🔍 扫描市场</button>
+          <button type="button" onclick="optimizeParams()" id="optimizeBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #f90; border-radius: 4px; cursor: pointer;">⚙️ 参数优化</button>
+          <button type="button" onclick="runPortfolioBacktest()" id="portfolioBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #9cf; border-radius: 4px; cursor: pointer;">📊 组合策略</button>
+        </div>
+        <small style="color: #666; font-size: 11px; display: block; margin-top: 6px;">扫描市场 / 参数优化 / 组合策略 需在左侧选择<strong style="color:#0f9;">插件策略</strong>（MA均线、RSI、MACD、Breakout突破）；文件策略仅支持运行回测。</small>
         <div id="status"></div>
       </div>
     </div>
     
     <div class="card full-width" id="resultCard" style="display: none;">
       <h2>📊 回测结果</h2>
+      <div id="resultStrategyInfo" style="margin-bottom: 12px; padding: 8px 12px; background: #1a2744; border-radius: 4px; color: #888; font-size: 13px; display: none;"></div>
+      <div style="display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start;" class="result-layout">
+        <div>
       <div id="resultSummary" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;"></div>
       <div id="resultCurve" style="height: 220px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
-      <div id="resultCockpit" style="display: none; margin-top: 20px;">
+        <div id="resultCockpit" style="display: none; margin-top: 20px;">
         <h3 style="color: #0f9; margin-bottom: 12px;">📈 决策驾驶舱</h3>
+        <div id="resultCockpitStats" style="margin-bottom: 12px; padding: 8px 12px; background: #1a2744; border-radius: 4px; color: #888; font-size: 13px; display: none;"></div>
         <div id="resultKline" style="height: 320px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
         <div id="resultFutureTrend" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; display: none;">
           <div style="color: #888; font-size: 12px; margin-bottom: 8px;">未来趋势（概率，非预测）</div>
           <div id="resultFutureProb" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;"></div>
           <div id="resultFutureRange" style="margin-top: 8px; color: #0f9; font-size: 13px;"></div>
+          <div style="margin-top: 12px;">
+            <button type="button" id="btnFuture5Day" style="display: none; padding: 6px 14px; font-size: 12px; color: #0f9; background: transparent; border: 1px solid #0f9; border-radius: 4px; cursor: pointer;">查看未来5日走势与买卖点</button>
+          </div>
+          <div id="resultFuture5Day" style="display: none; margin-top: 12px; padding: 12px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;">
+            <div id="resultFuture5DayChart" style="height: 180px;"></div>
+            <div id="resultFuture5DaySignals" style="margin-top: 12px; font-size: 13px; color: #ccc;"></div>
+          </div>
         </div>
         <div id="resultCurveCompare" style="height: 220px; margin-top: 12px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
         <div id="resultSignalList" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
         <div id="resultSignalReason" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; min-height: 50px; color: #888; font-size: 13px;">点击下方买卖信号可查看原因</div>
+      </div>
+        </div>
+        <div id="resultDecisionPanel" style="background: #1a2744; border-radius: 8px; padding: 16px; border: 1px solid #2a2a4a; position: sticky; top: 12px;">
+          <h3 style="color: #0f9; font-size: 14px; margin-bottom: 12px;">📋 决策面板</h3>
+          <div id="decisionCurrentPrice" style="color: #888; font-size: 12px; margin-bottom: 8px;">当前价格: —</div>
+          <div id="decisionSignal" style="margin-bottom: 8px; font-size: 13px;"><span style="color: #888;">最新信号</span> <span id="decisionSignalValue" style="color: #fc0;">HOLD</span></div>
+          <div id="decisionTrend" style="color: #888; font-size: 12px; margin-bottom: 8px;">趋势: —</div>
+          <div id="decisionScore" style="margin-bottom: 8px;"><span style="color: #888; font-size: 12px;">策略评分</span> <span id="decisionScoreValue" style="color: #0f9; font-size: 18px;">—</span> <span id="decisionGradeValue" style="color: #888; font-size: 12px;"></span></div>
+          <div id="decisionSuggestion" style="color: #888; font-size: 12px;">建议: 运行回测后显示</div>
+        </div>
       </div>
     </div>
     
@@ -161,7 +205,6 @@ HTML_TEMPLATE = """
     </div>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
@@ -193,19 +236,37 @@ def _load_strategies_meta():
     return {}
 
 
+# 插件策略 id 列表（多周期回测）
+PLUGIN_STRATEGY_IDS = [
+    {"id": "ma_cross", "name": "MA均线", "description": "MA5/MA20 金叉死叉", "order": 0},
+    {"id": "rsi", "name": "RSI", "description": "RSI 超买超卖", "order": 1},
+    {"id": "macd", "name": "MACD", "description": "MACD 金叉死叉", "order": 2},
+    {"id": "breakout", "name": "Breakout突破", "description": "N 日高低点突破", "order": 3},
+]
+
+
 @app.route("/api/strategies")
 def list_strategies():
-    """列出所有策略文件（含名称与说明）"""
+    """列出所有策略：插件策略 + 策略文件"""
     try:
         strategies_dir = "strategies"
         if not os.path.exists(strategies_dir):
             os.makedirs(strategies_dir)
-        
-        meta = _load_strategies_meta()
+
         strategies = []
+        for p in PLUGIN_STRATEGY_IDS:
+            strategies.append({
+                "file": p["id"],
+                "name": p["name"],
+                "description": p["description"],
+                "order": p["order"],
+                "plugin": True,
+            })
+
+        meta = _load_strategies_meta()
         for f in sorted(glob.glob(os.path.join(strategies_dir, "*.py"))):
             rel_path = os.path.relpath(f, strategies_dir).replace(os.sep, "/")
-            if rel_path in ["__init__.py", "utils.py"] or rel_path.startswith(".tmp_"):
+            if rel_path in ["__init__.py", "utils.py", "base.py", "ma_cross.py", "rsi_strategy.py", "macd_strategy.py", "breakout.py"] or rel_path.startswith(".tmp_"):
                 continue
             info = meta.get(rel_path, {})
             strategies.append({
@@ -213,8 +274,9 @@ def list_strategies():
                 "name": info.get("name", rel_path),
                 "description": info.get("description", ""),
                 "order": info.get("order", 99),
+                "plugin": False,
             })
-        
+
         strategies.sort(key=lambda x: (x["order"], x["file"]))
         return jsonify({"strategies": strategies})
     except Exception as e:
@@ -308,6 +370,84 @@ def sync_pool():
         return jsonify({"success": False, "error": str(e), "log": traceback.format_exc()}), 500
 
 
+@app.route("/api/scan", methods=["POST"])
+def api_scan():
+    """扫描市场：单策略或组合策略，筛选最新 K 线出现信号的股票。Body 支持 strategy 或 strategies（组合）。"""
+    try:
+        data = request.json or {}
+        timeframe = (data.get("timeframe") or "D").strip().upper() or "D"
+        if timeframe not in ("D", "W", "M"):
+            timeframe = "D"
+        limit = data.get("limit")
+        if limit is not None:
+            try:
+                limit = int(limit)
+            except (TypeError, ValueError):
+                limit = 50
+        strategies = data.get("strategies")
+        if strategies and isinstance(strategies, list) and len(strategies) > 0:
+            from scanner import scan_market_portfolio
+            results = scan_market_portfolio(strategies=strategies, timeframe=timeframe, limit=limit)
+            return jsonify({"success": True, "results": results, "mode": "portfolio"})
+        strategy_id = data.get("strategy")
+        if not strategy_id:
+            return jsonify({"success": False, "error": "请选择策略或传入 strategies 组合"}), 400
+        plugin_ids = [p["id"] for p in PLUGIN_STRATEGY_IDS]
+        if strategy_id not in plugin_ids:
+            return jsonify({"success": False, "error": "仅支持插件策略（MA/RSI/MACD/Breakout）"}), 400
+        from scanner import scan_market
+        results = scan_market(strategy_id=strategy_id, timeframe=timeframe, limit=limit)
+        return jsonify({"success": True, "results": results})
+    except Exception as e:
+        import traceback
+        return jsonify({"success": False, "error": str(e), "results": []}), 500
+
+
+@app.route("/api/optimize", methods=["POST"])
+def api_optimize():
+    """策略参数优化：在给定参数空间内搜索最优参数。"""
+    try:
+        data = request.json or {}
+        strategy_id = data.get("strategy")
+        stock_code = data.get("stockCode")
+        start_date = data.get("startDate")
+        end_date = data.get("endDate")
+        timeframe = (data.get("timeframe") or "D").strip().upper() or "D"
+        if timeframe not in ("D", "W", "M"):
+            timeframe = "D"
+        param_space = data.get("paramSpace")
+        generations = data.get("generations", 20)
+        population_per_gen = data.get("populationPerGen", 20)
+        if not strategy_id or not stock_code or not start_date or not end_date:
+            return jsonify({"success": False, "error": "参数不完整"}), 400
+        if not param_space or not isinstance(param_space, dict):
+            if strategy_id == "ma_cross":
+                param_space = {"fast": [5, 20], "slow": [20, 60]}
+            elif strategy_id == "rsi":
+                param_space = {"period": [10, 20], "oversold": [25, 35], "overbought": [65, 80]}
+            elif strategy_id == "macd":
+                param_space = {"fast": [8, 15], "slow": [20, 30], "signal": [7, 12]}
+            elif strategy_id == "breakout":
+                param_space = {"period": [10, 30]}
+            else:
+                return jsonify({"success": False, "error": "请提供 paramSpace 或使用支持的策略"}), 400
+        from optimizer import optimize_strategy_simple
+        best_params, best_score = optimize_strategy_simple(
+            strategy_id=strategy_id,
+            stock_code=stock_code,
+            start_date=start_date,
+            end_date=end_date,
+            param_space=param_space,
+            timeframe=timeframe,
+            generations=int(generations) if generations else 20,
+            population_per_gen=int(population_per_gen) if population_per_gen else 20,
+        )
+        return jsonify({"success": True, "bestParams": best_params, "bestScore": best_score})
+    except Exception as e:
+        import traceback
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route("/api/run_backtest", methods=["POST"])
 def run_backtest():
     """运行回测"""
@@ -320,11 +460,35 @@ def run_backtest():
         stock_code = data.get("stockCode")
         start_date = data.get("startDate")
         end_date = data.get("endDate")
+        timeframe = (data.get("timeframe") or "D").strip().upper() or "D"
+        if timeframe not in ("D", "W", "M"):
+            timeframe = "D"
         initial_cash = data.get("initialCash", "1000000")
         data_source = data.get("dataSource", "database")
 
         if not strategy or not stock_code or not start_date or not end_date:
             return jsonify({"success": False, "error": "参数不完整"}), 400
+
+        # 插件策略：多周期回测（不走 RQAlpha）
+        plugin_ids = [p["id"] for p in PLUGIN_STRATEGY_IDS]
+        if strategy in plugin_ids:
+            try:
+                from run_backtest_plugins import run_plugin_backtest
+                result = run_plugin_backtest(strategy, stock_code, start_date, end_date, timeframe)
+                if result.get("error"):
+                    return jsonify({"success": False, "error": result["error"]}), 400
+                os.makedirs("output", exist_ok=True)
+                json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "last_backtest_result.json")
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+                return jsonify({
+                    "success": True,
+                    "log": f"插件策略回测完成：{result.get('strategy_name', strategy)}，周期：{result.get('timeframe', timeframe)}",
+                    "result": result,
+                })
+            except Exception as e:
+                import traceback
+                return jsonify({"success": False, "error": f"插件回测失败: {str(e)}\n{traceback.format_exc()}"})
 
         strategy_path = os.path.join("strategies", strategy)
         if not os.path.exists(strategy_path):
@@ -561,6 +725,18 @@ def run_backtest():
                     try:
                         with open(json_path, "r", encoding="utf-8") as f:
                             resp["result"] = json.load(f)
+                        if "strategy_name" not in resp["result"]:
+                            resp["result"]["strategy_name"] = strategy
+                        if "timeframe" not in resp["result"]:
+                            resp["result"]["timeframe"] = timeframe
+                        if "strategy_score" not in resp["result"] and resp["result"].get("stats"):
+                            try:
+                                from core.scoring import score_strategy
+                                sc, gr = score_strategy(resp["result"]["stats"])
+                                resp["result"]["strategy_score"] = sc
+                                resp["result"]["strategy_grade"] = gr
+                            except Exception:
+                                pass
                     except Exception:
                         pass
                 return jsonify(resp)
@@ -649,7 +825,8 @@ if __name__ == "__main__":
     os.makedirs("output", exist_ok=True)
     
     PORT = int(os.environ.get("PORT", 5050))
+    HOST = os.environ.get("HOST", "127.0.0.1")
     print("量化交易平台启动中...")
-    print("访问 http://127.0.0.1:{} 使用平台".format(PORT))
-    print("提示: 若 5050 被占用可设置环境变量 PORT=其他端口 如 PORT=8080 python web_platform.py")
-    app.run(host="127.0.0.1", port=PORT, debug=True)
+    print("访问 http://{}:{} 使用平台（或 http://localhost:{}）".format(HOST, PORT, PORT))
+    print("按 Ctrl+C 停止服务。若 5050 被占用可: PORT=8080 python web_platform.py")
+    app.run(host=HOST, port=PORT, debug=True)

@@ -2,12 +2,95 @@
   var selectedStrategy = '';
   var cockpitKlineChart = null;
   var cockpitCurveChart = null;
+  var cockpitFuture5Chart = null;
+  var lastBacktestResult = null;
 
   function handleError(error, context) {
     try {
       var log = document.getElementById('log');
       if (log) log.textContent = '错误: ' + (error.message || error.toString());
     } catch (e) {}
+  }
+
+  function renderFuture5Day(result) {
+    var range = result.futurePriceRange;
+    var prediction = result.prediction;
+    var kline = result.kline || [];
+    var lastClose = kline.length ? parseFloat(kline[kline.length - 1].close) : null;
+    var low = range && range.low != null ? parseFloat(range.low) : null;
+    var high = range && range.high != null ? parseFloat(range.high) : null;
+    var trend = prediction && prediction.trend ? prediction.trend : 'SIDEWAYS';
+    var chartEl = document.getElementById('resultFuture5DayChart');
+    var signalsEl = document.getElementById('resultFuture5DaySignals');
+    if (!chartEl || !signalsEl) return;
+    var days = ['D+1', 'D+2', 'D+3', 'D+4', 'D+5'];
+    var mid = (low != null && high != null) ? (low + high) / 2 : lastClose;
+    var start = lastClose != null ? lastClose : mid;
+    var target = start;
+    if (trend === 'UP' && high != null) target = high * 0.95;
+    else if (trend === 'DOWN' && low != null) target = low * 1.05;
+    else if (mid != null) target = mid;
+    var prices = [];
+    for (var i = 0; i < 5; i++) {
+      var t = (i + 1) / 5;
+      prices.push(parseFloat((start + (target - start) * t).toFixed(2)));
+    }
+    var buyIdx = -1, sellIdx = -1;
+    if (low != null && high != null) {
+      var minP = Math.min.apply(null, prices), maxP = Math.max.apply(null, prices);
+      for (var j = 0; j < 5; j++) { if (prices[j] <= low + (mid - low) * 0.5) buyIdx = j; }
+      for (var k = 4; k >= 0; k--) { if (prices[k] >= mid + (high - mid) * 0.5) sellIdx = k; }
+    }
+    var lines = [];
+    if (low != null && high != null) {
+      lines.push('<span style="color:#0f9;">潜在买点：</span> 若价格回落至 <span style="color:#0f9;">' + low + ' — ' + mid.toFixed(2) + '</span> 区间（如 D+2～D+3）可能触发策略买点。');
+      lines.push('<span style="color:#f55;">潜在卖点：</span> 若价格上行至 <span style="color:#f55;">' + mid.toFixed(2) + ' — ' + high + '</span> 区间（如 D+4～D+5）可能触发策略卖点。');
+    }
+    lines.push('（以上为基于当前趋势与区间的参考，非实际预测）');
+    signalsEl.innerHTML = lines.join('<br/>');
+    if (typeof echarts === 'undefined') return;
+    try {
+      if (cockpitFuture5Chart) { cockpitFuture5Chart.dispose(); cockpitFuture5Chart = null; }
+      chartEl.innerHTML = '';
+      cockpitFuture5Chart = echarts.init(chartEl);
+      var markPointData = [];
+      if (buyIdx >= 0) markPointData.push({ name: '买', coord: [days[buyIdx], prices[buyIdx]], value: '买', itemStyle: { color: '#0f9' }, symbol: 'triangle', symbolRotate: 0, symbolSize: 12 });
+      if (sellIdx >= 0) markPointData.push({ name: '卖', coord: [days[sellIdx], prices[sellIdx]], value: '卖', itemStyle: { color: '#f55' }, symbol: 'triangle', symbolRotate: 180, symbolSize: 12 });
+      cockpitFuture5Chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { left: 44, right: 24, top: 16, bottom: 40 },
+        xAxis: {
+          type: 'category',
+          data: days,
+          axisLabel: { color: '#bbb', fontSize: 12 }
+        },
+        yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
+        series: [
+          { type: 'line', data: prices, smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { color: '#0f9' }, itemStyle: { color: '#0f9' }, markPoint: markPointData.length ? { data: markPointData } : undefined }
+        ]
+      });
+    } catch (e) {
+      chartEl.innerHTML = '<div style="padding:12px;color:#f55;text-align:center;">未来5日图渲染失败</div>';
+    }
+  }
+
+  function loadEChartsThenRender(result) {
+    lastBacktestResult = result;
+    var klineEl = document.getElementById('resultKline');
+    var curveCompareEl = document.getElementById('resultCurveCompare');
+    if (klineEl) klineEl.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">正在加载图表库…</div>';
+    if (curveCompareEl) curveCompareEl.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">请稍候</div>';
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
+    script.async = true;
+    script.onload = function() {
+      requestAnimationFrame(function() { renderCockpit(lastBacktestResult); });
+    };
+    script.onerror = function() {
+      if (klineEl) klineEl.innerHTML = '<div style="padding:20px;color:#f55;text-align:center;">图表库加载失败，请检查网络后刷新重试</div>';
+      if (curveCompareEl) curveCompareEl.innerHTML = '';
+    };
+    document.head.appendChild(script);
   }
 
   function renderCockpit(result) {
@@ -17,8 +100,11 @@
     var curveCompareEl = document.getElementById('resultCurveCompare');
     var signalReasonEl = document.getElementById('resultSignalReason');
     if (!cockpitEl || !klineEl || !curveCompareEl) return;
-    if (cockpitKlineChart) { cockpitKlineChart.dispose(); cockpitKlineChart = null; }
-    if (cockpitCurveChart) { cockpitCurveChart.dispose(); cockpitCurveChart = null; }
+    try {
+      if (cockpitKlineChart) { cockpitKlineChart.dispose(); cockpitKlineChart = null; }
+      if (cockpitCurveChart) { cockpitCurveChart.dispose(); cockpitCurveChart = null; }
+      if (cockpitFuture5Chart) { cockpitFuture5Chart.dispose(); cockpitFuture5Chart = null; }
+    } catch (e) {}
     var hasKline = result.kline && result.kline.length > 0;
     var hasHold = result.holdCurve && result.holdCurve.length > 0 && result.curve && result.curve.length > 0;
     if (!hasKline && !hasHold) {
@@ -26,55 +112,144 @@
       return;
     }
     cockpitEl.style.display = 'block';
-    if (typeof echarts === 'undefined') return;
-    var dark = { backgroundColor: 'transparent', textStyle: { color: '#888' } };
-    if (hasKline) {
-      var kline = result.kline;
-      var dates = kline.map(function(k) { return k.date; });
-      var ohlc = kline.map(function(k) { return [k.open, k.close, k.low, k.high]; });
-      var dateToIdx = {};
-      dates.forEach(function(d, i) { dateToIdx[d] = i; });
-      var markArea = [];
-      (result.buyZones || []).forEach(function(z) {
-        var a = dateToIdx[z.start], b = dateToIdx[z.end];
-        if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(0,255,100,0.15)' } }, { xAxis: b }]);
-      });
-      (result.sellZones || []).forEach(function(z) {
-        var a = dateToIdx[z.start], b = dateToIdx[z.end];
-        if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(255,80,80,0.15)' } }, { xAxis: b }]);
-      });
-      var opt = {
-        backgroundColor: 'transparent',
-        grid: { left: 48, right: 24, top: 24, bottom: 32 },
-        xAxis: { type: 'category', data: dates, axisLabel: { color: '#888', fontSize: 10 }, splitLine: { show: false } },
-        yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
-        series: [
-          { type: 'candlestick', data: ohlc, itemStyle: { color: '#0f9', borderColor: '#0f9', color0: '#f55', borderColor0: '#f55' }, markArea: markArea.length ? { silent: true, data: markArea } : undefined }
-        ]
-      };
-      cockpitKlineChart = echarts.init(klineEl);
-      cockpitKlineChart.setOption(opt);
+    lastBacktestResult = result;
+    if (typeof echarts === 'undefined') {
+      loadEChartsThenRender(result);
+      return;
     }
-    if (hasHold) {
-      var curve = result.curve;
-      var holdCurve = result.holdCurve;
-      var curveDates = curve.map(function(p) { return p.date; });
-      var curveVals = curve.map(function(p) { return p.value; });
-      var holdMap = {};
-      (holdCurve || []).forEach(function(p) { holdMap[p.date] = p.value; });
-      var holdVals = curveDates.map(function(d) { return holdMap[d] != null ? holdMap[d] : null; });
-      cockpitCurveChart = echarts.init(curveCompareEl);
-      cockpitCurveChart.setOption({
-        backgroundColor: 'transparent',
-        grid: { left: 48, right: 24, top: 24, bottom: 32 },
-        legend: { data: ['策略净值', '持有净值'], textStyle: { color: '#888' }, top: 0 },
-        xAxis: { type: 'category', data: curveDates, axisLabel: { color: '#888', fontSize: 10 } },
-        yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
-        series: [
-          { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } },
-          { name: '持有净值', type: 'line', data: holdVals, smooth: true, symbol: 'none', lineStyle: { color: '#f90' } }
-        ]
-      });
+    klineEl.innerHTML = '';
+    curveCompareEl.innerHTML = '';
+    function drawCharts() {
+      var dark = { backgroundColor: 'transparent', textStyle: { color: '#888' } };
+      if (hasKline) {
+        var kline = result.kline;
+        var dates = [];
+        var ohlc = [];
+        for (var i = 0; i < kline.length; i++) {
+          var k = kline[i];
+          var o = Number(k.open), c = Number(k.close), l = Number(k.low), h = Number(k.high);
+          if (isNaN(o)) o = 0; if (isNaN(c)) c = 0; if (isNaN(l)) l = 0; if (isNaN(h)) h = 0;
+          dates.push(String(k.date != null ? k.date : ''));
+          ohlc.push([o, c, l, h]);
+        }
+        if (dates.length === 0 || ohlc.length === 0) return;
+        var dateToIdx = {};
+        dates.forEach(function(d, i) { dateToIdx[d] = i; });
+        var markArea = [];
+        (result.buyZones || []).forEach(function(z) {
+          var a = dateToIdx[z.start], b = dateToIdx[z.end];
+          if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(0,255,100,0.15)' } }, { xAxis: b }]);
+        });
+        (result.sellZones || []).forEach(function(z) {
+          var a = dateToIdx[z.start], b = dateToIdx[z.end];
+          if (a != null && b != null) markArea.push([{ xAxis: a, itemStyle: { color: 'rgba(255,80,80,0.15)' } }, { xAxis: b }]);
+        });
+        var markPointData = [];
+        (result.markers || []).forEach(function(m) {
+          var coord = m.coord;
+          if (!coord || coord.length < 2) return;
+          var isBuy = (m.name || m.value || '') === 'BUY';
+          markPointData.push({
+            name: m.name || (isBuy ? 'BUY' : 'SELL'),
+            coord: [String(coord[0]), Number(coord[1])],
+            value: isBuy ? '买' : '卖',
+            itemStyle: { color: isBuy ? '#00d68f' : '#ff6b6b' },
+            symbol: 'arrow',
+            symbolRotate: isBuy ? 0 : 180,
+            symbolSize: 14,
+            label: {
+              show: true,
+              formatter: (m.reason || m.name) ? (m.name + ' ' + (m.reason || '')) : m.name,
+              fontSize: 12,
+              color: isBuy ? '#e0fff4' : '#ffe8e8',
+              backgroundColor: isBuy ? 'rgba(0,80,50,0.92)' : 'rgba(100,20,20,0.92)',
+              borderColor: isBuy ? '#00d68f' : '#ff6b6b',
+              borderWidth: 1,
+              padding: [4, 8],
+              borderRadius: 4
+            }
+          });
+        });
+        var opt = {
+          backgroundColor: 'transparent',
+          tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, formatter: function(params) {
+            if (!params || !params.length) return '';
+            var p = params[0];
+            var axisVal = p.axisValue;
+            var idx = dates.indexOf(axisVal);
+            var line = (axisVal || '') + '<br/>';
+            if (idx >= 0 && kline[idx]) {
+              var k = kline[idx];
+              line += '开 ' + k.open + ' 高 ' + k.high + ' 低 ' + k.low + ' 收 ' + k.close;
+            }
+            (result.markers || []).forEach(function(m) {
+              if (m.coord && m.coord[0] === axisVal) line += '<br/><span style="color:' + (m.name === 'BUY' ? '#0f9' : '#f55') + '">' + (m.name || '') + '</span> ' + (m.reason || '');
+            });
+            return line;
+          }},
+          grid: { left: 48, right: 24, top: 24, bottom: 52 },
+          xAxis: {
+            type: 'category',
+            data: dates,
+            axisLabel: {
+              color: '#bbb',
+              fontSize: 12,
+              rotate: 45,
+              formatter: function(value) { return value ? value.substring(5) : value; }
+            },
+            splitLine: { show: false }
+          },
+          yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
+          series: [
+            { type: 'candlestick', data: ohlc, itemStyle: { color: '#0f9', borderColor: '#0f9', color0: '#f55', borderColor0: '#f55' }, markArea: markArea.length ? { silent: true, data: markArea } : undefined, markPoint: markPointData.length ? { data: markPointData, symbolSize: 14 } : undefined }
+          ]
+        };
+        try {
+          if (!cockpitKlineChart) cockpitKlineChart = echarts.init(klineEl);
+          cockpitKlineChart.setOption(opt, true);
+        } catch (e) {
+          if (klineEl) klineEl.innerHTML = '<div style="padding:20px;color:#f55;text-align:center;">K线图渲染失败，请刷新重试</div>';
+        }
+      }
+      if (hasHold) {
+        var curve = result.curve;
+        var holdCurve = result.holdCurve;
+        var curveDates = curve.map(function(p) { return String(p.date != null ? p.date : ''); });
+        var curveVals = curve.map(function(p) { var v = Number(p.value); return isNaN(v) ? null : v; });
+        var holdMap = {};
+        (holdCurve || []).forEach(function(p) { var v = Number(p.value); if (!isNaN(v)) holdMap[String(p.date)] = v; });
+        var holdVals = curveDates.map(function(d) { return holdMap[d] != null ? holdMap[d] : null; });
+        try {
+          if (!cockpitCurveChart) cockpitCurveChart = echarts.init(curveCompareEl);
+          cockpitCurveChart.setOption({
+            backgroundColor: 'transparent',
+            grid: { left: 48, right: 24, top: 24, bottom: 52 },
+            legend: { data: ['策略净值', '持有净值'], textStyle: { color: '#888' }, top: 0 },
+            xAxis: {
+              type: 'category',
+              data: curveDates,
+              axisLabel: {
+                color: '#bbb',
+                fontSize: 12,
+                rotate: 45,
+                formatter: function(value) { return value ? value.substring(5) : value; }
+              }
+            },
+            yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
+            series: [
+              { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } },
+              { name: '持有净值', type: 'line', data: holdVals, smooth: true, symbol: 'none', lineStyle: { color: '#f90' } }
+            ]
+          }, true);
+        } catch (e) {
+          if (curveCompareEl) curveCompareEl.innerHTML = '<div style="padding:20px;color:#f55;text-align:center;">净值曲线渲染失败，请刷新重试</div>';
+        }
+      }
+    }
+    if (klineEl.offsetParent === null || klineEl.offsetWidth === 0) {
+      requestAnimationFrame(function() { requestAnimationFrame(drawCharts); });
+    } else {
+      requestAnimationFrame(drawCharts);
     }
     var futureTrendEl = document.getElementById('resultFutureTrend');
     var futureProbEl = document.getElementById('resultFutureProb');
@@ -82,22 +257,53 @@
     if (futureTrendEl && futureProbEl && futureRangeEl) {
       var prob = result.futureProbability;
       var range = result.futurePriceRange;
+      var prediction = result.prediction;
       var hasProb = prob && (prob.up != null || prob.sideways != null || prob.down != null);
       var hasRange = range && range.low != null && range.high != null;
-      if (hasProb || hasRange) {
+      var hasPred = prediction && prediction.trend;
+      if (hasProb || hasRange || hasPred) {
         futureTrendEl.style.display = 'block';
-        if (hasProb) {
+        if (hasPred) {
+          var trendText = prediction.trend === 'UP' ? '上涨' : (prediction.trend === 'DOWN' ? '下跌' : '震荡');
+          var trendColor = prediction.trend === 'UP' ? '#0f9' : (prediction.trend === 'DOWN' ? '#f55' : '#888');
+          var conf = prediction.score != null ? Math.round(Math.min(1, Math.max(0, (prediction.score + 0.3) / 1.0)) * 100) : 50;
+          futureProbEl.innerHTML = '<span style="color:' + trendColor + ';">未来趋势：' + trendText + '</span> <span style="color:#888;">置信度 ' + conf + '%</span>';
+        } else if (hasProb) {
           var up = (prob.up != null ? Math.round(prob.up * 100) : 0);
           var side = (prob.sideways != null ? Math.round(prob.sideways * 100) : 0);
           var down = (prob.down != null ? Math.round(prob.down * 100) : 0);
-          futureProbEl.innerHTML = '<span style="color:#0f9;">上涨 ' + up + '%</span><span style="color:#888;">震荡 ' + side + '%</span><span style="color:#f55;">下跌 ' + down + '%</span>';
+          futureProbEl.innerHTML = '<span style="color:#0f9;">上涨 ' + up + '%</span> <span style="color:#888;">震荡 ' + side + '%</span> <span style="color:#f55;">下跌 ' + down + '%</span>';
         } else futureProbEl.innerHTML = '';
         if (hasRange) {
           futureRangeEl.textContent = '预计区间（' + (range.horizonDays || 5) + ' 日）: ' + range.low + ' — ' + range.high;
         } else futureRangeEl.textContent = '';
+        var btn5 = document.getElementById('btnFuture5Day');
+        var box5 = document.getElementById('resultFuture5Day');
+        if (btn5 && box5) {
+          btn5.style.display = (hasRange || hasPred) ? 'inline-block' : 'none';
+          btn5.onclick = function() {
+            var visible = box5.style.display === 'block';
+            box5.style.display = visible ? 'none' : 'block';
+            if (!visible) renderFuture5Day(result);
+          };
+          box5.style.display = 'none';
+        }
       } else {
         futureTrendEl.style.display = 'none';
+        var btn5 = document.getElementById('btnFuture5Day');
+        if (btn5) btn5.style.display = 'none';
       }
+    }
+    var statsEl = document.getElementById('resultCockpitStats');
+    if (statsEl && result.stats) {
+      var st = result.stats;
+      var parts = [];
+      if (st.tradeCount != null) parts.push('交易次数 ' + st.tradeCount);
+      if (st.winRate != null) parts.push('胜率 ' + (st.winRate * 100).toFixed(0) + '%');
+      if (st.maxDrawdown != null) parts.push('最大回撤 ' + (st.maxDrawdown * 100).toFixed(2) + '%');
+      if (st.return != null) parts.push('总收益 ' + (st.return * 100).toFixed(2) + '%');
+      statsEl.innerHTML = parts.length ? parts.join('　') : '';
+      statsEl.style.display = parts.length ? 'block' : 'none';
     }
     var signalListEl = document.getElementById('resultSignalList');
     if (signalListEl) {
@@ -115,10 +321,9 @@
               var reasonEl = document.getElementById('resultSignalReason');
               if (!reasonEl) return;
               var parts = [];
-              if (s.type === 'buy') parts.push('买入信号');
-              else parts.push('卖出信号');
-              parts.push('日期: ' + s.date);
-              if (s.reasons && s.reasons.length) parts.push('原因: ' + s.reasons.join('；'));
+              parts.push((s.type === 'buy' ? '买入' : '卖出') + '  ' + s.date + '  价格 ' + (s.price != null ? s.price : '-'));
+              var reasonText = s.reason || (s.reasons && s.reasons.length ? s.reasons.join('；') : '');
+              if (reasonText) parts.push('原因: ' + reasonText);
               if (s.winRate != null) parts.push('历史胜率: ' + (s.winRate * 100).toFixed(1) + '%');
               if (s.avgReturn != null) parts.push('平均收益: ' + (s.avgReturn * 100).toFixed(2) + '%');
               if (s.score != null) parts.push('评分: ' + s.score);
@@ -135,6 +340,195 @@
     }
   }
 
+  function updateDecisionPanel(result) {
+    if (!result) return;
+    var priceEl = document.getElementById('decisionCurrentPrice');
+    var signalEl = document.getElementById('decisionSignalValue');
+    var trendEl = document.getElementById('decisionTrend');
+    var scoreEl = document.getElementById('decisionScoreValue');
+    var gradeEl = document.getElementById('decisionGradeValue');
+    var suggestEl = document.getElementById('decisionSuggestion');
+    var kline = result.kline || [];
+    var lastClose = kline.length ? kline[kline.length - 1].close : null;
+    if (priceEl) priceEl.textContent = lastClose != null ? '当前价格: ' + lastClose : '当前价格: —';
+    var signals = result.signals || [];
+    var lastSig = signals.length ? signals[signals.length - 1] : null;
+    var sigText = 'HOLD';
+    var sigColor = '#fc0';
+    if (lastSig) {
+      sigText = (lastSig.type === 'buy' ? 'BUY' : 'SELL');
+      sigColor = lastSig.type === 'buy' ? '#0f9' : '#f55';
+    }
+    if (signalEl) { signalEl.textContent = sigText; signalEl.style.color = sigColor; }
+    var pred = result.prediction || {};
+    var trend = pred.trend || '—';
+    var trendLabel = trend === 'UP' ? '上涨' : (trend === 'DOWN' ? '下跌' : '震荡');
+    if (trendEl) trendEl.textContent = '趋势: ' + trendLabel;
+    var score = result.strategy_score;
+    var grade = result.strategy_grade || '';
+    if (scoreEl) scoreEl.textContent = score != null ? (score + ' / 100') : '—';
+    if (gradeEl) gradeEl.textContent = grade ? '（' + grade + '）' : '';
+    var suggest = '运行回测后显示';
+    if (lastSig && lastSig.type === 'buy') suggest = '最新信号为买入，可参考区间与趋势';
+    else if (lastSig && lastSig.type === 'sell') suggest = '最新信号为卖出，注意风险';
+    else if (signals.length === 0) suggest = '暂无买卖信号';
+    else suggest = '当前无新信号，观望';
+    if (suggestEl) suggestEl.textContent = '建议: ' + suggest;
+  }
+
+  async function scanMarket() {
+    var strategyInput = document.getElementById('strategyFile');
+    var strategy = strategyInput ? (strategyInput.getAttribute('data-file') || strategyInput.value.split('(')[1]) : '';
+    if (strategy && strategy.indexOf(')') >= 0) strategy = strategy.replace(')', '').trim();
+    var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
+    var log = document.getElementById('log');
+    if (!strategy) {
+      alert('请先选择策略（插件策略：MA/RSI/MACD/Breakout）');
+      return;
+    }
+    var pluginIds = ['ma_cross', 'rsi', 'macd', 'breakout'];
+    if (pluginIds.indexOf(strategy) < 0) {
+      alert('扫描市场仅支持插件策略，请选择 MA均线 / RSI / MACD / Breakout突破');
+      return;
+    }
+    if (log) log.textContent = '正在扫描市场（' + strategy + ' ' + timeframe + '）…\n';
+    var btn = document.getElementById('scanBtn');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({strategy: strategy, timeframe: timeframe, limit: 50})
+      });
+      var data = await res.json();
+      if (data.success && data.results && data.results.length > 0) {
+        var lines = ['扫描完成，共 ' + data.results.length + ' 只出现最新信号：\n'];
+        data.results.forEach(function(r) {
+          lines.push(r.symbol + ' ' + (r.name || '') + ' ' + r.signal + ' @ ' + r.price + ' ' + (r.trend || ''));
+        });
+        if (log) log.textContent = lines.join('\n');
+      } else if (data.success) {
+        if (log) log.textContent = '扫描完成，当前无最新信号股票。';
+      } else {
+        if (log) log.textContent = '扫描失败: ' + (data.error || '未知错误');
+      }
+    } catch (e) {
+      if (log) log.textContent = '扫描请求失败: ' + e.message;
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function optimizeParams() {
+    var strategyInput = document.getElementById('strategyFile');
+    var strategy = strategyInput ? (strategyInput.getAttribute('data-file') || '') : '';
+    if (!strategy && strategyInput && strategyInput.value) strategy = strategyInput.value.split('(')[1]; if (strategy && strategy.indexOf(')') >= 0) strategy = strategy.replace(')', '').trim();
+    var stockCode = document.getElementById('stockCode').value || document.getElementById('customStockCode').value.trim();
+    if (!stockCode) stockCode = (document.getElementById('stockCode').value || '').trim();
+    if (stockCode && !stockCode.includes('.')) stockCode = stockCode + (stockCode.startsWith('6') ? '.XSHG' : '.XSHE');
+    var startDate = document.getElementById('startDate').value;
+    var endDate = document.getElementById('endDate').value;
+    var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
+    var log = document.getElementById('log');
+    var pluginIds = ['ma_cross', 'rsi', 'macd', 'breakout'];
+    if (!strategy || pluginIds.indexOf(strategy) < 0) {
+      alert('请先选择插件策略（MA/RSI/MACD/Breakout）并选择股票');
+      return;
+    }
+    if (!stockCode) {
+      alert('请选择或输入股票代码');
+      return;
+    }
+    if (log) log.textContent = '参数优化中（约 1–2 分钟）…\n';
+    var btn = document.getElementById('optimizeBtn');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({strategy: strategy, stockCode: stockCode, startDate: startDate, endDate: endDate, timeframe: timeframe})
+      });
+      var data = await res.json();
+      if (data.success) {
+        var msg = '优化完成。最佳评分: ' + data.bestScore + '\n最佳参数: ' + JSON.stringify(data.bestParams || {});
+        if (log) log.textContent = msg;
+      } else {
+        if (log) log.textContent = '优化失败: ' + (data.error || '未知错误');
+      }
+    } catch (e) {
+      if (log) log.textContent = '优化请求失败: ' + e.message;
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function runPortfolioBacktest() {
+    var stockCode = document.getElementById('stockCode').value || document.getElementById('customStockCode').value.trim();
+    if (stockCode && !stockCode.includes('.')) stockCode = stockCode + (stockCode.startsWith('6') ? '.XSHG' : '.XSHE');
+    var startDate = document.getElementById('startDate').value;
+    var endDate = document.getElementById('endDate').value;
+    var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
+    var log = document.getElementById('log');
+    if (!stockCode) {
+      alert('请选择或输入股票代码');
+      return;
+    }
+    var strategies = [
+      { strategy_id: 'ma_cross', weight: 0.5 },
+      { strategy_id: 'rsi', weight: 0.5 }
+    ];
+    var btn = document.getElementById('portfolioBtn');
+    if (btn) btn.disabled = true;
+    if (log) log.textContent = '组合策略回测中（MA + RSI 等权）…\n';
+    try {
+      var res = await fetch('/api/portfolio', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ strategies: strategies, stockCode: stockCode, startDate: startDate, endDate: endDate, timeframe: timeframe })
+      });
+      var data = await res.json();
+      if (data.success && data.result) {
+        if (log) log.textContent = '组合策略回测完成。\n';
+        var card = document.getElementById('resultCard');
+        card.style.display = 'block';
+        var infoEl = document.getElementById('resultStrategyInfo');
+        if (infoEl) {
+          infoEl.textContent = '策略: ' + (data.result.strategy_name || '组合') + '　周期: ' + (data.result.timeframe === 'W' ? '周线' : (data.result.timeframe === 'M' ? '月线' : '日线'));
+          infoEl.style.display = 'block';
+        }
+        var s = data.result.summary || {};
+        var sumEl = document.getElementById('resultSummary');
+        sumEl.innerHTML = '<div style="background:#1a2744;padding:10px;border-radius:4px;"><span style="color:#888;">总收益</span><br><span style="color:#0f9;">' + ((s.total_returns != null || s.return_rate != null) ? ((s.return_rate != null ? s.return_rate * 100 : (s.total_returns || 0) * 100).toFixed(2) + '%') : '—') + '</span></div>' +
+          '<div style="background:#1a2744;padding:10px;border-radius:4px;"><span style="color:#888;">最大回撤</span><br><span style="color:#0f9;">' + (s.max_drawdown != null ? (s.max_drawdown * 100).toFixed(2) + '%' : '—') + '</span></div>';
+        var curveEl = document.getElementById('resultCurve');
+        var curve = data.result.curve || [];
+        var vals = curve.map(function(p) { return p.value; }).filter(function(v) { return v != null && v === v; });
+        if (curve.length > 0 && vals.length > 0) {
+          var min = Math.min.apply(null, vals);
+          var max = Math.max.apply(null, vals);
+          var range = max - min || 1;
+          var w = curveEl.offsetWidth || 600;
+          var h = 200;
+          var pad = 20;
+          var points = curve.map(function(p, i) {
+            var x = pad + (w - 2 * pad) * (i / (curve.length - 1 || 1));
+            var v = p.value != null && p.value === p.value ? p.value : vals[0];
+            var y = h - pad - (h - 2 * pad) * ((v - min) / range);
+            return x + ',' + y;
+          }).join(' ');
+          curveEl.innerHTML = '<svg width="100%" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><polyline fill="none" stroke="#0f9" stroke-width="1.5" points="' + points + '"/></svg>';
+        } else {
+          curveEl.innerHTML = '<div style="padding:20px;color:#888;">无净值曲线</div>';
+        }
+        renderCockpit(data.result);
+        updateDecisionPanel(data.result);
+      } else {
+        if (log) log.textContent = '组合回测失败: ' + (data.error || '未知错误');
+      }
+    } catch (e) {
+      if (log) log.textContent = '请求失败: ' + e.message;
+    }
+    if (btn) btn.disabled = false;
+  }
+
   async function loadStrategies() {
     try {
       var res = await fetch('/api/strategies');
@@ -144,11 +538,13 @@
       var data = await res.json();
       var list = document.getElementById('strategyList');
       var select = document.getElementById('strategyFile');
+      if (!list || !select) return;
 
       list.innerHTML = '';
       select.innerHTML = '<option value="">请选择策略</option>';
 
-      data.strategies.forEach(function(s) {
+      var strategies = (data && Array.isArray(data.strategies)) ? data.strategies : [];
+      strategies.forEach(function(s) {
         var file = s.file || s;
         var name = s.name || file;
         var desc = s.description || '';
@@ -180,6 +576,7 @@
       }
       var data = await res.json();
       var select = document.getElementById('stockCode');
+      if (!select) return;
 
       select.innerHTML = '<option value="">请选择股票</option>';
 
@@ -249,6 +646,7 @@
           stockCode: stockCode,
           startDate: startDate,
           endDate: endDate,
+          timeframe: (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D',
           initialCash: initialCash,
           dataSource: dataSource
         })
@@ -267,7 +665,15 @@
           var card = document.getElementById('resultCard');
           var sumEl = document.getElementById('resultSummary');
           var curveEl = document.getElementById('resultCurve');
+          var infoEl = document.getElementById('resultStrategyInfo');
           card.style.display = 'block';
+          if (infoEl) {
+            var sn = data.result.strategy_name || '';
+            var tf = data.result.timeframe || 'D';
+            var tfLabel = tf === 'W' ? '周线' : (tf === 'M' ? '月线' : '日线');
+            infoEl.textContent = '策略: ' + sn + '　周期: ' + tfLabel;
+            infoEl.style.display = (sn || tf) ? 'block' : 'none';
+          }
           var s = data.result.summary || {};
           var showKeys = [
             ['return_rate', '总收益率', true], ['annualized_returns', '年化收益', true], ['max_drawdown', '最大回撤', true], ['sharpe_ratio', '夏普比率', false]
@@ -304,6 +710,7 @@
             curveEl.innerHTML = '<div style="padding:20px;color:#888;">无净值曲线数据</div>';
           }
           renderCockpit(data.result);
+          updateDecisionPanel(data.result);
         } else {
           var card = document.getElementById('resultCard');
           if (card) card.style.display = 'none';
@@ -436,6 +843,9 @@
   window.loadStrategies = loadStrategies;
   window.loadStocks = loadStocks;
   window.runBacktest = runBacktest;
+  window.scanMarket = scanMarket;
+  window.optimizeParams = optimizeParams;
+  window.runPortfolioBacktest = runPortfolioBacktest;
   window.syncStockData = syncStockData;
   window.syncPoolStocks = syncPoolStocks;
   window.loadStrategy = loadStrategy;
@@ -446,10 +856,21 @@
     if (cockpitCurveChart) cockpitCurveChart.resize();
   });
 
-  document.addEventListener('DOMContentLoaded', function() {
-    var loadBtn = document.getElementById('loadBtn');
-    if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
-    loadStrategies();
-    loadStocks();
-  });
+  function init() {
+    try {
+      var loadBtn = document.getElementById('loadBtn');
+      if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
+      loadStrategies();
+      loadStocks();
+    } catch (e) {
+      console.error('init error', e);
+      var log = document.getElementById('log');
+      if (log) log.textContent = '页面初始化异常: ' + (e.message || e);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 0);
+  }
 })();

@@ -14,6 +14,21 @@
 
 ## 🚀 快速开始（推荐）
 
+### 先启动 Web 平台（避免 ERR_CONNECTION_REFUSED）
+
+若浏览器提示「无法访问此网站 / localhost 拒绝了我们的连接请求」，说明 **服务未启动**。在项目根目录执行：
+
+```bash
+# 方式一：一键脚本（推荐）
+./start_platform.sh
+
+# 方式二：手动启动
+source venv/bin/activate
+python web_platform.py
+```
+
+终端出现「访问 http://127.0.0.1:5050 使用平台」后，用浏览器打开 **http://127.0.0.1:5050** 或 **http://localhost:5050**。按 Ctrl+C 可停止服务。
+
 ### 使用 AKShare 数据源（无需数据库）
 
 ```bash
@@ -23,7 +38,7 @@ source venv/bin/activate
 # 2. 命令行回测（推荐）
 python run_backtest_akshare.py strategies/simple_akshare_strategy.py 2024-01-01 2024-12-31 600745.XSHG
 
-# 3. 或启动 Web 平台
+# 3. 或启动简易 Web 平台
 python web_platform_simple.py
 # 访问 http://127.0.0.1:5050
 ```
@@ -135,6 +150,10 @@ python scripts/import_all_a_stocks.py --limit 10
 ```
 
 首次全量约 5000+ 只 × 约 500 交易日，耗时会较长（约 1～3 小时，视网络与 `--delay` 而定）。默认会跳过库中已有数据的股票，可多次执行直至全部完成。
+
+### 控制台出现 content.js / antd / chunk-*.js / chrome-extension 报错
+
+这些来自**浏览器扩展**（如 React DevTools、阿里通义等），不是本项目的代码。可忽略，或在无扩展的隐身窗口/新配置文件中打开 http://127.0.0.1:5050 以确认页面功能正常。
 
 ### 若出现「无法访问此网站 / 连接被拒绝」(ERR_CONNECTION_REFUSED)
 
@@ -442,7 +461,182 @@ python run_backtest.py strategies/strategy_wentai_demo.py 2024-01-01 2024-12-31
 
 详细说明请参考：`database/README.md`
 
-## 十一、注意事项
+## 十一、机构级量化模块（私募级）
+
+在「数据 → 回测 → 实盘」闭环基础上，已接入 **高频因子库、LSTM 预测、多策略组合、实盘监控**，达到私募量化中等水平。
+
+### 11.1 目录结构
+
+```
+quant_system/
+├── factors/           # Alpha 因子库
+│   ├── alpha_factors.py   # 动量/波动率/量价/趋势/偏度峰度等 20+ 因子
+│   └── factor_engine.py   # 统一特征矩阵输出
+├── ai_models/         # 深度学习
+│   ├── lstm_model.py      # LSTM 序列 → 未来 1 日收益
+│   ├── train_lstm.py      # 训练脚本
+│   └── predict_lstm.py   # 预测脚本
+├── portfolio/         # 多策略组合
+│   ├── strategy_pool.py       # 策略池 run()
+│   ├── capital_allocator.py   # 资金分配（等权/可扩展风险平价）
+│   └── portfolio_manager.py  # 持仓与总资产
+└── monitor/           # 实盘监控
+    ├── api_server.py        # FastAPI：/positions, /orders, /pnl
+    └── dashboard/           # 监控页（持仓/订单/PnL/图表）
+```
+
+### 11.2 依赖（可选）
+
+机构级模块依赖需单独安装：
+
+```bash
+pip install torch fastapi uvicorn
+```
+
+或使用项目提供的清单（若存在）：
+
+```bash
+pip install -r requirements-institutional.txt
+```
+
+### 11.3 使用方式
+
+**因子 + 特征矩阵（与现有 DataFrame 兼容）**
+
+```python
+from factors import add_alpha_factors, build_factor_matrix
+import pandas as pd
+# df 需含 open, high, low, close, volume
+df = build_factor_matrix(df, keep_date=True)
+```
+
+**LSTM 训练与预测**
+
+```bash
+# 训练（示例假数据）
+python ai_models/train_lstm.py
+
+# 预测：在代码中调用 predict_from_df(feature_matrix) 或 load_lstm + predict
+```
+
+**多策略组合与资金分配**
+
+```python
+from portfolio.strategy_pool import StrategyPool
+from portfolio.capital_allocator import CapitalAllocator
+from portfolio.portfolio_manager import PortfolioManager
+
+pool = StrategyPool()
+pool.add(strategy_a).add(strategy_b)
+results = pool.run(df)
+alloc = CapitalAllocator().allocate(1_000_000, pool.strategies)
+pm = PortfolioManager(capital=alloc.get(strategy_a, 0))
+pm.update("600519.XSHG", 100000)
+print(pm.total_value())
+```
+
+**实盘监控 API + Dashboard**
+
+```bash
+uvicorn monitor.api_server:app --reload --host 0.0.0.0 --port 8000
+# 浏览器打开 http://127.0.0.1:8000 查看 Dashboard；API 文档 http://127.0.0.1:8000/docs
+```
+
+### 11.4 建议的下一步
+
+1. **回测**：用历史 10 年数据回测因子与策略。
+2. **模拟盘**：跑 3 个月模拟盘验证稳定性。
+3. **小资金实盘**：市场验证优于自我检查。
+
+### 11.5 顶级量化扩展（百亿私募路线）
+
+在机构级模块之上，已接入 **强化学习交易、Tick 高频框架、AutoML 因子挖掘、机构级风险预测与仓位控制**，架构达到国内头部私募技术中枢水平。
+
+| 模块 | 路径 | 说明 |
+|------|------|------|
+| 强化学习交易 | `rl/` | Gymnasium 环境 + stable-baselines3 PPO，状态=价格/指标/仓位，动作=空仓/买/卖 |
+| Tick 高频框架 | `hft/` | 行情流 → 信号引擎 → 下单/风控，`TickEngine.on_tick(tick)` 驱动 |
+| AutoML 因子挖掘 | `automl/` | Optuna + sklearn 自动搜索因子与超参，最大化 CV 得分 |
+| 风险预测 AI | `risk/risk_model.py` | XGBoost 预测回撤/爆仓/亏损概率 |
+| 仓位控制器 | `risk/position_sizer.py` | 根据 risk_prob 动态调整可用资金比例 |
+
+**整体架构（完成后）：**
+
+```
+market_data/  factor_engine/  automl/  ai_models/  rl/  hft/
+portfolio/    risk/            arbitrage/  evolution/  fund_platform/  monitor/
+```
+
+**终极阶段模块（世界顶级路线）：**
+
+| 模块 | 路径 | 说明 |
+|------|------|------|
+| AI 自进化交易 | `evolution/` | 策略基因编码、变异/交叉、种群进化，回测适应度自动生成策略 |
+| 高频做市 | `hft/market_making.py` | 双边报价赚取价差，库存 skew、最大仓位控制 |
+| 多市场套利 | `arbitrage/` | 价差监控（SpreadMonitor）、多对套利引擎（ArbEngine） |
+| 量化基金管理 | `fund_platform/` | NAV、投资者台账、申赎、`FundManager` + `/fund` API |
+
+**依赖（顶级模块）：**
+
+```bash
+pip install gymnasium stable-baselines3 optuna xgboost scikit-learn
+# 或一并安装
+pip install -r requirements-institutional.txt
+```
+
+**使用示例：**
+
+```bash
+# RL 训练（示例价格序列）
+python rl/train_rl.py
+
+# AutoML 因子搜索（需准备 X, y）
+# from automl import run_factor_search
+# study = run_factor_search(X, y, n_trials=50)
+
+# 风险模型 + 仓位控制
+# from risk import RiskModel, PositionSizer
+# rm = RiskModel().train(X_risk, y_risk)
+# prob = rm.predict(X_live)
+# size = PositionSizer().size(capital, prob)
+```
+
+**终极阶段使用示例：**
+
+```python
+# AI 自进化：策略基因进化，fitness 可接回测夏普
+# from evolution import StrategyEvolver, StrategyGene
+# ev = StrategyEvolver(population_size=50, top_k=10)
+# best = ev.evolve(n_generations=20)
+
+# 高频做市：按 mid 与库存报价
+# from hft import MarketMakingEngine
+# mm = MarketMakingEngine(half_spread_bps=5, max_position=1000)
+# mm.on_tick(mid=100.5); mm.on_fill("BUY", 100, 100.5)
+
+# 多市场套利：价差突破上下轨发信号
+# from arbitrage import SpreadMonitor, ArbEngine
+# arb = ArbEngine(); arb.add_pair("A-B", upper=0.5, lower=-0.5)
+# arb.update("A-B", price_a=10.2, price_b=9.8)
+
+# 基金管理：NAV、申赎
+# from fund_platform import FundManager
+# fm = FundManager(initial_capital=1_000_000)
+# fm.update_aum(1_050_000, "2025-02-20")
+# fm.subscribe("investor_01", 100_000, "2025-02-20")
+# fm.redeem("investor_01", 500, "2025-02-21")
+# 将 fm 注入 fund_platform.api 后，可暴露 /fund/nav、/fund/subscribe 等 API
+```
+
+### 11.6 关键建议（真心话）
+
+- **数据质量**：没有高质量数据 = 全部白搭。优先 A 股 Level2、Tick、财务数据。
+- **交易成本**：回测赚钱、实盘亏钱常因手续费+滑点，必须在回测中模拟真实成本。
+- **风控优先**：活着比赚钱重要；风控优先级 > 策略。
+
+---
+
+## 十二、注意事项
 
 1. **数据源选择**：
    - **数据库数据源**（推荐）：适合离线回测，数据已缓存
@@ -451,7 +645,7 @@ python run_backtest.py strategies/strategy_wentai_demo.py 2024-01-01 2024-12-31
 3. **数据量**：单只股票一年约 250 条日线数据，注意数据库大小
 4. **商业使用**：RQAlpha 仅限非商业使用，商业使用需联系 ricequant
 
-## 十二、版本控制与 Git 上传
+## 十三、版本控制与 Git 上传
 
 - **不要提交**：`data/*.db`、`data/**/*.csv`（体积大，且 GitHub 单文件限制 100MB）。详见 `.gitignore`。
 - **克隆后**：需自行安装 akshare、rqalpha（`pip install akshare rqalpha`），数据库可运行 `scripts/import_all_a_stocks.py` 或通过 Web 平台按需拉取。

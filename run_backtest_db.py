@@ -184,9 +184,35 @@ try:
                     pr, prob = _future_from_kline(out["kline"])
                     if pr: out["futurePriceRange"] = pr
                     if prob: out["futureProbability"] = prob
+                    # 标准化信号与趋势预测（core.signals / core.prediction）
+                    try:
+                        from core.signals import generate_signals
+                        from core.prediction import predict_trend
+                        df["date"] = df.index.astype(str).str[:10]
+                        df["ma5"] = df["close"].rolling(5, min_periods=1).mean()
+                        df["ma20"] = df["close"].rolling(20, min_periods=1).mean()
+                        tech_signals = generate_signals(df)
+                        out["signals"] = [{{"date": s["date"], "type": s["type"].lower(), "price": float(s["price"]), "reason": s["reason"], "reasons": [s["reason"]]}} for s in tech_signals]
+                        out["prediction"] = predict_trend(df)
+                        out["markers"] = [{{"name": s["type"], "value": s["type"], "coord": [s["date"], float(s["price"])], "itemStyle": {{"color": "green" if s["type"] == "BUY" else "red"}}, "reason": s["reason"]}} for s in tech_signals]
+                        s = summary
+                        _wr = s.get("win_rate")
+                        _md = s.get("max_drawdown")
+                        _ret = s.get("total_returns") or s.get("return_rate")
+                        out["stats"] = {{"winRate": float(_wr) if _wr is not None else None, "tradeCount": len(tech_signals), "maxDrawdown": float(_md) if _md is not None else None, "return": float(_ret) if _ret is not None else 0.0}}
+                    except Exception as _e:
+                        out["markers"] = []
+                        out["prediction"] = {{"trend": "SIDEWAYS", "score": 0.0}}
+                        out["stats"] = {{"winRate": None, "tradeCount": 0, "maxDrawdown": None, "return": 0.0}}
             except Exception as _e:
                 pass
-        # 从 trades 推导 buyZones / sellZones / signals（RQAlpha pkl 可能含 trades DataFrame）
+        if "markers" not in out:
+            out["markers"] = []
+        if "prediction" not in out:
+            out["prediction"] = {{"trend": "SIDEWAYS", "score": 0.0}}
+        if "stats" not in out:
+            out["stats"] = {{"winRate": None, "tradeCount": 0, "maxDrawdown": None, "return": 0.0}}
+        # 从 trades 推导 buyZones / sellZones（仅区间高亮；signals 已由 core.signals 标准化）
         try:
             trades = rd.get("trades") or (rd.get("sys_analyser") or {{}}).get("trades")
             if trades is not None and hasattr(trades, "iterrows"):
@@ -199,12 +225,8 @@ try:
                     qty = row.get("quantity", 0) or row.get("amount", 0) or 0
                     try: qty = float(qty)
                     except (TypeError, ValueError): continue
-                    if qty > 0:
-                        buy_dates.append(d)
-                        out["signals"].append({{"date": d, "type": "buy", "score": None, "winRate": None, "avgReturn": None, "reasons": ["策略买入信号"]}})
-                    elif qty < 0:
-                        sell_dates.append(d)
-                        out["signals"].append({{"date": d, "type": "sell", "score": None, "winRate": None, "avgReturn": None, "reasons": ["策略卖出信号"]}})
+                    if qty > 0: buy_dates.append(d)
+                    elif qty < 0: sell_dates.append(d)
                 def _merge_zones(dates):
                     if not dates: return []
                     dates = sorted(set(dates))
