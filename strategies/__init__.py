@@ -3,6 +3,7 @@ from .base import BaseStrategy
 from .ma_cross import MACrossStrategy
 from .rsi_strategy import RSIStrategy
 from .macd_strategy import MACDStrategy
+from .kdj_strategy import KDJStrategy
 from .breakout import BreakoutStrategy
 
 # 插件策略注册表：strategy_id -> StrategyClass
@@ -10,6 +11,7 @@ PLUGIN_STRATEGIES = {
     "ma_cross": MACrossStrategy,
     "rsi": RSIStrategy,
     "macd": MACDStrategy,
+    "kdj": KDJStrategy,
     "breakout": BreakoutStrategy,
 }
 

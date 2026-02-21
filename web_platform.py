@@ -53,6 +53,9 @@ HTML_TEMPLATE = """
     button { background: #0f9; color: #000; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
     button:hover { background: #0cc; }
     button:disabled { background: #555; cursor: not-allowed; }
+    .ext-action { padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #0f9; border-radius: 4px; cursor: pointer; transition: opacity .2s; }
+    .ext-action:hover:not(:disabled) { border-color: #0f9; }
+    .ext-action.disabled { opacity: .5; cursor: not-allowed; color: #666; }
     .strategy-list { list-style: none; }
     .strategy-item { padding: 12px; background: #1a2744; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #2a2a4a; }
     .strategy-item:hover { border-color: #0f9; }
@@ -72,7 +75,7 @@ HTML_TEMPLATE = """
   <div class="container">
     <header>
       <h1>🚀 量化交易平台</h1>
-      <div class="subtitle">AKShare 数据源 + RQAlpha 回测引擎</div>
+      <div class="subtitle">AKShare 数据源 + RQAlpha 回测引擎 | 请确保通过 http://127.0.0.1:5050 访问</div>
     </header>
     
     <div class="grid">
@@ -126,7 +129,7 @@ HTML_TEMPLATE = """
             <option value="W">周线</option>
             <option value="M">月线</option>
           </select>
-          <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">插件策略（MA/RSI/MACD/Breakout）支持多周期</small>
+          <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">日/周/月线</small>
         </div>
         <div class="form-group">
           <label>数据源</label>
@@ -137,11 +140,13 @@ HTML_TEMPLATE = """
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
           <button onclick="runBacktest()" id="runBtn">🚀 运行回测</button>
-          <button type="button" onclick="scanMarket()" id="scanBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #0f9; border-radius: 4px; cursor: pointer;">🔍 扫描市场</button>
-          <button type="button" onclick="optimizeParams()" id="optimizeBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #f90; border-radius: 4px; cursor: pointer;">⚙️ 参数优化</button>
-          <button type="button" onclick="runPortfolioBacktest()" id="portfolioBtn" style="padding: 8px 14px; background: #1a2744; border: 1px solid #2a2a4a; color: #9cf; border-radius: 4px; cursor: pointer;">📊 组合策略</button>
+          <span class="action-group" style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" onclick="scanMarket()" id="scanBtn" class="ext-action">🔍 扫描市场</button>
+            <button type="button" onclick="optimizeParams()" id="optimizeBtn" class="ext-action">⚙️ 参数优化</button>
+            <button type="button" onclick="runPortfolioBacktest()" id="portfolioBtn" class="ext-action">📊 组合策略</button>
+          </span>
         </div>
-        <small style="color: #666; font-size: 11px; display: block; margin-top: 6px;">扫描市场 / 参数优化 / 组合策略 需在左侧选择<strong style="color:#0f9;">插件策略</strong>（MA均线、RSI、MACD、Breakout突破）；文件策略仅支持运行回测。</small>
+        <div id="actionHint" style="color: #666; font-size: 12px; margin-top: 8px; min-height: 20px;"></div>
         <div id="status"></div>
       </div>
     </div>
@@ -205,7 +210,7 @@ HTML_TEMPLATE = """
     </div>
   </div>
   
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v={{ version }}"></script>
 </body>
 </html>
 """
@@ -221,7 +226,8 @@ def health():
 def index():
     default_start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
     default_end = datetime.now().strftime("%Y-%m-%d")
-    return render_template_string(HTML_TEMPLATE, default_start=default_start, default_end=default_end)
+    version = datetime.now().strftime("%Y%m%d%H%M")
+    return render_template_string(HTML_TEMPLATE, default_start=default_start, default_end=default_end, version=version)
 
 
 def _load_strategies_meta():
@@ -241,6 +247,7 @@ PLUGIN_STRATEGY_IDS = [
     {"id": "ma_cross", "name": "MA均线", "description": "MA5/MA20 金叉死叉", "order": 0},
     {"id": "rsi", "name": "RSI", "description": "RSI 超买超卖", "order": 1},
     {"id": "macd", "name": "MACD", "description": "MACD 金叉死叉", "order": 2},
+    {"id": "kdj", "name": "KDJ", "description": "KDJ 金叉/超卖买入", "order": 2.5},
     {"id": "breakout", "name": "Breakout突破", "description": "N 日高低点突破", "order": 3},
 ]
 
@@ -264,9 +271,14 @@ def list_strategies():
             })
 
         meta = _load_strategies_meta()
+        _exclude = {
+            "__init__.py", "utils.py", "base.py", "ma_cross.py", "rsi_strategy.py",
+            "macd_strategy.py", "kdj_strategy.py", "breakout.py",
+            "market_regime.py", "stock_filter.py",
+        }
         for f in sorted(glob.glob(os.path.join(strategies_dir, "*.py"))):
             rel_path = os.path.relpath(f, strategies_dir).replace(os.sep, "/")
-            if rel_path in ["__init__.py", "utils.py", "base.py", "ma_cross.py", "rsi_strategy.py", "macd_strategy.py", "breakout.py"] or rel_path.startswith(".tmp_"):
+            if rel_path in _exclude or rel_path.startswith(".tmp_"):
                 continue
             info = meta.get(rel_path, {})
             strategies.append({
@@ -394,7 +406,7 @@ def api_scan():
             return jsonify({"success": False, "error": "请选择策略或传入 strategies 组合"}), 400
         plugin_ids = [p["id"] for p in PLUGIN_STRATEGY_IDS]
         if strategy_id not in plugin_ids:
-            return jsonify({"success": False, "error": "仅支持插件策略（MA/RSI/MACD/Breakout）"}), 400
+            return jsonify({"success": False, "error": "仅支持插件策略（MA/RSI/MACD/KDJ/Breakout）"}), 400
         from scanner import scan_market
         results = scan_market(strategy_id=strategy_id, timeframe=timeframe, limit=limit)
         return jsonify({"success": True, "results": results})
@@ -429,6 +441,8 @@ def api_optimize():
                 param_space = {"fast": [8, 15], "slow": [20, 30], "signal": [7, 12]}
             elif strategy_id == "breakout":
                 param_space = {"period": [10, 30]}
+            elif strategy_id == "kdj":
+                param_space = {"n": [9, 14], "oversold": [15, 30], "overbought": [70, 85]}
             else:
                 return jsonify({"success": False, "error": "请提供 paramSpace 或使用支持的策略"}), 400
         from optimizer import optimize_strategy_simple

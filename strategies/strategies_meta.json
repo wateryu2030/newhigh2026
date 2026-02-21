@@ -1,11 +1,52 @@
 {
-  "universal_ma_strategy.py": {"name": "通用均线策略（推荐）", "description": "支持任意股票代码的均线策略：5日/20日均线金叉买入、死叉卖出，带8%止损、20%止盈。可在回测时选择不同股票测试。", "order": 1},
-  "strategy_wentai_demo.py": {"name": "闻泰科技案例", "description": "以闻泰科技（600745）为标的的均线+止损止盈策略，用于验证数据与回测流程。金叉买入、死叉卖出，止损8%、止盈20%。", "order": 2},
-  "strategy1_industry_rotation.py": {"name": "行业轮动策略", "description": "高科技+消费板块轮动：基本面与资金流双驱动，月度调仓，选景气度高、资金净流入的行业龙头，8%止损。", "order": 3},
-  "strategy2_momentum_meanreversion.py": {"name": "动量+均值回归混合", "description": "高科技用60日动量；消费用均值回归。仓位约高科技60%+消费40%，兼顾趋势与反转。", "order": 4},
-  "strategy3_earnings_surprise.py": {"name": "财报超预期事件驱动", "description": "财报营收/净利润超预期时买入，持有约1个月博弈业绩驱动行情。事件驱动型策略。", "order": 5},
-  "strategy4_etf_grid.py": {"name": "ETF网格交易", "description": "高科技ETF与消费ETF网格：设定网格间距（如5%/3%），在震荡市中低买高卖，适合区间波动行情。", "order": 6},
-  "simple_ma_strategy.py": {"name": "简单均线策略", "description": "5日/20日双均线：短期均线上穿长期均线（金叉）买入，下穿（死叉）卖出。使用平安银行示例。", "order": 7},
-  "buy_and_hold_akshare.py": {"name": "买入并持有", "description": "选定一只股票后一次性满仓买入并持有，不主动择时。适合作为基准或长期看好的标的。", "order": 8},
-  "simple_akshare_strategy.py": {"name": "AKShare 均线示例", "description": "配合 AKShare 数据源的简单均线策略示例。", "order": 9}
+  "universal_ma_strategy.py": {
+    "name": "通用均线策略（推荐）",
+    "description": "支持任意股票代码的均线策略：5日/20日均线金叉买入、死叉卖出，带8%止损、20%止盈。可在回测时选择不同股票测试。",
+    "order": 1
+  },
+  "strategy_wentai_demo.py": {
+    "name": "闻泰科技案例",
+    "description": "以闻泰科技（600745）为标的的均线+止损止盈策略，用于验证数据与回测流程。金叉买入、死叉卖出，止损8%、止盈20%。",
+    "order": 2
+  },
+  "strategy1_industry_rotation.py": {
+    "name": "行业轮动策略",
+    "description": "高科技+消费板块轮动：基本面与资金流双驱动，月度调仓，选景气度高、资金净流入的行业龙头，8%止损。",
+    "order": 3
+  },
+  "strategy2_momentum_meanreversion.py": {
+    "name": "动量+均值回归混合",
+    "description": "高科技用60日动量；消费用均值回归。仓位约高科技60%+消费40%，兼顾趋势与反转。",
+    "order": 4
+  },
+  "strategy3_earnings_surprise.py": {
+    "name": "财报超预期事件驱动",
+    "description": "财报营收/净利润超预期时买入，持有约1个月博弈业绩驱动行情。事件驱动型策略。",
+    "order": 5
+  },
+  "strategy4_etf_grid.py": {
+    "name": "ETF网格交易",
+    "description": "高科技ETF与消费ETF网格：设定网格间距（如5%/3%），在震荡市中低买高卖，适合区间波动行情。",
+    "order": 6
+  },
+  "simple_ma_strategy.py": {
+    "name": "简单均线策略",
+    "description": "5日/20日双均线：短期均线上穿长期均线（金叉）买入，下穿（死叉）卖出。使用平安银行示例。",
+    "order": 7
+  },
+  "buy_and_hold_akshare.py": {
+    "name": "买入并持有",
+    "description": "选定一只股票后一次性满仓买入并持有，不主动择时。适合作为基准或长期看好的标的。",
+    "order": 8
+  },
+  "simple_akshare_strategy.py": {
+    "name": "AKShare 均线示例",
+    "description": "配合 AKShare 数据源的简单均线策略示例。",
+    "order": 9
+  },
+  "swing_newhigh.py": {
+    "name": "波段新高",
+    "description": "新高突破+均线趋势+放量+市场过滤。需 MA60/MA20/成交量，市场非 BEAR 时买入。",
+    "order": 3.5
+  }
 }

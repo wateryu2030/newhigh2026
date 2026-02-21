@@ -70,6 +70,37 @@ def create_api_blueprint():
             import traceback
             return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
 
+    @bp.route("/news", methods=["GET"])
+    def news():
+        """
+        新闻采集 + 舆情分析。
+        Query: symbol=, sources=eastmoney,caixin,douyin (逗号分隔)
+        """
+        _root()
+        try:
+            symbol = request.args.get("symbol", "600519")
+            sources_str = request.args.get("sources", "eastmoney,caixin")
+            sources = [s.strip() for s in sources_str.split(",") if s.strip()]
+            limit = request.args.get("limit", type=int) or 30
+            from news import fetch_all_news, analyze_sentiment, aggregate_sentiment
+            raw = fetch_all_news(symbol=symbol, sources=sources, limit_per_source=limit)
+            all_items = []
+            for site, items in raw.items():
+                filtered = [x for x in items if not x.get("error")]
+                all_items.extend(filtered)
+            analyzed = analyze_sentiment(all_items)
+            agg = aggregate_sentiment(analyzed)
+            return jsonify({
+                "success": True,
+                "symbol": symbol,
+                "news": analyzed,
+                "sentiment": agg,
+                "count": len(analyzed),
+            })
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
     @bp.route("/universe", methods=["GET"])
     def universe():
         """

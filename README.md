@@ -109,6 +109,24 @@ python auto_test.py
 - RQAlpha 功能
 - 策略文件语法
 
+### 前 9 月训练 + 后 3 月验证（样本外轮巡）
+
+结合现有数据，轮巡多标的×多策略，验证策略在样本外是否可行：
+
+```bash
+source venv/bin/activate
+python scripts/walk_forward_validate.py
+# 侧重 MACD+KDJ 组合（经验较有效）
+python scripts/walk_forward_validate.py --strategies macd,kdj
+# 限制标的数
+python scripts/walk_forward_validate.py --stocks 5
+# 输出 CSV 报告
+python scripts/walk_forward_validate.py --csv output/wf_report.csv
+# 结束后发送到飞书（需设置 FEISHU_WEBHOOK_URL）
+export FEISHU_WEBHOOK_URL="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"
+python scripts/walk_forward_validate.py --feishu
+```
+
 ### 批量回测验证（多标的 × 多策略）
 
 使用 002701、600598、300212 等标的，批量跑通所有策略，确保项目能满足多数 A 股的分析与回测：
@@ -121,6 +139,36 @@ python scripts/run_all_backtests.py 002701.XSHE 600598.XSHG 300212.XSHE 2025-02-
 ```
 
 通过即表示当前 7 个策略 × 3 只标的共 21 组回测均能正常完成。发布或修改策略/数据层后建议跑一遍以回归。
+
+### 新闻舆情（东方财富、财新、抖音占位）
+
+采集热点新闻并做舆情分析：
+
+```bash
+source venv/bin/activate
+python scripts/fetch_news_sentiment.py 600519
+```
+
+- **东方财富**：个股/关键词新闻（`akshare.stock_news_em`）
+- **财新**：热点财经新闻（`akshare.stock_news_main_cx`）
+- **抖音**：占位（需开放平台或第三方数据）
+- **舆情分析**：简单情感打分（可扩展 SnowNLP、NLP 模型）
+
+Web API：`GET /api/news?symbol=600519&sources=eastmoney,caixin`
+
+### 多策略组合系统（私募级）
+
+支持多策略、多标的、权重分配、风险平价、定期再平衡、策略归因：
+
+```bash
+source venv/bin/activate
+python run_portfolio_multi.py
+```
+
+- **MultiStrategyPortfolio**：主编排，支持 `run_backtest`（数据库）与 `run_with_paper_trading`（AKShare + 模拟交易）
+- **CapitalAllocator**：等权 / 风险平价 / 夏普最大化
+- **PortfolioRebalancer**：按日/周/月再平衡
+- **StrategyAttribution**：各策略收益贡献度
 
 ### 全量同步股票池（多标的策略推荐）
 

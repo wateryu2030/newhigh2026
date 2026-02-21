@@ -9,3 +9,6 @@ stable-baselines3>=2.0
 optuna>=3.0
 xgboost>=2.0
 scikit-learn>=1.0
+# UI 仪表盘
+streamlit>=1.28
+plotly>=5.18

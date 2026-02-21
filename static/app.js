@@ -1,9 +1,35 @@
 (function() {
   var selectedStrategy = '';
+  var selectedIsPlugin = false;
   var cockpitKlineChart = null;
   var cockpitCurveChart = null;
   var cockpitFuture5Chart = null;
   var lastBacktestResult = null;
+
+  var PLUGIN_IDS = ['ma_cross', 'rsi', 'macd', 'kdj', 'breakout'];
+
+  function updateActionButtons() {
+    var scanBtn = document.getElementById('scanBtn');
+    var optimizeBtn = document.getElementById('optimizeBtn');
+    var portfolioBtn = document.getElementById('portfolioBtn');
+    var hintEl = document.getElementById('actionHint');
+    var enabled = selectedIsPlugin;
+    [scanBtn, optimizeBtn, portfolioBtn].forEach(function(btn) {
+      if (btn) {
+        btn.disabled = !enabled;
+        btn.classList.toggle('disabled', !enabled);
+      }
+    });
+    if (hintEl) {
+      if (!selectedStrategy) {
+        hintEl.innerHTML = '<span style="color:#888;">1）先在左侧选择策略 → 2）选择股票 → 3）运行回测</span>';
+      } else if (enabled) {
+        hintEl.innerHTML = '<span style="color:#0f9;">✓ 当前策略支持扫描市场、参数优化和组合回测</span>';
+      } else {
+        hintEl.innerHTML = '<span style="color:#888;">扫描/优化/组合需选择插件策略（MA、RSI、MACD、KDJ、Breakout）</span>';
+      }
+    }
+  }
 
   function handleError(error, context) {
     try {
@@ -281,6 +307,13 @@
         var box5 = document.getElementById('resultFuture5Day');
         if (btn5 && box5) {
           btn5.style.display = (hasRange || hasPred) ? 'inline-block' : 'none';
+          var r = range || {};
+          var lo = r.low != null ? parseFloat(r.low).toFixed(2) : null;
+          var hi = r.high != null ? parseFloat(r.high).toFixed(2) : null;
+          var md = (lo != null && hi != null) ? ((parseFloat(lo) + parseFloat(hi)) / 2).toFixed(2) : null;
+          var priceHint = (lo != null && hi != null && md) ? '（买点约 ' + lo + '–' + md + ' / 卖点约 ' + md + '–' + hi + '）' : '';
+          btn5.textContent = '查看未来5日走势与买卖点' + priceHint;
+          btn5.title = priceHint ? '买点区间：' + lo + '–' + md + '，卖点区间：' + md + '–' + hi : '展开查看买卖点价格';
           btn5.onclick = function() {
             var visible = box5.style.display === 'block';
             box5.style.display = visible ? 'none' : 'block';
@@ -383,12 +416,11 @@
     var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
     var log = document.getElementById('log');
     if (!strategy) {
-      alert('请先选择策略（插件策略：MA/RSI/MACD/Breakout）');
+      alert('请先在左侧选择策略');
       return;
     }
-    var pluginIds = ['ma_cross', 'rsi', 'macd', 'breakout'];
-    if (pluginIds.indexOf(strategy) < 0) {
-      alert('扫描市场仅支持插件策略，请选择 MA均线 / RSI / MACD / Breakout突破');
+    if (PLUGIN_IDS.indexOf(strategy) < 0) {
+      alert('扫描市场需选择插件策略（MA、RSI、MACD、KDJ、Breakout）');
       return;
     }
     if (log) log.textContent = '正在扫描市场（' + strategy + ' ' + timeframe + '）…\n';
@@ -429,9 +461,8 @@
     var endDate = document.getElementById('endDate').value;
     var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
     var log = document.getElementById('log');
-    var pluginIds = ['ma_cross', 'rsi', 'macd', 'breakout'];
-    if (!strategy || pluginIds.indexOf(strategy) < 0) {
-      alert('请先选择插件策略（MA/RSI/MACD/Breakout）并选择股票');
+    if (!strategy || PLUGIN_IDS.indexOf(strategy) < 0) {
+      alert('参数优化需选择插件策略（MA、RSI、MACD、KDJ、Breakout）并选择股票');
       return;
     }
     if (!stockCode) {
@@ -531,7 +562,7 @@
 
   async function loadStrategies() {
     try {
-      var res = await fetch('/api/strategies');
+      var res = await fetch('/api/strategies', { cache: 'no-store' });
       if (!res.ok) {
         throw new Error('HTTP ' + res.status + ': ' + res.statusText);
       }
@@ -548,23 +579,30 @@
         var file = s.file || s;
         var name = s.name || file;
         var desc = s.description || '';
+        var isPlugin = s.plugin === true || PLUGIN_IDS.indexOf(file) >= 0;
         var li = document.createElement('li');
         li.className = 'strategy-item';
         li.title = desc;
+        li.setAttribute('data-plugin', isPlugin ? '1' : '0');
         var safeName = (name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         var safeDesc = (desc + '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        li.innerHTML = '<strong>' + safeName + '</strong>' + (desc ? '<br><span class="strategy-desc">' + safeDesc + '</span>' : '');
+        li.innerHTML = '<strong>' + safeName + '</strong>' + (isPlugin ? ' <span style="color:#0f9;font-size:11px;">插件</span>' : '') + (desc ? '<br><span class="strategy-desc">' + safeDesc + '</span>' : '');
         li.onclick = function() {
           document.querySelectorAll('.strategy-item').forEach(function(el) { el.classList.remove('active'); });
           li.classList.add('active');
           selectedStrategy = file;
+          selectedIsPlugin = isPlugin;
           document.getElementById('strategyFile').value = name + ' (' + file + ')';
           document.getElementById('strategyFile').setAttribute('data-file', file);
+          updateActionButtons();
         };
         list.appendChild(li);
       });
+      updateActionButtons();
     } catch (e) {
       handleError(e, 'loadStrategies');
+      var list = document.getElementById('strategyList');
+      if (list) list.innerHTML = '<li style="color:#f55;padding:12px;">策略加载失败，请确认服务已启动（python web_platform.py）并访问 http://127.0.0.1:5050</li>';
     }
   }
 
