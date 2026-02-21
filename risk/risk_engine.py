@@ -104,3 +104,45 @@ class RiskEngine:
         ai = order.index(acc)
         mi = order.index(mk)
         return order[max(ai, mi)]
+
+    def apply_drawdown_rules(self, max_drawdown: float) -> float:
+        """
+        按回撤规则返回仓位缩放系数 (0~1)。
+        - 回撤 >= 15%: 清仓，scale=0
+        - 回撤 >= 10%: 降仓 30%，scale=0.7
+        - 否则: scale=1
+        """
+        if max_drawdown >= self.max_drawdown_stop:
+            return 0.0
+        if max_drawdown >= self.max_drawdown_warn:
+            return 0.7
+        return 1.0
+
+    def check_sector_concentration(
+        self,
+        positions: Dict[str, float],
+        sector_map: Dict[str, str],
+        max_sector_pct: float = 0.30,
+    ) -> bool:
+        """检查行业集中度是否超过 max_sector_pct。"""
+        if not positions or not sector_map:
+            return True
+        total = sum(positions.values())
+        if total <= 0:
+            return True
+        sector_totals: Dict[str, float] = {}
+        for sym, val in positions.items():
+            sec = sector_map.get(sym, "OTHER")
+            sector_totals[sec] = sector_totals.get(sec, 0) + val
+        return all(v / total <= max_sector_pct for v in sector_totals.values())
+
+    def check_single_stock_risk(
+        self,
+        positions: Dict[str, float],
+        total_equity: float,
+        max_single_pct: float = 0.10,
+    ) -> bool:
+        """检查单股仓位是否均不超过 max_single_pct。"""
+        if total_equity <= 0 or not positions:
+            return True
+        return all(v / total_equity <= max_single_pct for v in positions.values())

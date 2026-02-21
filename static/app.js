@@ -143,9 +143,14 @@
       if (cockpitFuture5Chart) { cockpitFuture5Chart.dispose(); cockpitFuture5Chart = null; }
     } catch (e) {}
     var hasKline = result.kline && result.kline.length > 0;
-    var hasHold = result.holdCurve && result.holdCurve.length > 0 && result.curve && result.curve.length > 0;
-    if (!hasKline && !hasHold) {
-      cockpitEl.style.display = 'none';
+    var hasCurve = result.curve && result.curve.length > 0;
+    var hasHold = result.holdCurve && result.holdCurve.length > 0 && hasCurve;
+    var hasAny = hasKline || hasHold || hasCurve;
+    if (!hasAny) {
+      cockpitEl.style.display = 'block';
+      klineEl.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">无 K 线/净值数据，决策驾驶舱暂不显示。<br/>请使用左侧<strong>插件策略</strong>（MA、RSI、MACD、Breakout、波段新高）运行回测，或检查回测接口是否返回 kline / curve。</div>';
+      curveCompareEl.innerHTML = '';
+      if (signalReasonEl) signalReasonEl.textContent = '运行插件策略回测后可在此查看买卖信号与原因';
       return;
     }
     cockpitEl.style.display = 'block';
@@ -248,20 +253,21 @@
           if (klineEl) klineEl.innerHTML = '<div style="padding:20px;color:#f55;text-align:center;">K线图渲染失败，请刷新重试</div>';
         }
       }
-      if (hasHold) {
+      if (hasCurve) {
         var curve = result.curve;
-        var holdCurve = result.holdCurve;
+        var holdCurve = result.holdCurve || [];
         var curveDates = curve.map(function(p) { return String(p.date != null ? p.date : ''); });
         var curveVals = curve.map(function(p) { var v = Number(p.value); return isNaN(v) ? null : v; });
         var holdMap = {};
-        (holdCurve || []).forEach(function(p) { var v = Number(p.value); if (!isNaN(v)) holdMap[String(p.date)] = v; });
+        holdCurve.forEach(function(p) { var v = Number(p.value); if (!isNaN(v)) holdMap[String(p.date)] = v; });
         var holdVals = curveDates.map(function(d) { return holdMap[d] != null ? holdMap[d] : null; });
+        var hasHoldData = holdCurve.length > 0;
         try {
           if (!cockpitCurveChart) cockpitCurveChart = echarts.init(curveCompareEl);
           cockpitCurveChart.setOption({
             backgroundColor: 'transparent',
             grid: { left: 48, right: 24, top: 24, bottom: 52 },
-            legend: { data: ['策略净值', '持有净值'], textStyle: { color: '#888' }, top: 0 },
+            legend: { data: hasHoldData ? ['策略净值', '持有净值'] : ['策略净值'], textStyle: { color: '#888' }, top: 0 },
             xAxis: {
               type: 'category',
               data: curveDates,
@@ -273,10 +279,12 @@
               }
             },
             yAxis: { type: 'value', scale: true, axisLabel: { color: '#888' }, splitLine: { lineStyle: { color: '#2a2a4a' } } },
-            series: [
-              { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } },
-              { name: '持有净值', type: 'line', data: holdVals, smooth: true, symbol: 'none', lineStyle: { color: '#f90' } }
-            ]
+            series: hasHoldData
+              ? [
+                  { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } },
+                  { name: '持有净值', type: 'line', data: holdVals, smooth: true, symbol: 'none', lineStyle: { color: '#f90' } }
+                ]
+              : [ { name: '策略净值', type: 'line', data: curveVals, smooth: true, symbol: 'none', lineStyle: { color: '#0f9' } } ]
           }, true);
         } catch (e) {
           if (curveCompareEl) curveCompareEl.innerHTML = '<div style="padding:20px;color:#f55;text-align:center;">净值曲线渲染失败，请刷新重试</div>';
@@ -528,6 +536,8 @@
         if (log) log.textContent = '组合策略回测完成。\n';
         var card = document.getElementById('resultCard');
         card.style.display = 'block';
+        var pc = document.getElementById('resultPortfolioCard'); if (pc) pc.style.display = 'block';
+        var ac = document.getElementById('resultAiRecommendCard'); if (ac) ac.style.display = 'block';
         var infoEl = document.getElementById('resultStrategyInfo');
         if (infoEl) {
           infoEl.textContent = '策略: ' + (data.result.strategy_name || '组合') + '　周期: ' + (data.result.timeframe === 'W' ? '周线' : (data.result.timeframe === 'M' ? '月线' : '日线'));
@@ -740,6 +750,8 @@
           var curveEl = document.getElementById('resultCurve');
           var infoEl = document.getElementById('resultStrategyInfo');
           card.style.display = 'block';
+          var pc = document.getElementById('resultPortfolioCard'); if (pc) pc.style.display = 'block';
+          var ac = document.getElementById('resultAiRecommendCard'); if (ac) ac.style.display = 'block';
           if (infoEl) {
             var sn = data.result.strategy_name || '';
             var tf = data.result.timeframe || 'D';
@@ -810,6 +822,82 @@
     } finally {
       btn.disabled = false;
     }
+  }
+
+  async function loadPortfolioResult() {
+    var btn = document.getElementById('btnLoadPortfolio');
+    var el = document.getElementById('resultPortfolioContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    try {
+      var stockCode = getStockCodeInput();
+      var body = { capital: 1000000 };
+      if (stockCode) {
+        var code = stockCode.split('.')[0];
+        body.stockCodes = [code];
+      }
+      var res = await fetch('/api/portfolio_result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var data = await res.json();
+      if (data.success) {
+        var orders = data.orders || [];
+        var target = data.target_positions || {};
+        var scale = data.risk_scale != null ? (data.risk_scale * 100).toFixed(1) : '100';
+        var html = '<div style="margin-bottom:12px;"><span style="color:#0f9;">风控缩放</span> ' + scale + '%</div>';
+        if (orders.length > 0) {
+          html += '<div style="margin-bottom:8px;color:#aaa;">订单（' + orders.length + '）</div><table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">标的</th><th style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">金额</th><th style="padding:6px;border-bottom:1px solid #2a2a4a;">方向</th></tr></thead><tbody>';
+          orders.forEach(function(o) {
+            html += '<tr><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (o.symbol || '') + '</td><td style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">' + (o.value != null ? o.value.toFixed(0) : '') + '</td><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (o.side || 'BUY') + '</td></tr>';
+          });
+          html += '</tbody></table>';
+        } else {
+          html += '<div style="color:#888;">暂无订单（可能未配置多策略或股票池无数据）</div>';
+        }
+        if (Object.keys(target).length > 0 && orders.length === 0) {
+          html += '<div style="margin-top:12px;color:#888;">目标仓位: ' + JSON.stringify(target) + '</div>';
+        }
+        el.innerHTML = html;
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadAiRecommendations() {
+    var btn = document.getElementById('btnLoadAiRecommend');
+    var el = document.getElementById('resultAiRecommendContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    try {
+      var res = await fetch('/api/ai_recommendations?top=20');
+      var data = await res.json();
+      if (data.success) {
+        var list = data.list || [];
+        if (list.length === 0) {
+          el.innerHTML = '<span style="color:#888;">' + (data.message || '暂无推荐，请先运行 train_ai_model.py 训练模型') + '</span>';
+        } else {
+          var html = '<table style="width:100%;font-size:13px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">排名</th><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">标的</th><th style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">得分</th></tr></thead><tbody>';
+          list.forEach(function(row) {
+            html += '<tr><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (row.rank || '') + '</td><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (row.symbol || '') + '</td><td style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;color:#0f9;">' + (row.score != null ? row.score : '') + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          el.innerHTML = html;
+        }
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
   }
 
   async function loadStrategy() {
@@ -972,6 +1060,10 @@
     try {
       var loadBtn = document.getElementById('loadBtn');
       if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
+      var btnPortfolio = document.getElementById('btnLoadPortfolio');
+      if (btnPortfolio) btnPortfolio.addEventListener('click', loadPortfolioResult);
+      var btnAiRecommend = document.getElementById('btnLoadAiRecommend');
+      if (btnAiRecommend) btnAiRecommend.addEventListener('click', loadAiRecommendations);
       setupStockInputHandlers();
       loadStrategies();
       loadStocks();

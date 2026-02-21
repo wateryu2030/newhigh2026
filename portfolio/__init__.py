@@ -22,6 +22,8 @@ from .base_strategy import PortfolioStrategyBase, StrategyAdapter
 from .signal_aggregator import SignalAggregator, AggregatorConfig
 from .weight_allocator import WeightAllocator
 from .performance_report import PerformanceReport
+from .allocator import allocate as allocator_allocate
+from .position_manager import PositionManager
 
 __all__ = [
     "run_portfolio_backtest",
@@ -41,4 +43,6 @@ __all__ = [
     "AggregatorConfig",
     "WeightAllocator",
     "PerformanceReport",
+    "allocator_allocate",
+    "PositionManager",
 ]

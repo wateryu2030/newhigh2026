@@ -83,6 +83,19 @@ HTML_TEMPLATE = """
       <div class="subtitle">AKShare 数据源 + RQAlpha 回测引擎 | 请确保通过 http://127.0.0.1:5050 访问</div>
     </header>
     
+    <div class="card full-width" id="resultPortfolioCard" style="margin-bottom: 20px;">
+      <h2>🏦 机构组合结果</h2>
+      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">基于多策略信号与风控的目标仓位与订单（可指定股票池与资金规模）。</p>
+      <button type="button" class="ext-action" id="btnLoadPortfolio">加载机构组合</button>
+      <div id="resultPortfolioContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+    </div>
+    <div class="card full-width" id="resultAiRecommendCard" style="margin-bottom: 20px;">
+      <h2>🤖 AI 推荐列表</h2>
+      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">当日 AI 选股 Top N（基于已训练模型）。</p>
+      <button type="button" class="ext-action" id="btnLoadAiRecommend">加载 AI 推荐</button>
+      <div id="resultAiRecommendContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+    </div>
+    
     <div class="grid">
       <div class="card">
         <h2>📊 策略列表</h2>
