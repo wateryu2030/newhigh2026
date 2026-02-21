@@ -6,7 +6,18 @@
   var cockpitFuture5Chart = null;
   var lastBacktestResult = null;
 
-  var PLUGIN_IDS = ['ma_cross', 'rsi', 'macd', 'kdj', 'breakout'];
+  var PLUGIN_IDS = ['ma_cross', 'rsi', 'macd', 'kdj', 'breakout', 'swing_newhigh'];
+
+  function getStockCodeInput() {
+    var custom = document.getElementById('customStockCode');
+    var select = document.getElementById('stockCode');
+    var raw = (custom && custom.value ? custom.value.trim() : '') || (select && select.value ? select.value : '');
+    if (!raw) return '';
+    raw = raw.split(/[,\s，；;]+/)[0].trim();
+    if (!raw) return '';
+    if (!raw.includes('.')) raw = raw + (raw.startsWith('6') ? '.XSHG' : '.XSHE');
+    return raw;
+  }
 
   function updateActionButtons() {
     var scanBtn = document.getElementById('scanBtn');
@@ -26,7 +37,7 @@
       } else if (enabled) {
         hintEl.innerHTML = '<span style="color:#0f9;">✓ 当前策略支持扫描市场、参数优化和组合回测</span>';
       } else {
-        hintEl.innerHTML = '<span style="color:#888;">扫描/优化/组合需选择插件策略（MA、RSI、MACD、KDJ、Breakout）</span>';
+        hintEl.innerHTML = '<span style="color:#888;">扫描/优化/组合需选择插件策略（MA、RSI、MACD、KDJ、Breakout、波段新高）</span>';
       }
     }
   }
@@ -454,9 +465,7 @@
     var strategyInput = document.getElementById('strategyFile');
     var strategy = strategyInput ? (strategyInput.getAttribute('data-file') || '') : '';
     if (!strategy && strategyInput && strategyInput.value) strategy = strategyInput.value.split('(')[1]; if (strategy && strategy.indexOf(')') >= 0) strategy = strategy.replace(')', '').trim();
-    var stockCode = document.getElementById('stockCode').value || document.getElementById('customStockCode').value.trim();
-    if (!stockCode) stockCode = (document.getElementById('stockCode').value || '').trim();
-    if (stockCode && !stockCode.includes('.')) stockCode = stockCode + (stockCode.startsWith('6') ? '.XSHG' : '.XSHE');
+    var stockCode = getStockCodeInput();
     var startDate = document.getElementById('startDate').value;
     var endDate = document.getElementById('endDate').value;
     var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
@@ -492,8 +501,7 @@
   }
 
   async function runPortfolioBacktest() {
-    var stockCode = document.getElementById('stockCode').value || document.getElementById('customStockCode').value.trim();
-    if (stockCode && !stockCode.includes('.')) stockCode = stockCode + (stockCode.startsWith('6') ? '.XSHG' : '.XSHE');
+    var stockCode = getStockCodeInput();
     var startDate = document.getElementById('startDate').value;
     var endDate = document.getElementById('endDate').value;
     var timeframe = (document.getElementById('timeframe') && document.getElementById('timeframe').value) || 'D';
@@ -560,6 +568,30 @@
     if (btn) btn.disabled = false;
   }
 
+  async function deleteStrategy(filepath) {
+    if (!filepath) return;
+    try {
+      var res = await fetch('/api/strategies/' + encodeURIComponent(filepath), { method: 'DELETE' });
+      var data = await res.json().catch(function() { return {}; });
+      if (data.success) {
+        if (selectedStrategy === filepath) {
+          selectedStrategy = '';
+          selectedIsPlugin = false;
+          document.getElementById('strategyFile').value = '';
+          document.getElementById('strategyFile').removeAttribute('data-file');
+          updateActionButtons();
+        }
+        loadStrategies();
+        var log = document.getElementById('log');
+        if (log) log.textContent = '已删除策略: ' + filepath + '\n' + (log.textContent || '');
+      } else {
+        alert(data.error || '删除失败');
+      }
+    } catch (e) {
+      alert('删除失败: ' + (e.message || '网络错误'));
+    }
+  }
+
   async function loadStrategies() {
     try {
       var res = await fetch('/api/strategies', { cache: 'no-store' });
@@ -586,8 +618,10 @@
         li.setAttribute('data-plugin', isPlugin ? '1' : '0');
         var safeName = (name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         var safeDesc = (desc + '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        li.innerHTML = '<strong>' + safeName + '</strong>' + (isPlugin ? ' <span style="color:#0f9;font-size:11px;">插件</span>' : '') + (desc ? '<br><span class="strategy-desc">' + safeDesc + '</span>' : '');
-        li.onclick = function() {
+        var delBtn = isPlugin ? '' : ' <button type="button" class="strategy-delete-btn" title="删除策略" data-file="' + String(file).replace(/"/g, '&quot;') + '">×</button>';
+        li.innerHTML = '<span class="strategy-item-content"><strong>' + safeName + '</strong>' + (isPlugin ? ' <span style="color:#0f9;font-size:11px;">插件</span>' : '') + (desc ? '<br><span class="strategy-desc">' + safeDesc + '</span>' : '') + '</span>' + delBtn;
+        li.onclick = function(e) {
+          if (e.target && e.target.classList.contains('strategy-delete-btn')) return;
           document.querySelectorAll('.strategy-item').forEach(function(el) { el.classList.remove('active'); });
           li.classList.add('active');
           selectedStrategy = file;
@@ -596,6 +630,15 @@
           document.getElementById('strategyFile').setAttribute('data-file', file);
           updateActionButtons();
         };
+        var delBtnEl = li.querySelector('.strategy-delete-btn');
+        if (delBtnEl) {
+          delBtnEl.onclick = function(e) {
+            e.stopPropagation();
+            if (confirm('确定要删除策略「' + name + '」吗？此操作不可恢复。')) {
+              deleteStrategy(file);
+            }
+          };
+        }
         list.appendChild(li);
       });
       updateActionButtons();
@@ -616,7 +659,7 @@
       var select = document.getElementById('stockCode');
       if (!select) return;
 
-      select.innerHTML = '<option value="">请选择股票</option>';
+      select.innerHTML = '<option value="">或从列表选择</option>';
 
       if (data.stocks && data.stocks.length > 0) {
         data.stocks.forEach(function(stock) {
@@ -643,8 +686,7 @@
       var parts = strategyInput.value.split('(');
       strategy = (parts[1] ? parts[1].replace(')', '').trim() : '') || '';
     }
-    var stockCode = document.getElementById('stockCode').value;
-    var customStockCode = document.getElementById('customStockCode').value.trim();
+    var stockCode = getStockCodeInput();
     var startDate = document.getElementById('startDate').value;
     var endDate = document.getElementById('endDate').value;
     var initialCash = document.getElementById('initialCash').value;
@@ -653,13 +695,6 @@
     if (!strategy) {
       alert('请选择策略文件');
       return;
-    }
-
-    if (customStockCode) {
-      stockCode = customStockCode;
-      if (!stockCode.includes('.')) {
-        stockCode = stockCode + (stockCode.startsWith('6') ? '.XSHG' : '.XSHE');
-      }
     }
 
     if (!stockCode) {
@@ -709,7 +744,19 @@
             var sn = data.result.strategy_name || '';
             var tf = data.result.timeframe || 'D';
             var tfLabel = tf === 'W' ? '周线' : (tf === 'M' ? '月线' : '日线');
-            infoEl.textContent = '策略: ' + sn + '　周期: ' + tfLabel;
+            var isPortfolio = data.result.is_portfolio === true;
+            var stockCodes = data.result.stock_codes;
+            var line1 = '策略: ' + sn + '　周期: ' + tfLabel;
+            if (isPortfolio) {
+              line1 += '　多股票组合';
+              if (stockCodes && stockCodes.length > 0) {
+                infoEl.innerHTML = line1 + '<br><span style="color:#888;font-size:12px;">标的: ' + stockCodes.slice(0, 10).join(', ') + (stockCodes.length > 10 ? ' ...' : '') + '</span>';
+              } else {
+                infoEl.textContent = line1;
+              }
+            } else {
+              infoEl.textContent = line1;
+            }
             infoEl.style.display = (sn || tf) ? 'block' : 'none';
           }
           var s = data.result.summary || {};
@@ -824,7 +871,7 @@
   }
 
   async function syncStockData() {
-    var stockCode = document.getElementById('stockCode').value || document.getElementById('customStockCode').value.trim();
+    var stockCode = getStockCodeInput();
     if (!stockCode) {
       alert('请选择或输入股票代码');
       return;
@@ -894,10 +941,38 @@
     if (cockpitCurveChart) cockpitCurveChart.resize();
   });
 
+  function setupStockInputHandlers() {
+    var custom = document.getElementById('customStockCode');
+    var select = document.getElementById('stockCode');
+    var clearBtn = document.getElementById('clearStockBtn');
+    if (clearBtn && custom) {
+      clearBtn.onclick = function() {
+        custom.value = '';
+        if (select) select.value = '';
+        custom.focus();
+      };
+    }
+    if (select && custom) {
+      select.addEventListener('change', function() {
+        var v = select.value;
+        if (v && v.indexOf('.') >= 0) custom.value = v.split('.')[0];
+      });
+    }
+    if (custom) {
+      custom.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (typeof runBacktest === 'function') runBacktest();
+        }
+      });
+    }
+  }
+
   function init() {
     try {
       var loadBtn = document.getElementById('loadBtn');
       if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
+      setupStockInputHandlers();
       loadStrategies();
       loadStocks();
     } catch (e) {

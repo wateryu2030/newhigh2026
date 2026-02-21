@@ -2,7 +2,7 @@
 """
 多策略组合投资组合系统。
 按权重合并多个策略的净值曲线与信号，输出统一回测结果结构。
-支持：主编排、风险平价/夏普最大化、定期再平衡、策略归因。
+支持：主编排、风险平价/夏普最大化、定期再平衡、策略归因、信号聚合、绩效报告。
 """
 from .portfolio import (
     run_portfolio_backtest,
@@ -17,6 +17,11 @@ from .multi_strategy_portfolio import (
 from .capital_allocator import CapitalAllocator
 from .rebalancer import PortfolioRebalancer
 from .attribution import StrategyAttribution
+from .portfolio_manager import PortfolioManager, PositionTracker
+from .base_strategy import PortfolioStrategyBase, StrategyAdapter
+from .signal_aggregator import SignalAggregator, AggregatorConfig
+from .weight_allocator import WeightAllocator
+from .performance_report import PerformanceReport
 
 __all__ = [
     "run_portfolio_backtest",
@@ -28,4 +33,12 @@ __all__ = [
     "CapitalAllocator",
     "PortfolioRebalancer",
     "StrategyAttribution",
+    "PortfolioManager",
+    "PositionTracker",
+    "PortfolioStrategyBase",
+    "StrategyAdapter",
+    "SignalAggregator",
+    "AggregatorConfig",
+    "WeightAllocator",
+    "PerformanceReport",
 ]

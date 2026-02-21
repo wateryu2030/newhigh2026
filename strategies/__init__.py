@@ -5,6 +5,7 @@ from .rsi_strategy import RSIStrategy
 from .macd_strategy import MACDStrategy
 from .kdj_strategy import KDJStrategy
 from .breakout import BreakoutStrategy
+from .swing_newhigh import SwingNewHighStrategy
 
 # 插件策略注册表：strategy_id -> StrategyClass
 PLUGIN_STRATEGIES = {
@@ -13,6 +14,7 @@ PLUGIN_STRATEGIES = {
     "macd": MACDStrategy,
     "kdj": KDJStrategy,
     "breakout": BreakoutStrategy,
+    "swing_newhigh": SwingNewHighStrategy,
 }
 
 

@@ -53,7 +53,19 @@ def run_plugin_backtest(
     if "date" not in df.columns and df.index is not None:
         df["date"] = df.index.astype(str).str[:10]
 
-    signals = strategy.generate_signals(df)
+    # 对需要指数数据的策略（如 swing_newhigh）加载沪深300
+    index_df = None
+    if strategy_id == "swing_newhigh":
+        index_df = db.get_daily_bars("000300.XSHG", start_date, end_date)
+        if index_df is not None and len(index_df) >= 60:
+            index_df = index_df.copy()
+            if "date" not in index_df.columns and index_df.index is not None:
+                index_df["date"] = index_df.index.astype(str).str[:10]
+
+    kwargs = {}
+    if index_df is not None:
+        kwargs["index_df"] = index_df
+    signals = strategy.generate_signals(df, **kwargs)
     signals = [s for s in signals if s.get("type") in ("BUY", "SELL") and s.get("date")]
 
     # 按信号简单计算净值：有 BUY 则持仓，SELL 则空仓；持仓时净值 = 净值 * (close/prev_close)

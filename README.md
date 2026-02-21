@@ -572,13 +572,13 @@ python ai_models/train_lstm.py
 ```python
 from portfolio.strategy_pool import StrategyPool
 from portfolio.capital_allocator import CapitalAllocator
-from portfolio.portfolio_manager import PortfolioManager
+from portfolio.portfolio_manager import PositionTracker
 
 pool = StrategyPool()
 pool.add(strategy_a).add(strategy_b)
 results = pool.run(df)
 alloc = CapitalAllocator().allocate(1_000_000, pool.strategies)
-pm = PortfolioManager(capital=alloc.get(strategy_a, 0))
+pm = PositionTracker(capital=alloc.get(strategy_a, 0))
 pm.update("600519.XSHG", 100000)
 print(pm.total_value())
 ```

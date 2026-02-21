@@ -57,10 +57,15 @@ HTML_TEMPLATE = """
     .ext-action:hover:not(:disabled) { border-color: #0f9; }
     .ext-action.disabled { opacity: .5; cursor: not-allowed; color: #666; }
     .strategy-list { list-style: none; }
-    .strategy-item { padding: 12px; background: #1a2744; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #2a2a4a; }
+    .strategy-item { padding: 12px; background: #1a2744; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #2a2a4a; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     .strategy-item:hover { border-color: #0f9; }
     .strategy-item.active { border-color: #0f9; background: #1f3a5f; }
+    .strategy-item-content { flex: 1; min-width: 0; }
     .strategy-desc { font-size: 12px; color: #888; display: block; margin-top: 4px; line-height: 1.3; }
+    .strategy-delete-btn { flex-shrink: 0; width: 22px; height: 22px; padding: 0; line-height: 20px; font-size: 16px; color: #888; background: transparent; border: 1px solid #444; border-radius: 4px; cursor: pointer; }
+    .strategy-delete-btn:hover { color: #f55; border-color: #f55; }
+    .btn-clear { width: 32px; height: 36px; padding: 0; font-size: 14px; color: #888; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+    .btn-clear:hover { color: #f55; border-color: #666; }
     .log { background: #0a0e27; padding: 16px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 12px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; color: #0f9; border: 1px solid #2a2a4a; }
     .status { padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 8px; }
     .status.running { background: #0f9; color: #000; }
@@ -96,16 +101,16 @@ HTML_TEMPLATE = """
         </div>
         <div class="form-group">
           <label>股票代码</label>
-          <div style="display: flex; gap: 8px;">
-            <select id="stockCode" style="flex: 1;">
-              <option value="">请选择股票</option>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" id="customStockCode" placeholder="输入代码，如 600519、000001" style="flex: 1; padding: 10px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0;">
+              <button type="button" class="btn-clear" id="clearStockBtn" title="清空">✕</button>
+            </div>
+            <select id="stockCode" style="width: 100%; padding: 10px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0;">
+              <option value="">或从列表选择</option>
             </select>
-            <input type="text" id="customStockCode" placeholder="或输入代码" style="flex: 1; padding: 10px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0;">
           </div>
-          <small style="color: #888; font-size: 12px; margin-top: 4px; display: block;">
-            提示：选数据库时，若本地无该股票数据会<strong>按需自动拉取</strong>，无需全量导入 A 股<br>
-            <span style="color: #0f9;">💡 推荐先用「通用均线策略」测试，复杂策略（如行业轮动）可能需要额外数据文件</span>
-          </small>
+          <small style="color: #888; font-size: 12px; margin-top: 4px; display: block;">直接输入或选择；多只用逗号分隔，回测取第一只；无数据会<strong>按需拉取</strong></small>
           <button onclick="syncStockData()" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">📥 同步选中股票数据</button>
           <button onclick="syncPoolStocks()" style="margin-top: 8px; margin-left: 8px; padding: 6px 12px; font-size: 12px;" id="syncPoolBtn">📦 全量同步股票池</button>
           <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">全量同步：根据 data/ 下策略股票池 CSV 拉取所有标的日线，多标的策略回测更完整（需网络，较耗时）</small>
@@ -249,6 +254,7 @@ PLUGIN_STRATEGY_IDS = [
     {"id": "macd", "name": "MACD", "description": "MACD 金叉死叉", "order": 2},
     {"id": "kdj", "name": "KDJ", "description": "KDJ 金叉/超卖买入", "order": 2.5},
     {"id": "breakout", "name": "Breakout突破", "description": "N 日高低点突破", "order": 3},
+    {"id": "swing_newhigh", "name": "波段新高", "description": "新高突破+均线趋势+放量+市场过滤", "order": 3.5},
 ]
 
 
@@ -275,6 +281,7 @@ def list_strategies():
             "__init__.py", "utils.py", "base.py", "ma_cross.py", "rsi_strategy.py",
             "macd_strategy.py", "kdj_strategy.py", "breakout.py",
             "market_regime.py", "stock_filter.py",
+            "swing_newhigh.py",  # 已注册为插件策略
         }
         for f in sorted(glob.glob(os.path.join(strategies_dir, "*.py"))):
             rel_path = os.path.relpath(f, strategies_dir).replace(os.sep, "/")
@@ -293,6 +300,37 @@ def list_strategies():
         return jsonify({"strategies": strategies})
     except Exception as e:
         return jsonify({"strategies": [], "error": str(e)}), 500
+
+
+# 不允许删除的 core 策略文件
+_STRATEGY_DELETE_PROTECTED = {
+    "__init__.py", "utils.py", "base.py", "ma_cross.py", "rsi_strategy.py",
+    "macd_strategy.py", "kdj_strategy.py", "breakout.py",
+    "market_regime.py", "stock_filter.py", "swing_newhigh.py",
+}
+
+
+@app.route("/api/strategies/<path:filepath>", methods=["DELETE"])
+def delete_strategy(filepath):
+    """删除策略文件（仅限非插件、非 core 的文件策略）。"""
+    if not filepath or ".." in filepath or filepath.startswith("/"):
+        return jsonify({"success": False, "error": "无效的文件路径"}), 400
+    basename = os.path.basename(filepath)
+    if basename in _STRATEGY_DELETE_PROTECTED or basename.startswith(".tmp_"):
+        return jsonify({"success": False, "error": "该策略为系统内置，不可删除"}), 403
+    strategies_dir = "strategies"
+    full_path = os.path.normpath(os.path.join(strategies_dir, filepath))
+    if not full_path.startswith(strategies_dir) or ".." in full_path:
+        return jsonify({"success": False, "error": "路径越界"}), 400
+    if not os.path.exists(full_path):
+        return jsonify({"success": False, "error": "文件不存在"}), 404
+    if not full_path.endswith(".py"):
+        return jsonify({"success": False, "error": "仅支持删除 .py 策略文件"}), 400
+    try:
+        os.remove(full_path)
+        return jsonify({"success": True, "message": "已删除策略"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/stocks")
@@ -471,7 +509,7 @@ def run_backtest():
 
         data = request.json
         strategy = data.get("strategy")
-        stock_code = data.get("stockCode")
+        stock_code_raw = data.get("stockCode", "").strip()
         start_date = data.get("startDate")
         end_date = data.get("endDate")
         timeframe = (data.get("timeframe") or "D").strip().upper() or "D"
@@ -480,8 +518,17 @@ def run_backtest():
         initial_cash = data.get("initialCash", "1000000")
         data_source = data.get("dataSource", "database")
 
-        if not strategy or not stock_code or not start_date or not end_date:
+        if not strategy or not stock_code_raw or not start_date or not end_date:
             return jsonify({"success": False, "error": "参数不完整"}), 400
+
+        stock_codes_list = [x.strip() for x in stock_code_raw.replace("，", ",").split(",") if x.strip()]
+        stock_code = stock_codes_list[0] if stock_codes_list else stock_code_raw
+        if "." not in stock_code and len(stock_code) >= 6:
+            stock_code = stock_code + (".XSHG" if stock_code.startswith("6") else ".XSHE")
+
+        # swing_newhigh.py 与 swing_newhigh 等价（已注册为插件）
+        if strategy == "swing_newhigh.py":
+            strategy = "swing_newhigh"
 
         # 插件策略：多周期回测（不走 RQAlpha）
         plugin_ids = [p["id"] for p in PLUGIN_STRATEGY_IDS]
@@ -516,7 +563,10 @@ def run_backtest():
         log_output = []
         log_output.append(f"回测配置:")
         log_output.append(f"策略: {strategy}")
-        log_output.append(f"股票: {stock_code}")
+        if len(stock_codes_list) > 1:
+            log_output.append(f"股票: {stock_code} 等 {len(stock_codes_list)} 只（多股票组合）")
+        else:
+            log_output.append(f"股票: {stock_code}")
         log_output.append(f"日期: {start_date} 至 {end_date}")
         log_output.append(f"初始资金: {initial_cash}")
         log_output.append(f"数据源: {data_source}")
@@ -680,9 +730,10 @@ def run_backtest():
             log_output.append(traceback.format_exc())
         log_output.append("")
         
-        # 对于非 universal 策略，创建临时策略文件注入股票代码
+        # 多股票组合策略（strategy2/strategy1）使用自有股票池，不注入单股票代码
+        is_portfolio_strategy = "strategy2" in strategy.lower() or "strategy1" in strategy.lower() or "行业轮动" in strategy or "momentum" in strategy.lower()
         temp_strategy_path = None
-        if "universal" not in strategy.lower():
+        if not is_portfolio_strategy and "universal" not in strategy.lower():
             try:
                 from web_platform_helper import inject_stock_code_to_strategy
                 import glob
@@ -698,6 +749,8 @@ def run_backtest():
                 log_output.append(f"已生成临时策略文件: {os.path.basename(temp_strategy_path)}")
             except ImportError:
                 pass
+        elif is_portfolio_strategy:
+            log_output.append("多股票组合策略，使用策略自带股票池进行回测")
         log_output.append("正在运行回测...")
         
         # 始终使用数据库数据源执行回测（bundle 无数据会报错，已统一走 DB）
@@ -743,6 +796,15 @@ def run_backtest():
                             resp["result"]["strategy_name"] = strategy
                         if "timeframe" not in resp["result"]:
                             resp["result"]["timeframe"] = timeframe
+                        if is_portfolio_strategy:
+                            resp["result"]["is_portfolio"] = True
+                            resp["result"]["stock_codes"] = stock_codes_list[:20]
+                            if "strategy2" in strategy.lower() or "momentum" in strategy.lower():
+                                resp["result"]["strategy_name"] = "动量+均值回归混合（多标的组合）"
+                            elif "strategy1" in strategy.lower():
+                                resp["result"]["strategy_name"] = "行业轮动（多标的组合）"
+                            elif "行业轮动" in strategy:
+                                resp["result"]["strategy_name"] = "行业轮动（多标的组合）"
                         if "strategy_score" not in resp["result"] and resp["result"].get("stats"):
                             try:
                                 from core.scoring import score_strategy

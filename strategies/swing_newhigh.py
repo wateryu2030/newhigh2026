@@ -6,9 +6,14 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 import pandas as pd
 
-from .base import BaseStrategy
-from .market_regime import MarketRegime, MarketRegimeDetector
-from .stock_filter import StockFilter
+try:
+    from .base import BaseStrategy
+    from .market_regime import MarketRegime, MarketRegimeDetector
+    from .stock_filter import StockFilter
+except ImportError:
+    from strategies.base import BaseStrategy
+    from strategies.market_regime import MarketRegime, MarketRegimeDetector
+    from strategies.stock_filter import StockFilter
 
 
 class SwingNewHighStrategy(BaseStrategy):
