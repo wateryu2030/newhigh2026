@@ -29,6 +29,27 @@ def get_a_share_list() -> List[Dict[str, str]]:
     return []
 
 
+def get_a_share_symbols(exclude_delisted: bool = True) -> List[str]:
+    """
+    获取沪深京 A 股全部股票代码（6 位），不含退市股。
+    :param exclude_delisted: 是否排除名称含「退市」的标的
+    :return: ["000001", "600519", ...]
+    """
+    lst = get_a_share_list()
+    codes = []
+    for item in lst:
+        code = (item.get("symbol") or "").strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            continue
+        code = code.zfill(6)
+        if exclude_delisted:
+            name = (item.get("name") or "")
+            if "退市" in name:
+                continue
+        codes.append(code)
+    return list(dict.fromkeys(codes))  # 去重保序
+
+
 def load_kline(
     symbol: str,
     period: str = "daily",

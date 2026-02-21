@@ -37,10 +37,15 @@ class StrategyManager:
         self.scorer = scorer or StrategyScorer()
         self._regime_weights: Dict[str, float] = {}
         self._index_df: Optional[pd.DataFrame] = None
+        self._ai_scores: Optional[pd.DataFrame] = None  # symbol -> score 0~1，用于 weight *= ai_score
 
     def set_index_data(self, index_df: Optional[pd.DataFrame]) -> None:
         """设置指数数据，用于市场状态识别。"""
         self._index_df = index_df
+
+    def set_ai_scores(self, ai_scores: Optional[pd.DataFrame]) -> None:
+        """设置 AI 评分表（列 symbol, score），组合权重将乘以 ai_score。"""
+        self._ai_scores = ai_scores
 
     def run_all(self, market_data: MarketDataType) -> Dict[str, pd.DataFrame]:
         """运行所有策略，返回 { strategy_name: signals_df }。"""
@@ -91,6 +96,10 @@ class StrategyManager:
             for _, r in df.iterrows():
                 sym = r.get("symbol", "")
                 wt = float(r.get("weight", 0)) * w_scale
+                if self._ai_scores is not None and not self._ai_scores.empty and "symbol" in self._ai_scores.columns:
+                    m = self._ai_scores[self._ai_scores["symbol"] == sym.split(".")[0]]
+                    if not m.empty and "score" in self._ai_scores.columns:
+                        wt *= float(m["score"].iloc[0])
                 rows.append({
                     "symbol": sym,
                     "weight": round(wt, 4),
