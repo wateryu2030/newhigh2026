@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ev_1771688319_0",
+    "code": "\nimport pandas as pd\nimport numpy as np\ndef strategy(df):\n    out = df.copy()\n    out['ma5'] = out['close'].rolling(5).mean()\n    out['ma20'] = out['close'].rolling(20).mean()\n    out['signal'] = 0\n    out.loc[out['ma5'] > out['ma20'], 'signal'] = 1\n    out.loc[out['ma5'] <= out['ma20'], 'signal'] = -1\n    out['signal'] = out['signal'].fillna(0)\n    return out\n",
+    "metrics": {
+      "sharpe": 1.424,
+      "max_dd": 0.0533,
+      "score": 2.2947,
+      "total_return": 0.1557,
+      "win_rate": 0.5,
+      "profit_factor": 1.0,
+      "n_trades": 1
+    },
+    "added_at": 1771688319.279507
+  }
+]

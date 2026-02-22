@@ -1,0 +1,20 @@
+{
+  "updated_at": "2026-02-22T12:33:27.416211",
+  "metrics": {
+    "ok": true,
+    "model_path": "/Users/apple/astock/models/xgb_model.pkl",
+    "n_train": 602,
+    "n_forward": 201,
+    "train_date_range": [
+      "2025-06-17 00:00:00",
+      "2025-12-10 00:00:00"
+    ],
+    "forward_date_range": [
+      "2025-12-10 00:00:00",
+      "2026-02-06 00:00:00"
+    ],
+    "ic": 0.015106739094660489,
+    "rank_ic": 0.14360130042855032,
+    "return_top20pct": -0.011982930398212981
+  }
+}

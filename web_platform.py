@@ -14,12 +14,14 @@ import glob
 _static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 app = Flask(__name__, static_folder=_static_dir)
 
-# 注册 API 层（组合回测、TradingView K 线、股票池）
+# 注册 API 层（组合回测、TradingView K 线、股票池、机构组合、AI 推荐等）
 try:
     from api import register_routes
     register_routes(app)
-except Exception:
-    pass
+except Exception as e:
+    import traceback
+    print("WARNING: API routes not registered (机构组合/AI推荐等将 404):", e)
+    traceback.print_exc()
 
 # 添加 CORS 支持（简单版本）
 @app.after_request
@@ -74,37 +76,40 @@ HTML_TEMPLATE = """
     .full-width { grid-column: 1 / -1; }
     @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
     @media (max-width: 900px) { .result-layout { grid-template-columns: 1fr !important; } }
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #2a2a4a; }
+    .tab-btn { padding: 12px 24px; background: transparent; color: #888; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-size: 15px; font-weight: 600; }
+    .tab-btn:hover { color: #0f9; }
+    .tab-btn.active { color: #0f9; border-bottom-color: #0f9; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .badge-self { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #1a2744; color: #0f9; border: 1px solid #0f9; margin-left: 6px; }
+    .badge-ai { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #2a1a4a; color: #c9f; border: 1px solid #c9f; margin-left: 6px; }
+    .ai-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 1000px) { .ai-cards { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>🚀 量化交易平台</h1>
-      <div class="subtitle">AKShare 数据源 + RQAlpha 回测引擎 | 请确保通过 http://127.0.0.1:5050 访问</div>
+      <div class="subtitle">AKShare + RQAlpha | 请通过 http://127.0.0.1:5050 访问</div>
     </header>
     
-    <div class="card full-width" id="resultPortfolioCard" style="margin-bottom: 20px;">
-      <h2>🏦 机构组合结果</h2>
-      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">基于多策略信号与风控的目标仓位与订单（可指定股票池与资金规模）。</p>
-      <button type="button" class="ext-action" id="btnLoadPortfolio">加载机构组合</button>
-      <div id="resultPortfolioContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
-    </div>
-    <div class="card full-width" id="resultAiRecommendCard" style="margin-bottom: 20px;">
-      <h2>🤖 AI 推荐列表</h2>
-      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">当日 AI 选股 Top N（基于已训练模型）。</p>
-      <button type="button" class="ext-action" id="btnLoadAiRecommend">加载 AI 推荐</button>
-      <div id="resultAiRecommendContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+    <div class="tabs">
+      <button type="button" class="tab-btn active" id="tabSelf" data-tab="self">📌 自己实测</button>
+      <button type="button" class="tab-btn" id="tabAi" data-tab="ai">🤖 AI 推荐</button>
     </div>
     
+    <div id="panelSelf" class="tab-panel active">
     <div class="grid">
       <div class="card">
-        <h2>📊 策略列表</h2>
+        <h2>📊 策略列表 <span class="badge-self">自己实测</span></h2>
         <ul class="strategy-list" id="strategyList"></ul>
         <button onclick="loadStrategies()" style="margin-top: 12px;">刷新列表</button>
       </div>
       
       <div class="card">
-        <h2>⚙️ 回测配置</h2>
+        <h2>⚙️ 回测配置 <span class="badge-self">自己实测</span></h2>
         <div class="form-group">
           <label>已选策略</label>
           <input type="text" id="strategyFile" readonly style="background: #1a2744; cursor: not-allowed;" placeholder="请在左侧列表中选择策略">
@@ -170,7 +175,7 @@ HTML_TEMPLATE = """
     </div>
     
     <div class="card full-width" id="resultCard" style="display: none;">
-      <h2>📊 回测结果</h2>
+      <h2>📊 回测结果 <span class="badge-self">自己实测</span></h2>
       <div id="resultStrategyInfo" style="margin-bottom: 12px; padding: 8px 12px; background: #1a2744; border-radius: 4px; color: #888; font-size: 13px; display: none;"></div>
       <div style="display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start;" class="result-layout">
         <div>
@@ -209,12 +214,12 @@ HTML_TEMPLATE = """
     </div>
     
     <div class="card full-width">
-      <h2>📝 回测日志</h2>
+      <h2>📝 回测日志 <span class="badge-self">自己实测</span></h2>
       <div class="log" id="log">等待运行回测...</div>
     </div>
     
     <div class="card full-width">
-      <h2>📈 策略代码编辑器</h2>
+      <h2>📈 策略代码编辑器 <span class="badge-self">自己实测</span></h2>
       <div class="form-group">
         <label>策略文件路径</label>
         <input type="text" id="editPath" placeholder="strategies/my_strategy.py">
@@ -225,6 +230,61 @@ HTML_TEMPLATE = """
       </div>
       <button onclick="saveStrategy()">💾 保存策略</button>
       <button id="loadBtn" style="margin-left: 8px;">📂 加载策略</button>
+    </div>
+    </div>
+    
+    <div id="panelAi" class="tab-panel">
+      <p style="color: #888; font-size: 13px; margin-bottom: 16px;">以下为 AI 生成/推荐的组合、选股与资金分配，仅供参考，不构成投资建议。</p>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="concentrateModeCheckbox" style="width: 18px; height: 18px; accent-color: #0f9;" />
+          <span>短期集中交易</span>
+        </label>
+        <span style="color: #666; font-size: 12px; display: block; margin-top: 4px;">少品种、大仓位，1–3 个交易日内完成建仓，避免过度分散。开启后：机构组合/交易建议最多约 10 只标的、单只仓位上限 15%；再平衡仅保留表现最好的 3 个策略；各策略建议股票每策略仅取前 5 只。</span>
+      </div>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label>筛选描述（可选）</label>
+        <input type="text" id="nlFilterInput" placeholder="如：低估值高分红、科技龙头、消费白马、银行地产" style="width: 100%; max-width: 480px; padding: 8px 12px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0; font-size: 14px;" />
+        <span style="color: #666; font-size: 12px; display: block; margin-top: 4px;">在候选池中按自然语言要求二次筛选显示，留空则显示全部</span>
+      </div>
+      <div class="ai-cards">
+        <div class="card" id="resultPortfolioCard">
+          <h2>🏦 机构组合结果 <span class="badge-ai">AI 推荐</span></h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">基于多策略信号与风控的目标仓位与订单。</p>
+          <button type="button" class="ext-action" id="btnLoadPortfolio">加载机构组合</button>
+          <div id="resultPortfolioContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+        </div>
+        <div class="card" id="resultAiRecommendCard">
+          <h2>🤖 AI 推荐列表 <span class="badge-ai">AI 推荐</span></h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">当日 AI 选股 Top N（已训练模型）。</p>
+          <button type="button" class="ext-action" id="btnLoadAiRecommend">加载 AI 推荐</button>
+          <div id="resultAiRecommendContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+        </div>
+        <div class="card" id="resultFundManagerCard">
+          <h2>🧠 基金经理再平衡 <span class="badge-ai">AI 推荐</span></h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">按<strong>各策略</strong>的历史表现（如夏普、回撤）与风险预算分配资金，回撤超限自动降仓。策略包括：平台内置（MA/RSI/MACD/突破/波段新高）与自进化策略池中的策略。</p>
+          <button type="button" class="ext-action" id="btnFundManagerRebalance">执行再平衡</button>
+          <button type="button" class="ext-action" id="btnFundManagerStrategyStocks" style="display: none; margin-left: 8px;">加载各策略建议股票</button>
+          <div id="resultFundManagerContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮执行</div>
+        </div>
+        <div class="card" id="resultAiTradingAdviceCard">
+          <h2>📋 AI 交易建议 <span class="badge-ai">AI 推荐</span></h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">买卖时点 + 仓位布局：建议价位、止损、止盈。</p>
+          <button type="button" class="ext-action" id="btnLoadAiTradingAdvice">加载交易建议</button>
+          <div id="resultAiTradingAdviceContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+        </div>
+      </div>
+      <div class="card full-width" style="margin-top: 20px;">
+        <h2>📤 导出与发送 <span class="badge-ai">AI 推荐</span></h2>
+        <p style="color: #888; font-size: 13px; margin-bottom: 12px;">将上方已加载的结果导出为 PDF 或发送到飞书群/指定客户。</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px;">
+          <button type="button" class="ext-action" id="btnExportPdf">📄 导出 PDF</button>
+          <button type="button" class="ext-action" id="btnSendFeishu">📱 发送到飞书</button>
+          <input type="text" id="feishuWebhookInput" placeholder="飞书 webhook（可选，也可设环境变量 FEISHU_WEBHOOK_URL）" style="flex: 1; min-width: 200px; padding: 8px 12px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0; font-size: 13px;" />
+          <input type="text" id="feishuAtUserIdInput" placeholder="@用户 user_id（可选）" style="width: 140px; padding: 8px 12px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0; font-size: 13px;" />
+        </div>
+        <div id="exportSendStatus" style="font-size: 12px; color: #888;"></div>
+      </div>
     </div>
   </div>
   

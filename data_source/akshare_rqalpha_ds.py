@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 try:
-    from akshare.stock_feature.stock_hist_em import stock_zh_a_hist
+    import akshare as ak
 except ImportError:
     raise ImportError("请先安装 akshare: pip install akshare")
 
@@ -119,11 +119,11 @@ class AKShareRQAlphaDataSource(AbstractDataSource):
         try:
             # 调用 AKShare API 获取 A 股历史数据
             # 注意：AKShare 的 stock_zh_a_hist 需要 symbol（如 "600745"）和日期范围
-            df = stock_zh_a_hist(
+            df = ak.stock_zh_a_hist(
                 symbol=symbol,
                 period="daily",
-                start_date=start_date,
-                end_date=end_date,
+                start=start_date,
+                end=end_date,
                 adjust="qfq"  # 前复权
             )
             

@@ -76,7 +76,21 @@ manager.set_ai_scores(ai_scores)
 combined = manager.get_combined_signals(market_data)  # weight *= ai_score
 ```
 
-### 4. 仅用因子/数据集
+### 4. 模型修正闭环（持续修正）
+
+用历史 3/4 训练、后 1/4 作为「未来」做前向验证，新数据进来后再次运行即可持续修正模型：
+
+```bash
+python run_correction_loop.py
+# 可选: --days 500 --source database --train-ratio 0.75 --label-days 5
+```
+
+- **流程**：按时间划分 → 前 75% 训练 → 后 25% 预测 → 对比预测与实际（label）→ 计算 IC / Rank IC / Top20% 收益 → 写入 `models/prediction_log.csv` 与 `models/correction_metrics.json`
+- **循环**：当有新 K 线进入数据库或拉取到新数据后，再次执行上述命令，即用更新后的历史重新训练并评估，实现「新数据 → 再训练 → 再预测 → 再评估」的闭环
+
+API：`POST /api/ai/correction_cycle`，Body 可选 `{ "days": 500, "source": "database", "train_ratio": 0.75, "label_days": 5 }`。
+
+### 5. 仅用因子/数据集
 
 ```python
 from ai_models.feature_engineering import build_features_multi

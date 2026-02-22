@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 股票扫描器：对股票池逐只运行策略，筛选出「最新 K 线出现信号」的标的。
+支持插件策略（ma_cross/rsi/macd/breakout/swing_newhigh）与自进化策略（ev_*）。
 """
 import os
 import sys
@@ -95,6 +96,98 @@ def scan_market(
         except Exception:
             continue
 
+    return results
+
+
+def scan_market_evolution(
+    ev_id: str,
+    timeframe: str = "D",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    stock_list: Optional[List[str]] = None,
+    limit: Optional[int] = None,
+    pool_path: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    自进化策略扫描：用策略池中 ev_id 对应代码对每只股票运行，保留最新 K 线为买入信号的标的。
+    :param ev_id: 自进化策略 id，如 ev_1771688319_0
+    :param pool_path: 策略池 JSON 路径；None 则用 data/evolution/strategy_pool.json
+    :return: 与 scan_market 同构的列表 [{"symbol", "name", "signal", "price", "date", "reason"}, ...]
+    """
+    from datetime import datetime, timedelta
+    from database.db_schema import StockDatabase
+    from core.timeframe import resample_kline, normalize_timeframe
+    from evolution.strategy_pool import StrategyPool
+    from evolution.strategy_runner import StrategyRunner
+
+    if pool_path is None:
+        pool_path = os.path.join(_root, "data", "evolution", "strategy_pool.json")
+    pool = StrategyPool(persist_path=pool_path)
+    pool.load()
+    entry = next((p for p in pool.get_all() if (p.get("id") or "") == ev_id), None)
+    if not entry or not entry.get("code"):
+        return []
+
+    code = entry["code"]
+    runner = StrategyRunner()
+    tf = normalize_timeframe(timeframe)
+    if end_date is None:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    if start_date is None:
+        start_dt = datetime.now() - timedelta(days=120)
+        start_date = start_dt.strftime("%Y-%m-%d")
+
+    db_path = os.path.join(_root, "data", "astock.db")
+    if not os.path.exists(db_path):
+        return []
+
+    db = StockDatabase(db_path)
+    all_rows = db.get_stocks()
+    stock_names = {r[0]: (r[1], r[2]) for r in all_rows}
+    if stock_list is None:
+        rows = all_rows[: 2000]
+        stock_list = [r[0] for r in rows]
+
+    results: List[Dict[str, Any]] = []
+    max_results = limit if limit and limit > 0 else 50
+    for order_book_id in stock_list:
+        if len(results) >= max_results:
+            break
+        try:
+            df = db.get_daily_bars(order_book_id, start_date, end_date)
+            if df is None or len(df) < 20:
+                continue
+            df = resample_kline(df, tf)
+            if len(df) == 0:
+                continue
+            if "date" not in df.columns and df.index is not None:
+                df = df.copy()
+                df["date"] = df.index.astype(str).str[:10] if hasattr(df.index, "str") else str(df.index[-1])[:10]
+            res = runner.run(code, df, entry_point="strategy")
+            if res.get("error") or res.get("df") is None:
+                continue
+            out = res["df"]
+            if "signal" not in out.columns or len(out) == 0:
+                continue
+            last_sig = out["signal"].iloc[-1]
+            if last_sig != 1:
+                continue
+            last_bar_date = str(out["date"].iloc[-1])[:10] if "date" in out.columns else (str(out.index[-1])[:10] if hasattr(out.index[-1], "__str__") else "")
+            close = float(out["close"].iloc[-1]) if "close" in out.columns else 0
+            symbol = order_book_id.split(".")[0] if "." in order_book_id else order_book_id
+            name = (stock_names.get(order_book_id) or (None, None))[1] or symbol
+            results.append({
+                "symbol": symbol,
+                "order_book_id": order_book_id,
+                "name": name,
+                "signal": "BUY",
+                "price": round(close, 2),
+                "date": last_bar_date,
+                "reason": "自进化策略最新K线信号=1",
+                "trend": "SIDEWAYS",
+            })
+        except Exception:
+            continue
     return results
 
 

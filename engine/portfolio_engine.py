@@ -37,6 +37,7 @@ class InstitutionalPortfolioEngine:
         index_df: Optional[pd.DataFrame] = None,
         current_max_drawdown: float = 0.0,
         sector_map: Optional[Dict[str, str]] = None,
+        ai_scores: Optional[pd.DataFrame] = None,
     ) -> Dict[str, Any]:
         """
         执行一轮：多策略 → 合并 → 分配 → 风控 → 目标仓位。
@@ -44,6 +45,7 @@ class InstitutionalPortfolioEngine:
         :param index_df: 指数 K 线（可选，用于市场状态）
         :param current_max_drawdown: 当前账户最大回撤 (0~1)
         :param sector_map: symbol -> 行业，用于行业约束
+        :param ai_scores: 可选，列 symbol, score；用于按 AI 分数差异化分配（weight *= score）
         :return: { "orders": [], "target_positions": { symbol: value }, "risk_scale": float, "signals": df }
         """
         try:
@@ -57,6 +59,8 @@ class InstitutionalPortfolioEngine:
         manager = StrategyManager()
         if index_df is not None and len(index_df) >= 60:
             manager.set_index_data(index_df)
+        if ai_scores is not None and not ai_scores.empty:
+            manager.set_ai_scores(ai_scores)
         combined = manager.get_combined_signals(market_data)
         if combined is None or len(combined) == 0:
             return self._empty_result()

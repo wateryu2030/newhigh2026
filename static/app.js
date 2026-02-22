@@ -7,6 +7,10 @@
   var lastBacktestResult = null;
 
   var PLUGIN_IDS = ['ma_cross', 'rsi', 'macd', 'kdj', 'breakout', 'swing_newhigh'];
+  var lastPortfolioResult = null;
+  var lastAiRecommendResult = null;
+  var lastFundManagerResult = null;
+  var lastTradingAdviceResult = null;
 
   function getStockCodeInput() {
     var custom = document.getElementById('customStockCode');
@@ -824,15 +828,25 @@
     }
   }
 
+  function getNlFilterInput() {
+    var inp = document.getElementById('nlFilterInput');
+    return inp ? (inp.value || '').trim() : '';
+  }
+
+  function getConcentrateMode() {
+    var cb = document.getElementById('concentrateModeCheckbox');
+    return cb ? cb.checked : false;
+  }
+
   async function loadPortfolioResult() {
     var btn = document.getElementById('btnLoadPortfolio');
     var el = document.getElementById('resultPortfolioContent');
     if (!el) return;
     if (btn) btn.disabled = true;
-    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    el.innerHTML = '<span style="color:#888;">全量筛选中，请稍候（约1–2分钟）…</span>';
     try {
       var stockCode = getStockCodeInput();
-      var body = { capital: 1000000 };
+      var body = { capital: 1000000, nl_filter: getNlFilterInput(), concentrate: getConcentrateMode() };
       if (stockCode) {
         var code = stockCode.split('.')[0];
         body.stockCodes = [code];
@@ -847,7 +861,10 @@
         var orders = data.orders || [];
         var target = data.target_positions || {};
         var scale = data.risk_scale != null ? (data.risk_scale * 100).toFixed(1) : '100';
-        var html = '<div style="margin-bottom:12px;"><span style="color:#0f9;">风控缩放</span> ' + scale + '%</div>';
+        var candCount = data.candidate_count != null ? data.candidate_count : orders.length;
+        var html = '<div style="margin-bottom:12px;"><span style="color:#0f9;">风控缩放</span> ' + scale + '%';
+        if (candCount !== orders.length) html += ' <span style="color:#888;">| 候选 ' + candCount + ' 只，筛选后 ' + orders.length + ' 只</span>';
+        html += '</div>';
         if (orders.length > 0) {
           html += '<div style="margin-bottom:8px;color:#aaa;">订单（' + orders.length + '）</div><table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">标的</th><th style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">金额</th><th style="padding:6px;border-bottom:1px solid #2a2a4a;">方向</th></tr></thead><tbody>';
           orders.forEach(function(o) {
@@ -861,6 +878,7 @@
           html += '<div style="margin-top:12px;color:#888;">目标仓位: ' + JSON.stringify(target) + '</div>';
         }
         el.innerHTML = html;
+        lastPortfolioResult = data;
       } else {
         el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
       }
@@ -875,27 +893,260 @@
     var el = document.getElementById('resultAiRecommendContent');
     if (!el) return;
     if (btn) btn.disabled = true;
-    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    el.innerHTML = '<span style="color:#888;">全量筛选中，请稍候（约1–2分钟）…</span>';
     try {
-      var res = await fetch('/api/ai_recommendations?top=20');
+      var top = 50;
+      var nl = encodeURIComponent(getNlFilterInput());
+      var url = '/api/ai_recommendations?top=' + top + (nl ? '&nl_filter=' + nl : '');
+      var res = await fetch(url);
       var data = await res.json();
       if (data.success) {
         var list = data.list || [];
+        var candCount = data.candidate_count != null ? data.candidate_count : list.length;
         if (list.length === 0) {
           el.innerHTML = '<span style="color:#888;">' + (data.message || '暂无推荐，请先运行 train_ai_model.py 训练模型') + '</span>';
         } else {
-          var html = '<table style="width:100%;font-size:13px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">排名</th><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">标的</th><th style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">得分</th></tr></thead><tbody>';
+          var html = '';
+          if (candCount !== list.length) html += '<div style="margin-bottom:8px;color:#888;font-size:12px;">候选 ' + candCount + ' 只，筛选后 ' + list.length + ' 只</div>';
+          html += '<table style="width:100%;font-size:13px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">排名</th><th style="text-align:left;padding:6px;border-bottom:1px solid #2a2a4a;">标的</th><th style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;">得分</th></tr></thead><tbody>';
           list.forEach(function(row) {
             html += '<tr><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (row.rank || '') + '</td><td style="padding:6px;border-bottom:1px solid #2a2a4a;">' + (row.symbol || '') + '</td><td style="text-align:right;padding:6px;border-bottom:1px solid #2a2a4a;color:#0f9;">' + (row.score != null ? row.score : '') + '</td></tr>';
           });
           html += '</tbody></table>';
           el.innerHTML = html;
         }
+        lastAiRecommendResult = data;
       } else {
         el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
       }
     } catch (e) {
       el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  function renderFundManagerHtml(data, strategyStocks) {
+    var desc = data.strategy_descriptions || {};
+    var html = '<div style="margin-bottom:8px;"><span style="color:#0f9;">风控缩放</span> ' + (data.risk_scale != null ? (data.risk_scale * 100).toFixed(1) : '100') + '%</div>';
+    if (data.allocation && Object.keys(data.allocation).length > 0) {
+      html += '<div style="margin-bottom:6px;color:#aaa;">分配（策略 → 金额）</div>';
+      for (var k in data.allocation) {
+        var d = desc[k] ? (' <span style="color:#666;font-size:11px;">' + desc[k] + '</span>') : '';
+        html += '<div style="font-size:12px;margin-bottom:4px;">' + k + ': ' + (data.allocation[k] != null ? data.allocation[k].toFixed(0) : '') + d + '</div>';
+      }
+    }
+    if (data.orders && data.orders.length > 0) {
+      html += '<div style="margin-top:12px;color:#aaa;">订单（为各策略分配的资金目标，用于该策略选股与下单）</div>';
+      html += '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #2a2a4a;">策略</th><th style="text-align:right;padding:4px;border-bottom:1px solid #2a2a4a;">目标金额</th><th style="padding:4px;border-bottom:1px solid #2a2a4a;">方向</th></tr></thead><tbody>';
+      data.orders.forEach(function(o) {
+        var d = desc[o.strategy] ? ('<div style="color:#666;font-size:11px;margin-top:2px;">' + desc[o.strategy] + '</div>') : '';
+        html += '<tr><td style="padding:4px;vertical-align:top;"><span style="color:#0f9;">' + (o.strategy || '') + '</span>' + d + '</td><td style="text-align:right;padding:4px;">' + (o.target_value != null ? o.target_value.toFixed(0) : '') + '</td><td style="padding:4px;">' + (o.side || '') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html += '<div style="margin-top:8px;color:#888;">暂无新订单</div>';
+    }
+    if (strategyStocks && Object.keys(strategyStocks).length > 0) {
+      html += '<div style="margin-top:16px;color:#0f9;font-size:13px;">各策略建议股票（当前有信号的标的）</div>';
+      for (var sid in strategyStocks) {
+        var list = strategyStocks[sid];
+        if (!list || list.length === 0) {
+          html += '<div style="margin-top:8px;font-size:12px;"><span style="color:#888;">' + sid + '</span>: <span style="color:#666;">当前无信号标的</span></div>';
+        } else {
+          var names = list.slice(0, 12).map(function(x) { return (x.name || x.symbol) + '(' + (x.symbol || '') + ')'; }).join('、');
+          if (list.length > 12) names += ' 等' + list.length + '只';
+          html += '<div style="margin-top:6px;font-size:12px;"><span style="color:#0f9;">' + sid + '</span>: ' + names + '</div>';
+        }
+      }
+    }
+    return html;
+  }
+
+  async function loadFundManagerRebalance() {
+    var btn = document.getElementById('btnFundManagerRebalance');
+    var el = document.getElementById('resultFundManagerContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">执行中…</span>';
+    try {
+      var res = await fetch('/api/fund_manager/rebalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ capital: 1000000, concentrate: getConcentrateMode() })
+      });
+      var data = await res.json();
+      if (data.success) {
+        lastFundManagerResult = data;
+        el.innerHTML = renderFundManagerHtml(data, null);
+        var loadStocksBtn = document.getElementById('btnFundManagerStrategyStocks');
+        if (loadStocksBtn) loadStocksBtn.style.display = 'inline-block';
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadFundManagerStrategyStocks() {
+    if (!lastFundManagerResult || !lastFundManagerResult.allocation) return;
+    var btn = document.getElementById('btnFundManagerStrategyStocks');
+    var el = document.getElementById('resultFundManagerContent');
+    if (!el) return;
+    var strategyIds = Object.keys(lastFundManagerResult.allocation);
+    if (strategyIds.length === 0) return;
+    if (btn) btn.disabled = true;
+    var origHtml = el.innerHTML;
+    el.innerHTML = origHtml + '<div style="margin-top:8px;color:#888;">正在加载各策略建议股票…</div>';
+    try {
+      var res = await fetch('/api/fund_manager/strategy_stocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ strategy_ids: strategyIds, limit_per_strategy: getConcentrateMode() ? 5 : 15, concentrate: getConcentrateMode() })
+      });
+      var data = await res.json();
+      if (data.success && data.strategy_stocks) {
+        el.innerHTML = renderFundManagerHtml(lastFundManagerResult, data.strategy_stocks);
+      } else {
+        el.innerHTML = renderFundManagerHtml(lastFundManagerResult, null) + '<div style="margin-top:8px;color:#f55;">' + (data.error || '加载失败') + '</div>';
+      }
+    } catch (e) {
+      el.innerHTML = renderFundManagerHtml(lastFundManagerResult, null) + '<div style="margin-top:8px;color:#f55;">' + (e.message || e) + '</div>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadAiTradingAdvice() {
+    var btn = document.getElementById('btnLoadAiTradingAdvice');
+    var el = document.getElementById('resultAiTradingAdviceContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">全量筛选中，请稍候（约1–2分钟）…</span>';
+    try {
+      var stockCode = getStockCodeInput();
+      var body = { capital: 1000000, nl_filter: getNlFilterInput(), concentrate: getConcentrateMode() };
+      if (stockCode) {
+        var code = stockCode.split('.')[0];
+        body.stockCodes = [code];
+      }
+      var res = await fetch('/api/ai_trading_advice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var data = await res.json();
+      if (data.success) {
+        var advice = data.advice || [];
+        var capEff = data.capital_eff;
+        var scale = data.risk_scale != null ? (data.risk_scale * 100).toFixed(1) : '100';
+        if (advice.length === 0) {
+          el.innerHTML = '<span style="color:#888;">暂无交易建议，请确保机构组合有输出</span>';
+        } else {
+          var html = '<div style="margin-bottom:10px;"><span style="color:#0f9;">风控</span> ' + scale + '%';
+          if (capEff) html += ' | 有效资金 ' + capEff.toLocaleString() + '</div>';
+          html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+          advice.forEach(function(a) {
+            html += '<div style="padding:12px;background:#0a0e27;border-radius:6px;border:1px solid #2a2a4a;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="color:#0f9;font-weight:600;">' + (a.symbol || '') + '</span><span style="color:#fc0;">' + (a.direction || 'BUY') + '</span></div>';
+            html += '<div style="font-size:12px;color:#aaa;margin-bottom:4px;">仓位 ' + (a.suggested_position_pct != null ? a.suggested_position_pct + '%' : '—') + ' | 金额 ' + (a.suggested_amount != null ? a.suggested_amount.toLocaleString() : '—');
+            if (a.current_price != null) html += ' | 现价 ' + a.current_price;
+            html += '</div>';
+            html += '<div style="font-size:12px;color:#888;">时点: ' + (a.timing_hint || '—') + '</div>';
+            html += '<div style="font-size:12px;color:#f55;">止损 ' + (a.stop_loss_pct != null ? a.stop_loss_pct + '%' : '—') + '</div>';
+            html += '<div style="font-size:12px;color:#0f9;">止盈 10%/20%/30% 分批</div>';
+            html += '<div style="font-size:11px;color:#666;">' + (a.reason || '') + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+          el.innerHTML = html;
+        }
+        lastTradingAdviceResult = data;
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  function getAiReportData() {
+    var data = {};
+    if (lastPortfolioResult) data.portfolio = { orders: lastPortfolioResult.orders, risk_scale: lastPortfolioResult.risk_scale };
+    if (lastAiRecommendResult) data.ai_recommend = { list: lastAiRecommendResult.list };
+    if (lastFundManagerResult) data.fund_manager = { allocation: lastFundManagerResult.allocation, orders: lastFundManagerResult.orders, risk_scale: lastFundManagerResult.risk_scale };
+    if (lastTradingAdviceResult) data.trading_advice = { advice: lastTradingAdviceResult.advice };
+    return data;
+  }
+
+  async function exportPdf() {
+    var btn = document.getElementById('btnExportPdf');
+    var statusEl = document.getElementById('exportSendStatus');
+    if (!statusEl) return;
+    var reportData = getAiReportData();
+    if (!reportData.portfolio && !reportData.ai_recommend && !reportData.fund_manager && !reportData.trading_advice) {
+      statusEl.innerHTML = '<span style="color:#f55;">请先加载机构组合、AI 推荐、基金经理再平衡或交易建议，再导出 PDF</span>';
+      return;
+    }
+    if (btn) btn.disabled = true;
+    statusEl.innerHTML = '<span style="color:#888;">导出中…</span>';
+    try {
+      var res = await fetch('/api/export_pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: reportData })
+      });
+      var contentType = res.headers.get('Content-Type') || '';
+      if (res.ok && contentType.indexOf('application/pdf') >= 0) {
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'ai_report_' + new Date().toISOString().slice(0, 10) + '.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        statusEl.innerHTML = '<span style="color:#0f9;">PDF 已导出</span>';
+      } else {
+        var json = await res.json().catch(function() { return {}; });
+        statusEl.innerHTML = '<span style="color:#f55;">' + (json.error || '导出失败') + '</span>';
+      }
+    } catch (e) {
+      statusEl.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function sendToFeishu() {
+    var btn = document.getElementById('btnSendFeishu');
+    var statusEl = document.getElementById('exportSendStatus');
+    var webhookInp = document.getElementById('feishuWebhookInput');
+    var atInp = document.getElementById('feishuAtUserIdInput');
+    if (!statusEl) return;
+    var reportData = getAiReportData();
+    if (!reportData.portfolio && !reportData.ai_recommend && !reportData.fund_manager && !reportData.trading_advice) {
+      statusEl.innerHTML = '<span style="color:#f55;">请先加载任意 AI 数据，再发送到飞书</span>';
+      return;
+    }
+    if (btn) btn.disabled = true;
+    statusEl.innerHTML = '<span style="color:#888;">发送中…</span>';
+    try {
+      var body = { data: reportData };
+      if (webhookInp && webhookInp.value.trim()) body.webhook_url = webhookInp.value.trim();
+      if (atInp && atInp.value.trim()) body.at_user_id = atInp.value.trim();
+      var res = await fetch('/api/send_feishu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var json = await res.json();
+      if (json.success) {
+        statusEl.innerHTML = '<span style="color:#0f9;">已发送到飞书</span>';
+      } else {
+        statusEl.innerHTML = '<span style="color:#f55;">' + (json.error || '发送失败') + '</span>';
+      }
+    } catch (e) {
+      statusEl.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
     }
     if (btn) btn.disabled = false;
   }
@@ -1058,12 +1309,37 @@
 
   function init() {
     try {
+      var tabSelf = document.getElementById('tabSelf');
+      var tabAi = document.getElementById('tabAi');
+      var panelSelf = document.getElementById('panelSelf');
+      var panelAi = document.getElementById('panelAi');
+      if (tabSelf && tabAi && panelSelf && panelAi) {
+        function showPanel(tab) {
+          var isSelf = (tab === 'self');
+          tabSelf.classList.toggle('active', isSelf);
+          tabAi.classList.toggle('active', !isSelf);
+          panelSelf.classList.toggle('active', isSelf);
+          panelAi.classList.toggle('active', !isSelf);
+        }
+        tabSelf.addEventListener('click', function() { showPanel('self'); });
+        tabAi.addEventListener('click', function() { showPanel('ai'); });
+      }
       var loadBtn = document.getElementById('loadBtn');
       if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
       var btnPortfolio = document.getElementById('btnLoadPortfolio');
       if (btnPortfolio) btnPortfolio.addEventListener('click', loadPortfolioResult);
       var btnAiRecommend = document.getElementById('btnLoadAiRecommend');
       if (btnAiRecommend) btnAiRecommend.addEventListener('click', loadAiRecommendations);
+      var btnFundManager = document.getElementById('btnFundManagerRebalance');
+      if (btnFundManager) btnFundManager.addEventListener('click', loadFundManagerRebalance);
+      var btnFundManagerStocks = document.getElementById('btnFundManagerStrategyStocks');
+      if (btnFundManagerStocks) btnFundManagerStocks.addEventListener('click', loadFundManagerStrategyStocks);
+      var btnAiTradingAdvice = document.getElementById('btnLoadAiTradingAdvice');
+      if (btnAiTradingAdvice) btnAiTradingAdvice.addEventListener('click', loadAiTradingAdvice);
+      var btnExportPdf = document.getElementById('btnExportPdf');
+      if (btnExportPdf) btnExportPdf.addEventListener('click', exportPdf);
+      var btnSendFeishu = document.getElementById('btnSendFeishu');
+      if (btnSendFeishu) btnSendFeishu.addEventListener('click', sendToFeishu);
       setupStockInputHandlers();
       loadStrategies();
       loadStocks();

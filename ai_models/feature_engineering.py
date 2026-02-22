@@ -184,7 +184,7 @@ def build_features_multi(
     """
     frames: list[pd.DataFrame] = []
     for sym, df in market_data.items():
-        if df is None or len(df) < 80:
+        if df is None or len(df) < 60:
             continue
         code = sym.split(".")[0] if "." in sym else sym
         try:

@@ -7,7 +7,6 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from akshare.stock_feature.stock_hist_em import stock_zh_a_hist
 import pandas as pd
 from datetime import datetime, timedelta
 import time
@@ -18,8 +17,8 @@ from database.db_schema import StockDatabase
 def get_all_a_share_symbols() -> List[str]:
     """获取沪深京 A 股全部股票代码（6 位字符串）。"""
     try:
-        from akshare.stock.stock_info import stock_info_a_code_name
-        df = stock_info_a_code_name()
+        import akshare as ak
+        df = ak.stock_info_a_code_name()
         if df is None or df.empty:
             return []
         if "code" not in df.columns:
@@ -89,12 +88,12 @@ class DataFetcher:
         print(f"获取 {symbol} 数据: {start_date} 至 {end_date}")
         
         try:
-            # 获取数据
-            df = stock_zh_a_hist(
+            import akshare as ak
+            df = ak.stock_zh_a_hist(
                 symbol=symbol,
                 period="daily",
-                start_date=start_date,
-                end_date=end_date,
+                start=start_date,
+                end=end_date,
                 adjust=adjust
             )
             

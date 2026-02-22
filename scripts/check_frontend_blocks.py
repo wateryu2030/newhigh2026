@@ -19,6 +19,9 @@ REQUIRED = [
     ("resultAiRecommendCard", "AI 推荐卡片 id"),
     ("btnLoadPortfolio", "加载机构组合按钮 id"),
     ("btnLoadAiRecommend", "加载 AI 推荐按钮 id"),
+    ("AI 基金经理再平衡", "基金经理再平衡 标题"),
+    ("resultFundManagerCard", "基金经理卡片 id"),
+    ("btnFundManagerRebalance", "执行再平衡按钮 id"),
 ]
 OPTIONAL_API = [
     ("/api/portfolio_result", "POST", "机构组合 API"),

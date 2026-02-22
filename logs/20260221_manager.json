@@ -1,0 +1,18 @@
+{
+  "allocation": {
+    "ev_1771688319_0": 1000000.0
+  },
+  "orders": [
+    {
+      "strategy": "ev_1771688319_0",
+      "target_value": 1000000.0,
+      "current_value": 0.0,
+      "delta": 1000000.0,
+      "side": "BUY"
+    }
+  ],
+  "risk_scale": 1.0,
+  "weights": {
+    "ev_1771688319_0": 1.0
+  }
+}
