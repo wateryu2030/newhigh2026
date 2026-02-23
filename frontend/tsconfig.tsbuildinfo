@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/theme.ts","./src/vite-env.d.ts","./src/api/client.ts","./src/components/klinechart.tsx","./src/components/mainlayout.tsx","./src/components/signalmarkers.tsx","./src/pages/marketscanner.tsx","./src/pages/strategylab.tsx","./src/pages/tradingdecision.tsx","./src/types/index.ts"],"version":"5.6.3"}

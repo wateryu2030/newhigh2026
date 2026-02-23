@@ -183,9 +183,19 @@ python scripts/sync_pool_stocks.py --start 20240220 --end 20260220
 
 或在 Web 回测页点击 **「📦 全量同步股票池」**，会按当前回测开始/结束日期拉取 data/ 下所有策略 CSV 中的股票日线并写入数据库（需网络，耗时数分钟）。
 
-### 全量导入 A 股（本地全市场数据）
+### 已有 SQLite 全量日线时：直接复制到 DuckDB（推荐，最快）
 
-将沪深京 A 股全部股票（约 5000+ 只）的日线导入本地数据库，回测时可任意选股、多标的策略不再缺数据：
+若 `data/astock.db` 里已经有全部日线（例如之前全量拉取过），**无需再拉取**，直接把 SQLite 拷贝到 DuckDB 即可，本地复制、不占网络，通常几十秒完成：
+
+```bash
+python scripts/migrate_sqlite_to_duckdb.py
+```
+
+生成 `data/quant.duckdb` 后，平台会默认使用 DuckDB。
+
+### 全量导入 A 股（无 SQLite 或需补全时，需网络）
+
+将沪深京 A 股全部股票（约 5000+ 只）的日线从 AKShare 拉取并写入本地数据库，回测时可任意选股、多标的策略不再缺数据：
 
 ```bash
 source venv/bin/activate
@@ -211,6 +221,8 @@ python scripts/import_all_a_stocks.py --limit 10
 2. **使用正确端口**：平台默认使用 **5050**（避免与 macOS 占用的 5000/5001 冲突），浏览器访问 **http://127.0.0.1:5050**
 3. **自检**：终端执行 `curl -s http://127.0.0.1:5050/health`，若返回 `{"status":"ok"}` 表示服务正常
 4. **换端口**：若 5050 被占用，可执行 `PORT=8080 python web_platform.py`，然后访问 http://127.0.0.1:8080
+5. **DuckDB**：若存在 `data/quant.duckdb`（执行 `python scripts/migrate_sqlite_to_duckdb.py` 生成），平台默认使用 DuckDB；用 `USE_DUCKDB=0` 可改回 SQLite  
+6. **数据已有 SQLite 时**：若 `data/astock.db` 里已有全部日线，**直接复制到 DuckDB 即可**，比从网络全量拉取快得多：`python scripts/migrate_sqlite_to_duckdb.py`（本地拷贝，通常几十秒完成）
 
 ### 2.1 测试 AKShare 数据获取
 
@@ -271,9 +283,13 @@ python app.py
 ```
 astock/
 ├── README.md              # 本说明文档
+├── frontend/              # 专业量化前端（React + TS + TradingView 风格）
+│   ├── src/pages/         # 交易决策中心、策略实验室、市场扫描器
+│   ├── COMPONENT_STRUCTURE.md
+│   └── npm run dev        # 开发（需先启动 web_platform.py，API 代理到 5050）
 ├── run_akshare.py         # AKShare 快速测试脚本
 ├── app.py                  # AKShare 数据展示 Web 页面
-├── web_platform.py         # 量化交易平台 Web 界面
+├── web_platform.py         # 量化交易平台 Web 界面（含 /api/kline、/api/signals、/api/ai_score、/api/backtest、/api/scan）
 ├── run_backtest.py        # 回测运行脚本
 ├── akshare_adapter.py      # AKShare 数据适配器（RQAlpha 接口）
 ├── venv/                   # Python 虚拟环境

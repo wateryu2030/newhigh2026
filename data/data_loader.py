@@ -28,16 +28,16 @@ def load_kline(
         start_ymd = (start_date or "").replace("-", "")[:8]
         end_ymd = (end_date or "").replace("-", "")[:8]
         return akshare_load(code, "daily", "qfq", start_ymd, end_ymd)
-    # database
+    # database（默认存在 quant.duckdb 时走 DuckDB，否则 SQLite）
     try:
         import sys
         sys.path.insert(0, _ROOT)
-        from database.db_schema import StockDatabase
+        from database.duckdb_backend import get_db_backend
         order_book_id = symbol if "." in symbol else (code + ".XSHG" if code.startswith("6") else code + ".XSHE")
-        db_path = os.path.join(_ROOT, "data", "astock.db")
+        db = get_db_backend()
+        db_path = getattr(db, "db_path", os.path.join(_ROOT, "data", "astock.db"))
         if not os.path.exists(db_path):
             return pd.DataFrame()
-        db = StockDatabase(db_path)
         df = db.get_daily_bars(order_book_id, start_date, end_date)
         if df is None or len(df) == 0:
             return pd.DataFrame()

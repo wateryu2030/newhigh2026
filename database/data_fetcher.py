@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import time
 from typing import List
 from database.db_schema import StockDatabase
+from database.duckdb_backend import get_db_backend
 
 
 def get_all_a_share_symbols() -> List[str]:
@@ -66,8 +67,11 @@ def get_pool_symbols(data_dir: str = "data") -> List[str]:
 class DataFetcher:
     """数据获取器"""
     
-    def __init__(self, db_path="data/astock.db"):
-        self.db = StockDatabase(db_path)
+    def __init__(self, db_path=None):
+        if db_path is None:
+            self.db = get_db_backend()
+        else:
+            self.db = StockDatabase(db_path)
     
     def fetch_stock_data(self, symbol: str, start_date: str = None, end_date: str = None, 
                         adjust: str = "qfq"):
@@ -92,8 +96,8 @@ class DataFetcher:
             df = ak.stock_zh_a_hist(
                 symbol=symbol,
                 period="daily",
-                start=start_date,
-                end=end_date,
+                start_date=start_date,
+                end_date=end_date,
                 adjust=adjust
             )
             

@@ -8,6 +8,7 @@ from .position_sizer import PositionSizer
 from .risk_engine import RiskEngine, RiskLevel
 from .position_control import PositionControl
 from .risk_report import RiskReport, RiskReporter
+from .position_sizing import position_size, position_size_with_atr
 
 __all__ = [
     "RiskModel",
@@ -17,4 +18,6 @@ __all__ = [
     "PositionControl",
     "RiskReport",
     "RiskReporter",
+    "position_size",
+    "position_size_with_atr",
 ]

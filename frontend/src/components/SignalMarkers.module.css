@@ -1,0 +1,48 @@
+.empty {
+  color: #6b7280;
+  font-size: 12px;
+  padding: 8px 0;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.buy {
+  padding: 6px 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border-left: 3px solid #10b981;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.sell {
+  padding: 6px 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border-left: 3px solid #ef4444;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.type {
+  font-weight: 600;
+  margin-right: 8px;
+}
+.date {
+  color: #9ca3af;
+  margin-right: 8px;
+}
+.price {
+  color: #e0e6ed;
+}
+.extra {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+.reason {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}

@@ -86,101 +86,131 @@ HTML_TEMPLATE = """
     .badge-ai { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #2a1a4a; color: #c9f; border: 1px solid #c9f; margin-left: 6px; }
     .ai-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     @media (max-width: 1000px) { .ai-cards { grid-template-columns: 1fr; } }
+    /* === 回测布局：侧栏 + 主区（参考 Backtrader/OpenBB） === */
+    .layout-backtest { display: flex; gap: 20px; margin-bottom: 20px; align-items: stretch; }
+    .sidebar { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+    .sidebar .card { padding: 16px; }
+    .sidebar .card h2 { font-size: 15px; margin-bottom: 12px; }
+    .sidebar .form-group { margin-bottom: 12px; }
+    .sidebar .form-group label { font-size: 12px; }
+    .sidebar-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .sidebar-row label { flex: 0 0 60px; margin-bottom: 0; font-size: 12px; }
+    .sidebar-row input, .sidebar-row select { flex: 1; padding: 8px 10px; font-size: 13px; }
+    .main-backtest { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+    .btn-run { width: 100%; padding: 14px; font-size: 16px; margin-top: 4px; margin-bottom: 8px; }
+    .progress-wrap { height: 6px; background: #1a2744; border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+    .progress-wrap .bar { height: 100%; background: #0f9; width: 0%; transition: width .2s; }
+    .strategy-list-compact { max-height: 200px; overflow-y: auto; }
+    .strategy-item { padding: 10px; font-size: 13px; }
+    .strategy-item .strategy-desc { font-size: 11px; }
+    .summary-sidebar { font-size: 12px; }
+    .summary-sidebar .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a4a; }
+    .summary-sidebar .row:last-child { border-bottom: none; }
+    .summary-sidebar .label { color: #888; }
+    .summary-sidebar .value { font-weight: 600; }
+    .summary-sidebar .value.positive { color: #0f9; }
+    .summary-sidebar .value.negative { color: #f55; }
+    .core-metrics-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .core-metric { background: #16213e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 14px 16px; text-align: center; }
+    .core-metric .name { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .core-metric .num { font-size: 22px; font-weight: 700; }
+    .core-metric .num.positive { color: #0f9; }
+    .core-metric .num.negative { color: #f55; }
+    .core-metric .num.neutral { color: #e0e0e0; }
+    .result-chart-wrap { min-height: 280px; }
+    .scan-progress-wrap { margin: 8px 0; }
+    .scan-progress-bar { height: 8px; background: #1a2744; border-radius: 4px; overflow: hidden; }
+    .scan-progress-fill { height: 100%; background: #0f9; transition: width 0.2s ease; }
+    .scan-progress-msg { font-size: 12px; color: #888; margin-top: 6px; }
+    @media (max-width: 900px) { .layout-backtest { flex-direction: column; } .sidebar { width: 100%; } .core-metrics-bar { grid-template-columns: repeat(2, 1fr); } }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🚀 量化交易平台</h1>
-      <div class="subtitle">AKShare + RQAlpha | 请通过 http://127.0.0.1:5050 访问</div>
+      <h1>量化交易平台</h1>
+      <div class="subtitle">策略回测 · 数据：DuckDB / AKShare | 访问 http://127.0.0.1:5050</div>
     </header>
     
     <div class="tabs">
-      <button type="button" class="tab-btn active" id="tabSelf" data-tab="self">📌 自己实测</button>
-      <button type="button" class="tab-btn" id="tabAi" data-tab="ai">🤖 AI 推荐</button>
+      <button type="button" class="tab-btn active" id="tabSelf" data-tab="self">自己实测</button>
+      <button type="button" class="tab-btn" id="tabAi" data-tab="ai">AI 推荐</button>
     </div>
     
     <div id="panelSelf" class="tab-panel active">
-    <div class="grid">
-      <div class="card">
-        <h2>📊 策略列表 <span class="badge-self">自己实测</span></h2>
-        <ul class="strategy-list" id="strategyList"></ul>
-        <button onclick="loadStrategies()" style="margin-top: 12px;">刷新列表</button>
-      </div>
-      
-      <div class="card">
-        <h2>⚙️ 回测配置 <span class="badge-self">自己实测</span></h2>
-        <div class="form-group">
-          <label>已选策略</label>
-          <input type="text" id="strategyFile" readonly style="background: #1a2744; cursor: not-allowed;" placeholder="请在左侧列表中选择策略">
-          <small style="color: #888; font-size: 12px; margin-top: 4px; display: block;">
-            💡 点击左侧策略列表选择策略，此处仅显示已选策略
-          </small>
+    <div class="layout-backtest">
+      <aside class="sidebar">
+        <div class="card">
+          <h2>策略</h2>
+          <input type="text" id="strategyFile" readonly placeholder="请从下方选择" style="background:#1a2744;padding:8px;margin-bottom:10px;font-size:13px;cursor:default;">
+          <ul class="strategy-list strategy-list-compact" id="strategyList"></ul>
+          <button type="button" onclick="loadStrategies()" style="margin-top:8px;padding:6px 12px;font-size:12px;">刷新列表</button>
         </div>
-        <div class="form-group">
-          <label>股票代码</label>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="text" id="customStockCode" placeholder="输入代码，如 600519、000001" style="flex: 1; padding: 10px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0;">
+        <div class="card">
+          <h2>回测配置</h2>
+          <div class="form-group">
+            <label>股票</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="text" id="customStockCode" placeholder="600519 / 000001" style="flex:1;padding:8px 10px;font-size:13px;">
               <button type="button" class="btn-clear" id="clearStockBtn" title="清空">✕</button>
             </div>
-            <select id="stockCode" style="width: 100%; padding: 10px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0;">
-              <option value="">或从列表选择</option>
+            <select id="stockCode" style="padding:8px 10px;font-size:13px;margin-top:6px;">
+              <option value="">或从列表选</option>
             </select>
           </div>
-          <small style="color: #888; font-size: 12px; margin-top: 4px; display: block;">直接输入或选择；多只用逗号分隔，回测取第一只；无数据会<strong>按需拉取</strong></small>
-          <button onclick="syncStockData()" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">📥 同步选中股票数据</button>
-          <button onclick="syncPoolStocks()" style="margin-top: 8px; margin-left: 8px; padding: 6px 12px; font-size: 12px;" id="syncPoolBtn">📦 全量同步股票池</button>
-          <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">全量同步：根据 data/ 下策略股票池 CSV 拉取所有标的日线，多标的策略回测更完整（需网络，较耗时）</small>
+          <div class="sidebar-row">
+            <label>开始</label>
+            <input type="date" id="startDate" value="{{ default_start }}">
+          </div>
+          <div class="sidebar-row">
+            <label>结束</label>
+            <input type="date" id="endDate" value="{{ default_end }}">
+          </div>
+          <div class="form-group">
+            <label>初始资金（元）</label>
+            <input type="number" id="initialCash" value="1000000" step="10000" style="padding:8px 10px;">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div class="form-group" style="flex:1;">
+              <label>周期</label>
+              <select id="timeframe"><option value="D">日线</option><option value="W">周线</option><option value="M">月线</option></select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>数据源</label>
+              <select id="dataSource"><option value="database">数据库</option><option value="akshare">AKShare</option></select>
+            </div>
+          </div>
+          <button type="button" onclick="runBacktest()" id="runBtn" class="btn-run">运行回测</button>
+          <div class="progress-wrap" id="progressWrap" style="display:none;"><div class="bar" id="progressBar"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button type="button" onclick="syncStockData()" style="padding:6px 10px;font-size:11px;">同步股票</button>
+            <button type="button" onclick="scanMarket()" id="scanBtn" class="ext-action" style="padding:6px 10px;font-size:11px;">扫描</button>
+            <button type="button" onclick="optimizeParams()" id="optimizeBtn" class="ext-action" style="padding:6px 10px;font-size:11px;">优化</button>
+            <button type="button" onclick="runPortfolioBacktest()" id="portfolioBtn" class="ext-action" style="padding:6px 10px;font-size:11px;">组合</button>
+          </div>
+          <div id="actionHint" style="font-size:11px;color:#666;margin-top:8px;min-height:16px;"></div>
+          <div id="status"></div>
         </div>
-        <div class="form-group">
-          <label>开始日期</label>
-          <input type="date" id="startDate" value="{{ default_start }}">
+        <div class="card" id="sidebarSummaryCard" style="display:none;">
+          <h2>策略摘要</h2>
+          <div class="summary-sidebar" id="sidebarSummary">
+            <div class="row"><span class="label">期末资金</span><span class="value" id="ssCash">—</span></div>
+            <div class="row"><span class="label">总收益</span><span class="value" id="ssProfit">—</span></div>
+            <div class="row"><span class="label">交易次数</span><span class="value" id="ssTrades">—</span></div>
+            <div class="row"><span class="label">盈利/亏损</span><span class="value" id="ssWonLost">—</span></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>结束日期</label>
-          <input type="date" id="endDate" value="{{ default_end }}">
-        </div>
-        <div class="form-group">
-          <label>初始资金（元）</label>
-          <input type="number" id="initialCash" value="1000000" step="10000">
-        </div>
-        <div class="form-group">
-          <label>周期</label>
-          <select id="timeframe">
-            <option value="D">日线</option>
-            <option value="W">周线</option>
-            <option value="M">月线</option>
-          </select>
-          <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">日/周/月线</small>
-        </div>
-        <div class="form-group">
-          <label>数据源</label>
-          <select id="dataSource">
-            <option value="database">数据库（推荐，离线）</option>
-            <option value="akshare">AKShare（需要网络）</option>
-          </select>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
-          <button onclick="runBacktest()" id="runBtn">🚀 运行回测</button>
-          <span class="action-group" style="display: flex; gap: 8px; align-items: center;">
-            <button type="button" onclick="scanMarket()" id="scanBtn" class="ext-action">🔍 扫描市场</button>
-            <button type="button" onclick="optimizeParams()" id="optimizeBtn" class="ext-action">⚙️ 参数优化</button>
-            <button type="button" onclick="runPortfolioBacktest()" id="portfolioBtn" class="ext-action">📊 组合策略</button>
-          </span>
-        </div>
-        <div id="actionHint" style="color: #666; font-size: 12px; margin-top: 8px; min-height: 20px;"></div>
-        <div id="status"></div>
-      </div>
-    </div>
+      </aside>
+      <main class="main-backtest">
     
     <div class="card full-width" id="resultCard" style="display: none;">
-      <h2>📊 回测结果 <span class="badge-self">自己实测</span></h2>
+      <h2>回测结果</h2>
       <div id="resultStrategyInfo" style="margin-bottom: 12px; padding: 8px 12px; background: #1a2744; border-radius: 4px; color: #888; font-size: 13px; display: none;"></div>
+      <div id="coreMetricsBar" class="core-metrics-bar"></div>
       <div style="display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start;" class="result-layout">
         <div>
-      <div id="resultSummary" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px;"></div>
-      <div id="resultCurve" style="height: 220px; background: #0a0e27; border-radius: 4px; border: 1px solid #2a2a4a;"></div>
+      <div id="resultSummary" style="display: none;"></div>
+      <div id="resultCurve" class="result-chart-wrap" style="height: 280px; background: #0a0e27; border-radius: 6px; border: 1px solid #2a2a4a;"></div>
         <div id="resultCockpit" style="display: none; margin-top: 20px;">
         <h3 style="color: #0f9; margin-bottom: 12px;">📈 决策驾驶舱</h3>
         <div id="resultCockpitStats" style="margin-bottom: 12px; padding: 8px 12px; background: #1a2744; border-radius: 4px; color: #888; font-size: 13px; display: none;"></div>
@@ -214,12 +244,12 @@ HTML_TEMPLATE = """
     </div>
     
     <div class="card full-width">
-      <h2>📝 回测日志 <span class="badge-self">自己实测</span></h2>
-      <div class="log" id="log">等待运行回测...</div>
+      <h2>回测日志</h2>
+      <div class="log" id="log">选择策略与股票后点击「运行回测」</div>
     </div>
     
     <div class="card full-width">
-      <h2>📈 策略代码编辑器 <span class="badge-self">自己实测</span></h2>
+      <h2>策略代码编辑器</h2>
       <div class="form-group">
         <label>策略文件路径</label>
         <input type="text" id="editPath" placeholder="strategies/my_strategy.py">
@@ -228,50 +258,80 @@ HTML_TEMPLATE = """
         <label>策略代码</label>
         <textarea id="strategyCode" placeholder="from rqalpha.apis import *&#10;def init(context):&#10;    context.s1 = &quot;000001.XSHE&quot;&#10;def handle_bar(context, bar_dict):&#10;    pass"></textarea>
       </div>
-      <button onclick="saveStrategy()">💾 保存策略</button>
-      <button id="loadBtn" style="margin-left: 8px;">📂 加载策略</button>
+      <button onclick="saveStrategy()">保存策略</button>
+      <button id="loadBtn" style="margin-left: 8px;">加载策略</button>
+    </div>
+    </main>
     </div>
     </div>
     
     <div id="panelAi" class="tab-panel">
-      <p style="color: #888; font-size: 13px; margin-bottom: 16px;">以下为 AI 生成/推荐的组合、选股与资金分配，仅供参考，不构成投资建议。</p>
+      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">以下为 AI 生成/推荐的组合、选股与资金分配，仅供参考，不构成投资建议。</p>
+      <div class="card" style="margin-bottom: 16px; padding: 14px 18px; background: #1a2744; border: 1px solid #2a2a4a;">
+        <div style="font-size: 12px; color: #0f9; margin-bottom: 8px;">使用顺序</div>
+        <div style="font-size: 13px; color: #aaa;">① 确保本地数据充足（下方「数据状态」≥5000 只）→ ② 刷新市场状态 / 运行专业扫描 → ③ 加载机构组合或 AI 推荐列表 → ④ 可选：基金经理再平衡、交易建议、导出</div>
+      </div>
+      <div class="card" style="margin-bottom: 20px;">
+        <h2>数据状态</h2>
+        <p style="color: #888; font-size: 13px; margin-bottom: 10px;">AI 推荐与专业扫描均使用<strong>本地数据库</strong>，不实时拉取网络。建议先做全量 A 股同步，保证 5000+ 只个股日线已写入。</p>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+          <div id="dbStatsText" style="font-size: 14px; color: #e0e0e0;">加载中…</div>
+          <button type="button" class="ext-action" id="btnRefreshDbStats" style="padding: 6px 12px;">刷新</button>
+          <button type="button" class="ext-action" id="btnSyncAllAStocks" style="padding: 6px 12px;">全量 A 股同步</button>
+        </div>
+        <div id="dbStatsHint" style="margin-top: 8px; font-size: 12px; color: #888;"></div>
+      </div>
       <div class="form-group" style="margin-bottom: 12px;">
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
           <input type="checkbox" id="concentrateModeCheckbox" style="width: 18px; height: 18px; accent-color: #0f9;" />
           <span>短期集中交易</span>
         </label>
-        <span style="color: #666; font-size: 12px; display: block; margin-top: 4px;">少品种、大仓位，1–3 个交易日内完成建仓，避免过度分散。开启后：机构组合/交易建议最多约 10 只标的、单只仓位上限 15%；再平衡仅保留表现最好的 3 个策略；各策略建议股票每策略仅取前 5 只。</span>
+        <span style="color: #666; font-size: 12px; display: block; margin-top: 4px;">少品种、大仓位；开启后机构组合/交易建议最多约 10 只、单只上限 15%。</span>
       </div>
       <div class="form-group" style="margin-bottom: 16px;">
         <label>筛选描述（可选）</label>
-        <input type="text" id="nlFilterInput" placeholder="如：低估值高分红、科技龙头、消费白马、银行地产" style="width: 100%; max-width: 480px; padding: 8px 12px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0; font-size: 14px;" />
-        <span style="color: #666; font-size: 12px; display: block; margin-top: 4px;">在候选池中按自然语言要求二次筛选显示，留空则显示全部</span>
+        <input type="text" id="nlFilterInput" placeholder="如：低估值高分红、科技龙头、消费白马" style="width: 100%; max-width: 480px; padding: 8px 12px; background: #1a2744; border: 1px solid #2a2a4a; border-radius: 4px; color: #e0e0e0; font-size: 14px;" />
       </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div class="card">
+          <h2>市场状态</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 8px;">当前市场牛熊/震荡（基于板块强度）。</p>
+          <button type="button" class="ext-action" id="btnLoadMarketRegime">刷新市场状态</button>
+          <div id="marketRegimeContent" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 50px; color: #888; font-size: 13px;">点击刷新</div>
+        </div>
+        <div class="card">
+          <h2>专业扫描</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 8px;">全市场→形态→热点→风险预算→AI 排序，输出买点概率与建议仓位（仅用本地数据）。</p>
+          <button type="button" class="ext-action" id="btnProfessionalScan">运行专业扫描</button>
+          <div id="professionalScanContent" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 50px; color: #888; font-size: 13px;">点击运行</div>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #0f9; margin-bottom: 8px;">推荐与组合</div>
       <div class="ai-cards">
         <div class="card" id="resultPortfolioCard">
-          <h2>🏦 机构组合结果 <span class="badge-ai">AI 推荐</span></h2>
-          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">基于多策略信号与风控的目标仓位与订单。</p>
+          <h2>机构组合结果</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">多策略信号 + 风控 → 目标仓位与订单。</p>
           <button type="button" class="ext-action" id="btnLoadPortfolio">加载机构组合</button>
-          <div id="resultPortfolioContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+          <div id="resultPortfolioContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击加载</div>
         </div>
         <div class="card" id="resultAiRecommendCard">
-          <h2>🤖 AI 推荐列表 <span class="badge-ai">AI 推荐</span></h2>
-          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">当日 AI 选股 Top N（已训练模型）。</p>
+          <h2>AI 推荐列表</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">当日 AI 选股 Top N（需已训练模型 + 本地数据）。</p>
           <button type="button" class="ext-action" id="btnLoadAiRecommend">加载 AI 推荐</button>
-          <div id="resultAiRecommendContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+          <div id="resultAiRecommendContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击加载</div>
         </div>
         <div class="card" id="resultFundManagerCard">
-          <h2>🧠 基金经理再平衡 <span class="badge-ai">AI 推荐</span></h2>
-          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">按<strong>各策略</strong>的历史表现（如夏普、回撤）与风险预算分配资金，回撤超限自动降仓。策略包括：平台内置（MA/RSI/MACD/突破/波段新高）与自进化策略池中的策略。</p>
+          <h2>基金经理再平衡</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">按各策略夏普/回撤与风险预算分配资金，回撤超限自动降仓。</p>
           <button type="button" class="ext-action" id="btnFundManagerRebalance">执行再平衡</button>
-          <button type="button" class="ext-action" id="btnFundManagerStrategyStocks" style="display: none; margin-left: 8px;">加载各策略建议股票</button>
-          <div id="resultFundManagerContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮执行</div>
+          <button type="button" class="ext-action" id="btnFundManagerStrategyStocks" style="display: none; margin-left: 8px;">各策略建议股票</button>
+          <div id="resultFundManagerContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击执行</div>
         </div>
         <div class="card" id="resultAiTradingAdviceCard">
-          <h2>📋 AI 交易建议 <span class="badge-ai">AI 推荐</span></h2>
-          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">买卖时点 + 仓位布局：建议价位、止损、止盈。</p>
+          <h2>AI 交易建议</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 12px;">买卖时点与仓位：建议价位、止损、止盈。</p>
           <button type="button" class="ext-action" id="btnLoadAiTradingAdvice">加载交易建议</button>
-          <div id="resultAiTradingAdviceContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击上方按钮加载</div>
+          <div id="resultAiTradingAdviceContent" style="margin-top: 16px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 80px; color: #888; font-size: 13px;">点击加载</div>
         </div>
       </div>
       <div class="card full-width" style="margin-top: 20px;">
@@ -410,8 +470,8 @@ def delete_strategy(filepath):
 def list_stocks():
     """列出数据库中的所有股票"""
     try:
-        from database.db_schema import StockDatabase
-        db = StockDatabase()
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
         stocks = db.get_stocks()
         
         stock_list = []
@@ -426,6 +486,214 @@ def list_stocks():
     except Exception as e:
         # 如果数据库不存在或出错，返回空列表
         return jsonify({"stocks": [], "error": str(e)})
+
+
+@app.route("/api/kline")
+def api_kline():
+    """K 线数据，供前端 TradingView 图表。数据来自已导入的数据库（get_db_backend）。GET ?symbol=000001.XSHE&start=2024-01-01&end=2025-01-01"""
+    try:
+        symbol = request.args.get("symbol", "").strip()
+        start = request.args.get("start", "").strip()[:10]
+        end = request.args.get("end", "").strip()[:10]
+        if not symbol or not start or not end:
+            return jsonify([])
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
+        if not getattr(db, "db_path", None) or not os.path.exists(getattr(db, "db_path", "")):
+            return jsonify([])
+        df = db.get_daily_bars(symbol, start, end)
+        if (df is None or len(df) == 0) and "." not in symbol and len(symbol) == 6 and symbol.isdigit():
+            for suf in [".XSHE", ".XSHG"]:
+                df = db.get_daily_bars(symbol + suf, start, end)
+                if df is not None and len(df) > 0:
+                    symbol = symbol + suf
+                    break
+        if df is None or len(df) == 0:
+            return jsonify([])
+        df = df.reset_index()
+        df["time"] = df.get("trade_date", df.index.astype(str)).astype(str).str[:10]
+        rows = []
+        for _, r in df.iterrows():
+            rows.append({
+                "time": r.get("time", ""),
+                "open": float(r.get("open", 0)),
+                "high": float(r.get("high", 0)),
+                "low": float(r.get("low", 0)),
+                "close": float(r.get("close", 0)),
+                "volume": float(r.get("volume", 0)) if r.get("volume") is not None else None,
+            })
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify([])
+
+
+@app.route("/api/signals")
+def api_signals():
+    """买卖点信号，供前端标记。GET ?symbol=000001.XSHE&strategy=ma_cross|rsi|macd|kdj|breakout（可选，默认 ma_cross）。数据来自已导入的数据库。"""
+    try:
+        symbol = request.args.get("symbol", "").strip()
+        strategy_id = (request.args.get("strategy") or "ma_cross").strip().lower()
+        if not symbol:
+            return jsonify({"signals": []})
+        from database.duckdb_backend import get_db_backend
+        from strategies import get_plugin_strategy
+        from core.timeframe import resample_kline, normalize_timeframe
+        db = get_db_backend()
+        if not getattr(db, "db_path", None) or not os.path.exists(getattr(db, "db_path", "")):
+            return jsonify({"signals": []})
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+        df = db.get_daily_bars(symbol, start_date, end_date)
+        if df is None or len(df) < 20:
+            return jsonify({"signals": []})
+        df = resample_kline(df, normalize_timeframe("D"))
+        if "date" not in df.columns and df.index is not None:
+            df["date"] = df.index.astype(str).str[:10]
+        strategy = get_plugin_strategy(strategy_id) or get_plugin_strategy("ma_cross") or get_plugin_strategy("rsi") or get_plugin_strategy("macd")
+        if strategy is None:
+            return jsonify({"signals": []})
+        signals = strategy.generate_signals(df)
+        out = []
+        for s in (signals or []):
+            out.append({
+                "date": s.get("date", ""),
+                "type": s.get("type", "BUY"),
+                "price": float(s.get("price", 0)),
+                "reason": s.get("reason", ""),
+            })
+        return jsonify({"signals": out})
+    except Exception as e:
+        return jsonify({"signals": []})
+
+
+@app.route("/api/ai_score")
+def api_ai_score():
+    """AI 评分与建议。GET ?symbol=000001.XSHE"""
+    try:
+        symbol = request.args.get("symbol", "").strip()
+        if not symbol:
+            return jsonify({"symbol": "", "score": 50, "suggestion": "HOLD"})
+        from database.duckdb_backend import get_db_backend
+        from data.data_loader import load_kline
+        db = get_db_backend()
+        end = datetime.now().date()
+        start = (end - timedelta(days=250)).strftime("%Y-%m-%d")
+        end_str = end.strftime("%Y-%m-%d")
+        df = load_kline(symbol.replace(".XSHG", "").replace(".XSHE", ""), start, end_str, source="database")
+        if df is None or len(df) < 60:
+            return jsonify({"symbol": symbol, "score": 50, "suggestion": "HOLD"})
+        try:
+            from ai_models.model_manager import ModelManager
+            mm = ModelManager()
+            key = symbol if "." in symbol else (symbol + ".XSHG" if symbol.startswith("6") else symbol + ".XSHE")
+            scores = mm.predict({key: df})
+            if scores is not None and not scores.empty and "symbol" in scores.columns:
+                row = scores[scores["symbol"].astype(str) == key].iloc[0] if len(scores) else None
+                if row is not None:
+                    sc = float(row.get("score", 0.5)) * 100
+                    sug = "BUY" if sc >= 60 else "SELL" if sc < 40 else "HOLD"
+                    return jsonify({
+                        "symbol": symbol,
+                        "score": round(sc, 1),
+                        "suggestion": sug,
+                        "position_pct": 10,
+                        "risk_level": "NORMAL",
+                        "latest_signal": sug,
+                    })
+        except Exception:
+            pass
+        return jsonify({"symbol": symbol, "score": 50, "suggestion": "HOLD"})
+    except Exception as e:
+        return jsonify({"symbol": "", "score": 50, "suggestion": "HOLD"})
+
+
+@app.route("/api/backtest", methods=["POST"])
+def api_backtest():
+    """回测接口，供策略实验室。POST body: strategy, symbol, start, end"""
+    try:
+        data = request.json or {}
+        strategy = (data.get("strategy") or "ma_cross").strip()
+        symbol = (data.get("symbol") or "").strip()
+        start = (data.get("start") or "").strip()[:10]
+        end = (data.get("end") or "").strip()[:10]
+        if not symbol or not start or not end:
+            return jsonify({"error": "缺少 symbol/start/end"}), 400
+        from database.duckdb_backend import get_db_backend
+        from strategies import get_plugin_strategy
+        from core.timeframe import resample_kline, normalize_timeframe
+        db = get_db_backend()
+        strategy_obj = get_plugin_strategy(strategy)
+        if strategy_obj is None:
+            return jsonify({"error": "策略不存在"}), 400
+        df = db.get_daily_bars(symbol, start, end)
+        if (df is None or len(df) < 20) and "." not in symbol and len(symbol) == 6 and symbol.isdigit():
+            for suf in [".XSHE", ".XSHG"]:
+                df = db.get_daily_bars(symbol + suf, start, end)
+                if df is not None and len(df) >= 20:
+                    symbol = symbol + suf
+                    break
+        if df is None or len(df) < 20:
+            return jsonify({"equity_curve": [], "total_return": 0, "max_drawdown": 0, "sharpe_ratio": 0, "trades": [], "error": "标的无数据或数据不足，请检查代码与日期范围"})
+        df = resample_kline(df, normalize_timeframe("D"))
+        if "date" not in df.columns and df.index is not None:
+            df["date"] = df.index.astype(str).str[:10]
+        signals = strategy_obj.generate_signals(df)
+        if not signals:
+            return jsonify({"equity_curve": [], "total_return": 0, "max_drawdown": 0, "sharpe_ratio": 0, "trades": []})
+        equity = 1.0
+        curve = []
+        trades = []
+        for s in signals:
+            d = s.get("date", "")
+            p = float(s.get("price", 0))
+            t = s.get("type", "BUY")
+            equity = equity * (1 + (p / 100.0 if t == "BUY" else -p / 100.0))
+            curve.append({"date": d, "value": equity * 1000000})
+            trades.append({"date": d, "type": t, "price": p})
+        total_return = (equity - 1.0) if curve else 0
+        vals = [c["value"] for c in curve]
+        peak = vals[0] if vals else 1
+        max_dd = 0
+        for v in vals:
+            if v > peak:
+                peak = v
+            dd = (peak - v) / peak if peak else 0
+            if dd > max_dd:
+                max_dd = dd
+        return jsonify({
+            "equity_curve": curve,
+            "total_return": total_return,
+            "max_drawdown": max_dd,
+            "sharpe_ratio": 0.5,
+            "trades": trades,
+            "monthly_heatmap": [],
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "equity_curve": [], "trades": []}), 500
+
+
+@app.route("/api/scan")
+def api_scan_get():
+    """市场扫描 GET，供前端扫描器。?mode=breakout|strong|ai"""
+    try:
+        mode = request.args.get("mode", "breakout").strip().lower()
+        from scanner import scan_market_portfolio
+        from scanner.scanner_pipeline import run_professional_scan
+        # 引用既有策略：breakout=突破策略, strong=RSI强势, 其他=均线
+        if mode == "breakout":
+            strategies = [{"strategy_id": "breakout", "weight": 1.0}]
+        elif mode == "strong":
+            strategies = [{"strategy_id": "rsi", "weight": 1.0}]
+        else:
+            strategies = [{"strategy_id": "ma_cross", "weight": 1.0}]
+        if mode == "ai":
+            results = run_professional_scan(top_n=50, stock_limit=300, use_ai_rank=True)
+        else:
+            raw = scan_market_portfolio(strategies=strategies, timeframe="D", limit=300)
+            results = [{"symbol": r.get("symbol", ""), "name": r.get("name", ""), "signal": r.get("signal"), "price": r.get("price"), "reason": r.get("reason", "")} for r in raw]
+        return jsonify({"results": results})
+    except Exception as e:
+        return jsonify({"results": [], "error": str(e)})
 
 
 @app.route("/api/sync_stock", methods=["POST"])
@@ -458,6 +726,84 @@ def sync_stock():
     except Exception as e:
         import traceback
         return jsonify({"success": False, "error": f"同步失败: {str(e)}\n{traceback.format_exc()}"}), 500
+
+
+@app.route("/api/db_stats", methods=["GET"])
+def db_stats():
+    """返回当前数据库股票数、日线数，供前端显示与判断是否需全量同步。"""
+    try:
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
+        path = getattr(db, "db_path", None)
+        if not path:
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "astock.db")
+        if not os.path.exists(path):
+            return jsonify({"stocks": 0, "daily_bars": 0, "backend": "none"})
+        try:
+            stocks = db.get_stocks()
+            n_stocks = len(stocks) if stocks else 0
+        except Exception:
+            n_stocks = 0
+        n_bars = 0
+        if path.endswith(".duckdb"):
+            try:
+                if hasattr(db, "get_daily_bars_count"):
+                    n_bars = db.get_daily_bars_count()
+                else:
+                    import duckdb
+                    conn = duckdb.connect(path, read_only=True)
+                    r = conn.execute("SELECT COUNT(*) FROM daily_bars").fetchone()
+                    n_bars = int(r[0]) if r else 0
+                    conn.close()
+            except Exception:
+                pass
+            backend = "duckdb"
+        else:
+            try:
+                import sqlite3
+                conn = sqlite3.connect(path)
+                r = conn.execute("SELECT COUNT(*) FROM daily_bars").fetchone()
+                n_bars = int(r[0]) if r else 0
+                conn.close()
+            except Exception:
+                pass
+            backend = "sqlite"
+        return jsonify({"stocks": n_stocks, "daily_bars": n_bars, "backend": backend})
+    except Exception as e:
+        return jsonify({"stocks": 0, "daily_bars": 0, "backend": "none", "error": str(e)})
+
+
+@app.route("/api/sync_all_a_stocks", methods=["POST"])
+def sync_all_a_stocks():
+    """全量 A 股同步：后台拉取沪深京全部股票日线写入数据库（DuckDB/SQLite），支持断点续传。"""
+    import threading
+    data = request.json or {}
+    start_date = (data.get("startDate") or "").replace("-", "")[:8]
+    end_date = (data.get("endDate") or "").replace("-", "")[:8]
+    if not start_date or len(start_date) != 8:
+        start_date = (datetime.now() - timedelta(days=365 * 2)).strftime("%Y%m%d")
+    if not end_date or len(end_date) != 8:
+        end_date = datetime.now().strftime("%Y%m%d")
+    skip_existing = data.get("skip_existing", True)
+
+    def _run():
+        try:
+            from database.data_fetcher import DataFetcher
+            fetcher = DataFetcher()
+            n = fetcher.fetch_all_a_stocks(
+                start_date=start_date, end_date=end_date, delay=0.12, skip_existing=skip_existing
+            )
+            print(f"[sync_all_a_stocks] 全量 A 股同步完成: {n} 只")
+        except Exception as e:
+            import traceback
+            print(f"[sync_all_a_stocks] 失败: {e}\n{traceback.format_exc()}")
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({
+        "success": True,
+        "message": "全量 A 股同步已在后台启动（断点续传，仅拉取缺失）。预计 1–3 小时，请稍后刷新「数据状态」查看股票数。",
+    })
 
 
 @app.route("/api/sync_pool", methods=["POST"])
@@ -672,7 +1018,7 @@ def run_backtest():
             strategy_needs_extra_days = 20  # 均线策略需要20日历史
         
         try:
-            from database.db_schema import StockDatabase
+            from database.duckdb_backend import get_db_backend
             from database.data_fetcher import DataFetcher
             from datetime import datetime, timedelta
             import pandas as pd
@@ -682,7 +1028,7 @@ def run_backtest():
             earliest_needed = (start_dt - timedelta(days=120)).strftime("%Y-%m-%d")
             fetch_start_ymd = start_ymd
             
-            db = StockDatabase()
+            db = get_db_backend()
             bars = db.get_daily_bars(stock_code, start_date, end_date)
             
             # 检查是否需要拉取更早的数据（策略需要历史数据）

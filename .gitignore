@@ -3,6 +3,9 @@ venv/
 .venv/
 env/
 
+# 前端依赖（安装：cd frontend && npm install）
+frontend/node_modules/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -22,6 +25,7 @@ build/
 
 # 数据库与行情数据（GitHub 单文件限制 100MB，切勿提交）
 data/*.db
+data/*.duckdb
 data/**/*.csv
 
 # 回测产出（可选忽略，避免仓库膨胀）

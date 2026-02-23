@@ -432,6 +432,49 @@
     if (suggestEl) suggestEl.textContent = '建议: ' + suggest;
   }
 
+  function renderCoreMetricsBar(s) {
+    var el = document.getElementById('coreMetricsBar');
+    if (!el) return;
+    var ret = s.return_rate != null ? s.return_rate : s.total_returns;
+    var ann = s.annualized_returns;
+    var dd = s.max_drawdown;
+    var sharpe = s.sharpe_ratio;
+    var fmtPct = function(v) { return v != null ? (v * 100).toFixed(2) + '%' : '—'; };
+    var retNum = ret != null ? (ret * 100).toFixed(2) + '%' : '—';
+    var retCls = ret != null ? (ret >= 0 ? 'positive' : 'negative') : 'neutral';
+    var ddCls = dd != null ? 'negative' : 'neutral';
+    el.innerHTML =
+      '<div class="core-metric"><div class="name">总收益率</div><div class="num ' + retCls + '">' + retNum + '</div></div>' +
+      '<div class="core-metric"><div class="name">年化收益</div><div class="num ' + (ann != null && ann >= 0 ? 'positive' : 'negative') + '">' + fmtPct(ann) + '</div></div>' +
+      '<div class="core-metric"><div class="name">最大回撤</div><div class="num ' + ddCls + '">' + fmtPct(dd) + '</div></div>' +
+      '<div class="core-metric"><div class="name">夏普比率</div><div class="num neutral">' + (sharpe != null ? (sharpe).toFixed(3) : '—') + '</div></div>';
+  }
+
+  function renderSidebarSummary(result) {
+    var card = document.getElementById('sidebarSummaryCard');
+    var cashEl = document.getElementById('ssCash');
+    var profitEl = document.getElementById('ssProfit');
+    var tradesEl = document.getElementById('ssTrades');
+    var wonLostEl = document.getElementById('ssWonLost');
+    if (!card) return;
+    var curve = result.curve || [];
+    var lastVal = curve.length > 0 && curve[curve.length - 1].value != null ? curve[curve.length - 1].value : null;
+    var s = result.summary || {};
+    var initialCash = parseFloat(document.getElementById('initialCash').value) || 1000000;
+    var ret = s.return_rate != null ? s.return_rate : s.total_returns;
+    var profitPct = ret != null ? (ret * 100).toFixed(2) + '%' : (lastVal != null ? ((lastVal - initialCash) / initialCash * 100).toFixed(2) + '%' : '—');
+    var profitCls = (ret != null && ret >= 0) || (lastVal != null && lastVal >= initialCash) ? 'positive' : 'negative';
+    if (cashEl) cashEl.textContent = lastVal != null ? lastVal.toFixed(0) : '—';
+    if (profitEl) { profitEl.textContent = profitPct; profitEl.className = 'value ' + profitCls; }
+    var st = result.stats || {};
+    var tc = st.tradeCount != null ? st.tradeCount : (s.trade_count != null ? s.trade_count : null);
+    if (tradesEl) tradesEl.textContent = tc != null ? tc : '—';
+    var won = st.won != null ? st.won : (st.winCount != null ? st.winCount : null);
+    var lost = st.lost != null ? st.lost : (st.lossCount != null ? st.lossCount : null);
+    if (wonLostEl) wonLostEl.textContent = (won != null && lost != null) ? (won + ' / ' + lost) : (st.winRate != null ? (st.winRate * 100).toFixed(0) + '% 胜率' : '—');
+    card.style.display = 'block';
+  }
+
   async function scanMarket() {
     var strategyInput = document.getElementById('strategyFile');
     var strategy = strategyInput ? (strategyInput.getAttribute('data-file') || strategyInput.value.split('(')[1]) : '';
@@ -548,6 +591,8 @@
           infoEl.style.display = 'block';
         }
         var s = data.result.summary || {};
+        renderCoreMetricsBar(s);
+        renderSidebarSummary(data.result);
         var sumEl = document.getElementById('resultSummary');
         sumEl.innerHTML = '<div style="background:#1a2744;padding:10px;border-radius:4px;"><span style="color:#888;">总收益</span><br><span style="color:#0f9;">' + ((s.total_returns != null || s.return_rate != null) ? ((s.return_rate != null ? s.return_rate * 100 : (s.total_returns || 0) * 100).toFixed(2) + '%') : '—') + '</span></div>' +
           '<div style="background:#1a2744;padding:10px;border-radius:4px;"><span style="color:#888;">最大回撤</span><br><span style="color:#0f9;">' + (s.max_drawdown != null ? (s.max_drawdown * 100).toFixed(2) + '%' : '—') + '</span></div>';
@@ -721,6 +766,10 @@
     var log = document.getElementById('log');
 
     btn.disabled = true;
+    var pw = document.getElementById('progressWrap');
+    var pbar = document.getElementById('progressBar');
+    if (pw) pw.style.display = 'block';
+    if (pbar) pbar.style.width = '30%';
     status.innerHTML = '<span class="status running">运行中...</span>';
     log.textContent = '正在启动回测...\n策略: ' + strategy + '\n股票: ' + stockCode + '\n数据源: ' + dataSource + '\n';
 
@@ -746,6 +795,7 @@
         return;
       }
       if (data.success) {
+        if (pbar) pbar.style.width = '100%';
         status.innerHTML = '<span class="status success">回测完成</span>';
         log.textContent = data.log || '回测完成！';
         if (data.result) {
@@ -776,6 +826,8 @@
             infoEl.style.display = (sn || tf) ? 'block' : 'none';
           }
           var s = data.result.summary || {};
+          renderCoreMetricsBar(s);
+          renderSidebarSummary(data.result);
           var showKeys = [
             ['return_rate', '总收益率', true], ['annualized_returns', '年化收益', true], ['max_drawdown', '最大回撤', true], ['sharpe_ratio', '夏普比率', false]
           ];
@@ -825,6 +877,10 @@
       log.textContent = '错误: ' + e.message;
     } finally {
       btn.disabled = false;
+      var pw = document.getElementById('progressWrap');
+      var pbar = document.getElementById('progressBar');
+      if (pbar) pbar.style.width = '100%';
+      setTimeout(function() { if (pw) pw.style.display = 'none'; if (pbar) pbar.style.width = '0%'; }, 1500);
     }
   }
 
@@ -836,6 +892,151 @@
   function getConcentrateMode() {
     var cb = document.getElementById('concentrateModeCheckbox');
     return cb ? cb.checked : false;
+  }
+
+  async function loadDbStats() {
+    var el = document.getElementById('dbStatsText');
+    var hint = document.getElementById('dbStatsHint');
+    if (!el) return;
+    el.textContent = '加载中…';
+    if (hint) hint.textContent = '';
+    try {
+      var res = await fetch('/api/db_stats');
+      var data = await res.json();
+      var backend = data.backend || '';
+      var stocks = data.stocks != null ? data.stocks : 0;
+      var bars = data.daily_bars != null ? data.daily_bars : 0;
+      el.textContent = '股票 ' + stocks + ' 只，日线 ' + (bars >= 1000000 ? (bars / 1000000).toFixed(1) + 'M' : bars.toLocaleString()) + ' 条（' + backend + '）';
+      if (hint) {
+        if (stocks < 5000) hint.textContent = '建议：若已有完整 data/astock.db，可直接运行 python scripts/migrate_sqlite_to_duckdb.py 复制到 DuckDB（本地拷贝，很快）；否则可点「全量 A 股同步」从网络拉取。';
+        else hint.textContent = '本地数据已满足 5000+ 只，可直接使用专业扫描与 AI 推荐。';
+      }
+    } catch (e) {
+      el.textContent = '获取失败: ' + (e.message || e);
+    }
+  }
+
+  async function syncAllAStocks() {
+    var btn = document.getElementById('btnSyncAllAStocks');
+    var hint = document.getElementById('dbStatsHint');
+    if (btn) btn.disabled = true;
+    if (hint) hint.textContent = '正在启动全量同步…';
+    try {
+      var res = await fetch('/api/sync_all_a_stocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skip_existing: true })
+      });
+      var data = await res.json();
+      if (hint) hint.textContent = data.message || (data.success ? '已启动，请稍后刷新数据状态。' : (data.error || ''));
+    } catch (e) {
+      if (hint) hint.textContent = '请求失败: ' + (e.message || e);
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadMarketRegime() {
+    var btn = document.getElementById('btnLoadMarketRegime');
+    var el = document.getElementById('marketRegimeContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    try {
+      var res = await fetch('/api/market/regime');
+      var data = await res.json();
+      if (data.success) {
+        var r = data.regime || 'NEUTRAL';
+        var desc = data.description || '';
+        var strength = data.avg_strength != null ? data.avg_strength : '';
+        var color = r === 'BULL' ? '#0f9' : (r === 'BEAR' ? '#f55' : '#fc0');
+        el.innerHTML = '<div style="font-size:18px;font-weight:600;color:' + color + ';">' + r + ' ' + desc + '</div>' + (strength ? '<div style="font-size:12px;color:#888;">板块强度均值 ' + strength + '</div>' : '');
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  function pctForPhase(phase, current, total) {
+    var t = total > 0 ? current / total : 0;
+    if (phase === 'scan') return Math.round(25 * t);
+    if (phase === 'pattern') return 25 + Math.round(50 * t);
+    if (phase === 'ai') return 75 + Math.round(20 * t);
+    if (phase === 'done') return 100;
+    return 0;
+  }
+
+  async function loadProfessionalScan() {
+    var btn = document.getElementById('btnProfessionalScan');
+    var el = document.getElementById('professionalScanContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<div class="scan-progress-wrap"><div class="scan-progress-bar"><div class="scan-progress-fill" id="scanProgressFill" style="width:0%"></div></div><div class="scan-progress-msg" id="scanProgressMsg">正在启动… 预计 30 秒–2 分钟</div></div>';
+    var fillEl = document.getElementById('scanProgressFill');
+    var msgEl = document.getElementById('scanProgressMsg');
+    try {
+      var res = await fetch('/api/scan/professional/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ top_n: 30, use_ai_rank: true })
+      });
+      if (!res.ok || !res.body) {
+        el.innerHTML = '<span style="color:#f55;">请求失败 ' + res.status + '</span>';
+        if (btn) btn.disabled = false;
+        return;
+      }
+      var reader = res.body.getReader();
+      var dec = new TextDecoder();
+      var buf = '';
+      var done = false;
+      while (!done) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buf += dec.decode(chunk.value, { stream: true });
+        var parts = buf.split('\n\n');
+        buf = parts.pop() || '';
+        for (var i = 0; i < parts.length; i++) {
+          var line = parts[i];
+          var dataStr = (line.match(/^data:\s*(.+)$/m) || [])[1];
+          if (!dataStr) continue;
+          try {
+            var msg = JSON.parse(dataStr);
+            if (msg.type === 'ping') continue;
+            if (msg.type === 'progress' && fillEl && msgEl) {
+              var pct = pctForPhase(msg.phase, msg.current || 0, msg.total || 1);
+              fillEl.style.width = pct + '%';
+              msgEl.textContent = msg.message || (msg.phase + ' ' + (msg.current || 0) + '/' + (msg.total || 1));
+            }
+            if (msg.type === 'done') {
+              done = true;
+              var results = msg.results || [];
+              if (results.length > 0) {
+                var html = '<table style="width:100%;font-size:12px;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #2a2a4a;">标的</th><th style="padding:4px;border-bottom:1px solid #2a2a4a;">买点概率</th><th style="padding:4px;border-bottom:1px solid #2a2a4a;">风险</th><th style="padding:4px;border-bottom:1px solid #2a2a4a;">建议仓位%</th><th style="padding:4px;border-bottom:1px solid #2a2a4a;">形态/热点</th></tr></thead><tbody>';
+                results.forEach(function(r) {
+                  html += '<tr><td style="padding:4px;">' + (r.symbol || '') + '</td><td style="padding:4px;color:#0f9;">' + (r.buy_prob != null ? r.buy_prob + '%' : '') + '</td><td style="padding:4px;">' + (r.risk_level || '') + '</td><td style="padding:4px;">' + (r.suggest_position_pct != null ? r.suggest_position_pct + '%' : '') + '</td><td style="padding:4px;font-size:11px;color:#888;">' + (r.pattern_tags || '') + ' | ' + (r.hot_strength != null ? r.hot_strength : '') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                el.innerHTML = html;
+              } else {
+                el.innerHTML = '<span style="color:#888;">扫描完成，当前无符合条件的标的</span>';
+              }
+              break;
+            }
+            if (msg.type === 'error') {
+              done = true;
+              el.innerHTML = '<span style="color:#f55;">' + (msg.error || '扫描失败') + '</span>';
+              break;
+            }
+          } catch (parseErr) {}
+        }
+        if (done) break;
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
   }
 
   async function loadPortfolioResult() {
@@ -1320,10 +1521,15 @@
           tabAi.classList.toggle('active', !isSelf);
           panelSelf.classList.toggle('active', isSelf);
           panelAi.classList.toggle('active', !isSelf);
+          if (tab === 'ai') loadDbStats();
         }
         tabSelf.addEventListener('click', function() { showPanel('self'); });
         tabAi.addEventListener('click', function() { showPanel('ai'); });
       }
+      var btnRefreshDbStats = document.getElementById('btnRefreshDbStats');
+      if (btnRefreshDbStats) btnRefreshDbStats.addEventListener('click', loadDbStats);
+      var btnSyncAllAStocks = document.getElementById('btnSyncAllAStocks');
+      if (btnSyncAllAStocks) btnSyncAllAStocks.addEventListener('click', syncAllAStocks);
       var loadBtn = document.getElementById('loadBtn');
       if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
       var btnPortfolio = document.getElementById('btnLoadPortfolio');
@@ -1334,6 +1540,10 @@
       if (btnFundManager) btnFundManager.addEventListener('click', loadFundManagerRebalance);
       var btnFundManagerStocks = document.getElementById('btnFundManagerStrategyStocks');
       if (btnFundManagerStocks) btnFundManagerStocks.addEventListener('click', loadFundManagerStrategyStocks);
+      var btnMarketRegime = document.getElementById('btnLoadMarketRegime');
+      if (btnMarketRegime) btnMarketRegime.addEventListener('click', loadMarketRegime);
+      var btnProfessionalScan = document.getElementById('btnProfessionalScan');
+      if (btnProfessionalScan) btnProfessionalScan.addEventListener('click', loadProfessionalScan);
       var btnAiTradingAdvice = document.getElementById('btnLoadAiTradingAdvice');
       if (btnAiTradingAdvice) btnAiTradingAdvice.addEventListener('click', loadAiTradingAdvice);
       var btnExportPdf = document.getElementById('btnExportPdf');

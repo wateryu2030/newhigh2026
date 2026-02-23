@@ -4,8 +4,12 @@ API 路由注册：组合回测、TradingView K 线数据、股票池等。
 与 web_platform 主应用解耦，通过 register_routes(app) 挂载。
 """
 import os
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, Response, stream_with_context
 import io
+import json
+import queue
+import threading
+import time
 
 _API_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -225,6 +229,133 @@ def create_api_blueprint():
             import traceback
             return jsonify({"success": False, "error": str(e), "universe": []}), 500
 
+    @bp.route("/market/sector_strength", methods=["GET"])
+    def market_sector_strength():
+        """板块强度（涨幅排名），用于热点与市场状态。"""
+        _root()
+        try:
+            from market import get_sector_strength
+            top = request.args.get("top", type=int) or 20
+            rows = get_sector_strength(top_n=top)
+            return jsonify({"success": True, "sectors": rows})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "sectors": [], "detail": traceback.format_exc()}), 500
+
+    @bp.route("/market/regime", methods=["GET"])
+    def market_regime():
+        """市场状态：牛熊/震荡。基于指数 MA 与板块强度简要判断。"""
+        _root()
+        try:
+            from market import get_sector_strength
+            sectors = get_sector_strength(top_n=10)
+            avg_strength = sum(s.get("strength", 50) for s in sectors) / len(sectors) if sectors else 50
+            if avg_strength >= 60:
+                regime = "BULL"
+                desc = "偏多"
+            elif avg_strength <= 40:
+                regime = "BEAR"
+                desc = "偏空"
+            else:
+                regime = "NEUTRAL"
+                desc = "震荡"
+            return jsonify({"success": True, "regime": regime, "description": desc, "avg_strength": round(avg_strength, 1)})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "regime": "NEUTRAL", "description": "未知"}), 500
+
+    @bp.route("/scan/professional", methods=["POST"])
+    def scan_professional():
+        """
+        专业级扫描：形态 + 热点 + 风险预算 + AI 排序。
+        Body: { strategy_ids?, use_pattern_filter?, use_hot_filter?, use_ai_rank?, top_n?, capital?, risk_pct?, stop_loss_pct? }
+        """
+        _root()
+        try:
+            from scanner.scanner_pipeline import run_professional_scan
+            data = request.json or {}
+            strategy_ids = data.get("strategy_ids") or ["ma_cross", "rsi", "macd", "breakout"]
+            top_n = max(1, min(100, int(data.get("top_n") or 50)))
+            results = run_professional_scan(
+                strategy_ids=strategy_ids,
+                use_pattern_filter=data.get("use_pattern_filter", True),
+                use_hot_filter=data.get("use_hot_filter", True),
+                use_risk_budget=True,
+                use_ai_rank=data.get("use_ai_rank", True),
+                capital=float(data.get("capital") or 1000000),
+                risk_pct=float(data.get("risk_pct") or 0.01),
+                stop_loss_pct=float(data.get("stop_loss_pct") or 0.05),
+                top_n=top_n,
+                stock_limit=int(data.get("stock_limit") or 500),
+            )
+            return jsonify({"success": True, "results": results, "count": len(results)})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "results": [], "detail": traceback.format_exc()}), 500
+
+    @bp.route("/scan/professional/stream", methods=["POST"])
+    def scan_professional_stream():
+        """
+        专业扫描流式接口：通过 SSE 推送进度与最终结果，便于前端显示进度条。
+        Body 同 /scan/professional。
+        """
+        _root()
+        data = request.json or {}
+        strategy_ids = data.get("strategy_ids") or ["ma_cross", "rsi", "macd", "breakout"]
+        top_n = max(1, min(100, int(data.get("top_n") or 50)))
+        stock_limit = int(data.get("stock_limit") or 500)
+        q = queue.Queue()
+        scan_result = {"results": [], "error": None}
+
+        def run_scan():
+            try:
+                from scanner.scanner_pipeline import run_professional_scan
+                def progress_cb(phase, current, total, message):
+                    q.put({"type": "progress", "phase": phase, "current": current, "total": total, "message": message})
+                results = run_professional_scan(
+                    strategy_ids=strategy_ids,
+                    use_pattern_filter=data.get("use_pattern_filter", True),
+                    use_hot_filter=data.get("use_hot_filter", True),
+                    use_risk_budget=True,
+                    use_ai_rank=data.get("use_ai_rank", True),
+                    capital=float(data.get("capital") or 1000000),
+                    risk_pct=float(data.get("risk_pct") or 0.01),
+                    stop_loss_pct=float(data.get("stop_loss_pct") or 0.05),
+                    top_n=top_n,
+                    stock_limit=stock_limit,
+                    progress_callback=progress_cb,
+                )
+                scan_result["results"] = results
+                q.put({"type": "done", "results": results, "count": len(results)})
+            except Exception as e:
+                import traceback
+                scan_result["error"] = str(e)
+                q.put({"type": "error", "error": str(e), "detail": traceback.format_exc()})
+
+        def generate():
+            t = threading.Thread(target=run_scan, daemon=True)
+            t.start()
+            deadline = time.time() + 300
+            while time.time() < deadline:
+                try:
+                    msg = q.get(timeout=0.5)
+                except queue.Empty:
+                    yield "data: " + json.dumps({"type": "ping"}) + "\n\n"
+                    continue
+                if msg.get("type") == "done":
+                    yield "data: " + json.dumps(msg) + "\n\n"
+                    return
+                if msg.get("type") == "error":
+                    yield "data: " + json.dumps(msg) + "\n\n"
+                    return
+                yield "data: " + json.dumps(msg) + "\n\n"
+            yield "data: " + json.dumps({"type": "error", "error": "超时"}) + "\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            content_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     @bp.route("/ai_recommendations", methods=["GET"])
     def ai_recommendations():
         """
@@ -250,8 +381,6 @@ def create_api_blueprint():
             def _load_one(code):
                 c = code.split(".")[0] if "." in code else code
                 df = load_kline(c, start, end_str, source="database")
-                if df is None or len(df) < 60:
-                    df = load_kline(c, start, end_str, source="akshare")
                 if df is not None and len(df) >= 60:
                     key = c + ".XSHG" if c.startswith("6") else c + ".XSHE"
                     return (key, df)
@@ -313,8 +442,6 @@ def create_api_blueprint():
             def _load_one(code):
                 c = code.split(".")[0] if "." in code else code
                 df = load_kline(c, start, end_str, source="database")
-                if df is None or len(df) < 60:
-                    df = load_kline(c, start, end_str, source="akshare")
                 if df is not None and len(df) >= 60:
                     key = c + ".XSHG" if c.startswith("6") else c + ".XSHE"
                     return (key, df)

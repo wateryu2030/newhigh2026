@@ -11,6 +11,23 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _root)
 
 
+def _get_db():
+    """优先 DuckDB，否则 SQLite，保证与平台数据源一致。"""
+    try:
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
+        path = getattr(db, "db_path", None)
+        if path and os.path.exists(path):
+            return db
+    except Exception:
+        pass
+    from database.db_schema import StockDatabase
+    p = os.path.join(_root, "data", "astock.db")
+    if not os.path.exists(p):
+        return None
+    return StockDatabase(p)
+
+
 def scan_market(
     strategy_id: str,
     timeframe: str = "D",
@@ -31,7 +48,6 @@ def scan_market(
     :return: [{"symbol", "name", "signal", "price", "date", "reason", "trend", "score"}, ...]
     """
     from datetime import datetime, timedelta
-    from database.db_schema import StockDatabase
     from core.timeframe import resample_kline, normalize_timeframe
     from strategies import get_plugin_strategy
     from core.prediction import predict_trend
@@ -47,11 +63,9 @@ def scan_market(
         start_dt = datetime.now() - timedelta(days=120)
         start_date = start_dt.strftime("%Y-%m-%d")
 
-    db_path = os.path.join(_root, "data", "astock.db")
-    if not os.path.exists(db_path):
+    db = _get_db()
+    if db is None:
         return []
-
-    db = StockDatabase(db_path)
     all_rows = db.get_stocks()
     stock_names = {r[0]: (r[1], r[2]) for r in all_rows}
     if stock_list is None:
@@ -115,7 +129,6 @@ def scan_market_evolution(
     :return: 与 scan_market 同构的列表 [{"symbol", "name", "signal", "price", "date", "reason"}, ...]
     """
     from datetime import datetime, timedelta
-    from database.db_schema import StockDatabase
     from core.timeframe import resample_kline, normalize_timeframe
     from evolution.strategy_pool import StrategyPool
     from evolution.strategy_runner import StrategyRunner
@@ -137,11 +150,9 @@ def scan_market_evolution(
         start_dt = datetime.now() - timedelta(days=120)
         start_date = start_dt.strftime("%Y-%m-%d")
 
-    db_path = os.path.join(_root, "data", "astock.db")
-    if not os.path.exists(db_path):
+    db = _get_db()
+    if db is None:
         return []
-
-    db = StockDatabase(db_path)
     all_rows = db.get_stocks()
     stock_names = {r[0]: (r[1], r[2]) for r in all_rows}
     if stock_list is None:
@@ -239,11 +250,9 @@ def scan_market_portfolio(
         start_dt = datetime.now() - timedelta(days=120)
         start_date = start_dt.strftime("%Y-%m-%d")
 
-    db_path = os.path.join(_root, "data", "astock.db")
-    if not os.path.exists(db_path):
+    db = _get_db()
+    if db is None:
         return []
-
-    db = StockDatabase(db_path)
     all_rows = db.get_stocks()
     stock_names = {r[0]: (r[1], r[2]) for r in all_rows}
     if stock_list is None:
