@@ -11,7 +11,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import time
 from typing import List
-from database.db_schema import StockDatabase
 from database.duckdb_backend import get_db_backend
 
 
@@ -68,10 +67,8 @@ class DataFetcher:
     """数据获取器"""
     
     def __init__(self, db_path=None):
-        if db_path is None:
-            self.db = get_db_backend()
-        else:
-            self.db = StockDatabase(db_path)
+        """db_path 忽略，统一使用 DuckDB。"""
+        self.db = get_db_backend()
     
     def fetch_stock_data(self, symbol: str, start_date: str = None, end_date: str = None, 
                         adjust: str = "qfq"):

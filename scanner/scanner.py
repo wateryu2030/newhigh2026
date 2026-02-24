@@ -12,20 +12,9 @@ sys.path.insert(0, _root)
 
 
 def _get_db():
-    """优先 DuckDB，否则 SQLite，保证与平台数据源一致。"""
-    try:
-        from database.duckdb_backend import get_db_backend
-        db = get_db_backend()
-        path = getattr(db, "db_path", None)
-        if path and os.path.exists(path):
-            return db
-    except Exception:
-        pass
-    from database.db_schema import StockDatabase
-    p = os.path.join(_root, "data", "astock.db")
-    if not os.path.exists(p):
-        return None
-    return StockDatabase(p)
+    """使用平台唯一数据后端（DuckDB）。"""
+    from database.duckdb_backend import get_db_backend
+    return get_db_backend()
 
 
 def scan_market(
@@ -219,7 +208,6 @@ def scan_market_portfolio(
     :return: 与 scan_market 同构的列表，signal 为组合信号
     """
     from datetime import datetime, timedelta
-    from database.db_schema import StockDatabase
     from core.timeframe import resample_kline, normalize_timeframe
     from strategies import get_plugin_strategy
     from portfolio import PortfolioEngine

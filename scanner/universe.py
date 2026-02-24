@@ -11,14 +11,14 @@ def get_stock_list(limit: Optional[int] = None) -> List[Tuple[str, str, str]]:
     从数据库获取股票列表 (order_book_id, symbol, name)。
     limit: 最多返回数量，None 表示全部。
     """
-    db_path = os.path.join(_root, "data", "astock.db")
-    if not os.path.exists(db_path):
-        return []
     try:
         import sys
         sys.path.insert(0, _root)
-        from database.db_schema import StockDatabase
-        db = StockDatabase(db_path)
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
+        path = getattr(db, "db_path", os.path.join(_root, "data", "quant.duckdb"))
+        if not os.path.exists(path):
+            return []
         rows = db.get_stocks()
         if limit is not None and limit > 0:
             rows = rows[:limit]

@@ -256,8 +256,8 @@ def add_stock_to_pool(filepath, stock_code, pool_name):
         if stock_code not in df["代码"].values:
             # 从数据库获取股票名称
             try:
-                from database.db_schema import StockDatabase
-                db = StockDatabase()
+                from database.duckdb_backend import get_db_backend
+                db = get_db_backend()
                 stocks = db.get_stocks()
                 stock_name = None
                 for ob, sym, name in stocks:

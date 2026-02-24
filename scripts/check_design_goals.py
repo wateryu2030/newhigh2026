@@ -16,27 +16,25 @@ BASE_URL = "http://127.0.0.1:5050"
 
 
 def check_data_sync():
-    """检查数据同步情况"""
+    """检查数据同步情况（DuckDB）"""
     print("【1】数据同步情况")
     try:
-        import sqlite3
-        db_path = os.path.join(BASE, "data", "astock.db")
+        from database.duckdb_backend import get_db_backend
+        db_path = os.path.join(BASE, "data", "quant.duckdb")
         if not os.path.exists(db_path):
-            print("   ❌ 数据库文件不存在: data/astock.db")
+            print("   ❌ 数据库文件不存在: data/quant.duckdb")
             return False
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT order_book_id, symbol, name FROM stocks")
-        stocks = cursor.fetchall()
-        conn.close()
+        db = get_db_backend()
+        stocks = db.get_stocks()
         print(f"   ✅ 数据库: {len(stocks)} 只股票")
-        for ob, sym, name in stocks:
-            conn2 = sqlite3.connect(db_path)
-            c2 = conn2.cursor()
-            c2.execute("SELECT COUNT(*) FROM daily_bars WHERE order_book_id = ?", (ob,))
-            cnt = c2.fetchone()[0]
-            conn2.close()
+        for ob, sym, name in (stocks or [])[:5]:
+            import duckdb
+            conn = duckdb.connect(db_path, read_only=True)
+            cnt = conn.execute("SELECT COUNT(*) FROM daily_bars WHERE order_book_id = ?", [ob]).fetchone()[0]
+            conn.close()
             print(f"      - {ob} ({sym}): {cnt} 条日线")
+        if len(stocks or []) > 5:
+            print(f"      ... 共 {len(stocks)} 只")
         return True
     except Exception as e:
         print(f"   ❌ {e}")

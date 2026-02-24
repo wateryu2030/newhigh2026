@@ -27,9 +27,9 @@ def _ensure_one_symbol(
     days: int,
     db_path: str,
 ) -> bool:
-    """单只标的：若本地不足 days 条则从 AKShare 拉取并写入 DB。返回是否执行了拉取。"""
+    """单只标的：若本地不足 days 条则从 AKShare 拉取并写入 DuckDB。返回是否执行了拉取。"""
     import pandas as pd
-    from database.db_schema import StockDatabase
+    from database.duckdb_backend import get_db_backend
     from data.data_loader import load_kline
 
     end = datetime.now().date()
@@ -37,7 +37,7 @@ def _ensure_one_symbol(
     end_str = end.strftime("%Y-%m-%d")
     order_book_id = _order_book_id(code)
     try:
-        db = StockDatabase(db_path)
+        db = get_db_backend()
         existing = db.get_daily_bars(order_book_id, start, end_str)
         if existing is not None and len(existing) >= days:
             return False
@@ -49,8 +49,7 @@ def _ensure_one_symbol(
         return False
 
     try:
-        from database.db_schema import StockDatabase
-        db = StockDatabase(db_path)
+        db = get_db_backend()
         df_db = df.copy()
         if "date" in df_db.columns:
             df_db["日期"] = pd.to_datetime(df_db["date"])
@@ -76,7 +75,7 @@ def main() -> int:
     args = parser.parse_args()
 
     days = max(60, args.days)
-    db_path = os.path.join(ROOT, "data", "astock.db")
+    db_path = os.path.join(ROOT, "data", "quant.duckdb")
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
     print("1. 获取 A 股列表（不含退市）...")
@@ -102,10 +101,10 @@ def main() -> int:
         print(f"   共 {len(symbols)} 只")
 
     if not args.no_skip:
-        from database.db_schema import StockDatabase
+        from database.duckdb_backend import get_db_backend
         start = (datetime.now().date() - timedelta(days=days + 60)).strftime("%Y-%m-%d")
         end_str = datetime.now().date().strftime("%Y-%m-%d")
-        db = StockDatabase(db_path)
+        db = get_db_backend()
         need_fetch = []
         for code in symbols:
             ob = _order_book_id(code)

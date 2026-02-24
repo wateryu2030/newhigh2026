@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database.data_fetcher import DataFetcher
-from database.db_schema import StockDatabase
+from database.duckdb_backend import get_db_backend
 from datetime import datetime, timedelta
 import argparse
 
@@ -56,7 +56,7 @@ def sync_strategy_stocks():
 
 def update_all(days: int = 365):
     """更新所有已存储股票的数据"""
-    db = StockDatabase()
+    db = get_db_backend()
     stocks = db.get_stocks()
     
     if len(stocks) == 0:

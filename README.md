@@ -29,6 +29,14 @@ python web_platform.py
 
 终端出现「访问 http://127.0.0.1:5050 使用平台」后，用浏览器打开 **http://127.0.0.1:5050** 或 **http://localhost:5050**。按 Ctrl+C 可停止服务。
 
+**新界面（市场扫描器、名称/去年营收/去年净利润等）**：需先构建前端，5050 才会托管 React 界面；否则为旧版单页。在项目根目录执行：
+```bash
+cd frontend && npm run build && cd ..
+```
+之后重启 `python web_platform.py`，访问 http://127.0.0.1:5050 并点击「市场扫描器」即可看到新表格。
+
+**市场扫描器功能**：点击表头可排序（标的、价格、买点概率等）；点击某行可打开右侧抽屉，查看该股票详情与 K 线图。若改动未生效，请执行 `./scripts/rebuild_and_start.sh` 并**强制刷新浏览器**（Cmd+Shift+R 或 Ctrl+Shift+R）。
+
 ### 使用 AKShare 数据源（无需数据库）
 
 ```bash
@@ -212,6 +220,28 @@ python scripts/import_all_a_stocks.py --limit 10
 ### 控制台出现 content.js / antd / chunk-*.js / chrome-extension 报错
 
 这些来自**浏览器扩展**（如 React DevTools、阿里通义等），不是本项目的代码。可忽略，或在无扩展的隐身窗口/新配置文件中打开 http://127.0.0.1:5050 以确认页面功能正常。
+
+### `npm run build` 报错：Library not loaded libsimdjson.28.dylib（macOS Homebrew Node）
+
+这是本机 **Node 与 Homebrew simdjson 版本不匹配**导致的，不是项目代码问题。任选其一即可：
+
+1. **重装 Node，让其重新链接当前 simdjson**：
+   ```bash
+   brew reinstall node
+   ```
+2. **或重装 simdjson 并重链**：
+   ```bash
+   brew reinstall simdjson
+   brew link --overwrite simdjson
+   ```
+3. **或改用 nvm 安装的 Node**（不依赖 Homebrew 的 simdjson）：
+   ```bash
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+   # 重启终端后
+   nvm install 20
+   nvm use 20
+   cd frontend && npm run build
+   ```
 
 ### 若出现「无法访问此网站 / 连接被拒绝」(ERR_CONNECTION_REFUSED)
 

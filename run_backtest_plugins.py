@@ -26,7 +26,7 @@ def run_plugin_backtest(
     执行插件策略回测，返回与 run_backtest_db 输出兼容的 result 字典（含 strategy_name, timeframe）。
     param_overrides: 可选，策略构造参数，如 {"fast": 10, "slow": 30} 用于参数优化。
     """
-    from database.db_schema import StockDatabase
+    from database.duckdb_backend import get_db_backend
     from core.timeframe import resample_kline, normalize_timeframe
     from strategies import get_plugin_strategy
     from core.prediction import predict_trend
@@ -37,11 +37,10 @@ def run_plugin_backtest(
     if strategy is None:
         return {"error": f"未知策略: {strategy_id}", "strategy_name": strategy_id, "timeframe": tf}
 
-    db_path = os.path.join(_root, "data", "astock.db")
+    db = get_db_backend()
+    db_path = getattr(db, "db_path", os.path.join(_root, "data", "quant.duckdb"))
     if not os.path.exists(db_path):
         return {"error": "数据库不存在", "strategy_name": strategy.name, "timeframe": tf}
-
-    db = StockDatabase(db_path)
     df = db.get_daily_bars(stock_code, start_date, end_date)
     if df is None or len(df) == 0:
         return {"error": "无日线数据", "strategy_name": strategy.name, "timeframe": tf}

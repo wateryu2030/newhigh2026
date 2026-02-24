@@ -44,20 +44,19 @@ def load_universe_from_database(
     limit: Optional[int] = None,
 ) -> StockUniverse:
     """
-    从 SQLite 数据库加载股票池（stocks 表）。
-    :param db_path: 数据库路径，默认 data/astock.db
+    从 DuckDB 加载股票池（stocks 表）。
+    :param db_path: 忽略，统一使用 data/quant.duckdb
     :param limit: 最多返回数量，None 表示全部
     """
-    if db_path is None:
-        db_path = os.path.join(_ROOT, "data", "astock.db")
-    if not os.path.exists(db_path):
-        return StockUniverse(source="database")
     try:
         import sys
         sys.path.insert(0, _ROOT)
-        from database.db_schema import StockDatabase
-        db = StockDatabase(db_path)
-        rows = db.get_stocks()
+        from database.duckdb_backend import get_db_backend
+        db = get_db_backend()
+        path = getattr(db, "db_path", os.path.join(_ROOT, "data", "quant.duckdb"))
+        if not os.path.exists(path):
+            return StockUniverse(source="database")
+        rows = db.get_stocks() or []
         if limit is not None and limit > 0:
             rows = rows[:limit]
         return StockUniverse(items=rows, source="database")

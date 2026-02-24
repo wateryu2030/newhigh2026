@@ -4,14 +4,17 @@
 量化交易平台 Web 界面
 整合 AKShare 和 RQAlpha
 """
-from flask import Flask, render_template_string, request, jsonify, send_file
+from flask import Flask, render_template_string, request, jsonify, send_file, send_from_directory
 import os
 import subprocess
 import json
 from datetime import datetime, timedelta
 import glob
 
-_static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+_root = os.path.dirname(os.path.abspath(__file__))
+_static_dir = os.path.join(_root, 'static')
+# React 前端构建目录：若存在则 5050 根路径及 /scanner 等走新界面（市场扫描器含名称/去年营收/去年净利润等）
+_frontend_dist = os.path.join(_root, 'frontend', 'dist')
 app = Flask(__name__, static_folder=_static_dir)
 
 # 注册 API 层（组合回测、TradingView K 线、股票池、机构组合、AI 推荐等）
@@ -360,12 +363,54 @@ def health():
     return jsonify({"status": "ok", "service": "astock-web-platform"})
 
 
+def _use_react_ui():
+    """是否使用 React 前端（frontend/dist 已构建时）。"""
+    return os.path.isdir(_frontend_dist) and os.path.isfile(os.path.join(_frontend_dist, 'index.html'))
+
+
 @app.route("/")
 def index():
+    if _use_react_ui():
+        return send_file(os.path.join(_frontend_dist, 'index.html'))
     default_start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
     default_end = datetime.now().strftime("%Y-%m-%d")
     version = datetime.now().strftime("%Y%m%d%H%M")
     return render_template_string(HTML_TEMPLATE, default_start=default_start, default_end=default_end, version=version)
+
+
+@app.route("/assets/<path:filename>")
+def frontend_assets(filename):
+    """React 构建的静态资源，使 5050 能正确加载新界面。"""
+    if not _use_react_ui():
+        from flask import abort
+        abort(404)
+    return send_from_directory(os.path.join(_frontend_dist, 'assets'), filename)
+
+
+@app.route("/scanner")
+@app.route("/trading")
+@app.route("/strategy-lab")
+def spa_fallback():
+    """SPA 路由：/scanner、/trading、/strategy-lab 返回 index.html，由 React Router 渲染。"""
+    if _use_react_ui():
+        return send_file(os.path.join(_frontend_dist, 'index.html'))
+    from flask import abort
+    abort(404)
+
+
+@app.route("/<path:path>")
+def serve_react_or_404(path):
+    """非 /api 的其余路径：若为 frontend/dist 下存在的文件则返回；否则返回 index.html 供 SPA 路由处理。"""
+    if path.startswith("api/"):
+        from flask import abort
+        abort(404)
+    if _use_react_ui():
+        full = os.path.join(_frontend_dist, path)
+        if os.path.isfile(full):
+            return send_from_directory(_frontend_dist, path)
+        return send_file(os.path.join(_frontend_dist, 'index.html'))
+    from flask import abort
+    abort(404)
 
 
 def _load_strategies_meta():
@@ -607,6 +652,20 @@ def api_ai_score():
         return jsonify({"symbol": "", "score": 50, "suggestion": "HOLD"})
 
 
+@app.route("/api/ai/predict")
+def api_ai_predict():
+    """AI 买卖点预测与评分。GET ?symbol=xxx，返回 buy_prob, sell_prob, score, target_price, risk_price。"""
+    try:
+        symbol = request.args.get("symbol", "").strip()
+        if not symbol:
+            return jsonify({"buy_prob": 0.5, "sell_prob": 0.5, "score": 50, "target_price": None, "risk_price": None})
+        from backend.ai.predict_service import predict_stock
+        out = predict_stock(symbol)
+        return jsonify(out)
+    except Exception as e:
+        return jsonify({"buy_prob": 0.5, "sell_prob": 0.5, "score": 50, "target_price": None, "risk_price": None, "error": str(e)})
+
+
 @app.route("/api/backtest", methods=["POST"])
 def api_backtest():
     """回测接口，供策略实验室。POST body: strategy, symbol, start, end"""
@@ -672,14 +731,91 @@ def api_backtest():
         return jsonify({"error": str(e), "equity_curve": [], "trades": []}), 500
 
 
+def _scan_symbol_name_map():
+    """证券代码 -> 证券名称映射，用于扫描结果名称补全。带内存缓存，避免重复拉取。"""
+    if not hasattr(_scan_symbol_name_map, "_cache"):
+        _scan_symbol_name_map._cache = None
+        _scan_symbol_name_map._ts = 0
+    now = datetime.now().timestamp()
+    if _scan_symbol_name_map._cache is not None and (now - _scan_symbol_name_map._ts) < 3600:
+        return _scan_symbol_name_map._cache
+    try:
+        from data.stock_pool import get_a_share_list
+        lst = get_a_share_list()
+        _scan_symbol_name_map._cache = {str(x.get("symbol", "")).strip(): str(x.get("name", "")).strip() or str(x.get("symbol", "")) for x in lst if x.get("symbol")}
+        _scan_symbol_name_map._ts = now
+        return _scan_symbol_name_map._cache
+    except Exception:
+        return getattr(_scan_symbol_name_map, "_cache") or {}
+
+
+def _scan_financials_cache():
+    """从本地缓存读取去年营收/净利润（相对静态），减轻实时数据压力。"""
+    cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "financials_cache.json")
+    if not os.path.exists(cache_path):
+        return {}
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _enrich_scan_results(results):
+    """补全名称、附加去年营收/净利润、市盈率、市净率、行业、区域。"""
+    name_map = _scan_symbol_name_map()
+    fin = _scan_financials_cache()
+    for r in results:
+        sym = (r.get("symbol") or "").strip()
+        name = (r.get("name") or "").strip()
+        if not name or name == sym:
+            r["name"] = name_map.get(sym) or sym or name
+        sym_key = sym.zfill(6) if sym and sym.isdigit() else sym
+        info = fin.get(sym_key) or fin.get(sym) if (sym_key or sym) else {}
+        if isinstance(info, dict):
+            r["revenue_ly"] = info.get("revenue_ly")
+            r["profit_ly"] = info.get("profit_ly")
+            r["industry"] = info.get("industry")
+            r["region"] = info.get("region")
+            eps = info.get("eps_ly")
+            bps = info.get("bps_ly")
+            price = r.get("price")
+            if price is not None and isinstance(price, (int, float)) and price > 0:
+                if eps is not None and eps > 0:
+                    r["pe_ratio"] = round(price / eps, 2)
+                else:
+                    r["pe_ratio"] = None
+                if bps is not None and bps > 0:
+                    r["pb_ratio"] = round(price / bps, 2)
+                else:
+                    r["pb_ratio"] = None
+            else:
+                r["pe_ratio"] = None
+                r["pb_ratio"] = None
+        else:
+            r["revenue_ly"] = None
+            r["profit_ly"] = None
+            r["pe_ratio"] = None
+            r["pb_ratio"] = None
+            r["industry"] = None
+            r["region"] = None
+    return results
+
+
+def _scan_raw(strategies, limit):
+    """执行组合扫描，使用 DuckDB。"""
+    from scanner import scan_market_portfolio
+    return scan_market_portfolio(strategies=strategies, timeframe="D", limit=limit)
+
+
 @app.route("/api/scan")
 def api_scan_get():
     """市场扫描 GET，供前端扫描器。?mode=breakout|strong|ai"""
     try:
         mode = request.args.get("mode", "breakout").strip().lower()
         from scanner import scan_market_portfolio
-        from scanner.scanner_pipeline import run_professional_scan
-        # 引用既有策略：breakout=突破策略, strong=RSI强势, 其他=均线
+        # 引用既有策略：breakout=突破策略, strong=RSI强势, ai=多策略组合
         if mode == "breakout":
             strategies = [{"strategy_id": "breakout", "weight": 1.0}]
         elif mode == "strong":
@@ -687,10 +823,24 @@ def api_scan_get():
         else:
             strategies = [{"strategy_id": "ma_cross", "weight": 1.0}]
         if mode == "ai":
-            results = run_professional_scan(top_n=50, stock_limit=300, use_ai_rank=True)
+            # 多策略组合扫描（DuckDB）。不用 run_professional_scan，因其逐股形态/AI 评分导致超时。
+            strategies_ai = [
+                {"strategy_id": "ma_cross", "weight": 1.0},
+                {"strategy_id": "rsi", "weight": 1.0},
+                {"strategy_id": "macd", "weight": 1.0},
+                {"strategy_id": "breakout", "weight": 1.0},
+            ]
+            raw = _scan_raw(strategies_ai, 100)
+            results = [
+                {"symbol": r.get("symbol", ""), "name": r.get("name", ""), "signal": r.get("signal"), "price": r.get("price"), "reason": r.get("reason", ""), "buy_prob": 50}
+                for r in raw[:30]
+            ]
+            results = _enrich_scan_results(results)
+            return jsonify({"results": results})
         else:
-            raw = scan_market_portfolio(strategies=strategies, timeframe="D", limit=300)
-            results = [{"symbol": r.get("symbol", ""), "name": r.get("name", ""), "signal": r.get("signal"), "price": r.get("price"), "reason": r.get("reason", "")} for r in raw]
+            raw = _scan_raw(strategies, 500)
+            results = [{"symbol": r.get("symbol", ""), "name": r.get("name", ""), "signal": r.get("signal"), "price": r.get("price"), "reason": r.get("reason", ""), "buy_prob": r.get("buy_prob") if r.get("buy_prob") is not None else 50} for r in raw]
+        results = _enrich_scan_results(results)
         return jsonify({"results": results})
     except Exception as e:
         return jsonify({"results": [], "error": str(e)})
@@ -730,52 +880,36 @@ def sync_stock():
 
 @app.route("/api/db_stats", methods=["GET"])
 def db_stats():
-    """返回当前数据库股票数、日线数，供前端显示与判断是否需全量同步。"""
+    """返回 DuckDB 股票数、日线数，供前端显示与判断是否需全量同步。"""
     try:
         from database.duckdb_backend import get_db_backend
         db = get_db_backend()
-        path = getattr(db, "db_path", None)
-        if not path:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "astock.db")
+        path = getattr(db, "db_path", None) or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "quant.duckdb")
         if not os.path.exists(path):
-            return jsonify({"stocks": 0, "daily_bars": 0, "backend": "none"})
+            return jsonify({"stocks": 0, "daily_bars": 0, "backend": "duckdb"})
         try:
             stocks = db.get_stocks()
             n_stocks = len(stocks) if stocks else 0
         except Exception:
             n_stocks = 0
-        n_bars = 0
-        if path.endswith(".duckdb"):
-            try:
-                if hasattr(db, "get_daily_bars_count"):
-                    n_bars = db.get_daily_bars_count()
-                else:
-                    import duckdb
-                    conn = duckdb.connect(path, read_only=True)
-                    r = conn.execute("SELECT COUNT(*) FROM daily_bars").fetchone()
-                    n_bars = int(r[0]) if r else 0
-                    conn.close()
-            except Exception:
-                pass
-            backend = "duckdb"
-        else:
-            try:
-                import sqlite3
-                conn = sqlite3.connect(path)
+        try:
+            n_bars = db.get_daily_bars_count() if hasattr(db, "get_daily_bars_count") else 0
+            if n_bars == 0:
+                import duckdb
+                conn = duckdb.connect(path, read_only=True)
                 r = conn.execute("SELECT COUNT(*) FROM daily_bars").fetchone()
                 n_bars = int(r[0]) if r else 0
                 conn.close()
-            except Exception:
-                pass
-            backend = "sqlite"
-        return jsonify({"stocks": n_stocks, "daily_bars": n_bars, "backend": backend})
+        except Exception:
+            n_bars = 0
+        return jsonify({"stocks": n_stocks, "daily_bars": n_bars, "backend": "duckdb"})
     except Exception as e:
-        return jsonify({"stocks": 0, "daily_bars": 0, "backend": "none", "error": str(e)})
+        return jsonify({"stocks": 0, "daily_bars": 0, "backend": "duckdb", "error": str(e)})
 
 
 @app.route("/api/sync_all_a_stocks", methods=["POST"])
 def sync_all_a_stocks():
-    """全量 A 股同步：后台拉取沪深京全部股票日线写入数据库（DuckDB/SQLite），支持断点续传。"""
+    """全量 A 股同步：后台拉取沪深京全部股票日线写入 DuckDB，支持断点续传。"""
     import threading
     data = request.json or {}
     start_date = (data.get("startDate") or "").replace("-", "")[:8]

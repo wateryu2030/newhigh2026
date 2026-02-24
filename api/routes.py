@@ -933,6 +933,88 @@ def create_api_blueprint():
             import traceback
             return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
 
+    # ---------- RL 交易系统 API ----------
+    @bp.route("/rl/train", methods=["POST"])
+    def rl_train():
+        """触发 RL 训练。Body: { symbol?, start_date?, end_date?, total_timesteps? }"""
+        _root()
+        try:
+            data = request.json or {}
+            symbol = (data.get("symbol") or "000001").strip().split(".")[0].zfill(6)
+            start_date = (data.get("start_date") or data.get("startDate") or "2023-01-01")[:10]
+            end_date = (data.get("end_date") or data.get("endDate") or "2024-12-31")[:10]
+            total_timesteps = int(data.get("total_timesteps") or data.get("totalTimesteps") or 30000)
+            from rl_trading.training.trainer import train_rl_model
+            result = train_rl_model(symbol=symbol, start_date=start_date, end_date=end_date, total_timesteps=total_timesteps)
+            return jsonify(result)
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
+    @bp.route("/rl/performance", methods=["GET"])
+    def rl_performance():
+        """返回训练曲线与评估结果。Query: symbol?, start_date?, end_date? 用于评估；无则返回最近一次 train_log + 已有 performance.json"""
+        _root()
+        try:
+            import os
+            rl_out = os.path.join(_API_ROOT, "output", "rl_training")
+            train_log = os.path.join(rl_out, "train_log.json")
+            perf_log = os.path.join(rl_out, "performance.json")
+            out = {"rewards": [], "curve": [], "sharpe": 0, "max_drawdown": 0, "total_return": 0, "actions": {}}
+            if os.path.exists(train_log):
+                with open(train_log, "r", encoding="utf-8") as f:
+                    out["train_log"] = json.load(f)
+                    out["rewards"] = out["train_log"].get("rewards", [])
+            if os.path.exists(perf_log):
+                with open(perf_log, "r", encoding="utf-8") as f:
+                    perf = json.load(f)
+                    out["curve"] = perf.get("curve", [])
+                    out["sharpe"] = perf.get("sharpe", 0)
+                    out["max_drawdown"] = perf.get("max_drawdown", 0)
+                    out["total_return"] = perf.get("total_return", 0)
+                    out["actions"] = perf.get("actions", {})
+            symbol = request.args.get("symbol", "").strip().split(".")[0].zfill(6) or None
+            start_date = (request.args.get("start_date") or request.args.get("startDate") or "")[:10]
+            end_date = (request.args.get("end_date") or request.args.get("endDate") or "")[:10]
+            if symbol and start_date and end_date:
+                from rl_trading.evaluation.evaluator import evaluate_rl_model
+                ev = evaluate_rl_model(symbol=symbol, start_date=start_date, end_date=end_date)
+                out["curve"] = ev.get("curve", [])
+                out["sharpe"] = ev.get("sharpe", 0)
+                out["max_drawdown"] = ev.get("max_drawdown", 0)
+                out["total_return"] = ev.get("total_return", 0)
+                out["actions"] = ev.get("actions", {})
+            return jsonify(out)
+        except Exception as e:
+            import traceback
+            return jsonify({"error": str(e), "rewards": [], "curve": [], "sharpe": 0, "max_drawdown": 0, "total_return": 0, "actions": {}}), 500
+
+    @bp.route("/rl/decision", methods=["GET"])
+    def rl_decision():
+        """AI 决策与解释。Query: symbol=, position_pct? 返回 decision, confidence, reason, state_summary, suggested_position_pct"""
+        _root()
+        try:
+            symbol = request.args.get("symbol", "000001").strip().split(".")[0].zfill(6)
+            position_pct = float(request.args.get("position_pct") or request.args.get("positionPct") or 0)
+            from rl_trading.live.rl_live_trader import RLLiveTrader
+            trader = RLLiveTrader()
+            signal = trader.get_signal(symbol=symbol, current_position_pct=position_pct / 100.0)
+            return jsonify({
+                "decision": signal.get("decision", "HOLD"),
+                "confidence": signal.get("confidence", 0),
+                "reason": signal.get("reason", []),
+                "state_summary": signal.get("state_summary", ""),
+                "suggested_position_pct": signal.get("suggested_position_pct", 0),
+            })
+        except Exception as e:
+            import traceback
+            return jsonify({"decision": "HOLD", "confidence": 0, "reason": [str(e)], "state_summary": "异常", "suggested_position_pct": 0}), 500
+
+    @bp.route("/rl/live_signal", methods=["GET"])
+    def rl_live_signal():
+        """与 /rl/decision 相同，供实盘/移动端调用。"""
+        return rl_decision()
+
     return bp
 
 

@@ -11,3 +11,4 @@ scikit-learn>=1.0
 akshare>=1.10
 rqalpha>=3.0
 xgboost>=2.0
+lightgbm>=4.0

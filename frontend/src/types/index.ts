@@ -41,4 +41,16 @@ export interface ScanItem {
   price?: number;
   buy_prob?: number;
   reason?: string;
+  /** 去年营业收入（元） */
+  revenue_ly?: number | null;
+  /** 去年净利润（元） */
+  profit_ly?: number | null;
+  /** 市盈率（用去年每股收益计算） */
+  pe_ratio?: number | null;
+  /** 市净率（用去年每股净资产计算） */
+  pb_ratio?: number | null;
+  /** 所处行业 */
+  industry?: string | null;
+  /** 区域（注册地省份） */
+  region?: string | null;
 }

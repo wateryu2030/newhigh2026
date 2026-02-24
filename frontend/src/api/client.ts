@@ -37,6 +37,33 @@ export const api = {
 
   stocks: () =>
     get<{ stocks: { order_book_id: string; symbol: string; name: string }[] }>(BASE + '/stocks'),
+
+  rl: {
+    train: (body: { symbol?: string; start_date?: string; end_date?: string; total_timesteps?: number }) =>
+      post<{ success: boolean; model_path?: string; total_timesteps?: number; error?: string }>(BASE + '/rl/train', body),
+    performance: (params?: { symbol?: string; start_date?: string; end_date?: string }) =>
+      get<RLPerformanceResponse>(BASE + '/rl/performance', params || {}),
+    decision: (params: { symbol: string; position_pct?: number }) =>
+      get<RLDecisionResponse>(BASE + '/rl/decision', { symbol: params.symbol, position_pct: String(params.position_pct ?? 0) }),
+  },
 };
 
 export type KlineBar = import('../types').KlineBar;
+
+export interface RLPerformanceResponse {
+  rewards?: number[];
+  curve?: { step: number; date: string; value: number; action: number }[];
+  sharpe?: number;
+  max_drawdown?: number;
+  total_return?: number;
+  actions?: Record<number, number>;
+  train_log?: { symbol?: string; total_timesteps?: number };
+}
+
+export interface RLDecisionResponse {
+  decision: string;
+  confidence: number;
+  reason: string[];
+  state_summary: string;
+  suggested_position_pct: number;
+}

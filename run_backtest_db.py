@@ -30,11 +30,11 @@ def main():
 
     print(f"运行策略: {strategy_file}")
     print(f"回测期间: {start_date} 至 {end_date}")
-    print("使用数据库数据源（SQLite）")
+    print("使用数据库数据源（DuckDB）")
     print("-" * 50)
 
     # 检查数据库是否存在
-    db_path = os.path.join(_root, "data", "astock.db")
+    db_path = os.path.join(_root, "data", "quant.duckdb")
     if not os.path.exists(db_path):
         print("⚠️  数据库不存在，正在获取数据...")
         from database.data_fetcher import DataFetcher
@@ -80,7 +80,7 @@ config = {{
         "db_data_source": {{
             "enabled": True,
             "lib": "database.db_data_source_mod",
-            "db_path": os.path.join(root, "data", "astock.db"),
+            "db_path": os.path.join(root, "data", "quant.duckdb"),
         }},
     }},
     "extra": {{"log_level": "INFO", "stock_code": os.environ.get("STOCK_CODE", "")}},
@@ -166,8 +166,8 @@ try:
         if stock_code:
             try:
                 sys.path.insert(0, root)
-                from database.db_schema import StockDatabase
-                db = StockDatabase(os.path.join(root, "data", "astock.db"))
+                from database.duckdb_backend import get_db_backend
+                db = get_db_backend()
                 df = db.get_daily_bars(stock_code, start_date, end_date)
                 if df is not None and len(df) > 0:
                     kline = []

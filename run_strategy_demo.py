@@ -31,10 +31,9 @@ def _ensure_symbol_data(symbol: str, days: int) -> bool:
     start_ymd = start.replace("-", "")
     end_ymd = end_str.replace("-", "")
     try:
-        from database.db_schema import StockDatabase
-        db_path = os.path.join(_ROOT, "data", "astock.db")
+        from database.duckdb_backend import get_db_backend
         order_book_id = symbol if "." in symbol else _order_book_id(code)
-        db = StockDatabase(db_path)
+        db = get_db_backend()
         existing = db.get_daily_bars(order_book_id, start, end_str)
         if existing is not None and len(existing) >= min(60, days):
             return False

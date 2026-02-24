@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-DuckDB 数据后端：与 StockDatabase 相同接口，策略代码无需大改。
-通过环境变量 USE_DUCKDB=1 或 get_db_backend() 切换。
+DuckDB 数据后端：平台唯一数据库，与旧 StockDatabase 接口兼容。
 """
 from __future__ import annotations
 import os
@@ -13,6 +12,11 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def _duckdb_path() -> str:
     return os.path.join(_ROOT, "data", "quant.duckdb")
+
+
+def get_db_backend():
+    """返回平台唯一数据后端（DuckDB）。"""
+    return DuckDBBackend()
 
 
 class DuckDBBackend:
@@ -32,9 +36,48 @@ class DuckDBBackend:
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
             self._connection = duckdb.connect(self.db_path)
             self._connection.execute("PRAGMA threads=4")
+            self._ensure_schema()
             return self._connection
         except ImportError:
             raise ImportError("请安装 duckdb: pip install duckdb")
+
+    def _ensure_schema(self):
+        """确保 stocks / daily_bars 表存在（空库首次使用时创建）。"""
+        c = self._connection
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS stocks (
+                order_book_id VARCHAR PRIMARY KEY,
+                symbol VARCHAR NOT NULL,
+                name VARCHAR,
+                market VARCHAR,
+                listed_date VARCHAR,
+                de_listed_date VARCHAR,
+                type VARCHAR,
+                updated_at TIMESTAMP
+            )
+        """)
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS daily_bars (
+                order_book_id VARCHAR NOT NULL,
+                trade_date DATE NOT NULL,
+                open DOUBLE,
+                high DOUBLE,
+                low DOUBLE,
+                close DOUBLE,
+                volume DOUBLE,
+                total_turnover DOUBLE,
+                adjust_factor DOUBLE DEFAULT 1.0,
+                PRIMARY KEY (order_book_id, trade_date)
+            )
+        """)
+        for idx_sql in (
+            "CREATE INDEX IF NOT EXISTS idx_daily_bars_order_book_id ON daily_bars(order_book_id)",
+            "CREATE INDEX IF NOT EXISTS idx_daily_bars_trade_date ON daily_bars(trade_date)",
+        ):
+            try:
+                c.execute(idx_sql)
+            except Exception:
+                pass
 
     def get_daily_bars(
         self,
@@ -142,18 +185,3 @@ class DuckDBBackend:
             )
 
 
-def get_db_backend(use_duckdb: Optional[bool] = None):
-    """
-    获取数据后端。默认：若存在 data/quant.duckdb 则用 DuckDB，否则用 SQLite。
-    可通过 use_duckdb=False 或环境变量 USE_DUCKDB=0 强制使用 SQLite。
-    """
-    if use_duckdb is None:
-        env = os.environ.get("USE_DUCKDB", "").strip().lower()
-        if env in ("0", "false", "no"):
-            use_duckdb = False
-        else:
-            use_duckdb = os.path.exists(_duckdb_path())
-    if use_duckdb and os.path.exists(_duckdb_path()):
-        return DuckDBBackend()
-    from database.db_schema import StockDatabase
-    return StockDatabase(os.path.join(_ROOT, "data", "astock.db"))

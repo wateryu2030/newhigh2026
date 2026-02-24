@@ -22,24 +22,23 @@ os.chdir(ROOT)
 
 
 def get_stocks_with_data(min_bars: int = 200) -> List[Tuple[str, str, str, int]]:
-    """从数据库获取有足够数据的股票及日期范围。返回 [(order_book_id, start, end, count), ...]"""
-    import sqlite3
-    db_path = os.path.join(ROOT, "data", "astock.db")
+    """从 DuckDB 获取有足够数据的股票及日期范围。返回 [(order_book_id, start, end, count), ...]"""
+    import duckdb
+    db_path = os.path.join(ROOT, "data", "quant.duckdb")
     if not os.path.exists(db_path):
         return []
-    conn = sqlite3.connect(db_path)
-    cur = conn.execute(
+    conn = duckdb.connect(db_path, read_only=True)
+    rows = conn.execute(
         """
-        SELECT order_book_id, MIN(trade_date), MAX(trade_date), COUNT(*)
+        SELECT order_book_id, MIN(trade_date)::VARCHAR, MAX(trade_date)::VARCHAR, COUNT(*)
         FROM daily_bars GROUP BY order_book_id
         HAVING COUNT(*) >= ?
         ORDER BY COUNT(*) DESC
         """,
-        (min_bars,),
-    )
-    rows = cur.fetchall()
+        [min_bars],
+    ).fetchall()
     conn.close()
-    return [(r[0], r[1], r[2], r[3]) for r in rows]
+    return [(r[0], str(r[1]), str(r[2]), r[3]) for r in rows]
 
 
 def split_9_3(start: str, end: str) -> Optional[Tuple[str, str, str, str]]:

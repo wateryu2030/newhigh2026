@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-数据库数据源适配器 - 从 SQLite 数据库读取数据供 RQAlpha 使用
+数据库数据源适配器 - 从 DuckDB 读取数据供 RQAlpha 使用
 """
 import numpy as np
 import pandas as pd
@@ -11,18 +11,17 @@ from rqalpha.interface import AbstractDataSource, ExchangeRate
 from rqalpha.model.instrument import Instrument
 from rqalpha.const import INSTRUMENT_TYPE, MARKET, TRADING_CALENDAR_TYPE
 from rqalpha.utils.datetime_func import convert_date_to_int, convert_int_to_date
-from database.db_schema import StockDatabase
+from database.duckdb_backend import get_db_backend
 
 
 class DatabaseDataSource(AbstractDataSource):
     """
-    从 SQLite 数据库读取数据的数据源适配器
+    从 DuckDB 读取数据的数据源适配器
     实现完整的 AbstractDataSource 接口
     """
     
     def __init__(self, base_config):
-        db_path = getattr(base_config, "db_path", "data/astock.db")
-        self.db = StockDatabase(db_path)
+        self.db = get_db_backend()
         self._instruments = {}
         self._cache = {}
         self._load_instruments()

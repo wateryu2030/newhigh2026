@@ -27,6 +27,11 @@ build/
 data/*.db
 data/*.duckdb
 data/**/*.csv
+data/financials_cache*.json
+
+# 训练产出与模型（体积大，本地生成）
+models/*.pkl
+models/*.zip
 
 # 回测产出（可选忽略，避免仓库膨胀）
 output/*.pkl

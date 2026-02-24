@@ -4,7 +4,7 @@ import type { KlineBar } from '../types';
 
 interface KLineChartProps {
   data: KlineBar[];
-  signals?: { date: string; type: 'BUY' | 'SELL'; price: number }[];
+  signals?: { date: string; type: 'BUY' | 'SELL' | 'HOLD'; price: number }[];
   height?: number;
 }
 
@@ -58,13 +58,24 @@ export default function KLineChart({ data, signals = [], height = 400 }: KLineCh
       volSeries.setData(volData);
     }
 
-    const markers = signals.map((s) => ({
-      time: s.date.slice(0, 10) as string,
-      position: (s.type === 'BUY' ? 'belowBar' : 'aboveBar') as 'belowBar' | 'aboveBar',
-      color: s.type === 'BUY' ? '#10b981' : '#ef4444',
-      shape: (s.type === 'BUY' ? 'arrowUp' : 'arrowDown') as 'arrowUp' | 'arrowDown',
-      text: s.type,
-    }));
+    const markers = signals.map((s) => {
+      if (s.type === 'HOLD') {
+        return {
+          time: s.date.slice(0, 10) as string,
+          position: 'aboveBar' as const,
+          color: '#3b82f6',
+          shape: 'circle' as const,
+          text: 'HOLD',
+        };
+      }
+      return {
+        time: s.date.slice(0, 10) as string,
+        position: (s.type === 'BUY' ? 'belowBar' : 'aboveBar') as 'belowBar' | 'aboveBar',
+        color: s.type === 'BUY' ? '#10b981' : '#ef4444',
+        shape: (s.type === 'BUY' ? 'arrowUp' : 'arrowDown') as 'arrowUp' | 'arrowDown',
+        text: s.type,
+      };
+    });
     if (markers.length) candleSeries.setMarkers(markers);
 
     const handleResize = () => {

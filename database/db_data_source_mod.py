@@ -12,17 +12,13 @@ class DatabaseDataSourceMod(AbstractMod):
     """数据库数据源 Mod"""
     
     def start_up(self, env, mod_config):
-        """启动时替换数据源"""
-        db_path = getattr(mod_config, "db_path", "data/astock.db")
-        
-        # 创建配置对象
+        """启动时替换数据源（DuckDB）"""
+        from database.duckdb_backend import _duckdb_path
+        db_path = getattr(mod_config, "db_path", None) or _duckdb_path()
         class DBConfig:
-            def __init__(self, path):
-                self.db_path = path
-        
-        db_config = DBConfig(db_path)
-        
-        # 替换数据源
+            pass
+        db_config = DBConfig()
+        db_config.db_path = db_path
         env.set_data_source(DatabaseDataSource(db_config))
         env.user_system_log.info("已切换到数据库数据源: {}".format(db_path))
     
