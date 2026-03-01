@@ -5,7 +5,8 @@ import { LineChartOutlined, ExperimentOutlined, RadarChartOutlined, RobotOutline
 const { Header, Content } = Layout;
 
 const items = [
-  { key: '/trading', icon: <LineChartOutlined />, label: '交易决策中心' },
+  { key: '/trading', icon: <LineChartOutlined />, label: '交易决策中心（含新闻热点）' },
+  { key: '/institutional', icon: <LineChartOutlined />, label: '机构交易' },
   { key: '/strategy-lab', icon: <ExperimentOutlined />, label: '策略实验室' },
   { key: '/scanner', icon: <RadarChartOutlined />, label: '市场扫描器' },
   { key: '/rl', icon: <RobotOutlined />, label: 'RL 交易' },
@@ -18,7 +19,9 @@ export default function MainLayout() {
     ? location.pathname
     : location.pathname.startsWith('/rl')
       ? '/rl'
-      : location.pathname;
+      : location.pathname.startsWith('/institutional')
+        ? '/institutional'
+        : location.pathname;
 
   const onMenuSelect = ({ key }: { key: string }) => {
     navigate(key);

@@ -7,6 +7,20 @@ export interface KlineBar {
   volume?: number;
 }
 
+/** 单条 MA 点（与 K 线 time 一一对应） */
+export interface MaPoint {
+  time: string;
+  value: number;
+}
+
+/** /api/kline?indicators=ma 时的响应 */
+export interface KlineWithIndicatorsResponse {
+  kline: KlineBar[];
+  ma5: MaPoint[];
+  ma10: MaPoint[];
+  ma20: MaPoint[];
+}
+
 export interface Signal {
   date: string;
   type: 'BUY' | 'SELL';

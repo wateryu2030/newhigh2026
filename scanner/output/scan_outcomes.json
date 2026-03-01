@@ -1,0 +1,1128 @@
+[
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T09:02:39.496115",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 2 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 2 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:07:52.977251",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:21:38.392911",
+    "themes_count": 0,
+    "picks_count": 0,
+    "themes": [],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 0 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 0 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 0 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 0 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 0 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 0 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:22:43.899919",
+    "themes_count": 0,
+    "picks_count": 0,
+    "themes": [],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 0 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 0 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 0 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 0 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 0 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 0 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:36:45.223396",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:38:18.543689",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票(候选5只,过滤5只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:38:22.952656",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票(候选5只,过滤5只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:38:36.301005",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": null,
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:41:18.471244",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "紫光股份",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T20:42:35.976405",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T21:00:36.587850",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T21:23:41.654278",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票(候选5只,过滤5只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-02-28",
+    "timestamp": "2026-02-28T21:23:54.587479",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  }
+]

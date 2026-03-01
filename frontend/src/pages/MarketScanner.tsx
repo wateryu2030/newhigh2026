@@ -4,9 +4,8 @@ import { DownloadOutlined, DownOutlined, FilterOutlined } from '@ant-design/icon
 import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { api } from '../api/client';
-import type { ScanItem } from '../types';
-import type { KlineBar } from '../types';
-import KLineChart from '../components/KLineChart';
+import type { ScanItem, KlineBar, MaPoint } from '../types';
+import TradingChart from '../components/TradingChart';
 
 function fmtWanYi(val: number | null | undefined): string {
   if (val == null || Number.isNaN(val)) return '—';
@@ -43,13 +42,65 @@ function buildColumns(sortField: string | undefined, sortOrder: SortOrder): Colu
   ];
 }
 
-type TabKey = 'breakout' | 'strong' | 'ai';
+type TabKey = 'breakout' | 'strong' | 'ai' | 'multi_agent';
+
+// 多智能体扫描结果类型
+type ThemeData = {
+  name: string;
+  stage?: string;
+  tier?: string;
+  confidence?: number;
+};
+
+type MultiAgentPick = {
+  symbol: string;
+  name?: string;
+  theme?: string;
+  strategy?: string;
+  strategy_cn?: string;
+  current_price?: number;
+  rsi?: number;
+  risk_level?: string;
+  logic?: string;
+  stop_loss?: string;
+  observe?: string;
+  ma20?: number;
+  ma60?: number;
+  trend?: string;
+  revenue_ly?: number | null;
+  profit_ly?: number | null;
+  pe_ratio?: number | null;
+  pb_ratio?: number | null;
+  industry?: string | null;
+  region?: string | null;
+};
+
+type ExecutionLog = {
+  step: string;
+  status: string;
+  message?: string;
+};
 
 export default function MarketScanner() {
   const [activeTab, setActiveTab] = useState<TabKey>('breakout');
   const [breakout, setBreakout] = useState<ScanItem[]>([]);
   const [strong, setStrong] = useState<ScanItem[]>([]);
   const [aiRec, setAiRec] = useState<ScanItem[]>([]);
+  // 多智能体扫描状态
+  const [multiAgentPicks, setMultiAgentPicks] = useState<MultiAgentPick[]>([]);
+  const [multiAgentThemes, setMultiAgentThemes] = useState<ThemeData[]>([]);
+  const [multiAgentReport, setMultiAgentReport] = useState<string>('');
+  const [multiAgentLogs, setMultiAgentLogs] = useState<ExecutionLog[]>([]);
+  const [loadingMultiAgent, setLoadingMultiAgent] = useState(false);
+  const [loadedMultiAgent, setLoadedMultiAgent] = useState(false);
+  const [multiAgentError, setMultiAgentError] = useState<string | undefined>(undefined);
+  // 多智能体参数控制
+  const [maDaysLookback, setMaDaysLookback] = useState<number>(3);
+  const [maTopNThemes, setMaTopNThemes] = useState<number>(10);
+  const [maTopNStocks, setMaTopNStocks] = useState<number>(20);
+  const [maUseLlm, setMaUseLlm] = useState<boolean>(false);
+  const [maRelaxedFilter, setMaRelaxedFilter] = useState<boolean>(false);
+  const [maStats, setMaStats] = useState<{candidates_count: number; filtered_count: number; theme_stock_count: number}>({candidates_count: 0, filtered_count: 0, theme_stock_count: 0});
   const [loadingBreakout, setLoadingBreakout] = useState(false);
   const [loadingStrong, setLoadingStrong] = useState(false);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -62,6 +113,9 @@ export default function MarketScanner() {
   const [industryFilter, setIndustryFilter] = useState<string | undefined>(undefined);
   const [selectedRow, setSelectedRow] = useState<ScanItem | null>(null);
   const [detailKline, setDetailKline] = useState<KlineBar[]>([]);
+  const [detailMa5, setDetailMa5] = useState<MaPoint[]>([]);
+  const [detailMa10, setDetailMa10] = useState<MaPoint[]>([]);
+  const [detailMa20, setDetailMa20] = useState<MaPoint[]>([]);
   const [detailSignals, setDetailSignals] = useState<{ date: string; type: 'BUY' | 'SELL'; price: number }[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
@@ -99,8 +153,42 @@ export default function MarketScanner() {
       } finally {
         setLoadingAi(false);
       }
+    } else if (mode === 'multi_agent') {
+      if (loadedMultiAgent && !forceRefresh) return;
+      setLoadingMultiAgent(true);
+      setMultiAgentError(undefined);
+      try {
+        // 调用多智能体扫描API
+        const response = await fetch('/api/scan/multi_agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            days_lookback: maDaysLookback,
+            top_n_themes: maTopNThemes,
+            top_n_stocks: maTopNStocks,
+            use_llm: maUseLlm,
+            relaxed_filter: maRelaxedFilter,
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setMultiAgentPicks(data.picks || []);
+          setMultiAgentThemes(data.themes || []);
+          setMultiAgentReport(data.report || '');
+          setMultiAgentLogs(data.execution_log || []);
+          setMaStats(data.stats || {candidates_count: 0, filtered_count: 0, theme_stock_count: 0});
+        } else {
+          setMultiAgentError(data.error || '扫描失败');
+        }
+        setLoadedMultiAgent(true);
+      } catch (err) {
+        setMultiAgentError(err instanceof Error ? err.message : '请求失败');
+        setLoadedMultiAgent(true);
+      } finally {
+        setLoadingMultiAgent(false);
+      }
     }
-  }, [loadedBreakout, loadedStrong, loadedAi]);
+  }, [loadedBreakout, loadedStrong, loadedAi, loadedMultiAgent, maDaysLookback, maTopNThemes, maTopNStocks, maUseLlm, maRelaxedFilter]);
 
   // 进入页面只拉当前 Tab；切换 Tab 时仅在该 Tab 未加载过时拉取
   useEffect(() => {
@@ -116,7 +204,23 @@ export default function MarketScanner() {
     loadMode(activeTab, true);
   };
 
-  const currentData = activeTab === 'breakout' ? breakout : activeTab === 'strong' ? strong : aiRec;
+  const currentData = activeTab === 'breakout' ? breakout : activeTab === 'strong' ? strong : activeTab === 'ai' ? aiRec : [];
+  
+  // 多智能体选股结果转ScanItem格式用于详情展示（补齐名称与财务信息）
+  const multiAgentToScanItem = (pick: MultiAgentPick): ScanItem => ({
+    symbol: pick.symbol,
+    name: (pick.name && pick.name !== pick.symbol ? pick.name : undefined) || pick.symbol,
+    signal: 'BUY',
+    price: pick.current_price ?? 0,
+    buy_prob: undefined,
+    industry: pick.industry ?? pick.theme ?? '',
+    reason: `${pick.strategy_cn || pick.strategy || ''}: ${pick.logic || ''}`,
+    revenue_ly: pick.revenue_ly ?? undefined,
+    profit_ly: pick.profit_ly ?? undefined,
+    pe_ratio: pick.pe_ratio ?? undefined,
+    pb_ratio: pick.pb_ratio ?? undefined,
+    region: pick.region ?? undefined,
+  });
 
   const industryOptions = useMemo(() => {
     const set = new Set<string>();
@@ -155,6 +259,9 @@ export default function MarketScanner() {
   useEffect(() => {
     if (!selectedRow?.symbol) {
       setDetailKline([]);
+      setDetailMa5([]);
+      setDetailMa10([]);
+      setDetailMa20([]);
       setDetailSignals([]);
       return;
     }
@@ -165,22 +272,36 @@ export default function MarketScanner() {
     const startStr = start.toISOString().slice(0, 10);
     const endStr = end.toISOString().slice(0, 10);
     Promise.all([
-      api.kline(selectedRow.symbol, startStr, endStr),
+      api.kline(selectedRow.symbol, startStr, endStr, { indicators: 'ma' }),
       api.signals(selectedRow.symbol).catch(() => ({ signals: [] })),
     ])
       .then(([kline, sigRes]) => {
-        setDetailKline(Array.isArray(kline) ? kline : []);
+        if (Array.isArray(kline)) {
+          setDetailKline(kline);
+          setDetailMa5([]);
+          setDetailMa10([]);
+          setDetailMa20([]);
+        } else {
+          const r = kline as { kline: KlineBar[]; ma5?: MaPoint[]; ma10?: MaPoint[]; ma20?: MaPoint[] };
+          setDetailKline(r.kline || []);
+          setDetailMa5(r.ma5 || []);
+          setDetailMa10(r.ma10 || []);
+          setDetailMa20(r.ma20 || []);
+        }
         const sigs = (sigRes as { signals?: { date: string; type: 'BUY' | 'SELL'; price: number }[] }).signals ?? [];
         setDetailSignals(sigs.map((s) => ({ date: s.date, type: s.type, price: s.price })));
       })
       .catch(() => {
         setDetailKline([]);
+        setDetailMa5([]);
+        setDetailMa10([]);
+        setDetailMa20([]);
         setDetailSignals([]);
       })
       .finally(() => setLoadingDetail(false));
   }, [selectedRow?.symbol]);
 
-  const tabLabel = activeTab === 'breakout' ? '突破股票' : activeTab === 'strong' ? '强势股' : 'AI推荐';
+  const tabLabel = activeTab === 'breakout' ? '突破股票' : activeTab === 'strong' ? '强势股' : activeTab === 'ai' ? 'AI推荐' : '智能扫描';
   const columns = useMemo(() => buildColumns(sortField, sortOrder), [sortField, sortOrder]);
 
   const onTableChange = (_: unknown, __: unknown, sorter: unknown) => {
@@ -503,12 +624,377 @@ export default function MarketScanner() {
                 )
               ),
             },
+            {
+              key: 'multi_agent',
+              label: '智能扫描',
+              children: (
+                <div style={{ color: '#f1f5f9' }}>
+                  {/* 参数控制面板 */}
+                  <Card
+                    title={<span style={{ color: '#f1f5f9', fontWeight: 600 }}>扫描参数设置</span>}
+                    style={{ background: '#0f172a', marginBottom: 16, border: '1px solid #1e293b' }}
+                    headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
+                    extra={
+                      <Space>
+                        <Button 
+                          type="primary" 
+                          size="small" 
+                          onClick={() => loadMode('multi_agent', true)}
+                          loading={loadingMultiAgent}
+                        >
+                          开始扫描
+                        </Button>
+                      </Space>
+                    }
+                  >
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>新闻回溯天数</div>
+                        <Select
+                          value={maDaysLookback}
+                          onChange={setMaDaysLookback}
+                          options={[
+                            { value: 1, label: '1天' },
+                            { value: 3, label: '3天' },
+                            { value: 7, label: '7天' },
+                            { value: 14, label: '14天' },
+                          ]}
+                          style={{ width: 100 }}
+                          disabled={loadingMultiAgent}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>主题数量</div>
+                        <Select
+                          value={maTopNThemes}
+                          onChange={setMaTopNThemes}
+                          options={[
+                            { value: 5, label: '5个' },
+                            { value: 10, label: '10个' },
+                            { value: 15, label: '15个' },
+                            { value: 20, label: '20个' },
+                          ]}
+                          style={{ width: 100 }}
+                          disabled={loadingMultiAgent}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>选股上限</div>
+                        <Select
+                          value={maTopNStocks}
+                          onChange={setMaTopNStocks}
+                          options={[
+                            { value: 10, label: '10只' },
+                            { value: 20, label: '20只' },
+                            { value: 30, label: '30只' },
+                            { value: 50, label: '50只' },
+                          ]}
+                          style={{ width: 100 }}
+                          disabled={loadingMultiAgent}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>过滤条件</div>
+                        <Select
+                          value={maRelaxedFilter ? 'relaxed' : 'strict'}
+                          onChange={(v) => setMaRelaxedFilter(v === 'relaxed')}
+                          options={[
+                            { value: 'strict', label: '严格过滤' },
+                            { value: 'relaxed', label: '宽松过滤' },
+                          ]}
+                          style={{ width: 120 }}
+                          disabled={loadingMultiAgent}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>LLM深度分析</div>
+                        <Select
+                          value={maUseLlm ? 'yes' : 'no'}
+                          onChange={(v) => setMaUseLlm(v === 'yes')}
+                          options={[
+                            { value: 'no', label: '关闭（更快）' },
+                            { value: 'yes', label: '开启（更准）' },
+                          ]}
+                          style={{ width: 140 }}
+                          disabled={loadingMultiAgent}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 12, fontSize: 12, color: '#64748b' }}>
+                      提示：如结果为空，可尝试「宽松过滤」或增加「新闻回溯天数」
+                    </div>
+                  </Card>
+
+                  {loadingMultiAgent && (
+                    <div style={{ textAlign: 'center', padding: 48 }}>
+                      <Spin size="large" tip="多智能体扫描中，约需30-60秒…" />
+                      <div style={{ color: '#64748b', fontSize: 12, marginTop: 12 }}>
+                        正在执行13步智能分析流程：新闻采集 → 主题提取 → 策略选择 → 选股推荐
+                      </div>
+                    </div>
+                  )}
+
+                  {multiAgentError && multiAgentPicks.length === 0 && !loadingMultiAgent && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message="扫描失败"
+                      description={multiAgentError + '。请检查后端服务或稍后重试。'}
+                      style={{ marginBottom: 16 }}
+                    />
+                  )}
+
+                  {!loadingMultiAgent && (
+                    <>
+                    {/* 主题热点区域 */}
+                    {multiAgentThemes.length > 0 && (
+                      <Card
+                        title={<span style={{ color: '#f1f5f9', fontWeight: 600 }}>主题热点（Canonical Themes）</span>}
+                        style={{ background: '#0f172a', marginBottom: 16, border: '1px solid #1e293b' }}
+                        headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
+                      >
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {multiAgentThemes.map((theme, idx) => (
+                            <Tag
+                              key={idx}
+                              color={theme.tier === 'Tier1' ? 'gold' : theme.tier === 'Tier2' ? 'blue' : 'default'}
+                              style={{ fontSize: 14, padding: '4px 12px' }}
+                            >
+                              {theme.name}
+                              {theme.stage && <span style={{ marginLeft: 4, fontSize: 12 }}>({theme.stage})</span>}
+                              {theme.confidence !== undefined && (
+                                <span style={{ marginLeft: 4, fontSize: 11, opacity: 0.8 }}>
+                                  {Math.round((theme.confidence || 0) * 100)}%
+                                </span>
+                              )}
+                            </Tag>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+
+                    {/* 选股结果区域 */}
+                    <Card
+                      title={
+                        <Space>
+                          <span style={{ color: '#f1f5f9', fontWeight: 600 }}>
+                            多因子选股结果 ({multiAgentPicks.length}只)
+                          </span>
+                          {multiAgentPicks.length > 0 && (
+                            <Tag color="green" style={{ fontSize: 12 }}>
+                              已通过风险校验
+                            </Tag>
+                          )}
+                        </Space>
+                      }
+                      style={{ background: '#0f172a', marginBottom: 16, border: '1px solid #1e293b' }}
+                      headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
+                    >
+                      {multiAgentPicks.length === 0 ? (
+                        <div style={{ color: '#94a3b8', textAlign: 'center', padding: 24 }}>
+                          <div style={{ fontSize: 16, marginBottom: 12 }}>暂无选股结果</div>
+                          {maStats.theme_stock_count > 0 && (
+                            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12 }}>
+                              候选股票：{maStats.theme_stock_count}只 | 过滤掉：{maStats.filtered_count}只
+                            </div>
+                          )}
+                          <div style={{ fontSize: 12, marginBottom: 8 }}>
+                            可能原因：当前市场无明确主题热点，或过滤条件较严格
+                          </div>
+                          <div style={{ fontSize: 12, color: '#64748b' }}>
+                            建议：① 切换到「宽松过滤」模式 ② 增加「新闻回溯天数」③ 查看下方执行日志
+                          </div>
+                        </div>
+                      ) : (
+                        <Table
+                          size="small"
+                          dataSource={multiAgentPicks}
+                          rowKey="symbol"
+                          pagination={{ pageSize: 10 }}
+                          columns={[
+                            { 
+                              title: '标的', 
+                              dataIndex: 'symbol', 
+                              key: 'symbol', 
+                              width: 100,
+                              render: (v: string, record: MultiAgentPick) => (
+                                <div>
+                                  <div style={{ fontWeight: 600 }}>{v}</div>
+                                  {record.name && (
+                                    <div style={{ fontSize: 12, color: '#94a3b8' }}>{record.name}</div>
+                                  )}
+                                </div>
+                              ),
+                            },
+                            { 
+                              title: '所属主题', 
+                              dataIndex: 'theme', 
+                              key: 'theme', 
+                              width: 120,
+                              render: (v: string) => <Tag color="purple">{v}</Tag>,
+                            },
+                            { 
+                              title: '策略标签', 
+                              dataIndex: 'strategy_cn', 
+                              key: 'strategy_cn', 
+                              width: 110,
+                              render: (v: string, record: MultiAgentPick) => (
+                                <Tag color="cyan">{v || record.strategy}</Tag>
+                              ),
+                            },
+                            { 
+                              title: '当前价', 
+                              dataIndex: 'current_price', 
+                              key: 'current_price', 
+                              width: 80,
+                              render: (v: number) => v != null ? v.toFixed(2) : '—',
+                            },
+                            { 
+                              title: 'RSI', 
+                              dataIndex: 'rsi', 
+                              key: 'rsi', 
+                              width: 70,
+                              render: (v: number) => v != null ? (
+                                <span style={{ 
+                                  color: v > 70 ? '#f87171' : v < 30 ? '#4ade80' : '#f1f5f9' 
+                                }}>
+                                  {v.toFixed(1)}
+                                </span>
+                              ) : '—',
+                            },
+                            { 
+                              title: '均线趋势', 
+                              key: 'trend', 
+                              width: 120,
+                              render: (_: unknown, record: MultiAgentPick) => (
+                                <div style={{ fontSize: 12 }}>
+                                  {record.ma20 && <div>MA20: {record.ma20.toFixed(2)}</div>}
+                                  {record.ma60 && <div>MA60: {record.ma60.toFixed(2)}</div>}
+                                  {record.trend && (
+                                    <span
+                                      style={{
+                                        marginTop: 4,
+                                        padding: '2px 8px',
+                                        borderRadius: 4,
+                                        fontSize: 12,
+                                        background: record.trend.includes('UP') ? '#166534' : record.trend.includes('DOWN') ? '#991b1b' : '#374151',
+                                        color: '#f1f5f9',
+                                        display: 'inline-block',
+                                      }}
+                                    >
+                                      {record.trend}
+                                    </span>
+                                  )}
+                                </div>
+                              ),
+                            },
+                            { 
+                              title: '风险等级', 
+                              dataIndex: 'risk_level', 
+                              key: 'risk_level', 
+                              width: 90,
+                              render: (v: string) => (
+                                <Tag 
+                                  color={v === '低风险' ? 'green' : v === '中风险' ? 'orange' : v === '高风险' ? 'red' : 'default'}
+                                >
+                                  {v || '未知'}
+                                </Tag>
+                              ),
+                            },
+                            { 
+                              title: '选股逻辑', 
+                              dataIndex: 'logic', 
+                              key: 'logic', 
+                              ellipsis: true,
+                              render: (v: string) => (
+                                <span style={{ color: '#cbd5e1', fontSize: 12 }}>{v || '—'}</span>
+                              ),
+                            },
+                            {
+                              title: '操作',
+                              key: 'action',
+                              width: 80,
+                              render: (_: unknown, record: MultiAgentPick) => (
+                                <Button 
+                                  size="small" 
+                                  type="primary"
+                                  onClick={() => setSelectedRow(multiAgentToScanItem(record))}
+                                >
+                                  详情
+                                </Button>
+                              ),
+                            },
+                          ]}
+                          onRow={(record) => ({
+                            onClick: () => setSelectedRow(multiAgentToScanItem(record)),
+                            style: { cursor: 'pointer' },
+                            onMouseEnter: (e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(45,58,79,0.6)'; },
+                            onMouseLeave: (e) => { (e.currentTarget as HTMLElement).style.background = ''; },
+                          })}
+                        />
+                      )}
+                    </Card>
+
+                    {/* 执行日志区域 */}
+                    {multiAgentLogs.length > 0 && (
+                      <Card
+                        title={<span style={{ color: '#f1f5f9', fontWeight: 600 }}>执行日志</span>}
+                        style={{ background: '#0f172a', marginBottom: 16, border: '1px solid #1e293b' }}
+                        headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
+                        bodyStyle={{ maxHeight: 300, overflow: 'auto' }}
+                      >
+                        <div style={{ fontFamily: 'monospace', fontSize: 12 }}>
+                          {multiAgentLogs.map((log, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{ 
+                                padding: '4px 0', 
+                                borderBottom: '1px solid #1e293b',
+                                color: log.status === 'error' ? '#f87171' : 
+                                       log.status === 'done' ? '#4ade80' : '#94a3b8',
+                              }}
+                            >
+                              <span style={{ color: '#64748b' }}>[{log.step}]</span>
+                              <span style={{ marginLeft: 8 }}>{log.status}</span>
+                              {log.message && (
+                                <span style={{ marginLeft: 8, color: '#cbd5e1' }}>{log.message}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+
+                    {/* 研报区域 */}
+                    {multiAgentReport && (
+                      <Card
+                        title={<span style={{ color: '#f1f5f9', fontWeight: 600 }}>智能研报</span>}
+                        style={{ background: '#0f172a', border: '1px solid #1e293b' }}
+                        headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
+                      >
+                        <div 
+                          style={{ 
+                            color: '#e2e8f0', 
+                            lineHeight: 1.8, 
+                            whiteSpace: 'pre-wrap',
+                            fontSize: 13,
+                          }}
+                        >
+                          {multiAgentReport}
+                        </div>
+                      </Card>
+                    )}
+                  </>
+                  )}
+                </div>
+              ),
+            },
           ]}
         />
       </Card>
 
       <Drawer
-        title={selectedRow ? `${selectedRow.name ?? selectedRow.symbol} (${selectedRow.symbol})` : '股票详情'}
+        title={selectedRow ? (selectedRow.name && selectedRow.name !== selectedRow.symbol ? `${selectedRow.name} (${selectedRow.symbol})` : `${selectedRow.symbol}`) : '股票详情'}
         placement="right"
         width={Math.min(560, window.innerWidth * 0.9)}
         open={selectedRow != null}
@@ -542,7 +1028,14 @@ export default function MarketScanner() {
               {loadingDetail ? (
                 <Spin tip="加载 K 线…" />
               ) : detailKline.length > 0 ? (
-                <KLineChart data={detailKline} signals={detailSignals} height={320} />
+                <TradingChart
+                  data={detailKline}
+                  signals={detailSignals}
+                  ma5={detailMa5}
+                  ma10={detailMa10}
+                  ma20={detailMa20}
+                  height={320}
+                />
               ) : (
                 <div style={{ color: '#64748b', textAlign: 'center', padding: 24 }}>暂无 K 线数据</div>
               )}

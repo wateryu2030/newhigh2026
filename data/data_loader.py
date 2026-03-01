@@ -16,7 +16,7 @@ def load_kline(
     source: str = "database",
 ) -> pd.DataFrame:
     """
-    加载 K 线：source=database 时从 SQLite 读，source=akshare 时从 AKShare 拉取。
+    加载 K 线：source=database 时从 DuckDB 读，source=akshare 时从 AKShare 拉取。
     :param symbol: 如 000001 或 000001.XSHE
     :param start_date: YYYY-MM-DD
     :param end_date: YYYY-MM-DD

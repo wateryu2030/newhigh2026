@@ -2,18 +2,15 @@
 
 ## 概述
 
-已成功实现基于 SQLite 的本地数据库系统，用于存储和管理股票数据，解决了 RQAlpha 回测需要真实数据的问题。
+已实现基于 **DuckDB** 的本地数据库系统（`data/quant.duckdb`），用于存储和管理股票数据，解决 RQAlpha 回测与交易页股票列表等需求。运行时仅使用 DuckDB，不再使用 SQLite。
 
 ## 实现的功能
 
-### ✅ 1. 数据库模型 (`database/db_schema.py`)
+### ✅ 1. 数据后端 (`database/duckdb_backend.py`)
 
-- **StockDatabase 类**：管理 SQLite 数据库
-- **表结构**：
-  - `stocks`: 股票基本信息
-  - `daily_bars`: 日线行情数据（OHLCV）
-  - `trading_calendar`: 交易日历
-- **索引优化**：为常用查询字段创建索引
+- **get_db_backend() / DuckDBBackend**：平台唯一数据后端，DuckDB
+- **表结构**：`stocks`、`daily_bars`、`news_items`（可选）
+- **db_schema.StockDatabase**：保留类名兼容，实际委托给 DuckDBBackend
 
 ### ✅ 2. 数据获取器 (`database/data_fetcher.py`)
 

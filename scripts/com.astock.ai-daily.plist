@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.astock.ai-daily</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/apple/astock/scripts/run_daily_ai_job.sh</string>
+    </array>
+
+    <!-- 每天 20:00 触发一次。若机器当时时间睡眠，则在唤醒后尽快执行。 -->
+    <key>StartCalendarInterval</key>
+    <array>
+      <dict>
+        <key>Hour</key>
+        <integer>20</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+      </dict>
+    </array>
+
+    <!-- 用户登录时若错过上一次，也可 RunAtLoad 补跑一次 -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- 标准输出/错误日志，可在需要时查看 -->
+    <key>StandardOutPath</key>
+    <string>/Users/apple/astock/scripts/ai_daily.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/apple/astock/scripts/ai_daily.err.log</string>
+  </dict>
+</plist>
+

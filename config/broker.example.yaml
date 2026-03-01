@@ -1,0 +1,14 @@
+# 券商配置示例。实盘时将此类配置置于 config/broker.yaml（勿提交到版本库）。
+
+# 模拟
+sim:
+  initial_cash: 1000000
+
+# QMT 实盘（按需填写）
+qmt:
+  qmt_path: ""          # QMT 安装路径或 miniquant 地址
+  account_id: ""
+  timeout: 10
+
+# 当前使用: sim | qmt
+active: sim

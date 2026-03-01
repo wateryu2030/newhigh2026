@@ -6,6 +6,7 @@ import MarketScanner from './pages/MarketScanner';
 import RLTrainingDashboard from './pages/RLTrainingDashboard';
 import RLPerformance from './pages/RLPerformance';
 import RLDecisionView from './pages/RLDecisionView';
+import InstitutionalTrading from './pages/InstitutionalTrading';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/trading" replace />} />
           <Route path="trading" element={<TradingDecision />} />
+          <Route path="institutional" element={<InstitutionalTrading />} />
           <Route path="strategy-lab" element={<StrategyLab />} />
           <Route path="scanner" element={<MarketScanner />} />
           <Route path="rl" element={<RLTrainingDashboard />} />

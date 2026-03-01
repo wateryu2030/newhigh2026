@@ -1,6 +1,7 @@
 # Web 平台 + 回测 + AI 选股 / 机构组合 / 自进化 依赖（用于 .venv）
 # 安装: python -m venv .venv && .venv/bin/pip install -r requirements-web.txt
 flask>=2.0
+APScheduler>=3.10
 reportlab>=3.6
 requests>=2.28
 duckdb>=0.9

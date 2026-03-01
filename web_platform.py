@@ -10,11 +10,51 @@ import subprocess
 import json
 from datetime import datetime, timedelta
 import glob
+from typing import Dict, Optional
 
 _root = os.path.dirname(os.path.abspath(__file__))
 _static_dir = os.path.join(_root, 'static')
 # React 前端构建目录：若存在则 5050 根路径及 /scanner 等走新界面（市场扫描器含名称/去年营收/去年净利润等）
 _frontend_dist = os.path.join(_root, 'frontend', 'dist')
+
+# 股票名称补丁：从 CSV 等文件加载更友好的中文名称（如 闻泰科技），用于 /api/stocks 与前端展示/搜索。
+_STOCK_NAME_OVERRIDES: Optional[Dict[str, str]] = None
+
+
+def _load_stock_name_overrides() -> Dict[str, str]:
+  """从本地 CSV 等加载股票名称映射，key=order_book_id, value=友好名称。"""
+  global _STOCK_NAME_OVERRIDES
+  if _STOCK_NAME_OVERRIDES is not None:
+      return _STOCK_NAME_OVERRIDES
+  overrides: Dict[str, str] = {}
+  # 技术龙头/消费龙头等小表，体量很小，逐个加载即可
+  for path in (
+      os.path.join(_root, "data", "tech_leader_stocks.csv"),
+      os.path.join(_root, "data", "consume_leader_stocks.csv"),
+  ):
+      if not os.path.exists(path):
+          continue
+      try:
+          with open(path, "r", encoding="utf-8") as f:
+              # 跳过表头
+              header = f.readline()
+              for line in f:
+                  line = line.strip()
+                  if not line:
+                      continue
+                  parts = line.split(",")
+                  if len(parts) >= 2:
+                      code = parts[0].strip()
+                      name = parts[1].strip()
+                      if code and name:
+                          overrides[code] = name
+      except Exception:
+          # 名称补丁失败不影响主流程
+          continue
+  # 针对部分重要标的做人工修正（CSV 中可能是代码占位）
+  overrides["600745.XSHG"] = "闻泰科技"
+  _STOCK_NAME_OVERRIDES = overrides
+  return overrides
 app = Flask(__name__, static_folder=_static_dir)
 
 # 注册 API 层（组合回测、TradingView K 线、股票池、机构组合、AI 推荐等）
@@ -513,33 +553,60 @@ def delete_strategy(filepath):
 
 @app.route("/api/stocks")
 def list_stocks():
-    """列出数据库中的所有股票"""
+    """列出数据库中的所有股票；名称优先用 CSV 覆盖，否则用 get_display_name 解析。
+    若 stocks 表为空，则从 daily_bars 去重得到标的列表，保证有日线数据的标的能出现在列表中。"""
     try:
         from database.duckdb_backend import get_db_backend
+        from core.stock_display import get_display_name
         db = get_db_backend()
         stocks = db.get_stocks()
-        
+        if not stocks and hasattr(db, "get_stocks_from_daily_bars"):
+            stocks = db.get_stocks_from_daily_bars()
+        name_overrides = _load_stock_name_overrides()
+        _proj_root = os.path.dirname(os.path.abspath(__file__))
+
         stock_list = []
         for order_book_id, symbol, name in stocks:
+            final_name = name_overrides.get(order_book_id, name or symbol)
+            if not final_name or (final_name.strip() == (symbol or "").strip()):
+                final_name = get_display_name(symbol or "", db=db, root=_proj_root) if symbol else (symbol or "")
             stock_list.append({
                 "order_book_id": order_book_id,
                 "symbol": symbol,
-                "name": name or symbol
+                "name": final_name or symbol
             })
-        
+
         return jsonify({"stocks": stock_list})
     except Exception as e:
         # 如果数据库不存在或出错，返回空列表
         return jsonify({"stocks": [], "error": str(e)})
 
 
+def _compute_ma(close_series, window):
+    """Series 滚动均值，返回与 close 同长的 Series，前 window-1 为 NaN。"""
+    return close_series.rolling(window=window, min_periods=1).mean()
+
+
+def _resample_ohlcv(df, freq):
+    """将日线 df (index=trade_date) 聚合为周/月。freq 为 'W-FRI' 或 'M'。"""
+    if df is None or len(df) == 0:
+        return df
+    g = df.resample(freq)
+    agg = g.agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
+    return agg.dropna(how="all")
+
+
 @app.route("/api/kline")
 def api_kline():
-    """K 线数据，供前端 TradingView 图表。数据来自已导入的数据库（get_db_backend）。GET ?symbol=000001.XSHE&start=2024-01-01&end=2025-01-01"""
+    """K 线数据，供前端 TradingView 图表。数据来自已导入的数据库。
+    GET ?symbol=000001&start=2024-01-01&end=2025-01-01&period=day|week|month
+    可选 ?indicators=ma 返回 MA5/10/20/30/60，响应为 { kline, ma5, ma10, ma20, ma30, ma60 }。"""
     try:
         symbol = request.args.get("symbol", "").strip()
         start = request.args.get("start", "").strip()[:10]
         end = request.args.get("end", "").strip()[:10]
+        period = (request.args.get("period") or "day").strip().lower()
+        indicators = (request.args.get("indicators") or "").strip().lower()
         if not symbol or not start or not end:
             return jsonify([])
         from database.duckdb_backend import get_db_backend
@@ -555,6 +622,12 @@ def api_kline():
                     break
         if df is None or len(df) == 0:
             return jsonify([])
+        if period == "week":
+            df = _resample_ohlcv(df, "W-FRI")
+        elif period == "month":
+            df = _resample_ohlcv(df, "M")
+        if df is None or len(df) == 0:
+            return jsonify([])
         df = df.reset_index()
         df["time"] = df.get("trade_date", df.index.astype(str)).astype(str).str[:10]
         rows = []
@@ -567,7 +640,23 @@ def api_kline():
                 "close": float(r.get("close", 0)),
                 "volume": float(r.get("volume", 0)) if r.get("volume") is not None else None,
             })
-        return jsonify(rows)
+        if indicators != "ma":
+            return jsonify(rows)
+        close = df["close"].astype(float)
+        ma5 = _compute_ma(close, 5)
+        ma10 = _compute_ma(close, 10)
+        ma20 = _compute_ma(close, 20)
+        ma30 = _compute_ma(close, 30)
+        ma60 = _compute_ma(close, 60)
+        times = df["time"].astype(str).str[:10].tolist()
+        return jsonify({
+            "kline": rows,
+            "ma5": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma5)],
+            "ma10": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma10)],
+            "ma20": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma20)],
+            "ma30": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma30)],
+            "ma60": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma60)],
+        })
     except Exception as e:
         return jsonify([])
 
@@ -613,27 +702,29 @@ def api_signals():
 
 @app.route("/api/ai_score")
 def api_ai_score():
-    """AI 评分与建议。GET ?symbol=000001.XSHE"""
+    """AI 评分与建议。无模型或数据不足时返回 score/suggestion 为 null，前端显示「暂无评分」。"""
     try:
         symbol = request.args.get("symbol", "").strip()
         if not symbol:
-            return jsonify({"symbol": "", "score": 50, "suggestion": "HOLD"})
+            return jsonify({"symbol": "", "score": None, "suggestion": None})
         from database.duckdb_backend import get_db_backend
         from data.data_loader import load_kline
         db = get_db_backend()
         end = datetime.now().date()
         start = (end - timedelta(days=250)).strftime("%Y-%m-%d")
         end_str = end.strftime("%Y-%m-%d")
-        df = load_kline(symbol.replace(".XSHG", "").replace(".XSHE", ""), start, end_str, source="database")
+        code = symbol.replace(".XSHG", "").replace(".XSHE", "")
+        df = load_kline(code, start, end_str, source="database")
         if df is None or len(df) < 60:
-            return jsonify({"symbol": symbol, "score": 50, "suggestion": "HOLD"})
+            return jsonify({"symbol": symbol, "score": None, "suggestion": None})
         try:
             from ai_models.model_manager import ModelManager
             mm = ModelManager()
             key = symbol if "." in symbol else (symbol + ".XSHG" if symbol.startswith("6") else symbol + ".XSHE")
             scores = mm.predict({key: df})
             if scores is not None and not scores.empty and "symbol" in scores.columns:
-                row = scores[scores["symbol"].astype(str) == key].iloc[0] if len(scores) else None
+                mask = scores["symbol"].astype(str) == code
+                row = scores[mask].iloc[0] if mask.any() else None
                 if row is not None:
                     sc = float(row.get("score", 0.5)) * 100
                     sug = "BUY" if sc >= 60 else "SELL" if sc < 40 else "HOLD"
@@ -647,9 +738,9 @@ def api_ai_score():
                     })
         except Exception:
             pass
-        return jsonify({"symbol": symbol, "score": 50, "suggestion": "HOLD"})
+        return jsonify({"symbol": symbol, "score": None, "suggestion": None})
     except Exception as e:
-        return jsonify({"symbol": "", "score": 50, "suggestion": "HOLD"})
+        return jsonify({"symbol": "", "score": None, "suggestion": None})
 
 
 @app.route("/api/ai/predict")
@@ -922,12 +1013,15 @@ def sync_all_a_stocks():
 
     def _run():
         try:
-            from database.data_fetcher import DataFetcher
+            from database.data_fetcher import DataFetcher, sync_stock_names_to_db
             fetcher = DataFetcher()
             n = fetcher.fetch_all_a_stocks(
                 start_date=start_date, end_date=end_date, delay=0.12, skip_existing=skip_existing
             )
             print(f"[sync_all_a_stocks] 全量 A 股同步完成: {n} 只")
+            # 补全 stocks 表名称（含已存在仅缺名称的标的），保证交易页列表显示完整
+            names_count = sync_stock_names_to_db()
+            print(f"[sync_all_a_stocks] 股票名称已更新: {names_count} 条")
         except Exception as e:
             import traceback
             print(f"[sync_all_a_stocks] 失败: {e}\n{traceback.format_exc()}")
@@ -936,7 +1030,27 @@ def sync_all_a_stocks():
     t.start()
     return jsonify({
         "success": True,
-        "message": "全量 A 股同步已在后台启动（断点续传，仅拉取缺失）。预计 1–3 小时，请稍后刷新「数据状态」查看股票数。",
+        "message": "全量 A 股同步已在后台启动（断点续传，仅拉取缺失）。完成后将自动补全股票名称。预计 1–3 小时，请稍后刷新「数据状态」查看股票数。",
+    })
+
+
+@app.route("/api/backfill_stock_names", methods=["POST"])
+def backfill_stock_names():
+    """补全 DuckDB stocks 表名称：从 AKShare 拉取 A 股代码+名称并写入，保证交易页列表显示完整。"""
+    import threading
+    def _run():
+        try:
+            from database.data_fetcher import sync_stock_names_to_db
+            n = sync_stock_names_to_db()
+            print(f"[backfill_stock_names] 已更新股票名称: {n} 条")
+        except Exception as e:
+            import traceback
+            print(f"[backfill_stock_names] 失败: {e}\n{traceback.format_exc()}")
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({
+        "success": True,
+        "message": "股票名称补全已在后台启动，请稍后刷新交易页列表查看。",
     })
 
 
@@ -1448,7 +1562,38 @@ def not_found(error):
 def internal_error(error):
     return jsonify({"success": False, "error": "服务器内部错误"}), 500
 
+def _start_daily_fetch_scheduler():
+    """交易日每天 15:30（上海时区）自动拉取新增日线数据。可通过环境变量 DISABLE_DAILY_FETCH=1 关闭。"""
+    if os.environ.get("DISABLE_DAILY_FETCH") == "1":
+        return
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.cron import CronTrigger
+    except ImportError:
+        return
+    script = os.path.join(_root, "scripts", "daily_fetch_after_close.py")
+    if not os.path.isfile(script):
+        return
+
+    def job():
+        try:
+            subprocess.run(
+                [sys.executable, script],
+                cwd=_root,
+                timeout=3600,
+                capture_output=False,
+            )
+        except Exception as e:
+            print("[daily_fetch] 定时拉取异常:", e)
+
+    sched = BackgroundScheduler(timezone="Asia/Shanghai")
+    sched.add_job(job, CronTrigger(hour=15, minute=30, day_of_week="mon-fri"))
+    sched.start()
+    print("已启用交易日 15:30 自动拉取日线（DISABLE_DAILY_FETCH=1 可关闭）")
+
+
 if __name__ == "__main__":
+    import sys
     # 确保必要的目录存在
     os.makedirs("strategies", exist_ok=True)
     os.makedirs("output", exist_ok=True)
@@ -1458,4 +1603,5 @@ if __name__ == "__main__":
     print("量化交易平台启动中...")
     print("访问 http://{}:{} 使用平台（或 http://localhost:{}）".format(HOST, PORT, PORT))
     print("按 Ctrl+C 停止服务。若 5050 被占用可: PORT=8080 python web_platform.py")
+    _start_daily_fetch_scheduler()
     app.run(host=HOST, port=PORT, debug=True)

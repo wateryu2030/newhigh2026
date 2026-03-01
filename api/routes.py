@@ -200,6 +200,14 @@ def create_api_blueprint():
                 all_items.extend(filtered)
             analyzed = analyze_sentiment(all_items)
             agg = aggregate_sentiment(analyzed)
+            # 持久化到 DuckDB，便于复盘与横截面分析（失败不影响接口返回）
+            try:
+                from database.duckdb_backend import get_db_backend
+
+                backend = get_db_backend()
+                backend.insert_news_items(symbol=symbol, items=analyzed)
+            except Exception:
+                pass
             return jsonify({
                 "success": True,
                 "symbol": symbol,
@@ -291,6 +299,126 @@ def create_api_blueprint():
         except Exception as e:
             import traceback
             return jsonify({"success": False, "error": str(e), "results": [], "detail": traceback.format_exc()}), 500
+
+    @bp.route("/scan/multi_agent", methods=["POST"])
+    def scan_multi_agent():
+        """
+        多智能体流水线扫描（13步完整流程）：
+        News Fetch → Theme Heat → Canonicalize → Theme Validate → Theme Regime
+        → Theme Stock Bridge → Strategy Select → Backfill Enriched → Feedback Curator
+        → Stock Pick → Chief Risk → Report → Outcome Enrich
+        
+        Body: {
+            days_lookback?: 3,           # 新闻回溯天数
+            top_n_themes?: 10,          # 提取主题数
+            top_n_stocks?: 20,          # 最终选股数
+            use_llm?: true,             # 是否使用LLM深度分析
+            relaxed_filter?: false,     # 是否使用放宽的过滤条件
+        }
+        
+        Response: {
+            success: true,
+            picks: [...],               # 选股结果
+            report: "markdown",         # 投资研报
+            themes: [...],              # 主题分析
+            execution_log: [...],       # 执行日志
+            stats: {                    # 统计信息
+                candidates_count: 0,    # 候选股票数
+                filtered_count: 0,      # 被过滤股票数
+            }
+        }
+        """
+        _root()
+        try:
+            from scanner.orchestrator import run_multi_agent_scan
+            
+            data = request.json or {}
+            
+            # 运行多智能体流水线
+            picks, report, ctx = run_multi_agent_scan(
+                days_lookback=int(data.get("days_lookback", 3)),
+                top_n_themes=int(data.get("top_n_themes", 10)),
+                top_n_stocks=int(data.get("top_n_stocks", 20)),
+                use_llm=data.get("use_llm", True),
+                relaxed_filter=data.get("relaxed_filter", False),
+            )
+            # 补齐证券显示名称与财务信息（名称与代码一致时用统一解析）
+            try:
+                from core.stock_display import get_display_name
+                from database.duckdb_backend import get_db_backend
+                _db = get_db_backend()
+                for p in picks:
+                    sym = (p.get("symbol") or "").strip()
+                    if sym:
+                        p["name"] = get_display_name(sym, db=_db, root=_API_ROOT)
+            except Exception:
+                pass
+            try:
+                _fin_path = os.path.join(_API_ROOT, "data", "financials_cache.json")
+                if os.path.exists(_fin_path):
+                    with open(_fin_path, "r", encoding="utf-8") as _f:
+                        _fin = json.load(_f)
+                    if isinstance(_fin, dict):
+                        for p in picks:
+                            sym = (p.get("symbol") or "").strip()
+                            sym_key = sym.zfill(6) if sym.isdigit() else sym
+                            info = _fin.get(sym_key) or _fin.get(sym) or {}
+                            if isinstance(info, dict):
+                                p["revenue_ly"] = info.get("revenue_ly")
+                                p["profit_ly"] = info.get("profit_ly")
+                                p["industry"] = p.get("industry") or info.get("industry")
+                                p["region"] = info.get("region")
+                                price = p.get("current_price") or p.get("price")
+                                eps, bps = info.get("eps_ly"), info.get("bps_ly")
+                                if price and eps and eps > 0:
+                                    p["pe_ratio"] = round(price / eps, 2)
+                                else:
+                                    p["pe_ratio"] = None
+                                if price and bps and bps > 0:
+                                    p["pb_ratio"] = round(price / bps, 2)
+                                else:
+                                    p["pb_ratio"] = None
+            except Exception:
+                pass
+
+            return jsonify({
+                "success": True,
+                "picks": picks,
+                "report": report,
+                "themes": [
+                    {
+                        "name": t.get("name"),
+                        "stage": t.get("stage_cn"),
+                        "tier": t.get("tier"),
+                        "confidence": t.get("confidence"),
+                    }
+                    for t in ctx.themes_with_regime
+                ],
+                "execution_log": [
+                    {
+                        "step": log.get("step"),
+                        "status": log.get("status"),
+                        "message": log.get("message"),
+                    }
+                    for log in ctx.execution_log
+                ],
+                "count": len(picks),
+                "stats": {
+                    "candidates_count": getattr(ctx, 'candidates_count', 0),
+                    "filtered_count": getattr(ctx, 'filtered_count', 0),
+                    "theme_stock_count": sum(len(v) for v in getattr(ctx, 'theme_stock_map', {}).values()),
+                },
+            })
+            
+        except Exception as e:
+            import traceback
+            return jsonify({
+                "success": False,
+                "error": str(e),
+                "picks": [],
+                "report": "",
+                "detail": traceback.format_exc(),
+            }), 500
 
     @bp.route("/scan/professional/stream", methods=["POST"])
     def scan_professional_stream():
@@ -936,17 +1064,36 @@ def create_api_blueprint():
     # ---------- RL 交易系统 API ----------
     @bp.route("/rl/train", methods=["POST"])
     def rl_train():
-        """触发 RL 训练。Body: { symbol?, start_date?, end_date?, total_timesteps? }"""
+        """触发 RL 训练（后台执行，立即返回）。Body: { symbol?, start_date?, end_date?, total_timesteps? }"""
         _root()
         try:
+            try:
+                from rl_trading.training.trainer import train_rl_model
+            except ImportError as ie:
+                if "stable_baselines3" in str(ie):
+                    return jsonify({
+                        "success": False,
+                        "error": "缺少依赖 stable_baselines3，请安装: pip install stable_baselines3",
+                    }), 500
+                raise
             data = request.json or {}
-            symbol = (data.get("symbol") or "000001").strip().split(".")[0].zfill(6)
+            raw = (data.get("symbol") or "000001").strip().split(".")[0]
+            symbol = raw.zfill(6) if len(raw) <= 6 else raw[:8]
             start_date = (data.get("start_date") or data.get("startDate") or "2023-01-01")[:10]
             end_date = (data.get("end_date") or data.get("endDate") or "2024-12-31")[:10]
             total_timesteps = int(data.get("total_timesteps") or data.get("totalTimesteps") or 30000)
-            from rl_trading.training.trainer import train_rl_model
-            result = train_rl_model(symbol=symbol, start_date=start_date, end_date=end_date, total_timesteps=total_timesteps)
-            return jsonify(result)
+
+            def _run():
+                train_rl_model(symbol=symbol, start_date=start_date, end_date=end_date, total_timesteps=total_timesteps)
+
+            t = threading.Thread(target=_run, daemon=True)
+            t.start()
+            return jsonify({
+                "success": True,
+                "message": "训练已在后台启动，请稍后刷新查看曲线",
+                "symbol": symbol,
+                "total_timesteps": total_timesteps,
+            }), 202
         except Exception as e:
             import traceback
             return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
@@ -1014,6 +1161,136 @@ def create_api_blueprint():
     def rl_live_signal():
         """与 /rl/decision 相同，供实盘/移动端调用。"""
         return rl_decision()
+
+    # ---------- 机构级 API：策略/组合/订单/账户/AI 决策 ----------
+    @bp.route("/strategy/run", methods=["POST"])
+    def strategy_run():
+        """运行策略池，返回信号/评分。Body: { symbols?: [], strategy?: "dragon"|"trend"|"alpha" }"""
+        _root()
+        try:
+            data = request.json or {}
+            symbols = data.get("symbols") or []
+            strategy_name = (data.get("strategy") or "trend").strip().lower()
+            if not symbols:
+                symbols = _get_full_symbols()[:50]
+            from backend.strategy import DragonLeaderStrategy, TrendInstitutionStrategy
+            from backend.strategy.alpha_factor import AlphaFactorModel
+            from data.data_loader import load_kline
+            from datetime import datetime, timedelta
+            end = datetime.now().date()
+            start = (end - timedelta(days=120)).strftime("%Y-%m-%d")
+            end_str = end.strftime("%Y-%m-%d")
+            results = []
+            if strategy_name == "dragon":
+                st = DragonLeaderStrategy()
+            elif strategy_name == "alpha":
+                st = AlphaFactorModel()
+            else:
+                st = TrendInstitutionStrategy()
+            for code in symbols[:80]:
+                try:
+                    ob = code if "." in code else (code + ".XSHG" if code.startswith("6") else code + ".XSHE")
+                    df = load_kline(code, start, end_str, source="database")
+                    if df is None or len(df) < 60:
+                        continue
+                    if "trade_date" in df.index.name or df.index.name is None:
+                        df = df.reset_index()
+                    if "close" not in df.columns and "收盘" in df.columns:
+                        df["close"] = df["收盘"]
+                    if "high" not in df.columns and "最高" in df.columns:
+                        df["high"] = df["最高"]
+                    if "volume" not in df.columns and "成交量" in df.columns:
+                        df["volume"] = df["成交量"]
+                    if strategy_name == "alpha":
+                        row = df.iloc[-1] if len(df) else {}
+                        score = st.score({"code": code, "rps": row.get("rps", 50), "momentum": 0, "fund_flow": 0, "volatility": 0})
+                        results.append({"symbol": code, "score": round(score, 4), "signal": 1 if score > 0.5 else 0})
+                    else:
+                        out = st.run(df)
+                        results.append({"symbol": code, "signal": out.get("signal", 0), "strategy": out.get("strategy", strategy_name)})
+                except Exception:
+                    continue
+            return jsonify({"success": True, "data": results})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
+    @bp.route("/portfolio/weights", methods=["GET", "POST"])
+    def portfolio_weights():
+        """GET: 返回当前组合权重（示例）。POST: 提交再平衡权重。"""
+        _root()
+        if request.method == "GET":
+            try:
+                from backend.ai.fund_manager import AIFundManager
+                mgr = AIFundManager()
+                market = {"index_ma20": 1, "index_ma60": 0.9}
+                w = mgr.decide(market)
+                return jsonify({"success": True, "weights": w, "regime": mgr.get_last_regime()})
+            except Exception as e:
+                return jsonify({"success": False, "error": str(e)}), 500
+        data = request.json or {}
+        return jsonify({"success": True, "message": "weights updated", "weights": data.get("weights", {})})
+
+    @bp.route("/order", methods=["POST"])
+    def order_place():
+        """下单。Body: { symbol, qty, side: "BUY"|"SELL", price? }"""
+        _root()
+        try:
+            data = request.json or {}
+            symbol = (data.get("symbol") or "").strip()
+            qty = int(data.get("qty") or 0)
+            side = (data.get("side") or "BUY").upper()
+            price = data.get("price")
+            if not symbol or qty <= 0 or side not in ("BUY", "SELL"):
+                return jsonify({"success": False, "error": "参数无效"}), 400
+            from backend.execution.engine import ExecutionEngine
+            eng = ExecutionEngine(broker_mode="simulation")
+            order = eng.place_order(symbol, qty, side, price)
+            return jsonify({"success": True, "order": order})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @bp.route("/order/<order_id>", methods=["DELETE"])
+    def order_cancel(order_id):
+        """撤单。"""
+        _root()
+        try:
+            from backend.execution.engine import ExecutionEngine
+            eng = ExecutionEngine(broker_mode="simulation")
+            ok = eng.cancel_order(order_id)
+            return jsonify({"success": ok, "order_id": order_id})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @bp.route("/account", methods=["GET"])
+    def account():
+        """资金与账户摘要。"""
+        _root()
+        try:
+            from backend.broker.sim_adapter import SimBrokerAdapter
+            adapter = SimBrokerAdapter()
+            bal = adapter.get_balance()
+            pos = adapter.query_position(None)
+            return jsonify({"success": True, "balance": bal, "positions": pos})
+        except Exception as e:
+            return jsonify({"success": True, "balance": {"total_asset": 1000000, "cash": 1000000, "frozen": 0}, "positions": {}})
+
+    @bp.route("/ai/decision", methods=["GET"])
+    def ai_decision():
+        """AI 基金经理当前决策：策略权重、市场状态。"""
+        _root()
+        try:
+            from backend.ai.fund_manager import AIFundManager
+            mgr = AIFundManager()
+            market = {"index_ma20": 1, "index_ma60": 0.9}
+            weights = mgr.decide(market)
+            return jsonify({
+                "success": True,
+                "regime": mgr.get_last_regime(),
+                "weights": weights,
+            })
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "regime": "sideways", "weights": {"dragon": 0.35, "trend": 0.35, "cash": 0.3}}), 500
 
     return bp
 

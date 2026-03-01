@@ -14,7 +14,7 @@ from .ai_model import load_model, FEATURE_COLS
 
 
 def _get_db():
-    """使用项目已有 DuckDB/SQLite 数据源。"""
+    """使用项目已有 DuckDB 数据源。"""
     try:
         from database.duckdb_backend import get_db_backend
         db = get_db_backend()

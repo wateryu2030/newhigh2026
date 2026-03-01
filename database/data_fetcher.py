@@ -16,17 +16,30 @@ from database.duckdb_backend import get_db_backend
 
 def get_all_a_share_symbols() -> List[str]:
     """获取沪深京 A 股全部股票代码（6 位字符串）。"""
+    return [c for c, _ in get_all_a_share_code_name()]
+
+
+def get_all_a_share_code_name() -> List[tuple]:
+    """获取沪深京 A 股全部 (code, name)。code 为 6 位，name 为中文名，用于写入 stocks 表保证名称完整。"""
     try:
         import akshare as ak
         df = ak.stock_info_a_code_name()
         if df is None or df.empty:
             return []
-        if "code" not in df.columns:
+        code_col = "code" if "code" in df.columns else None
+        name_col = "name" if "name" in df.columns else None
+        if not code_col:
             return []
-        codes = df["code"].astype(str).str.strip().str.zfill(6)
-        return [c for c in codes.unique().tolist() if c.isdigit() and len(c) == 6]
+        out = []
+        for _, row in df.iterrows():
+            code = str(row[code_col]).strip().zfill(6)
+            if not code.isdigit() or len(code) != 6:
+                continue
+            name = (str(row[name_col]).strip() if name_col else "") or code
+            out.append((code, name))
+        return out
     except Exception as e:
-        print(f"⚠️  获取 A 股列表失败: {e}")
+        print(f"⚠️  获取 A 股代码+名称失败: {e}")
         return []
 
 
@@ -70,24 +83,25 @@ class DataFetcher:
         """db_path 忽略，统一使用 DuckDB。"""
         self.db = get_db_backend()
     
-    def fetch_stock_data(self, symbol: str, start_date: str = None, end_date: str = None, 
-                        adjust: str = "qfq"):
+    def fetch_stock_data(self, symbol: str, start_date: str = None, end_date: str = None,
+                        adjust: str = "qfq", name: str = None):
         """
-        获取单只股票数据并存储
-        
+        获取单只股票数据并存储。
+
         Args:
             symbol: 股票代码（如 "600745"）
             start_date: 开始日期 "YYYYMMDD"
             end_date: 结束日期 "YYYYMMDD"
             adjust: 复权类型 "qfq"前复权/"hfq"后复权/""不复权
+            name: 股票中文名称，若提供则写入 stocks 表，保证列表页显示完整
         """
         if not start_date:
             start_date = "20200101"
         if not end_date:
             end_date = datetime.now().strftime("%Y%m%d")
-        
+
         print(f"获取 {symbol} 数据: {start_date} 至 {end_date}")
-        
+
         try:
             import akshare as ak
             df = ak.stock_zh_a_hist(
@@ -97,11 +111,11 @@ class DataFetcher:
                 end_date=end_date,
                 adjust=adjust
             )
-            
+
             if df is None or len(df) == 0:
                 print(f"⚠️  {symbol} 未获取到数据")
                 return False
-            
+
             # 确定交易所和 order_book_id
             if symbol.startswith('6'):
                 order_book_id = f"{symbol}.XSHG"
@@ -109,45 +123,48 @@ class DataFetcher:
             else:
                 order_book_id = f"{symbol}.XSHE"
                 market = "CN"
-            
-            # 保存股票基本信息
+
+            # 保存股票基本信息（含名称，保证交易页列表显示完整）
             self.db.add_stock(
                 order_book_id=order_book_id,
                 symbol=symbol,
-                name=None,  # 可以从其他接口获取
+                name=name,
                 market=market,
                 listed_date=None,
                 de_listed_date=None,
                 type="CS"
             )
-            
+
             # 保存日线数据
             self.db.add_daily_bars(order_book_id, df)
-            
+
             print(f"✅ {symbol} ({order_book_id}) 数据获取成功: {len(df)} 条")
             return True
-            
+
         except Exception as e:
             print(f"❌ 获取 {symbol} 数据失败: {e}")
             import traceback
             traceback.print_exc()
             return False
     
-    def fetch_multiple_stocks(self, symbols: List[str], start_date: str = None, 
-                             end_date: str = None, delay: float = 0.1):
-        """批量获取多只股票数据"""
+    def fetch_multiple_stocks(self, symbols: List[str], start_date: str = None,
+                             end_date: str = None, delay: float = 0.1,
+                             code_name_map: dict = None):
+        """批量获取多只股票数据。code_name_map: 可选，code -> 中文名称，用于写入 stocks 表。"""
         print(f"\n开始批量获取 {len(symbols)} 只股票数据...")
         success_count = 0
-        
+        name_map = code_name_map or {}
+
         for i, symbol in enumerate(symbols, 1):
+            name = name_map.get(symbol, "")
             print(f"\n[{i}/{len(symbols)}] 处理 {symbol}...")
-            if self.fetch_stock_data(symbol, start_date, end_date):
+            if self.fetch_stock_data(symbol, start_date, end_date, name=name):
                 success_count += 1
-            
+
             # 避免请求过快
             if i < len(symbols):
                 time.sleep(delay)
-        
+
         print(f"\n✅ 批量获取完成: {success_count}/{len(symbols)} 成功")
         return success_count
     
@@ -180,16 +197,19 @@ class DataFetcher:
         skip_existing: bool = True,
     ) -> int:
         """
-        全量导入 A 股日线：获取沪深京全部股票列表，逐只拉取日线并写入数据库。
+        全量导入 A 股日线：获取沪深京全部股票列表（含名称），逐只拉取日线并写入数据库。
         skip_existing=True 时，若某只股票在区间内已有数据则跳过，便于断点续传。
+        同时写入 stocks 表名称，保证交易页列表显示完整。
         """
         if not start_date:
             start_date = (datetime.now() - timedelta(days=365 * 2)).strftime("%Y%m%d")
         if not end_date:
             end_date = datetime.now().strftime("%Y%m%d")
-        symbols = get_all_a_share_symbols()
-        if not symbols:
+        code_name_list = get_all_a_share_code_name()
+        if not code_name_list:
             return 0
+        symbols = [c for c, _ in code_name_list]
+        code_name_map = {c: n for c, n in code_name_list}
         to_fetch = symbols
         if skip_existing:
             start_d = start_date[:4] + "-" + start_date[4:6] + "-" + start_date[6:8]
@@ -206,16 +226,18 @@ class DataFetcher:
         if not to_fetch:
             print("无需拉取新数据")
             return 0
-        return self.fetch_multiple_stocks(to_fetch, start_date, end_date, delay=delay)
+        return self.fetch_multiple_stocks(
+            to_fetch, start_date, end_date, delay=delay, code_name_map=code_name_map
+        )
     
     def update_trading_calendar(self, start_date: str = "20200101", end_date: str = None):
         """更新交易日历（简化版：使用工作日作为代理）"""
         if not end_date:
             end_date = datetime.now().strftime("%Y%m%d")
-        
+
         start = datetime.strptime(start_date, "%Y%m%d")
         end = datetime.strptime(end_date, "%Y%m%d")
-        
+
         dates = []
         current = start
         while current <= end:
@@ -223,9 +245,38 @@ class DataFetcher:
             if current.weekday() < 5:  # 0-4 为周一到周五
                 dates.append(current.strftime("%Y-%m-%d"))
             current += timedelta(days=1)
-        
+
         self.db.add_trading_dates(dates)
         print(f"✅ 交易日历已更新: {len(dates)} 个交易日")
+
+
+def sync_stock_names_to_db() -> int:
+    """
+    将沪深京 A 股代码+名称全量写入 DuckDB stocks 表，补全/更新名称，保证交易页列表显示一致。
+    可于全量同步后调用，或单独作为「补全股票名称」使用。
+    返回写入（更新）的股票数量。
+    """
+    code_name_list = get_all_a_share_code_name()
+    if not code_name_list:
+        return 0
+    db = get_db_backend()
+    count = 0
+    for code, name in code_name_list:
+        order_book_id = f"{code}.XSHG" if code.startswith("6") else f"{code}.XSHE"
+        try:
+            db.add_stock(
+                order_book_id=order_book_id,
+                symbol=code,
+                name=name,
+                market="CN",
+                listed_date=None,
+                de_listed_date=None,
+                type="CS",
+            )
+            count += 1
+        except Exception:
+            continue
+    return count
 
 
 if __name__ == "__main__":

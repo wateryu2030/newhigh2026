@@ -90,14 +90,14 @@ python run_backtest_db.py strategies/strategy_wentai_demo.py 2024-01-01 2024-12-
 
 ```python
 from database.data_fetcher import DataFetcher
-from database.db_schema import StockDatabase
+from database.duckdb_backend import get_db_backend
 
 # 获取数据
 fetcher = DataFetcher()
 fetcher.fetch_stock_data("600745", "20200101", "20241231")
 
-# 查询数据
-db = StockDatabase()
+# 查询数据（统一使用 DuckDB：data/quant.duckdb）
+db = get_db_backend()
 df = db.get_daily_bars("600745.XSHG", "2024-01-01", "2024-06-30")
 print(df)
 ```

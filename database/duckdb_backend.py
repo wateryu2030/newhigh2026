@@ -4,7 +4,7 @@ DuckDB 数据后端：平台唯一数据库，与旧 StockDatabase 接口兼容�
 """
 from __future__ import annotations
 import os
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +42,7 @@ class DuckDBBackend:
             raise ImportError("请安装 duckdb: pip install duckdb")
 
     def _ensure_schema(self):
-        """确保 stocks / daily_bars 表存在（空库首次使用时创建）。"""
+        """确保基础表结构存在（空库首次使用时创建）。"""
         c = self._connection
         c.execute("""
             CREATE TABLE IF NOT EXISTS stocks (
@@ -70,6 +70,23 @@ class DuckDBBackend:
                 PRIMARY KEY (order_book_id, trade_date)
             )
         """)
+        # 新闻热点与舆情摘要表（可选，用于新闻服务留痕）
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS news_items (
+                ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                symbol VARCHAR,
+                source_site VARCHAR,
+                source VARCHAR,
+                title VARCHAR,
+                content VARCHAR,
+                url VARCHAR,
+                keyword VARCHAR,
+                tag VARCHAR,
+                publish_time VARCHAR,
+                sentiment_score DOUBLE,
+                sentiment_label VARCHAR
+            )
+        """)
         for idx_sql in (
             "CREATE INDEX IF NOT EXISTS idx_daily_bars_order_book_id ON daily_bars(order_book_id)",
             "CREATE INDEX IF NOT EXISTS idx_daily_bars_trade_date ON daily_bars(trade_date)",
@@ -78,6 +95,58 @@ class DuckDBBackend:
                 c.execute(idx_sql)
             except Exception:
                 pass
+
+    # ----- 新闻写入 -----
+
+    def insert_news_items(self, symbol: str, items: List[Dict[str, Any]]) -> None:
+        """
+        将新闻列表写入 DuckDB。调用方负责去重策略，此处仅做追加写入。
+        items 预期包含 title / content / url / source / source_site / publish_time /
+        keyword / tag / sentiment_score / sentiment_label 等键（缺失则为空）。
+        """
+        if not items:
+            return
+        c = self._get_conn()
+        rows = []
+        for it in items:
+            rows.append(
+                [
+                    str(symbol or ""),
+                    str(it.get("source_site") or ""),
+                    str(it.get("source") or ""),
+                    str(it.get("title") or ""),
+                    str(it.get("content") or ""),
+                    str(it.get("url") or ""),
+                    str(it.get("keyword") or ""),
+                    str(it.get("tag") or ""),
+                    str(it.get("publish_time") or ""),
+                    float(it.get("sentiment_score") or 0.0),
+                    str(it.get("sentiment_label") or ""),
+                ]
+            )
+        try:
+            c.executemany(
+                """
+                INSERT INTO news_items (
+                    symbol,
+                    source_site,
+                    source,
+                    title,
+                    content,
+                    url,
+                    keyword,
+                    tag,
+                    publish_time,
+                    sentiment_score,
+                    sentiment_label
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+        except Exception:
+            # 新闻落库失败不应影响主流程
+            return
 
     def get_daily_bars(
         self,
@@ -118,6 +187,22 @@ class DuckDBBackend:
         except Exception:
             return []
 
+    def get_stocks_from_daily_bars(self) -> List[Tuple]:
+        """当 stocks 表为空时，从 daily_bars 去重得到标的列表。返回 (order_book_id, symbol, name)，name 暂用 symbol。"""
+        if not os.path.exists(self.db_path):
+            return []
+        try:
+            df = self._get_conn().execute(
+                "SELECT DISTINCT order_book_id FROM daily_bars ORDER BY order_book_id"
+            ).fetchdf()
+            out = []
+            for ob in df["order_book_id"].astype(str).tolist():
+                sym = ob.split(".")[0] if "." in ob else ob
+                out.append((ob, sym, sym))
+            return out
+        except Exception:
+            return []
+
     def get_daily_bars_count(self) -> int:
         """日线表总条数，供 db_stats 等使用，避免重复打开同一 DuckDB 文件。"""
         if not os.path.exists(self.db_path):
@@ -127,6 +212,21 @@ class DuckDBBackend:
             return int(r[0]) if r else 0
         except Exception:
             return 0
+
+    def get_last_trade_date(self, order_book_id: str) -> Optional[str]:
+        """某标的在库中的最新交易日，用于增量拉取。返回 YYYY-MM-DD 或 None。"""
+        if not os.path.exists(self.db_path):
+            return None
+        try:
+            r = self._get_conn().execute(
+                "SELECT max(trade_date) FROM daily_bars WHERE order_book_id = ?",
+                [order_book_id],
+            ).fetchone()
+            if r and r[0] is not None:
+                return str(r[0])[:10]
+            return None
+        except Exception:
+            return None
 
     def add_daily_bars(self, order_book_id: str, bars_df: pd.DataFrame) -> None:
         """写入日线。bars_df 可为中文列名 日期/开盘/最高/最低/收盘/成交量/成交额。"""

@@ -1,7 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Progress, Statistic, Row, Col, InputNumber, message } from 'antd';
+import { Card, Button, Progress, Statistic, Row, Col, InputNumber, Input, message } from 'antd';
 import { api, type RLPerformanceResponse } from '../api/client';
+
+/** 标的：仅数字文本，5-8 位（如 002701、600519），保留前导零 */
+const SYMBOL_LEN_MIN = 5;
+const SYMBOL_LEN_MAX = 8;
+const SYMBOL_REGEX = /^\d{5,8}$/;
+
+function normalizeSymbolRaw(raw: string): string {
+  return raw.replace(/\D/g, '').slice(0, SYMBOL_LEN_MAX);
+}
+
+function validateSymbol(s: string): boolean {
+  return s.length >= SYMBOL_LEN_MIN && s.length <= SYMBOL_LEN_MAX && SYMBOL_REGEX.test(s);
+}
 
 export default function RLTrainingDashboard() {
   const [loading, setLoading] = useState(false);
@@ -10,21 +23,30 @@ export default function RLTrainingDashboard() {
   const [totalTimesteps, setTotalTimesteps] = useState(30000);
   const [startDate, setStartDate] = useState('2023-01-01');
   const [endDate, setEndDate] = useState('2024-12-31');
+  const symbolValid = validateSymbol(symbol);
 
   const loadPerformance = useCallback(async () => {
     try {
-      const data = await api.rl.performance();
+      const data = await api.rl.performance({
+        symbol,
+        start_date: startDate,
+        end_date: endDate,
+      });
       setPerf(data);
     } catch (e) {
       setPerf(null);
     }
-  }, []);
+  }, [symbol, startDate, endDate]);
 
   useEffect(() => {
     loadPerformance();
   }, [loadPerformance]);
 
   const handleTrain = async () => {
+    if (!validateSymbol(symbol)) {
+      message.warning('标的请输入 5～8 位数字代码，如 002701、600519');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.rl.train({
@@ -34,13 +56,15 @@ export default function RLTrainingDashboard() {
         total_timesteps: totalTimesteps,
       });
       if (res.success) {
-        message.success('训练已启动/完成');
+        message.success('训练已启动，请稍后刷新查看曲线');
         await loadPerformance();
       } else {
         message.error(res.error || '训练失败');
       }
     } catch (e: unknown) {
-      message.error(String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      message.error(msg || '请求失败，请检查控制台');
+      console.error('[RL Train]', e);
     } finally {
       setLoading(false);
     }
@@ -56,6 +80,9 @@ export default function RLTrainingDashboard() {
   return (
     <div style={{ padding: 8, color: '#f1f5f9', maxWidth: 1200, margin: '0 auto' }}>
       <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Link to="/trading">
+          <Button type="default" style={{ borderColor: '#2d3a4f', color: '#94a3b8' }}>新闻热点</Button>
+        </Link>
         <Link to="/rl/performance">
           <Button type="default" style={{ borderColor: '#2d3a4f', color: '#94a3b8' }}>查看绩效</Button>
         </Link>
@@ -69,13 +96,20 @@ export default function RLTrainingDashboard() {
       >
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
-            <InputNumber
+            <Input
               addonBefore="标的"
+              placeholder="6位数字如 002701、600519"
               value={symbol}
-              onChange={(v) => setSymbol(String(v ?? '000001'))}
+              onChange={(e) => setSymbol(normalizeSymbolRaw(e.target.value) || '000001')}
+              status={symbolValid ? undefined : 'error'}
               style={{ width: '100%' }}
-              stringMode
+              maxLength={SYMBOL_LEN_MAX}
             />
+            {!symbolValid && symbol.length > 0 && (
+              <div style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>
+                请输入 5～8 位数字代码（前导零保留，如 002701）
+              </div>
+            )}
           </Col>
           <Col xs={24} sm={12} md={6}>
             <InputNumber addonBefore="步数" value={totalTimesteps} onChange={(v) => setTotalTimesteps(Number(v) || 30000)} style={{ width: '100%' }} />
@@ -126,7 +160,13 @@ export default function RLTrainingDashboard() {
                 </div>
               </div>
             ) : (
-              <div style={{ color: '#94a3b8', textAlign: 'center', padding: 24 }}>暂无训练数据，请先执行训练</div>
+              <div style={{ color: '#94a3b8', textAlign: 'center', padding: 24 }}>
+                <div style={{ marginBottom: 12 }}>暂无训练数据</div>
+                <div style={{ fontSize: 12, marginBottom: 12 }}>
+                  请点击上方「开始训练」。训练在后台进行（约数分钟），完成后点击下方刷新查看曲线。
+                </div>
+                <Button size="small" onClick={() => loadPerformance()}>刷新</Button>
+              </div>
             )}
           </Card>
         </Col>

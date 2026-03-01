@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-券商接口抽象：支持模拟模式与真实模式，统一 connect / get_balance / get_positions / send_order / cancel_order。
+券商接口抽象：支持模拟模式与真实模式，统一 connect / get_balance / get_positions / buy / sell / cancel_order。
+订单状态见 order_state：NEW → SUBMITTED → PARTIAL_FILLED / FILLED / CANCELLED / REJECTED。
 """
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from .order_state import OrderStatus, NEW, SUBMITTED, status_to_str, str_to_status
 
-class Broker:
+
+class Broker(ABC):
     """
     券商接口：模拟模式（默认）使用内存状态；真实模式需接入具体券商 API。
     """
@@ -21,6 +25,38 @@ class Broker:
         self._sim_positions: Dict[str, Dict[str, Any]] = {}
         self._sim_orders: Dict[str, Dict[str, Any]] = {}
         self._order_id = 0
+
+    def buy(
+        self,
+        symbol: str,
+        qty: float,
+        price: Optional[float] = None,
+        order_type: str = "limit",
+    ) -> Optional[Dict[str, Any]]:
+        """买入。order_type: limit | market。"""
+        return self.send_order(symbol=symbol, qty=qty, price=price, side="BUY", order_type=order_type)
+
+    def sell(
+        self,
+        symbol: str,
+        qty: float,
+        price: Optional[float] = None,
+        order_type: str = "limit",
+    ) -> Optional[Dict[str, Any]]:
+        """卖出。order_type: limit | market。"""
+        return self.send_order(symbol=symbol, qty=qty, price=price, side="SELL", order_type=order_type)
+
+    def query_position(self, symbol: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+        """查询持仓。symbol 为空时返回全部持仓。"""
+        positions = self.get_positions()
+        if symbol is None:
+            return positions
+        # 支持模糊匹配
+        out = {}
+        for k, v in positions.items():
+            if k == symbol or k.split(".")[0] == symbol or symbol in k:
+                out[k] = v
+        return out
 
     def connect(self) -> bool:
         """建立连接。模拟模式直接成功；真实模式可在此初始化券商 API。"""

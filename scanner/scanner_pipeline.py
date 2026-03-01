@@ -26,7 +26,7 @@ def run_professional_scan(
     progress_callback: Optional[Callable[[str, int, int, str], None]] = None,
 ) -> List[Dict[str, Any]]:
     """
-    专业级扫描流水线。仅使用本地数据库（DuckDB/SQLite）K 线，不触发 AKShare 网络下载，保证速度。
+    专业级扫描流水线。仅使用本地 DuckDB K 线，不触发 AKShare 网络下载，保证速度。
     :param strategy_ids: 参与的策略 id 列表；None 则用 ma_cross, rsi, macd, breakout
     :param use_pattern_filter: 是否用形态引擎过滤（pattern_score>=1）
     :param use_hot_filter: 是否用热点强度过滤（可选）

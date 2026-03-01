@@ -23,6 +23,9 @@ build/
 .DS_Store
 **/.DS_Store
 
+# Cursor IDE
+.cursor/
+
 # 数据库与行情数据（GitHub 单文件限制 100MB，切勿提交）
 data/*.db
 data/*.duckdb

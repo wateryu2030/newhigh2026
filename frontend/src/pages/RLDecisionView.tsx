@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Button, Tag, List, Input, message } from 'antd';
 import { api, type RLDecisionResponse } from '../api/client';
-import type { KlineBar } from '../types';
-import KLineChart from '../components/KLineChart';
+import type { KlineBar, MaPoint } from '../types';
+import TradingChart from '../components/TradingChart';
 
 function dateOffset(d: Date, days: number): string {
   const x = new Date(d);
@@ -16,6 +16,9 @@ export default function RLDecisionView() {
   const [positionPct, setPositionPct] = useState(0);
   const [decision, setDecision] = useState<RLDecisionResponse | null>(null);
   const [kline, setKline] = useState<KlineBar[]>([]);
+  const [ma5, setMa5] = useState<MaPoint[]>([]);
+  const [ma10, setMa10] = useState<MaPoint[]>([]);
+  const [ma20, setMa20] = useState<MaPoint[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchDecision = async () => {
@@ -39,14 +42,35 @@ export default function RLDecisionView() {
   useEffect(() => {
     if (!symbol.trim()) {
       setKline([]);
+      setMa5([]);
+      setMa10([]);
+      setMa20([]);
       return;
     }
     const end = new Date();
     const start = dateOffset(end, -120);
     api
-      .kline(symbol.trim(), start, end.toISOString().slice(0, 10))
-      .then((k) => setKline(Array.isArray(k) ? k : []))
-      .catch(() => setKline([]));
+      .kline(symbol.trim(), start, end.toISOString().slice(0, 10), { indicators: 'ma' })
+      .then((k) => {
+        if (Array.isArray(k)) {
+          setKline(k);
+          setMa5([]);
+          setMa10([]);
+          setMa20([]);
+        } else {
+          const r = k as { kline: KlineBar[]; ma5?: MaPoint[]; ma10?: MaPoint[]; ma20?: MaPoint[] };
+          setKline(r.kline || []);
+          setMa5(r.ma5 || []);
+          setMa10(r.ma10 || []);
+          setMa20(r.ma20 || []);
+        }
+      })
+      .catch(() => {
+        setKline([]);
+        setMa5([]);
+        setMa10([]);
+        setMa20([]);
+      });
   }, [symbol]);
 
   const confPct = decision ? Math.round(decision.confidence * 100) : 0;
@@ -124,7 +148,7 @@ export default function RLDecisionView() {
 
       {kline.length > 0 && (
         <Card title="K 线 + AI 决策" style={{ background: '#1a2332', border: '1px solid #2d3a4f' }}>
-          <KLineChart
+          <TradingChart
             data={kline}
             signals={
               decision
@@ -137,6 +161,9 @@ export default function RLDecisionView() {
                   ]
                 : []
             }
+            ma5={ma5}
+            ma10={ma10}
+            ma20={ma20}
             height={360}
           />
         </Card>
