@@ -1,11 +1,16 @@
 # 前端 E2E / 浏览器检测说明
 
-## 0. Node 22 与 OpenClaw（本机已配置）
+## 0. OpenClaw 安装（自动安装 Node.js 与依赖）
 
-- **Node 22**：已用 Homebrew 安装 `node@22`，并在 `~/.zshrc` 中加入  
-  `export PATH="/opt/homebrew/opt/node@22/bin:$PATH"`，新开终端即可用。
-- **OpenClaw**：在 Node 22 下执行 `npm install -g openclaw@latest` 已安装；  
-  使用前请先 `export PATH="/opt/homebrew/opt/node@22/bin:$PATH"` 或开新终端。
+一键安装 Node.js 和 OpenClaw 及所有依赖：
+
+```bash
+curl -fsSL https://clawd.org.cn/install.sh | bash
+```
+
+安装完成后新开终端即可使用 `openclaw`。若此前已用 Homebrew 安装 Node 22，可保留  
+`export PATH="/opt/homebrew/opt/node@22/bin:$PATH"`，与上述方式二选一即可。
+
 - **机构组合 / AI 推荐**：两区块已放在页面最上方（header 下），便于自动化快照与点击。
 
 ## 1. 不依赖浏览器的快速检测（推荐）
@@ -38,12 +43,11 @@ python3 scripts/check_frontend_blocks.py --base-url http://127.0.0.1:5050
    - 检查 Cursor 的 MCP 配置中是否包含 cursor-ide-browser，且状态为已连接。
    - 部分环境下 MCP 工具名可能带前缀（如 `mcp_cursor_ide_browser_browser_navigate`），以实际提供的工具名为准。
 
-## 3. 使用 OpenClaw 浏览器（本机已装 Node 22 + OpenClaw）
+## 3. 使用 OpenClaw 浏览器
+
+若尚未安装，先执行：`curl -fsSL https://clawd.org.cn/install.sh | bash`（自动安装 Node.js 与 OpenClaw）。
 
 ```bash
-# 确保 PATH 含 Node 22（已写入 ~/.zshrc）
-export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
-
 # 打开页面并截取快照（机构组合 / AI 推荐在首屏）
 openclaw browser --browser-profile openclaw open http://127.0.0.1:5050
 openclaw browser --browser-profile openclaw snapshot

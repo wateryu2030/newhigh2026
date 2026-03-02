@@ -3,7 +3,10 @@
 """
 数据库模型定义 - 统一使用 DuckDB。
 
-本模块保留 StockDatabase 类名以兼容旧引用，实际实现委托给 database.duckdb_backend。
+本模块保留 StockDatabase 、、
+
+
+ database.duckdb_backend。
 平台唯一数据库为 data/quant.duckdb，不再使用 SQLite。
 """
 from __future__ import annotations
@@ -49,16 +52,17 @@ class StockDatabase:
             listed_date=listed_date, de_listed_date=de_listed_date, type=type,
         )
 
-    def add_daily_bars(self, order_book_id: str, bars_df: pd.DataFrame):
-        self._backend.add_daily_bars(order_book_id, bars_df)
+    def add_daily_bars(self, order_book_id: str, bars_df: pd.DataFrame, adjust_type: str = "qfq"):
+        self._backend.add_daily_bars(order_book_id, bars_df, adjust_type=adjust_type)
 
     def get_daily_bars(
         self,
         order_book_id: str,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
+        adjust_type: str = "qfq",
     ) -> pd.DataFrame:
-        return self._backend.get_daily_bars(order_book_id, start_date, end_date)
+        return self._backend.get_daily_bars(order_book_id, start_date, end_date, adjust_type=adjust_type)
 
     def get_stocks(self) -> List[Tuple]:
         return self._backend.get_stocks()

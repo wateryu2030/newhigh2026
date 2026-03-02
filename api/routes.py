@@ -4,6 +4,7 @@ API 路由注册：组合回测、TradingView K 线数据、股票池等。
 与 web_platform 主应用解耦，通过 register_routes(app) 挂载。
 """
 import os
+import sys
 from flask import Blueprint, request, jsonify, send_file, Response, stream_with_context
 import io
 import json
@@ -271,6 +272,163 @@ def create_api_blueprint():
         except Exception as e:
             return jsonify({"success": False, "error": str(e), "regime": "NEUTRAL", "description": "未知"}), 500
 
+    @bp.route("/dragon_pool", methods=["GET"])
+    def dragon_pool():
+        """机构级龙头池：扫描 + 资金 + 情绪综合评分，供前端龙头池列表。"""
+        _root()
+        try:
+            from api.signal_api import get_dragon_pool
+            top_n = request.args.get("top_n", type=int) or 30
+            strategy_id = request.args.get("strategy_id") or "breakout"
+            rows = get_dragon_pool(strategy_id=strategy_id, top_n=top_n)
+            return jsonify({"success": True, "dragon_pool": rows, "count": len(rows)})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "dragon_pool": [], "detail": traceback.format_exc()}), 500
+
+    @bp.route("/fund_rank", methods=["GET"])
+    def fund_rank():
+        """板块资金强度排行，供前端资金强度排行。"""
+        _root()
+        try:
+            from api.market_api import get_fund_rank
+            indicator = request.args.get("indicator") or "今日"
+            top_n = request.args.get("top_n", type=int) or 20
+            rows = get_fund_rank(indicator=indicator, top_n=top_n)
+            return jsonify({"success": True, "fund_rank": rows, "count": len(rows)})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "fund_rank": []}), 500
+
+    @bp.route("/emotion_dashboard", methods=["GET"])
+    def emotion_dashboard():
+        """情绪仪表盘：情绪周期、建议仓位、涨停家数/连板高度/炸板率/情绪分。"""
+        _root()
+        try:
+            from api.market_api import get_emotion_dashboard
+            data = get_emotion_dashboard()
+            return jsonify({"success": True, **data})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "emotion_cycle": "启动", "suggested_position_pct": 0.4}), 500
+
+    @bp.route("/dragon_lhb_pool", methods=["GET"])
+    def dragon_lhb_pool():
+        """龙虎榜游资龙头池：游资打分、共振列表（仅启动/加速期返回共振股）。"""
+        _root()
+        try:
+            from api.market_api import get_emotion_dashboard, get_dragon_lhb_pool as get_lhb
+            emotion = get_emotion_dashboard()
+            pool = get_lhb(emotion_cycle=emotion.get("emotion_cycle"), date_ymd=request.args.get("date"))
+            return jsonify({"success": True, **pool})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "resonance_list": [], "detail": traceback.format_exc()}), 500
+
+    @bp.route("/emotion/refresh", methods=["POST"])
+    def emotion_refresh():
+        """刷新情绪与龙虎榜并写入 data/daily_emotion.json、data/dragon_lhb_pool.json。"""
+        _root()
+        try:
+            from core.sentiment_engine import get_emotion_state, save_daily_emotion_json
+            from core.lhb_engine import get_dragon_lhb_pool, save_dragon_lhb_pool_json
+            state = get_emotion_state()
+            path1 = save_daily_emotion_json(state=state)
+            pool = get_dragon_lhb_pool(emotion_cycle=state.get("emotion_cycle"))
+            path2 = save_dragon_lhb_pool_json(pool=pool)
+            return jsonify({"success": True, "daily_emotion": path1, "dragon_lhb_pool": path2, "emotion_cycle": state.get("emotion_cycle")})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
+    # ---------- 机构级闭环：情绪回测 / 龙虎榜胜率 / 每周报告 ----------
+    _OUTPUT_DIR = os.path.join(_API_ROOT, "output")
+    _DATA_DIR = os.path.join(_API_ROOT, "data")
+
+    def _read_report_json(rel_path: str):
+        path = os.path.join(_API_ROOT, rel_path)
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+
+    @bp.route("/closed_loop/emotion_report", methods=["GET"])
+    def closed_loop_emotion_report():
+        """读取情绪回测报告 output/emotion_performance_report.json"""
+        data = _read_report_json("output/emotion_performance_report.json")
+        if data is None:
+            return jsonify({"success": True, "report": None, "message": "报告尚未生成"})
+        return jsonify({"success": True, "report": data})
+
+    @bp.route("/closed_loop/lhb_report", methods=["GET"])
+    def closed_loop_lhb_report():
+        """读取龙虎榜胜率报告 output/lhb_statistics_report.json"""
+        data = _read_report_json("output/lhb_statistics_report.json")
+        if data is None:
+            return jsonify({"success": True, "report": None, "message": "报告尚未生成"})
+        return jsonify({"success": True, "report": data})
+
+    @bp.route("/closed_loop/weekly_report", methods=["GET"])
+    def closed_loop_weekly_report():
+        """读取每周策略报告 output/weekly_strategy_report.json"""
+        data = _read_report_json("output/weekly_strategy_report.json")
+        if data is None:
+            return jsonify({"success": True, "report": None, "message": "报告尚未生成"})
+        return jsonify({"success": True, "report": data})
+
+    @bp.route("/closed_loop/run/emotion", methods=["POST"])
+    def closed_loop_run_emotion():
+        """执行情绪周期回测验证，写入 emotion_performance_report.json"""
+        _root()
+        try:
+            from backtest.emotion_labeler import generate_emotion_history
+            from backtest.emotion_backtest import run_emotion_backtest_from_bars
+            from database.duckdb_backend import DuckDBBackend
+            end_date = (__import__("datetime").datetime.now() - __import__("datetime").timedelta(days=1)).strftime("%Y-%m-%d")
+            start_date = (__import__("datetime").datetime.now() - __import__("datetime").timedelta(days=730)).strftime("%Y-%m-%d")
+            generate_emotion_history(start_date=start_date, end_date=end_date)
+            backend = DuckDBBackend()
+            stocks = backend.get_stocks_from_daily_bars()
+            order_book_id = stocks[0][0] if stocks else "000001.XSHE"
+            bars = backend.get_daily_bars(order_book_id, start_date=start_date, end_date=end_date)
+            if bars is None or len(bars) == 0:
+                return jsonify({"success": False, "error": "无日线数据，请先同步数据库"})
+            result = run_emotion_backtest_from_bars(bars, start_date, end_date)
+            os.makedirs(_OUTPUT_DIR, exist_ok=True)
+            out_path = os.path.join(_OUTPUT_DIR, "emotion_performance_report.json")
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump({"start_date": start_date, "end_date": end_date, **result}, f, ensure_ascii=False, indent=2)
+            return jsonify({"success": True, "report": result, "path": out_path})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
+    @bp.route("/closed_loop/run/lhb", methods=["POST"])
+    def closed_loop_run_lhb():
+        """执行龙虎榜胜率统计，写入 lhb_statistics_report.json"""
+        _root()
+        try:
+            from analysis.lhb_statistics import run_lhb_statistics
+            report = run_lhb_statistics(years=2)
+            return jsonify({"success": True, "report": report})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
+    @bp.route("/closed_loop/run/weekly", methods=["POST"])
+    def closed_loop_run_weekly():
+        """执行每周闭环：情绪回测 + 龙虎榜统计，写入 weekly_strategy_report.json（进程内执行，避免子进程 500）"""
+        _root()
+        try:
+            from scripts.run_closed_loop_nightly import run_pipeline
+            run_pipeline()
+            data = _read_report_json("output/weekly_strategy_report.json")
+            return jsonify({"success": True, "report": data})
+        except Exception as e:
+            import traceback
+            return jsonify({"success": False, "error": str(e), "detail": traceback.format_exc()}), 500
+
     @bp.route("/scan/professional", methods=["POST"])
     def scan_professional():
         """
@@ -337,7 +495,7 @@ def create_api_blueprint():
             # 运行多智能体流水线
             picks, report, ctx = run_multi_agent_scan(
                 days_lookback=int(data.get("days_lookback", 3)),
-                top_n_themes=int(data.get("top_n_themes", 10)),
+                top_n_themes=int(data.get("top_n_themes", 25)),
                 top_n_stocks=int(data.get("top_n_stocks", 20)),
                 use_llm=data.get("use_llm", True),
                 relaxed_filter=data.get("relaxed_filter", False),
@@ -407,6 +565,7 @@ def create_api_blueprint():
                     "candidates_count": getattr(ctx, 'candidates_count', 0),
                     "filtered_count": getattr(ctx, 'filtered_count', 0),
                     "theme_stock_count": sum(len(v) for v in getattr(ctx, 'theme_stock_map', {}).values()),
+                    "news_count": len(getattr(ctx, 'news_raw', [])),
                 },
             })
             

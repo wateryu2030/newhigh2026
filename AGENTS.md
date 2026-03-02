@@ -12,7 +12,8 @@
 1. **生产级任务清单**：`docs/CURSOR_PRODUCTION_TASKS.md` — 13 项生产级任务，TradingEngine 闭环、策略/组合/风控/订单/API/前端/调度。
 2. **机构级任务**：`docs/CURSOR_UPGRADE_TASKS.md` — 原 13 项机构级任务。
 3. **规则与架构**：`.cursor/rules/INSTITUTIONAL_UPGRADE.md` — 目录约定、代码规范。
-4. **OpenClaw 提示词**：`docs/OPENCLAW_PROMPT.md` 或 `docs/CURSOR_PRODUCTION_TASKS.md` 末尾 — 复制到 OpenClaw 作为自动执行描述。
+4. **OpenClaw 提示词**：`docs/OPENCLAW_PROMPT.md` 或 `docs/CURSOR_PRODUCTION_TASKS.md` 末尾 — 复制到 OpenClaw（或 Z.AI 等自动执行环境）作为任务描述。自动执行前若未安装 OpenClaw，可执行：`curl -fsSL https://clawd.org.cn/install.sh | bash`。
+5. **情绪+龙虎榜自动执行**：`docs/EMOTION_LHB_AUTO_EXEC.md` — 情绪周期与龙虎榜每日刷新说明书；内含 **Cursor 自动执行任务文本** 与 **OpenClaw 自动执行任务文本**，复制即用。单次执行脚本：`python scripts/run_emotion_lhb_daily.py`；或 POST `/api/emotion/refresh`（需 Web 已启动）。
 
 ## 已实现模块（可直接用）
 - **Backend**  

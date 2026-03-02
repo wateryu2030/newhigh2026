@@ -1124,5 +1124,1839 @@
         "message": "研报已生成"
       }
     ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T22:33:14.119671",
+    "themes_count": 1,
+    "picks_count": 0,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票(候选5只,过滤5只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T22:33:28.964562",
+    "themes_count": 0,
+    "picks_count": 0,
+    "themes": [],
+    "picks": [],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 0 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 0 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 0 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 0 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 0 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 0 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 0 只股票(候选0只,过滤0只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 0 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T22:33:35.389936",
+    "themes_count": 1,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 3 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 3 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 1 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 1 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 5 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 1 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选5只,过滤2只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:01:35.562219",
+    "themes_count": 7,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选15只,过滤12只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:01:50.561605",
+    "themes_count": 7,
+    "picks_count": 11,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600030",
+        "name": "600030",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 27.62,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "603019",
+        "name": "603019",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 91.7,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601398",
+        "name": "601398",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 7.11,
+        "risk_level": "medium"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 11 只股票(候选15只,过滤4只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 11 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:03:16.424512",
+    "themes_count": 7,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选15只,过滤12只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:03:19.785312",
+    "themes_count": 7,
+    "picks_count": 3,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 3 只股票(候选15只,过滤12只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 3 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:03:33.946076",
+    "themes_count": 7,
+    "picks_count": 11,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600030",
+        "name": "600030",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 27.62,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "603019",
+        "name": "603019",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 91.7,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601398",
+        "name": "601398",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 7.11,
+        "risk_level": "medium"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 11 只股票(候选15只,过滤4只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 11 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:03:39.686813",
+    "themes_count": 7,
+    "picks_count": 11,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600030",
+        "name": "600030",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 27.62,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "603019",
+        "name": "603019",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 91.7,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "算力",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601398",
+        "name": "601398",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 7.11,
+        "risk_level": "medium"
+      },
+      {
+        "symbol": "002230",
+        "name": "科大讯飞",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 57.12,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000938",
+        "name": "中国软件",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 25.5,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000977",
+        "name": "浪潮信息",
+        "theme": "人工智能",
+        "strategy": "Trend Breakout",
+        "price": 65.33,
+        "risk_level": "medium"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 50 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 12 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 12 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 7 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 7 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 15 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 7 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 11 只股票(候选15只,过滤4只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 11 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-01",
+    "timestamp": "2026-03-01T23:12:11.042667",
+    "themes_count": 10,
+    "picks_count": 8,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "半导体",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "光伏",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "军工",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600893",
+        "name": "600893",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 57.17,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600862",
+        "name": "600862",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 26.92,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000768",
+        "name": "000768",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 30.38,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600732",
+        "name": "爱旭股份",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 14.35,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002459",
+        "name": "晶澳科技",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 11.87,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 83 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 23 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 23 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 18 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 10 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 30 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 10 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 8 只股票(候选30只,过滤22只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 8 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-02",
+    "timestamp": "2026-03-02T07:48:51.225934",
+    "themes_count": 18,
+    "picks_count": 8,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "半导体",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "光伏",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "军工",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "造商等高度集中的设备产业链",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "造商等高度集中的设备",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "有色金属板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "有色金属",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "影视传媒板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "影视传媒",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600893",
+        "name": "600893",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 57.17,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600862",
+        "name": "600862",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 26.92,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "000768",
+        "name": "000768",
+        "theme": "军工",
+        "strategy": "Trend Breakout",
+        "price": 30.38,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600732",
+        "name": "爱旭股份",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 14.35,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002459",
+        "name": "晶澳科技",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 11.87,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 122 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 24 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 24 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 18 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 18 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 30 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 18 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 8 只股票(候选30只,过滤22只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 8 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
+  },
+  {
+    "date": "2026-03-02",
+    "timestamp": "2026-03-02T18:13:14.288016",
+    "themes_count": 17,
+    "picks_count": 5,
+    "themes": [
+      {
+        "name": "人工智能",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "金融",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "半导体",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "光伏",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "算力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "科技",
+        "stage": "分歧期",
+        "tier": "Rising"
+      },
+      {
+        "name": "PCB等算力硬件概念",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "PCB等算力硬件",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "电力",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "造商等高度集中的设备产业链",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "造商等高度集中的设备",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "有色金属板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "有色金属",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "影视传媒板块",
+        "stage": "加速期",
+        "tier": "Leaders"
+      },
+      {
+        "name": "影视传媒",
+        "stage": "加速期",
+        "tier": "Leaders"
+      }
+    ],
+    "picks": [
+      {
+        "symbol": "600036",
+        "name": "600036",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 38.71,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601166",
+        "name": "601166",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 18.49,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "601318",
+        "name": "601318",
+        "theme": "金融",
+        "strategy": "Trend Breakout",
+        "price": 65.29,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "600732",
+        "name": "爱旭股份",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 14.35,
+        "risk_level": "low"
+      },
+      {
+        "symbol": "002459",
+        "name": "晶澳科技",
+        "theme": "光伏",
+        "strategy": "Trend Breakout",
+        "price": 11.87,
+        "risk_level": "low"
+      }
+    ],
+    "execution_log": [
+      {
+        "step": "news_fetch",
+        "status": "success",
+        "message": "获取 122 条新闻"
+      },
+      {
+        "step": "theme_heat",
+        "status": "success",
+        "message": "提取 24 个主题"
+      },
+      {
+        "step": "canonicalize",
+        "status": "success",
+        "message": "标准化后 24 个主题"
+      },
+      {
+        "step": "theme_validate",
+        "status": "success",
+        "message": "有效主题 17 个"
+      },
+      {
+        "step": "theme_regime",
+        "status": "success",
+        "message": "确定生命周期 17 个"
+      },
+      {
+        "step": "theme_stock_bridge",
+        "status": "success",
+        "message": "映射股票池 25 只"
+      },
+      {
+        "step": "strategy_select",
+        "status": "success",
+        "message": "策略计划 17 个"
+      },
+      {
+        "step": "backfill_enriched",
+        "status": "success",
+        "message": "数据补充完成"
+      },
+      {
+        "step": "feedback_curator",
+        "status": "success",
+        "message": "反馈数据已加载"
+      },
+      {
+        "step": "stock_pick",
+        "status": "success",
+        "message": "选出 5 只股票(候选25只,过滤20只)"
+      },
+      {
+        "step": "chief_risk",
+        "status": "success",
+        "message": "风控后剩余 5 只"
+      },
+      {
+        "step": "report_generator",
+        "status": "success",
+        "message": "研报已生成"
+      }
+    ]
   }
 ]

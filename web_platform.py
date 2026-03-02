@@ -321,6 +321,7 @@ HTML_TEMPLATE = """
           <div id="dbStatsText" style="font-size: 14px; color: #e0e0e0;">加载中…</div>
           <button type="button" class="ext-action" id="btnRefreshDbStats" style="padding: 6px 12px;">刷新</button>
           <button type="button" class="ext-action" id="btnSyncAllAStocks" style="padding: 6px 12px;">全量 A 股同步</button>
+          <button type="button" class="ext-action" id="btnBackfillAdjustQfq" style="padding: 6px 12px;">复权补全</button>
         </div>
         <div id="dbStatsHint" style="margin-top: 8px; font-size: 12px; color: #888;"></div>
       </div>
@@ -341,6 +342,19 @@ HTML_TEMPLATE = """
           <p style="color: #888; font-size: 13px; margin-bottom: 8px;">当前市场牛熊/震荡（基于板块强度）。</p>
           <button type="button" class="ext-action" id="btnLoadMarketRegime">刷新市场状态</button>
           <div id="marketRegimeContent" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 50px; color: #888; font-size: 13px;">点击刷新</div>
+        </div>
+        <div class="card">
+          <h2>情绪仪表盘</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 8px;">AI 情绪周期：冰点→启动→加速→高潮→退潮（涨停家数/连板高度/炸板率/成交额）。</p>
+          <button type="button" class="ext-action" id="btnLoadEmotionDashboard">刷新情绪</button>
+          <button type="button" class="ext-action" id="btnEmotionRefreshJson" style="margin-left: 8px;">写入 JSON</button>
+          <div id="emotionDashboardContent" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 50px; color: #888; font-size: 13px;">点击刷新</div>
+        </div>
+        <div class="card">
+          <h2>龙虎榜游资共振</h2>
+          <p style="color: #888; font-size: 13px; margin-bottom: 8px;">知名席位净买 + 多席位共振龙头（仅启动/加速期显示共振股）。</p>
+          <button type="button" class="ext-action" id="btnLoadLhbPool">刷新龙虎榜</button>
+          <div id="lhbPoolContent" style="margin-top: 12px; padding: 12px; background: #1a2744; border-radius: 4px; border: 1px solid #2a2a4a; min-height: 50px; color: #888; font-size: 13px;">点击刷新</div>
         </div>
         <div class="card">
           <h2>专业扫描</h2>
@@ -567,9 +581,13 @@ def list_stocks():
 
         stock_list = []
         for order_book_id, symbol, name in stocks:
+            # 强制为字符串，避免 DuckDB 返回数字导致前端 symbol.startsWith 失效
+            order_book_id = str(order_book_id or "").strip()
+            symbol = str(symbol or "").strip()
+            name = (name and str(name).strip()) or ""
             final_name = name_overrides.get(order_book_id, name or symbol)
-            if not final_name or (final_name.strip() == (symbol or "").strip()):
-                final_name = get_display_name(symbol or "", db=db, root=_proj_root) if symbol else (symbol or "")
+            if not final_name or (final_name.strip() == symbol):
+                final_name = get_display_name(symbol, db=db, root=_proj_root) if symbol else symbol
             stock_list.append({
                 "order_book_id": order_book_id,
                 "symbol": symbol,
@@ -579,6 +597,41 @@ def list_stocks():
         return jsonify({"stocks": stock_list})
     except Exception as e:
         # 如果数据库不存在或出错，返回空列表
+        return jsonify({"stocks": [], "error": str(e)})
+
+
+@app.route("/api/stocks/bj")
+def list_stocks_bj():
+    """北交所股票列表（独立接口，保证前端北交所 Tab 有数据）。从 DB 筛 order_book_id 以 .BSE 结尾或 symbol 以 4/8/9 开头。"""
+    try:
+        from database.duckdb_backend import get_db_backend
+        from core.stock_display import get_display_name
+        db = get_db_backend()
+        stocks = db.get_stocks()
+        if not stocks and hasattr(db, "get_stocks_from_daily_bars"):
+            stocks = db.get_stocks_from_daily_bars()
+        name_overrides = _load_stock_name_overrides()
+        _proj_root = os.path.dirname(os.path.abspath(__file__))
+        stock_list = []
+        for order_book_id, symbol, name in stocks:
+            order_book_id = str(order_book_id or "").strip()
+            symbol = str(symbol or "").strip()
+            if not order_book_id and not symbol:
+                continue
+            is_bj = order_book_id.endswith(".BSE") or (symbol and symbol[:1] in ("4", "8", "9"))
+            if not is_bj:
+                continue
+            name = (name and str(name).strip()) or ""
+            final_name = name_overrides.get(order_book_id, name or symbol)
+            if not final_name or (final_name.strip() == symbol):
+                final_name = get_display_name(symbol, db=db, root=_proj_root) if symbol else symbol
+            stock_list.append({
+                "order_book_id": order_book_id,
+                "symbol": symbol,
+                "name": final_name or symbol,
+            })
+        return jsonify({"stocks": stock_list})
+    except Exception as e:
         return jsonify({"stocks": [], "error": str(e)})
 
 
@@ -599,27 +652,67 @@ def _resample_ohlcv(df, freq):
 @app.route("/api/kline")
 def api_kline():
     """K 线数据，供前端 TradingView 图表。数据来自已导入的数据库。
-    GET ?symbol=000001&start=2024-01-01&end=2025-01-01&period=day|week|month
-    可选 ?indicators=ma 返回 MA5/10/20/30/60，响应为 { kline, ma5, ma10, ma20, ma30, ma60 }。"""
+    GET ?symbol=000001&start=2024-01-01&end=2025-01-01&period=day|week|month&adjust=qfq|hfq
+    可选 ?indicators=ma 返回 MA5/10/20/30/60；adjust 默认 qfq 前复权。"""
     try:
         symbol = request.args.get("symbol", "").strip()
         start = request.args.get("start", "").strip()[:10]
         end = request.args.get("end", "").strip()[:10]
         period = (request.args.get("period") or "day").strip().lower()
         indicators = (request.args.get("indicators") or "").strip().lower()
+        adjust = (request.args.get("adjust") or "qfq").strip().lower()
+        if adjust not in ("qfq", "hfq"):
+            adjust = "qfq"
         if not symbol or not start or not end:
             return jsonify([])
         from database.duckdb_backend import get_db_backend
         db = get_db_backend()
         if not getattr(db, "db_path", None) or not os.path.exists(getattr(db, "db_path", "")):
             return jsonify([])
-        df = db.get_daily_bars(symbol, start, end)
+        raw_code = (symbol.split(".")[0] if "." in symbol else symbol).strip()
+        df = db.get_daily_bars(symbol, start, end, adjust_type=adjust)
         if (df is None or len(df) == 0) and "." not in symbol and len(symbol) == 6 and symbol.isdigit():
-            for suf in [".XSHE", ".XSHG"]:
-                df = db.get_daily_bars(symbol + suf, start, end)
+            suffixes = [".BSE", ".XSHE", ".XSHG"] if symbol[:1] in ("4", "8", "9") else [".XSHE", ".XSHG"]
+            for suf in suffixes:
+                df = db.get_daily_bars(symbol + suf, start, end, adjust_type=adjust)
                 if df is not None and len(df) > 0:
                     symbol = symbol + suf
                     break
+        # 北交所无数据时按需拉取一次（前复权+后复权同时补齐）
+        if (df is None or len(df) == 0) and raw_code and len(raw_code) == 6 and raw_code.isdigit() and raw_code[:1] in ("4", "8", "9"):
+            try:
+                from database.data_fetcher import DataFetcher, _order_book_id_for_code
+                fetcher = DataFetcher()
+                start_ymd = start.replace("-", "")[:8]
+                end_ymd = end.replace("-", "")[:8]
+                fetcher.fetch_stock_data(raw_code, start_ymd, end_ymd, adjust="qfq")
+                fetcher.fetch_stock_data(raw_code, start_ymd, end_ymd, adjust="hfq")
+                symbol = _order_book_id_for_code(raw_code)
+                df = db.get_daily_bars(symbol, start, end, adjust_type=adjust)
+            except Exception:
+                pass
+        if df is None or len(df) == 0:
+            return jsonify([])
+        # 若库内最新日早于请求 end，按需增量拉取到 end（前复权+后复权同时补齐）
+        try:
+            if len(df) > 0:
+                last_dt = df.index.max()
+                last_str = getattr(last_dt, "strftime", None) and last_dt.strftime("%Y-%m-%d") or str(last_dt)[:10]
+                last_ymd = last_str.replace("-", "")[:8]
+                end_ymd = end.replace("-", "")[:8]
+                if last_ymd and end_ymd and last_ymd < end_ymd:
+                    start_inc = (datetime.strptime(last_str[:10], "%Y-%m-%d") + timedelta(days=1)).strftime("%Y%m%d")
+                    if start_inc <= end_ymd:
+                        from database.data_fetcher import DataFetcher, _order_book_id_for_code
+                        ob = symbol if "." in symbol else _order_book_id_for_code(raw_code or symbol[:6])
+                        code = (raw_code or (symbol.split(".")[0] if "." in symbol else symbol)).strip()
+                        if code and len(code) == 6 and code.isdigit():
+                            fetcher = DataFetcher()
+                            fetcher.fetch_stock_data(code, start_inc, end_ymd, adjust="qfq")
+                            fetcher.fetch_stock_data(code, start_inc, end_ymd, adjust="hfq")
+                            df = db.get_daily_bars(ob, start, end, adjust_type=adjust)
+        except Exception:
+            pass
         if df is None or len(df) == 0:
             return jsonify([])
         if period == "week":
@@ -656,6 +749,12 @@ def api_kline():
             "ma20": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma20)],
             "ma30": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma30)],
             "ma60": [{"time": t, "value": round(float(v), 4)} for t, v in zip(times, ma60)],
+            "meta": {
+                "adjust": adjust,
+                "start": start[:10],
+                "end": end[:10],
+                "note": "qfq 前复权 / hfq 后复权；end 为请求截止日期。",
+            },
         })
     except Exception as e:
         return jsonify([])
@@ -1022,30 +1121,94 @@ def sync_all_a_stocks():
             # 补全 stocks 表名称（含已存在仅缺名称的标的），保证交易页列表显示完整
             names_count = sync_stock_names_to_db()
             print(f"[sync_all_a_stocks] 股票名称已更新: {names_count} 条")
+            # 可选：复权补全，用前复权覆盖区间内已有日线，保证全量复权数据一致
+            if data.get("backfill_adjust") is True:
+                bf = fetcher.backfill_adjust_qfq(start_date=start_date, end_date=end_date, delay=0.12)
+                print(f"[sync_all_a_stocks] 复权补全完成: {bf} 只")
         except Exception as e:
             import traceback
             print(f"[sync_all_a_stocks] 失败: {e}\n{traceback.format_exc()}")
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
+    msg = "全量 A 股同步已在后台启动（断点续传，仅拉取缺失）。完成后将自动补全股票名称。"
+    if data.get("backfill_adjust") is True:
+        msg += " 并执行复权补全（前复权覆盖）。"
+    msg += " 预计 1–3 小时，请稍后刷新「数据状态」查看。"
+    return jsonify({"success": True, "message": msg})
+
+
+@app.route("/api/backfill_adjust_qfq", methods=["POST"])
+def backfill_adjust_qfq():
+    """全量复权补全：对全市场在指定区间内用前复权(qfq)+后复权(hfq)拉取并写入，覆盖已有日线。"""
+    import threading
+    data = request.json or {}
+    start_date = (data.get("startDate") or "").replace("-", "")[:8]
+    end_date = (data.get("endDate") or "").replace("-", "")[:8]
+    if not start_date or len(start_date) != 8:
+        start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
+    if not end_date or len(end_date) != 8:
+        end_date = datetime.now().strftime("%Y%m%d")
+    sync_mode = data.get("sync") is True
+
+    def _run():
+        try:
+            from database.data_fetcher import DataFetcher
+            fetcher = DataFetcher()
+            n = fetcher.backfill_adjust(start_date=start_date, end_date=end_date, delay=0.12)
+            print(f"[backfill_adjust_qfq] 复权补全完成: {n} 只（qfq+hfq）")
+            return n
+        except Exception as e:
+            import traceback
+            print(f"[backfill_adjust_qfq] 失败: {e}\n{traceback.format_exc()}")
+            return 0
+
+    if sync_mode:
+        try:
+            n = _run()
+            return jsonify({
+                "success": True,
+                "message": f"复权补全完成，共 {n} 只标的已补齐前复权+后复权。",
+                "updated": n,
+            })
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "updated": 0}), 500
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
     return jsonify({
         "success": True,
-        "message": "全量 A 股同步已在后台启动（断点续传，仅拉取缺失）。完成后将自动补全股票名称。预计 1–3 小时，请稍后刷新「数据状态」查看股票数。",
+        "message": "复权补全已在后台启动（前复权+后复权），请稍后刷新数据状态。",
     })
 
 
 @app.route("/api/backfill_stock_names", methods=["POST"])
 def backfill_stock_names():
-    """补全 DuckDB stocks 表名称：从 AKShare 拉取 A 股代码+名称并写入，保证交易页列表显示完整。"""
+    """补全 DuckDB stocks 表名称：从 AKShare 拉取 A 股代码+名称并写入，保证交易页列表显示完整。
+    Body 可选 { \"sync\": true } 表示同步执行并返回更新条数，否则后台执行。"""
     import threading
+    sync_mode = request.json and request.json.get("sync") is True
+
     def _run():
         try:
             from database.data_fetcher import sync_stock_names_to_db
             n = sync_stock_names_to_db()
             print(f"[backfill_stock_names] 已更新股票名称: {n} 条")
+            return n
         except Exception as e:
             import traceback
             print(f"[backfill_stock_names] 失败: {e}\n{traceback.format_exc()}")
+            return 0
+
+    if sync_mode:
+        try:
+            n = _run()
+            return jsonify({
+                "success": True,
+                "message": f"股票名称已补全，共更新 {n} 条。请刷新交易页列表。",
+                "updated": n,
+            })
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e), "updated": 0}), 500
     t = threading.Thread(target=_run, daemon=True)
     t.start()
     return jsonify({

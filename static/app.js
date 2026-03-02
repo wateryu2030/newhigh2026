@@ -935,6 +935,25 @@
     if (btn) btn.disabled = false;
   }
 
+  async function backfillAdjustQfq() {
+    var btn = document.getElementById('btnBackfillAdjustQfq');
+    var hint = document.getElementById('dbStatsHint');
+    if (btn) btn.disabled = true;
+    if (hint) hint.textContent = '正在启动复权补全（前复权覆盖）…';
+    try {
+      var res = await fetch('/api/backfill_adjust_qfq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      var data = await res.json();
+      if (hint) hint.textContent = data.message || (data.success ? '已启动，请稍后刷新数据状态。' : (data.error || ''));
+    } catch (e) {
+      if (hint) hint.textContent = '请求失败: ' + (e.message || e);
+    }
+    if (btn) btn.disabled = false;
+  }
+
   async function loadMarketRegime() {
     var btn = document.getElementById('btnLoadMarketRegime');
     var el = document.getElementById('marketRegimeContent');
@@ -956,6 +975,81 @@
     } catch (e) {
       el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
     }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadEmotionDashboard() {
+    var btn = document.getElementById('btnLoadEmotionDashboard');
+    var el = document.getElementById('emotionDashboardContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    try {
+      var res = await fetch('/api/emotion_dashboard');
+      var data = await res.json();
+      if (data.success || data.emotion_cycle) {
+        var cycle = data.emotion_cycle || '—';
+        var pct = (data.suggested_position_pct != null ? (data.suggested_position_pct * 100).toFixed(0) : '—') + '%';
+        var score = data.emotion_score != null ? data.emotion_score : '—';
+        var limitUp = data.limit_up_count != null ? data.limit_up_count : '—';
+        var boardH = data.max_board_height != null ? data.max_board_height : '—';
+        var breakR = data.break_rate != null ? (data.break_rate * 100).toFixed(1) + '%' : '—';
+        var color = cycle === '冰点' ? '#f55' : cycle === '启动' || cycle === '加速' ? '#0f9' : cycle === '高潮' || cycle === '极致高潮' ? '#fc0' : '#888';
+        el.innerHTML = '<div style="font-size:16px;font-weight:600;color:' + color + ';">' + cycle + ' · 建议仓位 ' + pct + '</div>' +
+          '<div style="font-size:12px;color:#888;margin-top:6px;">' + (data.description || '') + '</div>' +
+          '<div style="font-size:12px;color:#aaa;margin-top:8px;">情绪分 ' + score + ' · 涨停 ' + limitUp + ' · 连板高 ' + boardH + ' · 炸板率 ' + breakR + '</div>';
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function loadLhbPool() {
+    var btn = document.getElementById('btnLoadLhbPool');
+    var el = document.getElementById('lhbPoolContent');
+    if (!el) return;
+    if (btn) btn.disabled = true;
+    el.innerHTML = '<span style="color:#888;">加载中…</span>';
+    try {
+      var res = await fetch('/api/dragon_lhb_pool');
+      var data = await res.json();
+      if (data.success || data.resonance_list) {
+        var list = data.resonance_list || [];
+        var reason = data.reason || '';
+        var score = data.lhb_score != null ? data.lhb_score : '—';
+        var html = '<div style="font-size:13px;">游资得分 ' + score + ' · 共振数 ' + list.length + '</div>';
+        if (reason) html += '<div style="font-size:11px;color:#888;margin-top:4px;">' + reason + '</div>';
+        if (list.length > 0) {
+          html += '<ul style="margin:8px 0 0 0;padding-left:18px;font-size:12px;">';
+          for (var i = 0; i < list.length; i++) {
+            var r = list[i];
+            html += '<li>' + (r.symbol || '') + ' ' + (r.label || '') + ' ' + (r.seat_count || 0) + ' 席 · 净买 ' + (r.total_net_buy_wan || 0) + ' 万</li>';
+          }
+          html += '</ul>';
+        }
+        el.innerHTML = html;
+      } else {
+        el.innerHTML = '<span style="color:#f55;">' + (data.error || '请求失败') + '</span>';
+      }
+    } catch (e) {
+      el.innerHTML = '<span style="color:#f55;">' + (e.message || e) + '</span>';
+    }
+    if (btn) btn.disabled = false;
+  }
+
+  async function emotionRefreshJson() {
+    var btn = document.getElementById('btnEmotionRefreshJson');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await fetch('/api/emotion/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      var data = await res.json();
+      if (data.success) {
+        if (typeof loadEmotionDashboard === 'function') loadEmotionDashboard();
+      }
+    } catch (e) {}
     if (btn) btn.disabled = false;
   }
 
@@ -1530,6 +1624,8 @@
       if (btnRefreshDbStats) btnRefreshDbStats.addEventListener('click', loadDbStats);
       var btnSyncAllAStocks = document.getElementById('btnSyncAllAStocks');
       if (btnSyncAllAStocks) btnSyncAllAStocks.addEventListener('click', syncAllAStocks);
+      var btnBackfillAdjustQfq = document.getElementById('btnBackfillAdjustQfq');
+      if (btnBackfillAdjustQfq) btnBackfillAdjustQfq.addEventListener('click', backfillAdjustQfq);
       var loadBtn = document.getElementById('loadBtn');
       if (loadBtn) loadBtn.addEventListener('click', loadStrategy);
       var btnPortfolio = document.getElementById('btnLoadPortfolio');
@@ -1542,6 +1638,12 @@
       if (btnFundManagerStocks) btnFundManagerStocks.addEventListener('click', loadFundManagerStrategyStocks);
       var btnMarketRegime = document.getElementById('btnLoadMarketRegime');
       if (btnMarketRegime) btnMarketRegime.addEventListener('click', loadMarketRegime);
+      var btnLoadEmotionDashboard = document.getElementById('btnLoadEmotionDashboard');
+      if (btnLoadEmotionDashboard) btnLoadEmotionDashboard.addEventListener('click', loadEmotionDashboard);
+      var btnLoadLhbPool = document.getElementById('btnLoadLhbPool');
+      if (btnLoadLhbPool) btnLoadLhbPool.addEventListener('click', loadLhbPool);
+      var btnEmotionRefreshJson = document.getElementById('btnEmotionRefreshJson');
+      if (btnEmotionRefreshJson) btnEmotionRefreshJson.addEventListener('click', emotionRefreshJson);
       var btnProfessionalScan = document.getElementById('btnProfessionalScan');
       if (btnProfessionalScan) btnProfessionalScan.addEventListener('click', loadProfessionalScan);
       var btnAiTradingAdvice = document.getElementById('btnLoadAiTradingAdvice');

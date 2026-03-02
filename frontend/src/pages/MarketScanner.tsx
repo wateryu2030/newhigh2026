@@ -96,11 +96,11 @@ export default function MarketScanner() {
   const [multiAgentError, setMultiAgentError] = useState<string | undefined>(undefined);
   // 多智能体参数控制
   const [maDaysLookback, setMaDaysLookback] = useState<number>(3);
-  const [maTopNThemes, setMaTopNThemes] = useState<number>(10);
+  const [maTopNThemes, setMaTopNThemes] = useState<number>(25);
   const [maTopNStocks, setMaTopNStocks] = useState<number>(20);
   const [maUseLlm, setMaUseLlm] = useState<boolean>(false);
   const [maRelaxedFilter, setMaRelaxedFilter] = useState<boolean>(false);
-  const [maStats, setMaStats] = useState<{candidates_count: number; filtered_count: number; theme_stock_count: number}>({candidates_count: 0, filtered_count: 0, theme_stock_count: 0});
+  const [maStats, setMaStats] = useState<{candidates_count: number; filtered_count: number; theme_stock_count: number; news_count?: number}>({candidates_count: 0, filtered_count: 0, theme_stock_count: 0});
   const [loadingBreakout, setLoadingBreakout] = useState(false);
   const [loadingStrong, setLoadingStrong] = useState(false);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -176,7 +176,7 @@ export default function MarketScanner() {
           setMultiAgentThemes(data.themes || []);
           setMultiAgentReport(data.report || '');
           setMultiAgentLogs(data.execution_log || []);
-          setMaStats(data.stats || {candidates_count: 0, filtered_count: 0, theme_stock_count: 0});
+          setMaStats(data.stats || {candidates_count: 0, filtered_count: 0, theme_stock_count: 0, news_count: 0});
         } else {
           setMultiAgentError(data.error || '扫描失败');
         }
@@ -746,14 +746,23 @@ export default function MarketScanner() {
 
                   {!loadingMultiAgent && (
                     <>
-                    {/* 主题热点区域 */}
+                    {/* 主题热点区域：来自多源新闻与热点，展示更多 */}
                     {multiAgentThemes.length > 0 && (
                       <Card
-                        title={<span style={{ color: '#f1f5f9', fontWeight: 600 }}>主题热点（Canonical Themes）</span>}
+                        title={
+                          <Space direction="vertical" size={0}>
+                            <span style={{ color: '#f1f5f9', fontWeight: 600 }}>主题热点（Canonical Themes）</span>
+                            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 400 }}>
+                              来自多源新闻与热点
+                              {maStats.news_count != null && maStats.news_count > 0 && `（共 ${maStats.news_count} 条新闻）`}
+                              ，共 {multiAgentThemes.length} 个主题
+                            </span>
+                          </Space>
+                        }
                         style={{ background: '#0f172a', marginBottom: 16, border: '1px solid #1e293b' }}
                         headStyle={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}
                       >
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, maxHeight: 220, overflowY: 'auto' }}>
                           {multiAgentThemes.map((theme, idx) => (
                             <Tag
                               key={idx}

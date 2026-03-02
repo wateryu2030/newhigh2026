@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-新闻采集：东方财富、财新、抖音（占位）。
+新闻采集：东方财富（含多关键词/指数）、财新、抖音（占位）。
+主题热点可来自更多新闻与自媒体内容：扩展 sources 或 limit 即可；后续可接入新浪/微博等。
 """
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
@@ -142,6 +143,33 @@ def fetch_douyin_news_placeholder(
 # ----- 汇总 -----
 
 
+def fetch_eastmoney_multi_keywords(
+    keywords: List[str],
+    limit_per_keyword: int = 40,
+    delay: float = 0.8,
+) -> List[Dict[str, Any]]:
+    """
+    用多个关键词/代码从东方财富拉取新闻并合并去重（用于全市场/热点，不依赖单一股）。
+    :param keywords: 如 ["000001", "399001", "000300", "600519"] 或 ["A股", "热点"]
+    """
+    seen_titles: set = set()
+    out: List[Dict[str, Any]] = []
+    for kw in keywords:
+        try:
+            items = fetch_eastmoney_news(symbol=kw, limit=limit_per_keyword, delay=delay)
+            for item in items:
+                if item.get("error"):
+                    continue
+                title = (item.get("title") or "").strip()
+                if title and title not in seen_titles:
+                    seen_titles.add(title)
+                    out.append(item)
+        except Exception:
+            continue
+    out.sort(key=lambda x: x.get("publish_time", ""), reverse=True)
+    return out
+
+
 def fetch_all_news(
     symbol: str = "",
     sources: Optional[List[str]] = None,
@@ -149,14 +177,22 @@ def fetch_all_news(
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     从多源采集新闻。
-    :param symbol: 股票代码（东方财富用）
+    :param symbol: 股票代码（东方财富用）；传 "" 或 "all" 时拉取多关键词/指数新闻（全市场+热点）
     :param sources: 来源列表 ["eastmoney","caixin","douyin"]，None 表示全部
     :param limit_per_source: 每源最大条数
     """
     sources = sources or ["eastmoney", "caixin", "douyin"]
-    out = {}
-    if "eastmoney" in sources and symbol:
-        out["eastmoney"] = fetch_eastmoney_news(symbol, limit=limit_per_source)
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    # 东方财富：有 symbol 时单关键词；无 symbol 时多关键词（指数+热点股）以获取更多新闻与自媒体内容
+    if "eastmoney" in sources:
+        if symbol and symbol.strip() and symbol.strip().lower() != "all":
+            out["eastmoney"] = fetch_eastmoney_news(symbol, limit=limit_per_source)
+        else:
+            out["eastmoney"] = fetch_eastmoney_multi_keywords(
+                keywords=["000001", "399001", "000300", "600519", "000858"],
+                limit_per_keyword=min(limit_per_source // 2, 40),
+                delay=0.6,
+            )
     if "caixin" in sources:
         out["caixin"] = fetch_caixin_news(limit=limit_per_source)
     if "douyin" in sources:

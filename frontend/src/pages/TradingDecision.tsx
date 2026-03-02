@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Layout, Card, Input, List, Spin, Tag, Typography, Select, Button, Segmented, message } from 'antd';
+import { useState, useEffect, useMemo } from 'react';
+import { Layout, Card, Input, List, Spin, Tag, Typography, Select, Button, Segmented, message, Checkbox, Tabs } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import TradingChart from '../components/TradingChart';
 import SignalMarkers from '../components/SignalMarkers';
@@ -45,8 +45,27 @@ function loadStocksIntoState(
   setSearchMeta: (v: Record<string, { full: string; first: string }>) => void,
   setSelected: (fn: (prev: string | null) => string | null) => void,
 ) {
-  return api.stocks().then((r) => {
-    const list = r.stocks || [];
+  type Item = { order_book_id: string; symbol: string; name: string };
+  const byId = (list: Item[]) => {
+    const map: Record<string, Item> = {};
+    list.forEach((s) => {
+      const id = (s && s.order_book_id) || (s && (s as unknown as { symbol?: string }).symbol);
+      if (id) map[String(id)] = s;
+    });
+    return map;
+  };
+  return api.stocks().then((mainRes) => {
+    const mainList = mainRes.stocks || [];
+    return Promise.allSettled([Promise.resolve(mainList), api.stocksBj()]).then(([, b]) => {
+      const bjList = b.status === 'fulfilled' && b.value?.stocks ? b.value.stocks : [];
+      const mainMap = byId(mainList);
+      bjList.forEach((s) => {
+        const id = String((s && s.order_book_id) || (s as unknown as { symbol?: string }).symbol || '');
+        if (id && !mainMap[id]) mainMap[id] = { order_book_id: s.order_book_id || id, symbol: s.symbol || id, name: s.name || id };
+      });
+      return Object.values(mainMap);
+    });
+  }).then((list) => {
     setStocks(list);
     const meta: Record<string, { full: string; first: string }> = {};
     list.forEach((s) => {
@@ -90,7 +109,12 @@ export default function TradingDecision() {
   const [searchMeta, setSearchMeta] = useState<Record<string, { full: string; first: string }>>({});
   const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month'>('day');
   const [chartMaSet, setChartMaSet] = useState<'basic' | 'full'>('full');
-  const [chartSubCharts, setChartSubCharts] = useState<'none' | 'kdj' | 'macd' | 'both'>('both');
+  /** 副图指标多选：kdj, macd, rsi, boll, cci, obv */
+  const [chartSubCharts, setChartSubCharts] = useState<string[]>(['kdj', 'macd']);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [syncAllLoading, setSyncAllLoading] = useState(false);
+  /** 左侧市场 Tab：沪市 / 深市 / 北交所 */
+  const [marketTab, setMarketTab] = useState<'sh' | 'sz' | 'bj'>('sh');
 
   useEffect(() => {
     setStocksLoading(true);
@@ -112,11 +136,11 @@ export default function TradingDecision() {
       return;
     }
     setLoading(true);
-    const end = new Date();
-    const start = new Date();
+    const now = new Date();
+    const endStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const start = new Date(now);
     start.setFullYear(start.getFullYear() - 1);
-    const startStr = start.toISOString().slice(0, 10);
-    const endStr = end.toISOString().slice(0, 10);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
     Promise.all([
       api.kline(selected, startStr, endStr, { indicators: 'ma', period: chartPeriod }),
       api.signals(selected, signalStrategy),
@@ -197,16 +221,35 @@ export default function TradingDecision() {
     };
   }, [selected]);
 
-  const filteredStocks = stocks.filter((s) => {
+  /** 按市场筛选：沪市 6xxxxx，深市 0/3xxxxx，北交所 4/8/9xxxxx 或 order_book_id 以 .BSE 结尾 */
+  const stocksByMarket = useMemo(() => {
+    const str = (v: unknown) => (v != null ? String(v) : '');
+    const sh = stocks.filter((s) => str(s.symbol).startsWith('6'));
+    const sz = stocks.filter((s) => {
+      const sym = str(s.symbol);
+      return sym.startsWith('0') || sym.startsWith('3');
+    });
+    const bj = stocks.filter((s) => {
+      const sym = str(s.symbol);
+      const ob = str(s.order_book_id);
+      return ob.endsWith('.BSE') || sym.startsWith('4') || sym.startsWith('8') || sym.startsWith('9');
+    });
+    return { sh, sz, bj };
+  }, [stocks]);
+
+  const filteredStocks = useMemo(() => {
+    const list = marketTab === 'sh' ? stocksByMarket.sh : marketTab === 'sz' ? stocksByMarket.sz : stocksByMarket.bj;
     const q = search.trim().toLowerCase();
-    if (!q) return true;
-    const symbol = (s.symbol || '').toLowerCase();
-    const name = (s.name || '').toLowerCase();
-    if (symbol.includes(q) || name.includes(q)) return true;
-    const meta = searchMeta[s.order_book_id];
-    if (meta && (meta.full.includes(q) || meta.first.includes(q))) return true;
-    return false;
-  });
+    if (!q) return list;
+    return list.filter((s) => {
+      const symbol = (s.symbol || '').toLowerCase();
+      const name = (s.name || '').toLowerCase();
+      if (symbol.includes(q) || name.includes(q)) return true;
+      const meta = searchMeta[s.order_book_id];
+      if (meta && (meta.full.includes(q) || meta.first.includes(q))) return true;
+      return false;
+    });
+  }, [marketTab, stocksByMarket, search, searchMeta]);
 
   const selectedStock = selected ? stocks.find((s) => s.order_book_id === selected) : undefined;
   const klineTitle = selectedStock
@@ -215,72 +258,101 @@ export default function TradingDecision() {
       ? `K 线 · ${selected}`
       : '选择左侧股票加载 K 线';
 
+  const layoutHeight = 'calc(100vh - 64px)';
+
   return (
-    <Layout style={{ background: '#0b0f17', minHeight: 'calc(100vh - 100px)' }}>
-      <Sider width={280} style={{ background: '#111827', padding: 12 }}>
+    <Layout style={{ background: '#0b0f17', height: layoutHeight, overflow: 'hidden' }}>
+      <Sider width={300} style={{ background: '#111827', padding: 12, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Input
           placeholder="搜索股票"
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: 10, flexShrink: 0 }}
           allowClear
         />
-        <Card size="small" title="股票列表" style={{ background: '#0f172a' }}>
+        <Tabs
+          activeKey={marketTab}
+          onChange={(k) => setMarketTab(k as 'sh' | 'sz' | 'bj')}
+          size="small"
+          style={{ marginBottom: 8, flexShrink: 0 }}
+          items={[
+            { key: 'sh', label: `沪市 ${stocksByMarket.sh.length}` },
+            { key: 'sz', label: `深市 ${stocksByMarket.sz.length}` },
+            { key: 'bj', label: `北交所 ${stocksByMarket.bj.length}` },
+          ]}
+        />
+        {marketTab === 'bj' && stocksByMarket.bj.length === 0 && (
+          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>暂无北交所数据，请先点击「补全名称」拉取沪深+北交所列表，再点「刷新」</div>
+        )}
+        <div style={{ marginBottom: 8, display: 'flex', gap: 6, flexWrap: 'wrap', flexShrink: 0 }}>
+          <Button size="small" onClick={() => { setStocksLoading(true); loadStocksIntoState(setStocks, setSearchMeta, setSelected).catch(() => setStocks([])).finally(() => setStocksLoading(false)); }}>刷新</Button>
+          <Button size="small" type="primary" loading={backfillLoading} onClick={() => {
+            setBackfillLoading(true);
+            api.backfillStockNames({ sync: true })
+              .then((r) => { if (r?.success) { message.success(r.message || `已更新 ${r?.updated ?? 0} 条`); return loadStocksIntoState(setStocks, setSearchMeta, setSelected); } })
+              .catch((e) => message.error(e?.message || '补全失败'))
+              .finally(() => setBackfillLoading(false));
+          }}>补全名称</Button>
+          <Button size="small" type="default" loading={syncAllLoading} onClick={() => {
+            setSyncAllLoading(true);
+            api.syncAllAStocks()
+              .then((r) => { if (r?.success) message.success(r?.message || '全量同步已后台启动，请稍后刷新数据状态'); })
+              .catch((e) => message.error(e?.message || '启动失败'))
+              .finally(() => setSyncAllLoading(false));
+          }}>全量同步</Button>
+        </div>
+        <Card size="small" title={`股票列表 (${filteredStocks.length})`} style={{ background: '#0f172a', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }} styles={{ body: { flex: 1, minHeight: 0, overflow: 'hidden', padding: 8, display: 'flex', flexDirection: 'column' } }}>
           {stocksLoading && (
-            <div style={{ textAlign: 'center', padding: 24 }}>
+            <div style={{ textAlign: 'center', padding: 24, flexShrink: 0 }}>
               <Spin size="small" /> 加载中…
             </div>
           )}
           {!stocksLoading && filteredStocks.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 24, color: '#9ca3af', fontSize: 12 }}>
+            <div style={{ textAlign: 'center', padding: 24, color: '#9ca3af', fontSize: 12, flexShrink: 0 }}>
               <div style={{ marginBottom: 8 }}>暂无股票数据</div>
-              <div style={{ marginBottom: 12 }}>请确认后端服务已启动且数据库已有日线或股票表数据</div>
               <Button size="small" type="primary" onClick={() => { setStocksLoading(true); loadStocksIntoState(setStocks, setSearchMeta, setSelected).catch(() => setStocks([])).finally(() => setStocksLoading(false)); }}>刷新列表</Button>
             </div>
           )}
           {!stocksLoading && filteredStocks.length > 0 && (
-            <div style={{ marginBottom: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button size="small" onClick={() => { setStocksLoading(true); loadStocksIntoState(setStocks, setSearchMeta, setSelected).catch(() => setStocks([])).finally(() => setStocksLoading(false)); }}>刷新列表</Button>
-              <Button size="small" onClick={() => { api.backfillStockNames().then((r) => { if (r?.success) message.success(r.message || '已启动补全，请稍后点击刷新列表'); }).catch((e) => message.error(e?.message || '补全失败')); }}>补全名称</Button>
-            </div>
-          )}
-          {!stocksLoading && filteredStocks.length > 0 && (
-          <List
-            size="small"
-            dataSource={filteredStocks.slice(0, 200)}
-            renderItem={(item) => {
-              const displayName = item.name && item.name !== item.symbol ? item.name : item.symbol;
-              const subText = item.name && item.name !== item.symbol ? `${item.symbol} · ${item.order_book_id}` : item.order_book_id;
-              return (
-                <List.Item
-                  style={{
-                    cursor: 'pointer',
-                    background: selected === item.order_book_id ? 'rgba(16,185,129,0.15)' : undefined,
-                    borderRadius: 4,
-                    padding: '4px 8px',
-                  }}
-                  onClick={() => setSelected(item.order_book_id)}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                    <Text strong={selected === item.order_book_id} style={{ fontSize: 13 }}>
-                      {displayName} {item.name && item.name !== item.symbol ? item.symbol : ''}
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                      {subText}
-                    </Text>
-                  </div>
-                </List.Item>
-              );
-            }}
-          />
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', paddingRight: 4 }}>
+            <List
+              size="small"
+              dataSource={filteredStocks}
+              renderItem={(item) => {
+                const hasName = item.name && String(item.name).trim() && item.name !== item.symbol;
+                const mainText = hasName ? `${item.name} ${item.symbol}` : item.symbol;
+                const subText = hasName ? item.order_book_id : (item.order_book_id || item.symbol);
+                return (
+                  <List.Item
+                    style={{
+                      cursor: 'pointer',
+                      background: selected === item.order_book_id ? 'rgba(16,185,129,0.15)' : undefined,
+                      borderRadius: 4,
+                      padding: '4px 8px',
+                    }}
+                    onClick={() => setSelected(item.order_book_id)}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                      <Text strong={selected === item.order_book_id} style={{ fontSize: 13 }}>
+                        {mainText}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: 11 }}>
+                        {subText}
+                      </Text>
+                    </div>
+                  </List.Item>
+                );
+              }}
+            />
+          </div>
           )}
         </Card>
       </Sider>
-      <Content style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Content style={{ padding: 16, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', flex: 1 }}>
         <Card
           title={klineTitle}
-          style={{ background: '#111827', flex: 1 }}
+          style={{ background: '#111827', flex: 1, minHeight: 400 }}
         >
           {/* 图表展示组合：周期、均线、副图 */}
           <div
@@ -315,17 +387,19 @@ export default function TradingDecision() {
                 { value: 'full', label: 'MA5/10/20/30/60' },
               ]}
             />
-            <span style={{ color: '#9ca3af', fontSize: 12, marginLeft: 8 }}>副图</span>
-            <Segmented
-              size="small"
-              value={chartSubCharts}
-              onChange={(v) => setChartSubCharts(v as 'none' | 'kdj' | 'macd' | 'both')}
+            <span style={{ color: '#9ca3af', fontSize: 12, marginLeft: 8 }}>副图指标</span>
+            <Checkbox.Group
               options={[
-                { value: 'none', label: '无' },
-                { value: 'kdj', label: 'KDJ' },
-                { value: 'macd', label: 'MACD' },
-                { value: 'both', label: 'KDJ+MACD' },
+                { label: 'KDJ', value: 'kdj' },
+                { label: 'MACD', value: 'macd' },
+                { label: 'RSI', value: 'rsi' },
+                { label: 'BOLL', value: 'boll' },
+                { label: 'CCI', value: 'cci' },
+                { label: 'OBV', value: 'obv' },
               ]}
+              value={chartSubCharts}
+              onChange={(v) => setChartSubCharts(Array.isArray(v) ? v : [])}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'center' }}
             />
           </div>
           {loading && (
@@ -344,8 +418,12 @@ export default function TradingDecision() {
               ma60={ma60}
               height={380}
               maSet={chartMaSet}
-              showKDJ={chartSubCharts === 'kdj' || chartSubCharts === 'both'}
-              showMACD={chartSubCharts === 'macd' || chartSubCharts === 'both'}
+              showKDJ={chartSubCharts.includes('kdj')}
+              showMACD={chartSubCharts.includes('macd')}
+              showRSI={chartSubCharts.includes('rsi')}
+              showBOLL={chartSubCharts.includes('boll')}
+              showCCI={chartSubCharts.includes('cci')}
+              showOBV={chartSubCharts.includes('obv')}
             />
           )}
           {!loading && selected && kline.length === 0 && (
@@ -353,11 +431,13 @@ export default function TradingDecision() {
           )}
         </Card>
       </Content>
-      <Sider width={320} style={{ background: '#111827', padding: 12 }}>
+      <Sider width={320} style={{ background: '#111827', padding: 12, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <Card
           size="small"
           title="新闻热点"
-          style={{ background: '#0f172a', marginBottom: 12, maxHeight: 280, overflowY: 'auto' }}
+          style={{ background: '#0f172a', flexShrink: 0, maxHeight: 220 }}
+          styles={{ body: { maxHeight: 160, overflowY: 'auto', padding: 8 } }}
         >
           {newsLoading && (
             <div style={{ textAlign: 'center', padding: 12 }}>
@@ -376,14 +456,14 @@ export default function TradingDecision() {
           )}
           {!newsLoading && news.length > 0 && (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, flexShrink: 0 }}>
                 {nextNewsRefresh && <span style={{ fontSize: 11, color: '#9ca3af' }}>下次刷新 {nextNewsRefresh}</span>}
                 <Button size="small" type="link" style={{ padding: 0, fontSize: 12 }} onClick={() => { setNewsLoading(true); const code = selected?.split('.')[0]; if (code) api.news({ symbol: code, sources: 'eastmoney,caixin', limit: 30 }).then((r) => { if (r.success) setNews(r.news || []); }).finally(() => setNewsLoading(false)); }}>刷新</Button>
               </div>
               <List
                 size="small"
                 split={false}
-                dataSource={news.slice(0, 20)}
+                dataSource={news.slice(0, 8)}
                 renderItem={(item) => (
                   <List.Item style={{ padding: '4px 0' }}>
                     <div>
@@ -407,7 +487,7 @@ export default function TradingDecision() {
             </>
           )}
         </Card>
-        <Card size="small" title="AI 评分与建议" style={{ background: '#0f172a', marginBottom: 12 }}>
+        <Card size="small" title="AI 评分与建议" style={{ background: '#0f172a', flexShrink: 0 }}>
           {aiScore ? (
             aiScore.score != null && aiScore.suggestion != null ? (
               <>
@@ -449,7 +529,7 @@ export default function TradingDecision() {
             <Text type="secondary">选择股票后加载</Text>
           )}
         </Card>
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ flexShrink: 0 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>信号策略 </Text>
           <Select
             size="small"
@@ -460,6 +540,7 @@ export default function TradingDecision() {
           />
         </div>
         <SignalMarkers signals={signals} symbol={selected || undefined} />
+        </div>
       </Sider>
     </Layout>
   );

@@ -108,7 +108,7 @@ class Orchestrator:
     def run_pipeline(
         self,
         days_lookback: int = 3,
-        top_n_themes: int = 10,
+        top_n_themes: int = 25,
         top_n_stocks: int = 20,
         use_llm: bool = True,
         relaxed_filter: bool = False,
@@ -208,7 +208,7 @@ class Orchestrator:
 
 def run_multi_agent_scan(
     days_lookback: int = 3,
-    top_n_themes: int = 10,
+    top_n_themes: int = 25,
     top_n_stocks: int = 20,
     use_llm: bool = True,
     relaxed_filter: bool = False,

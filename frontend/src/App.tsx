@@ -7,6 +7,7 @@ import RLTrainingDashboard from './pages/RLTrainingDashboard';
 import RLPerformance from './pages/RLPerformance';
 import RLDecisionView from './pages/RLDecisionView';
 import InstitutionalTrading from './pages/InstitutionalTrading';
+import ClosedLoop from './pages/ClosedLoop';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route index element={<Navigate to="/trading" replace />} />
           <Route path="trading" element={<TradingDecision />} />
           <Route path="institutional" element={<InstitutionalTrading />} />
+          <Route path="closed-loop" element={<ClosedLoop />} />
           <Route path="strategy-lab" element={<StrategyLab />} />
           <Route path="scanner" element={<MarketScanner />} />
           <Route path="rl" element={<RLTrainingDashboard />} />

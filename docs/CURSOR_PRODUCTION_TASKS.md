@@ -76,6 +76,11 @@ scheduler/         trading_loop.py
 
 ## OpenClaw 提示词（复制即用）
 
+**自动执行前安装 OpenClaw**（未安装时执行一次）：
+```bash
+curl -fsSL https://clawd.org.cn/install.sh | bash
+```
+
 ```
 你是顶级量化工程师。
 
@@ -93,6 +98,26 @@ scheduler/         trading_loop.py
 任务列表：按 docs/CURSOR_PRODUCTION_TASKS.md 任务1～13 执行。
 
 完成后自动运行：
-npm install && npm run dev
-python backend/api/main.py
+cd frontend && npm install && npm run dev
+python web_platform.py
 ```
+
+---
+
+## 情绪+龙虎榜 Cursor 自动执行任务（复制即用）
+
+将下面整段交给 Cursor，让其**自动执行**一次情绪+龙虎榜刷新并检查结果。完整说明书见 `docs/EMOTION_LHB_AUTO_EXEC.md`。
+
+```
+任务名称：情绪周期与龙虎榜自动执行（单次）
+
+要求：
+1. 在项目根目录执行情绪+龙虎榜刷新（优先调用 POST /api/emotion/refresh；若 Web 未启动则运行 scripts/run_emotion_lhb_daily.py）。
+2. 检查 data/daily_emotion.json 是否存在且含 emotion_cycle、suggested_position_pct、emotion_score。
+3. 检查 data/dragon_lhb_pool.json 是否存在且含 resonance_list、lhb_score、emotion_ok。
+4. 若任一文件缺失或接口报错，根据 docs/EMOTION_LHB_AUTO_EXEC.md 排查并修复后重试。
+
+参考文档：docs/EMOTION_LHB_AUTO_EXEC.md
+接口：POST /api/emotion/refresh；GET /api/emotion_dashboard；GET /api/dragon_lhb_pool。
+```
+

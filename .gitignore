@@ -31,6 +31,11 @@ data/*.db
 data/*.duckdb
 data/**/*.csv
 data/financials_cache*.json
+# 机构闭环 / 情绪·龙虎榜 运行时生成
+data/daily_emotion.json
+data/dragon_lhb_pool.json
+data/emotion_history.csv
+data/lhb_cache/
 
 # 训练产出与模型（体积大，本地生成）
 models/*.pkl
@@ -39,6 +44,8 @@ models/*.zip
 # 回测产出（可选忽略，避免仓库膨胀）
 output/*.pkl
 output/*.json
+daily_report.json
+scanner/output/*.json
 
 # 嵌套仓库（克隆后请用 pip 安装或单独克隆，不纳入本仓库）
 akshare/

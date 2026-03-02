@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 交易日 15:30 后自动拉取新增日线数据（增量更新），并同步新增股票信息。
+日线统一使用 前复权(qfq)，与全量同步、K 线按需拉取、复权补全逻辑一致。
 
 流程：1) 同步 A 股列表，拉取库中不存在的标的（新股等）；2) 对库中全部标的做日线增量更新。
 
@@ -37,37 +38,9 @@ def is_trading_day(dt: datetime) -> bool:
 
 
 def _get_current_a_share_list():
-    """获取当前沪深京 A 股代码与名称列表。返回 [(code, name), ...]，code 为 6 位。兼容多种 akshare 接口。"""
-    import akshare as ak
-    df = None
-    code_col, name_col = None, None
-    # 优先 stock_info_a_code_name；部分版本无此接口则用 stock_zh_a_spot_em
-    if hasattr(ak, "stock_info_a_code_name"):
-        try:
-            df = ak.stock_info_a_code_name()
-            if df is not None and not df.empty:
-                code_col = "code" if "code" in df.columns else None
-                name_col = "name" if "name" in df.columns else None
-        except Exception:
-            df = None
-    if (df is None or df.empty or not code_col) and hasattr(ak, "stock_zh_a_spot_em"):
-        try:
-            df = ak.stock_zh_a_spot_em()
-            if df is not None and not df.empty:
-                code_col = "代码" if "代码" in df.columns else ("code" if "code" in df.columns else None)
-                name_col = "名称" if "名称" in df.columns else ("name" if "name" in df.columns else None)
-        except Exception:
-            df = None
-    if df is None or df.empty or not code_col:
-        logger.warning("获取 A 股列表失败：当前 akshare 无 stock_info_a_code_name / stock_zh_a_spot_em 或返回为空")
-        return []
-    out = []
-    for _, row in df.iterrows():
-        code = str(row.get(code_col, "")).strip().zfill(6)
-        name = str(row.get(name_col, "")).strip() if name_col else code
-        if code.isdigit() and len(code) == 6:
-            out.append((code, name or code))
-    return out
+    """获取当前沪深京 A 股代码与名称列表（与 data_fetcher 统一，含北交所）。返回 [(code, name), ...]。"""
+    from database.data_fetcher import get_all_a_share_code_name
+    return get_all_a_share_code_name()
 
 
 def sync_new_stocks(delay_seconds: float = 0.2) -> int:
@@ -111,27 +84,11 @@ def sync_new_stocks(delay_seconds: float = 0.2) -> int:
     start_ymd = (today - timedelta(days=365)).strftime("%Y%m%d")
     success = 0
 
+    from database.data_fetcher import _order_book_id_for_code
+
     for code in new_codes:
-        order_book_id = f"{code}.XSHG" if code.startswith("6") else f"{code}.XSHE"
+        order_book_id = _order_book_id_for_code(code)
         name = current_map.get(code, code)
-        try:
-            import akshare as ak
-            df = ak.stock_zh_a_hist(
-                symbol=code,
-                period="daily",
-                start_date=start_ymd,
-                end_date=today_ymd,
-                adjust="qfq",
-            )
-        except Exception as e:
-            logger.debug("%s 拉取失败: %s", code, e)
-            if delay_seconds > 0:
-                time.sleep(delay_seconds)
-            continue
-        if df is None or len(df) == 0:
-            if delay_seconds > 0:
-                time.sleep(delay_seconds)
-            continue
         try:
             db.add_stock(
                 order_book_id=order_book_id,
@@ -142,13 +99,38 @@ def sync_new_stocks(delay_seconds: float = 0.2) -> int:
                 de_listed_date=None,
                 type="CS",
             )
-            db.add_daily_bars(order_book_id, df)
-            success += 1
-            logger.info("新增 %s (%s) %s，写入 %d 条日线", code, order_book_id, name, len(df))
         except Exception as e:
-            logger.warning("%s 写入失败: %s", code, e)
-        if delay_seconds > 0:
-            time.sleep(delay_seconds)
+            logger.debug("%s 写入 stocks 失败: %s", code, e)
+        written = 0
+        for adj, label in [("qfq", "前复权"), ("hfq", "后复权")]:
+            try:
+                import akshare as ak
+                df = ak.stock_zh_a_hist(
+                    symbol=code,
+                    period="daily",
+                    start_date=start_ymd,
+                    end_date=today_ymd,
+                    adjust=adj,
+                )
+            except Exception as e:
+                logger.debug("%s %s 拉取失败: %s", code, label, e)
+                if delay_seconds > 0:
+                    time.sleep(delay_seconds)
+                continue
+            if df is None or len(df) == 0:
+                if delay_seconds > 0:
+                    time.sleep(delay_seconds)
+                continue
+            try:
+                db.add_daily_bars(order_book_id, df, adjust_type=adj)
+                written += len(df)
+            except Exception as e:
+                logger.warning("%s %s 写入失败: %s", code, label, e)
+            if delay_seconds > 0:
+                time.sleep(delay_seconds)
+        if written > 0:
+            success += 1
+            logger.info("新增 %s (%s) %s，写入 qfq+hfq 共 %d 条日线", code, order_book_id, name, written)
 
     return success
 
@@ -195,28 +177,32 @@ def run_incremental_fetch(delay_seconds: float = 0.15) -> int:
         if start_ymd > today_ymd:
             continue
 
-        try:
-            import akshare as ak
-            df = ak.stock_zh_a_hist(
-                symbol=symbol,
-                period="daily",
-                start_date=start_ymd,
-                end_date=today_ymd,
-                adjust="qfq",
-            )
-        except Exception as e:
-            logger.debug("%s 拉取失败: %s", symbol, e)
-            continue
-        if df is None or len(df) == 0:
-            continue
-        try:
-            db.add_daily_bars(order_book_id, df)
+        symbol_updated = False
+        for adj in ("qfq", "hfq"):
+            try:
+                import akshare as ak
+                df = ak.stock_zh_a_hist(
+                    symbol=symbol,
+                    period="daily",
+                    start_date=start_ymd,
+                    end_date=today_ymd,
+                    adjust=adj,
+                )
+            except Exception as e:
+                logger.debug("%s %s 拉取失败: %s", symbol, adj, e)
+                continue
+            if df is None or len(df) == 0:
+                continue
+            try:
+                db.add_daily_bars(order_book_id, df, adjust_type=adj)
+                symbol_updated = True
+                logger.info("%s (%s) %s 更新 %d 条", symbol, order_book_id, adj, len(df))
+            except Exception as e:
+                logger.warning("%s %s 写入失败: %s", symbol, adj, e)
+            if delay_seconds > 0:
+                time.sleep(delay_seconds)
+        if symbol_updated:
             success += 1
-            logger.info("%s (%s) 更新 %d 条", symbol, order_book_id, len(df))
-        except Exception as e:
-            logger.warning("%s 写入失败: %s", symbol, e)
-        if delay_seconds > 0:
-            time.sleep(delay_seconds)
 
     return success
 

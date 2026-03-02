@@ -89,9 +89,23 @@ export const api = {
   stocks: () =>
     get<{ stocks: { order_book_id: string; symbol: string; name: string }[] }>(BASE + '/stocks'),
 
-  /** 补全 DuckDB stocks 表名称（从 AKShare 拉取 A 股代码+名称），保证列表显示完整 */
-  backfillStockNames: () =>
-    post<{ success: boolean; message?: string }>(BASE + '/backfill_stock_names', {}),
+  /** 北交所股票列表（独立接口，与主列表合并后保证北交所 Tab 有数据） */
+  stocksBj: () =>
+    get<{ stocks: { order_book_id: string; symbol: string; name: string }[] }>(BASE + '/stocks/bj'),
+
+  /** 补全 DuckDB stocks 表名称（从 AKShare 拉取 A 股代码+名称）。sync=true 时同步执行并返回更新条数 */
+  backfillStockNames: (options?: { sync?: boolean }) =>
+    post<{ success: boolean; message?: string; updated?: number }>(
+      BASE + '/backfill_stock_names',
+      options?.sync ? { sync: true } : {}
+    ),
+
+  /** 全量 A 股同步：后台拉取沪深京全部股票日线（含北交所），断点续传 */
+  syncAllAStocks: () =>
+    post<{ success: boolean; message?: string }>(BASE + '/sync_all_a_stocks', {}),
+
+  /** 数据状态：股票数、日线数 */
+  dbStats: () => get<{ stocks: number; daily_bars: number }>(BASE + '/db_stats'),
 
   news: (params: { symbol: string; sources?: string; limit?: number }) => {
     const q: Record<string, string> = { symbol: params.symbol };
@@ -107,6 +121,16 @@ export const api = {
       get<RLPerformanceResponse>(BASE + '/rl/performance', params || {}),
     decision: (params: { symbol: string; position_pct?: number }) =>
       get<RLDecisionResponse>(BASE + '/rl/decision', { symbol: params.symbol, position_pct: String(params.position_pct ?? 0) }),
+  },
+
+  /** 机构级闭环：情绪回测 / 龙虎榜胜率 / 每周报告 */
+  closedLoop: {
+    emotionReport: () => get<{ success: boolean; report: ClosedLoopEmotionReport | null; message?: string }>(BASE + '/closed_loop/emotion_report'),
+    lhbReport: () => get<{ success: boolean; report: ClosedLoopLHBReport | null; message?: string }>(BASE + '/closed_loop/lhb_report'),
+    weeklyReport: () => get<{ success: boolean; report: ClosedLoopWeeklyReport | null; message?: string }>(BASE + '/closed_loop/weekly_report'),
+    runEmotion: () => post<{ success: boolean; report?: ClosedLoopEmotionReport; path?: string; error?: string }>(BASE + '/closed_loop/run/emotion', {}),
+    runLhb: () => post<{ success: boolean; report?: ClosedLoopLHBReport; error?: string }>(BASE + '/closed_loop/run/lhb', {}),
+    runWeekly: () => post<{ success: boolean; report?: ClosedLoopWeeklyReport; stdout?: string; error?: string }>(BASE + '/closed_loop/run/weekly', {}),
   },
 };
 
@@ -128,4 +152,32 @@ export interface RLDecisionResponse {
   reason: string[];
   state_summary: string;
   suggested_position_pct: number;
+}
+
+export interface ClosedLoopEmotionReport {
+  start_date?: string;
+  end_date?: string;
+  by_emotion?: Record<string, { win_rate: number; avg_win: number; avg_loss: number; profit_factor: number; max_drawdown: number; sharpe: number; total_return: number; mean_return: number; count: number }>;
+  summary?: { win_rate: number; max_drawdown: number; sharpe: number; total_return: number; mean_return: number; count: number };
+  trade_days?: number;
+}
+
+export interface ClosedLoopLHBReport {
+  start_date?: string;
+  end_date?: string;
+  by_seat?: Record<string, Record<string, { win_rate: number; profit_factor: number; max_drawdown: number; total_return: number }> & { high_win_rate?: boolean }>;
+  ranking?: { seat: string; win_rate_5d?: number }[];
+  total_records?: number;
+}
+
+export interface ClosedLoopWeeklyReport {
+  generated_at?: string;
+  start_date?: string;
+  end_date?: string;
+  emotion_backtest?: unknown;
+  lhb_statistics?: { by_seat_count?: number; ranking_sample?: { seat: string; win_rate_5d?: number }[] };
+  emotion_report_path?: string;
+  lhb_report_path?: string;
+  emotion_backtest_error?: string;
+  lhb_statistics_error?: string;
 }

@@ -46,7 +46,8 @@ python3 run_manager.py
    .venv/bin/python web_platform.py
    ```
    访问 http://127.0.0.1:5050
-2. 打开浏览器：`export PATH="/opt/homebrew/opt/node@22/bin:$PATH"` 后  
+2. 打开浏览器：若未安装 OpenClaw，先执行  
+   `curl -fsSL https://clawd.org.cn/install.sh | bash`（自动安装 Node.js 与依赖），然后  
    `openclaw browser --browser-profile openclaw open http://127.0.0.1:5050`
 3. 快照：`openclaw browser --browser-profile openclaw snapshot`  
    确认首屏有「机构组合结果」「AI 推荐列表」「AI 基金经理再平衡」

@@ -1,6 +1,12 @@
 # OpenClaw 自动执行提示词（机构级 A 股系统）
 
-复制以下内容到 OpenClaw 作为任务描述，用于自动执行机构级升级。
+复制以下内容到 OpenClaw（或 Z.AI / 其他支持 OpenClaw 的自动执行环境）作为任务描述，用于自动执行机构级升级。
+
+**环境准备（自动执行前）**：若本机未安装 OpenClaw，先执行一键安装（自动安装 Node.js 与依赖）：
+```bash
+curl -fsSL https://clawd.org.cn/install.sh | bash
+```
+安装完成后新开终端即可使用 `openclaw`。
 
 ---
 
@@ -26,15 +32,28 @@
 
 **完成后自动运行**：
 ```bash
-npm install
-npm run dev
-```
-```bash
+# 前端（可选，若需独立前端开发）
+cd frontend && npm install && npm run dev
+
+# 后端主站（项目根目录）
 python web_platform.py
 ```
-或项目约定的后端入口（如 `python main.py`）。
+或 `.venv/bin/python web_platform.py`、项目约定的后端入口（如 `python main.py`）。
 
 **注意**：
 - 不删除现有可用的回测、扫描、数据拉取逻辑。  
 - 新模块与现有 `backend/ai`、`backend/trading`、`backend/execution` 通过接口或桥接复用。  
 - 前端在现有 React 路由与 API client 基础上新增 chart/trading/portfolio/ai 页面与组件。
+
+---
+
+## 情绪+龙虎榜 自动执行（单次/每日）
+
+若只需执行「情绪周期 + 龙虎榜」刷新并写入 JSON，使用以下任务描述（详见 `docs/EMOTION_LHB_AUTO_EXEC.md`）：
+
+```
+任务：执行情绪周期与龙虎榜每日刷新。
+步骤：1) 进入项目根目录；2) 若 Web 已运行则 POST http://127.0.0.1:5050/api/emotion/refresh；否则执行 python scripts/run_emotion_lhb_daily.py；3) 验证 data/daily_emotion.json 与 data/dragon_lhb_pool.json 已更新。
+成功标准：两文件存在且含 emotion_cycle、resonance_list。参考 docs/EMOTION_LHB_AUTO_EXEC.md
+```
+

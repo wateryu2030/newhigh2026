@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Skill 1: News Fetch
-从 ReadHub、早报等源抓取最近 24-72 小时的财经新闻
+从多源抓取财经新闻与热点（东方财富多关键词、财新等），支持更多新闻与自媒体内容，供主题热点自动发现。
 """
 from __future__ import annotations
 import os
@@ -15,25 +14,21 @@ sys.path.insert(0, _root)
 
 def execute(ctx, days_lookback: int = 3) -> Any:
     """
-    抓取财经新闻
-    
+    抓取财经新闻（多源、多关键词，以获取更多新闻与自媒体内容）。
     :param ctx: SkillContext
-    :param days_lookback: 回溯天数
+    :param days_lookback: 回溯天数（当前由 limit 控制条数）
     :return: 更新后的ctx
     """
-    # 优先从已有的news模块获取新闻
     try:
         from news import fetch_all_news
-        
-        # 获取全市场热点新闻（不指定个股）
-        # 获取财新网热点新闻
+
+        # 全市场热点：不指定个股，拉取多关键词/指数新闻，得到更多内容
         raw_news = fetch_all_news(
-            symbol="",  # 全市场
-            sources=["caixin", "eastmoney"],
-            limit_per_source=50,
+            symbol="",  # 空表示全市场，内部用多关键词拉取
+            sources=["eastmoney", "caixin"],
+            limit_per_source=80,
         )
-        
-        # 整理新闻列表
+
         news_list = []
         for source, items in raw_news.items():
             for item in items:
@@ -47,17 +42,16 @@ def execute(ctx, days_lookback: int = 3) -> Any:
                         "url": item.get("url", ""),
                         "sentiment_label": item.get("sentiment_label", "neutral"),
                     })
-        
-        # 按时间排序
+
         news_list.sort(
             key=lambda x: x.get("publish_time", ""),
             reverse=True
         )
-        
-        ctx.news_raw = news_list[:100]  # 最多保留100条
-        
+        # 保留更多条以支撑主题热点来自更多新闻
+        ctx.news_raw = news_list[:250]
+
     except Exception as e:
         print(f"[NewsFetch] 获取新闻失败: {e}")
         ctx.news_raw = []
-    
+
     return ctx

@@ -37,9 +37,8 @@ def execute(ctx) -> Any:
             1 for news in ctx.news_raw
             if theme in news.get("title", "") or theme in news.get("content", "")
         )
-        
-        # 至少需要2条新闻提及才算有效主题
-        if mention_count >= 2:
+        # 至少 1 条新闻提及即保留，便于新闻自动发现的主题也能展示（原 2 条过严）
+        if mention_count >= 1:
             validated_themes.append({
                 "name": theme,
                 "mention_count": mention_count,
