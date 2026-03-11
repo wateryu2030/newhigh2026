@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --fund-dark: #0F172A;
+  --fund-emerald: #10B981;
+  --fund-indigo: #6366F1;
+}
+
+body {
+  @apply bg-slate-900 text-slate-100 antialiased;
+  background-color: var(--fund-dark);
+}
+
+/* Responsive grid helpers */
+.grid-dashboard {
+  @apply grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4;
+}
+
+.card {
+  @apply rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 shadow-lg backdrop-blur sm:p-6;
+}
+
+.link-nav {
+  @apply rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white;
+}
+
+.link-nav.active {
+  @apply bg-slate-700 text-white;
+}
+
+/* 移动端底部安全区（避免被设备底部遮挡） */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+}

@@ -1,0 +1,15 @@
+---
+description: OpenClaw 使用百炼（Bailian）API Key，从项目 .env 读取
+globs: ["**/*.py", "**/*.yaml", "**/.env.example", "**/OPENCLAW*.yaml"]
+alwaysApply: false
+---
+
+# OpenClaw 与百炼 API 配置
+
+- **本机 OpenClaw** 使用 **百炼专属 API Key** 进行 LLM 策略生成与 AI 开发代理。
+- **Key 位置**：项目根目录 `.env` 中已配置百练专属 API Key：
+  - `BAILIAN_API_KEY`（必填，百练/通义调用使用）
+  - `DASHSCOPE_API_KEY`（与上同值，dashscope SDK 使用）
+- **不要**在代码或文档中硬编码该 key；一律通过 `os.environ.get("BAILIAN_API_KEY")` 或 `os.environ.get("DASHSCOPE_API_KEY")` 读取。
+- 接入百炼/通义时：优先使用项目根目录的 `.env`（Gateway、scripts 启动时会加载）；若在独立脚本中调用，请先 `load_dotenv(".env")` 或 `source .env` 后再读环境变量。
+- 配置引用：`OPENCLAW_AUTONOMOUS_DEV.yaml`、`OPENCLAW_AI_DEV_AGENT.yaml`、`OPENCLAW_ALPHA_FACTORY.yaml` 的 `llm` 段均指向上述环境变量。

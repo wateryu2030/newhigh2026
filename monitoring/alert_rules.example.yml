@@ -1,0 +1,11 @@
+# 示例告警规则：复制为 alert_rules.yml 并在 prometheus.yml 中 rule_files 引用
+groups:
+  - name: gateway
+    rules:
+      - alert: GatewayDown
+        expr: up{job="gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Gateway 不可用"

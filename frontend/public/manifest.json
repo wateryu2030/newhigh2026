@@ -1,0 +1,11 @@
+{
+  "name": "AI 对冲基金 控制台",
+  "short_name": "AI Fund",
+  "description": "AI Fund Manager Cockpit",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "icons": []
+}

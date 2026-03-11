@@ -1,0 +1,52 @@
+# AI 开发代理 — 系统自己写代码、自己升级
+# 让 Cursor/OpenClaw 长期自主开发
+
+ai_dev_agent:
+
+  capabilities:
+    - read_codebase
+    - detect_missing_features
+    - propose_improvements
+    - generate_code
+    - run_tests
+    - deploy_changes
+
+  development_cycle:
+    - analyze_system
+    - detect_bottlenecks
+    - generate_improvements
+    - implement_code
+    - run_tests
+    - commit_changes
+
+  constraints:
+    never_delete_core_modules: true
+    always_run_tests: true
+    follow_openclaw_plan: true
+
+  commit_strategy:
+    commit_after_feature: true
+    message_prefix: "openclaw:"
+
+  # 入口：可由 Cursor 读取并执行
+  trigger_instruction: |
+    Read all OPENCLAW configuration files.
+    Initialize autonomous development mode.
+    Implement missing modules.
+    Connect database, backend APIs, and frontend data bindings.
+    Ensure the system generates real data automatically.
+    Start autonomous strategy evolution loop.
+    Enable AI development agent for continuous improvement.
+
+  config_refs:
+    master: OPENCLAW_MASTER_SYSTEM.yaml
+    data: OPENCLAW_DATA_PIPELINE.yaml
+    alpha: OPENCLAW_ALPHA_FACTORY.yaml
+    meta: OPENCLAW_META_FUND.yaml
+    frontend: FRONTEND_DATA_BINDING.yaml
+
+  # LLM：百练专属 API Key（原百练已停用）；.env 中 BAILIAN_API_KEY / DASHSCOPE_API_KEY
+  llm:
+    provider: bailian
+    env: BAILIAN_API_KEY
+    dashscope_env: DASHSCOPE_API_KEY

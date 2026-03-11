@@ -1,0 +1,36 @@
+# 第二阶段：系统进化阶段（AI 交易平台 → 自进化 AI 基金经理）
+phase: evolution_stage
+
+new_modules:
+  - alpha-factory
+  - alpha-scoring
+  - strategy-evolution
+  - meta-fund-manager
+  - simulation-world
+
+development_order:
+  - alpha-factory
+  - alpha-scoring
+  - strategy-evolution
+  - simulation-world
+  - meta-fund-manager
+
+loop:
+  enable_self_improvement: true
+  pipeline:
+    - generate_strategies
+    - backtest_strategies
+    - score_alpha
+    - evolve_population
+    - deploy_top_strategies
+
+rules:
+  strategy_population: 1000
+  survival_rate: 0.1
+  mutation_rate: 0.2
+  exploration_rate: 0.3
+
+# 与现有模块对应
+# evolution-engine: 策略池、达尔文淘汰（已有）
+# ai-fund-manager: 策略选择、风控、资金配置（已有）
+# 本阶段新增: alpha-factory 策略工厂、alpha-scoring 独立评分、strategy-evolution 遗传进化、simulation-world RL 环境、meta-fund-manager 基金经理大脑

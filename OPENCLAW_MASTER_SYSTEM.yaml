@@ -1,0 +1,83 @@
+# AI Hedge Fund Operating System — 系统总控制
+# Cursor + OpenClaw 长期自主运行、自主编程、自主进化
+# 目标：自己发现 Alpha / 自己交易 / 自己升级
+
+system_name: ai_hedge_fund_os
+
+mode: autonomous
+
+# 四个核心循环
+loops:
+
+  data_loop:
+    description: "行情 → 指标 → 存储"
+    steps:
+      - collect_market_data
+      - update_features
+      - store_database
+    scheduler_ref: data_loop
+
+  strategy_loop:
+    description: "生成策略 → 回测 → 评分 → 进化"
+    steps:
+      - generate_strategies
+      - run_backtests
+      - score_alpha
+      - evolve_strategies
+    scheduler_ref: run_evolution_pipeline
+
+  trading_loop:
+    description: "选择策略 → 资金配置 → 执行交易 → 绩效反馈"
+    steps:
+      - select_strategies
+      - allocate_capital
+      - execute_trades
+      - update_performance
+    scheduler_ref: trading_loop
+
+  dev_loop:
+    description: "分析代码 → 提出改进 → 生成代码 → 测试 → 部署"
+    steps:
+      - analyze_system
+      - propose_improvements
+      - generate_code
+      - run_tests
+      - deploy_updates
+    scheduler_ref: ai_dev_agent
+
+# 模块列表（与仓库目录一致）
+modules:
+
+  - core
+  - data-engine
+  - feature-engine
+  - alpha-factory
+  - backtest-engine
+  - alpha-scoring
+  - strategy-evolution
+  - portfolio-engine
+  - risk-engine
+  - execution-engine
+  - meta-fund-manager
+  - simulation-world
+  - scheduler
+  - gateway
+  - frontend
+  - infra
+  - docs
+  - ai-dev-agent
+
+# 配置引用
+config_files:
+  data_pipeline: OPENCLAW_DATA_PIPELINE.yaml
+  alpha_factory: OPENCLAW_ALPHA_FACTORY.yaml
+  meta_fund: OPENCLAW_META_FUND.yaml
+  ai_dev_agent: OPENCLAW_AI_DEV_AGENT.yaml
+  frontend_binding: FRONTEND_DATA_BINDING.yaml
+
+autonomous_development: true
+
+validation:
+  must_compile: true
+  must_pass_tests: true
+  must_connect_api: true

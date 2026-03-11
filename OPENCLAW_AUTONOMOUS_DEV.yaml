@@ -1,0 +1,62 @@
+agent:
+  name: openclaw_dev_agent
+  mode: autonomous
+
+objective:
+  build_full_ai_trading_platform
+
+loop:
+  enabled: true
+  steps:
+    - read_project_plan
+    - generate_tasks
+    - implement_module
+    - run_tests
+    - fix_errors
+    - commit_code
+    - continue_next_module
+
+development_order:
+  - data-engine
+  - feature-engine
+  - backtest-engine
+  - strategy-engine
+  - portfolio-engine
+  - risk-engine
+  - execution-engine
+  - ai-lab
+  - evolution-engine
+  - ai-fund-manager
+  - scheduler
+  - gateway
+  - frontend
+
+rules:
+  coding_style:
+    python: pep8
+    typescript: standard
+  test_required: true
+  fix_bugs_automatically: true
+  commit_after_each_module: true
+  never_delete_core_modules: true
+  always_generate_readme: true
+
+# A股数据 Skill（Tushare）：行情、基本面、技术指标；见 docs/OPENCLAW_SKILLS.md
+skills:
+  - name: a_share_skill
+    module: skills.a_share_skill
+    load: load_skill
+    env: TUSHARE_TOKEN
+
+# 百练 / 通义 LLM（策略生成、AI 开发代理）；原百练已停用，使用专属 API Key
+# 环境变量：.env 中 BAILIAN_API_KEY 或 DASHSCOPE_API_KEY（dashscope SDK 使用后者）
+llm:
+  provider: bailian
+  env: BAILIAN_API_KEY
+  dashscope_env: DASHSCOPE_API_KEY
+  note: "百练专属 Key 已配置于 .env；接入 ai-lab/strategy_generator 或 alpha-factory 时读取上述变量"
+
+validation:
+  must_compile: true
+  must_pass_tests: true
+  must_run_docker: true

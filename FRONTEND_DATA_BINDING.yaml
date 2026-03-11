@@ -1,0 +1,95 @@
+# 前端自动数据展示规则 — 前后端数据彻底打通
+# 数据流: database → API Gateway → Frontend
+# 双语: 默认中文，可切换英文 — 见 docs/FRONTEND_I18N_AND_OPENCLAW.md
+
+frontend_binding:
+
+  dashboard:
+    route: /
+    data_sources:
+      equity: /api/dashboard
+      data_status: /api/data/status
+      sharpe: /api/dashboard
+      drawdown: /api/dashboard
+      daily_return: /api/dashboard
+      top_strategies: /api/dashboard
+      ai_generated_today: /api/dashboard
+      strategies_alive: /api/dashboard
+      strategies_live: /api/dashboard
+
+  data:
+    route: /data
+    data_sources:
+      status: /api/data/status
+
+  market:
+    route: /market
+    data_sources:
+      klines: /api/market/klines
+      symbols: /api/market/ashare/stocks
+
+  news:
+    route: /news
+    data_sources:
+      list: /api/news
+      sentiment: /api/news
+
+  strategies:
+    route: /strategies
+    data_sources:
+      list: /api/strategies
+      pool: /api/strategies  # 扩展: 策略池详情
+
+  alpha_lab:
+    route: /alpha-lab
+    data_sources:
+      funnel: /api/alpha-lab
+
+  evolution:
+    route: /evolution
+    data_sources:
+      generations: /api/evolution
+      best_strategy: /api/evolution
+
+  portfolio:
+    route: /portfolio
+    data_sources:
+      weights: /api/portfolio/weights
+      positions: /api/positions
+
+  risk:
+    route: /risk
+    data_sources:
+      status: /api/risk/status
+      metrics: /api/risk/status  # 扩展: VaR, exposure
+
+  trade:
+    route: /trade
+    data_sources:
+      trades: /api/trades
+
+  reports:
+    route: /reports
+    data_sources:
+      summary: /api/dashboard
+      # 扩展: /api/reports/monthly
+
+# API 结构（与 gateway 一致）
+api_structure:
+  rest:
+    - /api/dashboard
+    - /api/market
+    - /api/market/klines
+    - /api/market/ashare/stocks
+    - /api/news
+    - /api/strategies
+    - /api/portfolio
+    - /api/risk
+    - /api/trades
+    - /api/evolution
+    - /api/alpha-lab
+    - /api/positions
+  websocket:
+    - /ws/market
+    - /ws/trades
+    - /ws/portfolio

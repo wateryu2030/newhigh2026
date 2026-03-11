@@ -1,0 +1,67 @@
+tasks:
+  data_engine:
+    - create_connector_binance
+    - create_data_pipeline
+    - implement_clickhouse_storage
+    - add_realtime_stream
+
+  feature_engine:
+    - implement_rsi
+    - implement_macd
+    - implement_vwap
+    - implement_atr
+    - build_feature_pipeline
+
+  backtest_engine:
+    - integrate_vectorbt
+    - implement_backtest_runner
+    - compute_metrics
+
+  strategy_engine:
+    - implement_trend_following
+    - implement_mean_reversion
+    - implement_breakout
+
+  portfolio_engine:
+    - implement_equal_weight
+    - implement_risk_parity
+    - implement_kelly_allocation
+
+  risk_engine:
+    - implement_drawdown_control
+    - implement_exposure_limit
+    - implement_volatility_filter
+
+  execution_engine:
+    - implement_binance_orders
+    - implement_order_manager
+
+  ai_lab:
+    - build_strategy_generator
+    - build_optuna_optimizer
+    - build_rl_trader
+
+  evolution_engine:
+    - implement_strategy_pool
+    - implement_alpha_scoring
+    - implement_darwin_engine
+
+  ai_fund_manager:
+    - implement_strategy_selector
+    - implement_risk_controller
+    - implement_capital_allocator
+
+  scheduler:
+    - build_task_scheduler
+    - connect_pipeline
+
+  gateway:
+    - build_fastapi_gateway
+    - create_endpoints
+
+  frontend:
+    - dashboard
+    - strategy_center
+    - backtest_ui
+    - portfolio_ui
+    - ai_lab_ui

@@ -1,0 +1,48 @@
+# AI 策略进化系统
+# 每天: 生成策略 → 筛选 → 进化
+
+alpha_factory:
+
+  strategy_generation:
+    methods:
+      - indicator_combinations
+      - random_parameters
+      - llm_generation
+    module: alpha-factory
+    # LLM 生成使用百练专属 API（.env: BAILIAN_API_KEY 或 DASHSCOPE_API_KEY）
+    llm:
+      provider: bailian
+      env: BAILIAN_API_KEY
+
+  indicators:
+    - RSI
+    - MACD
+    - VWAP
+    - ATR
+    - Momentum
+
+  population_size: 1000
+
+  selection:
+    metric: alpha_score
+    top_percent: 10
+    module: alpha-scoring
+
+  evolution:
+    mutation_rate: 0.2
+    crossover_rate: 0.3
+    module: strategy-evolution
+
+  deployment:
+    live_strategies: 10
+    module: meta-fund-manager
+
+  # 与 OPENCLAW_MASTER_SYSTEM 的 strategy_loop 对应
+  scheduler:
+    evolution_pipeline: run_evolution_pipeline
+    steps:
+      - generate_strategies
+      - backtest_strategies
+      - score_alpha
+      - evolve_population
+      - deploy_top_strategies

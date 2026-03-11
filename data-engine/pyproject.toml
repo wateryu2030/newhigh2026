@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-engine"
+version = "0.1.0"
+description = "Market data ingestion for newhigh"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.28.0",
+    "clickhouse-driver>=0.2.0",
+    "websocket-client>=1.5.0",
+    "yfinance>=0.2.0",
+    "akshare>=1.12.0",
+    "duckdb>=0.9.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

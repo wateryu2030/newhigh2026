@@ -1,0 +1,38 @@
+# AI 基金经理系统
+# 选择策略 → 分配资金 → 关闭差策略 → 启动新策略
+
+meta_fund_manager:
+
+  strategy_selection:
+    method: alpha_score
+    top_strategies: 10
+    module: ai-fund-manager  # strategy_selector
+
+  capital_allocation:
+    methods:
+      - risk_parity
+      - volatility_target
+      - kelly
+    module: portfolio-engine + ai-fund-manager
+
+  monitoring:
+    metrics:
+      - sharpe
+      - drawdown
+      - return
+    module: risk-engine + portfolio-engine
+
+  shutdown_rules:
+    drawdown_limit: 0.15
+    module: risk-engine
+
+  redeployment:
+    replace_bad_strategies: true
+    module: meta-fund-manager
+
+  # 与 OPENCLAW_MASTER_SYSTEM 的 trading_loop 对应
+  trading_loop_steps:
+    - select_strategies
+    - allocate_capital
+    - execute_trades
+    - update_performance

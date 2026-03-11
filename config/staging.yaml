@@ -1,0 +1,15 @@
+# 预发环境配置（APP_ENV=staging 时加载）
+
+app_env: staging
+api_host: "0.0.0.0"
+api_port: 8000
+api_reload: false
+
+celery_broker_url: "redis://127.0.0.1:6379/0"
+celery_result_backend: "redis://127.0.0.1:6379/0"
+
+execution_simulated: true
+execution_real_enabled: false
+
+log_level: INFO
+log_json: true

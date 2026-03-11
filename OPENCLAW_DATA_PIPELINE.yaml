@@ -1,0 +1,66 @@
+# 数据自动生成系统 — 解决前端没有数据的问题
+# 数据流: 行情 → 指标 → 数据库 → API → Frontend
+# 持续训练与实体化交易: 数据抓取 → 特征计算落库(features_daily) → 策略/回测 → 回测落库(backtest_runs) → 评分 → 进化
+
+data_pipeline:
+
+  sources:
+    market:
+      - binance
+      - yahoo_finance
+      - akshare   # A 股 + 北交所 日线/分钟线（东方财富等网络拉取）
+      - local_duckdb   # newhigh/data/quant.duckdb，由 copy 脚本复制 + ensure_ashare_data_completeness 自动补全
+
+  storage:
+    market_data:
+      table: market_ohlcv
+      backend: clickhouse  # infra/docker
+    portfolio_metrics:
+      table: portfolio_metrics
+      backend: postgres
+    strategy_metrics:
+      table: strategy_metrics
+      backend: postgres
+
+  update_frequency:
+    market_data: 1m
+    strategy_metrics: 10m
+    portfolio_metrics: 1m
+
+  tasks:
+    collect_market_data:
+      module: data-engine
+      entry: fetch_klines / ingest
+    collect_ashare_data:
+      module: data-engine
+      entry: run_pipeline_ashare
+    ensure_data_completeness:
+      module: scripts
+      entry: ensure_ashare_data_completeness.py   # 缺数据时从 akshare/北交所 自动拉取写入 DuckDB，保证分析数据完整
+    compute_features:
+      module: feature-engine
+      entry: build_feature_matrix
+    compute_features_to_duckdb:
+      module: scripts
+      entry: compute_features_to_duckdb.py   # daily_bars → features_daily，进化循环中在数据补全后执行
+    init_duckdb_extensions:
+      module: scripts
+      entry: init_newhigh_duckdb_extensions.py   # 创建 features_daily、backtest_runs 表（复制 DuckDB 后执行一次）
+    update_dashboard_metrics:
+      module: portfolio-engine
+      entry: aggregate_metrics
+
+  # 与 OPENCLAW_MASTER_SYSTEM 的 data_loop 对应；进化循环中在 ensure_data_completeness 后执行 compute_features_to_duckdb
+  loop_steps:
+    - collect_market_data
+    - update_features
+    - compute_features_to_duckdb
+    - store_database
+
+  # Gateway 从这些数据提供 API
+  api_exposure:
+    dashboard: portfolio_metrics + strategy_metrics
+    market: market_ohlcv
+    strategies: strategy_metrics
+    portfolio: portfolio_metrics
+    risk: portfolio_metrics + risk_engine status

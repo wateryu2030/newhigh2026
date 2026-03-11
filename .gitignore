@@ -1,0 +1,36 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node (frontend)
+node_modules/
+frontend/dist/
+
+# Env files (secrets)
+.env
+.env.local
+*.pem
+
+# Local data (A-share DuckDB 由 scripts/copy_astock_duckdb_to_newhigh.py 复制而来)
+data/
+
+# OpenClaw 单轮执行状态（可选保留以追踪上次运行）
+scripts/.openclaw_state.json
+
+# 定时任务 / 全量周期日志
+logs/

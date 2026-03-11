@@ -1,0 +1,11 @@
+[project]
+name = "newhigh"
+version = "0.1.0"
+description = "AI Hedge Fund OS"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["core/tests", "data-engine/tests", "evolution-engine/tests"]
+pythonpath = ["."]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

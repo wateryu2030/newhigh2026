@@ -1,0 +1,16 @@
+# 开发环境配置（APP_ENV=dev 时加载）
+# 与环境变量合并，环境变量优先
+
+app_env: dev
+api_host: "0.0.0.0"
+api_port: 8000
+api_reload: true
+
+celery_broker_url: "redis://127.0.0.1:6379/0"
+celery_result_backend: "redis://127.0.0.1:6379/0"
+
+execution_simulated: true
+execution_real_enabled: false
+
+log_level: INFO
+log_json: false

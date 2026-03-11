@@ -1,0 +1,52 @@
+{
+  "title": "newhigh Gateway",
+  "tags": ["newhigh"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pipeline stage latency (p99)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(pipeline_stage_latency_seconds_bucket{job=\"gateway\"}[5m])) by (le, stage))",
+          "legendFormat": "{{stage}} p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Pipeline stage latency (data / scan / ai / trade)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(pipeline_stage_latency_seconds_sum{job=\"gateway\"}[5m])) by (stage) / sum(rate(pipeline_stage_latency_seconds_count{job=\"gateway\"}[5m])) by (stage)",
+          "legendFormat": "{{stage}} avg"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "Gateway requests by stage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum(rate(gateway_requests_total{job=\"gateway\"}[5m])) by (stage)",
+          "legendFormat": "{{stage}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "title": "Up",
+      "type": "stat",
+      "targets": [{ "expr": "up{job=\"gateway\"}" }],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 }
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 2
+}
