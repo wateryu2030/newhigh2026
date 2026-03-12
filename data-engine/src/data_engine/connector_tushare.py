@@ -35,15 +35,33 @@ def _to_utc(dt: datetime) -> datetime:
     return dt
 
 
+def get_tushare_config():
+    """获取Tushare配置"""
+    config = {
+        'token': os.getenv('TUSHARE_TOKEN', '').strip(),
+        'request_interval': float(os.getenv('TUSHARE_REQUEST_INTERVAL', '1')),
+        'max_retries': int(os.getenv('TUSHARE_MAX_RETRIES', '3')),
+        'cache_dir': os.getenv('TUSHARE_CACHE_DIR', '/tmp/tushare_cache'),
+        'enable_cache': os.getenv('TUSHARE_ENABLE_CACHE', 'true').lower() == 'true',
+        'cache_ttl': int(os.getenv('TUSHARE_CACHE_TTL', '24')),
+        'output_format': os.getenv('TUSHARE_OUTPUT_FORMAT', 'csv'),
+        'default_adjust': os.getenv('TUSHARE_DEFAULT_ADJUST', 'qfq')
+    }
+    return config
+
+
 def _init_tushare() -> bool:
     """初始化Tushare，设置token"""
     if ts is None:
         return False
     
-    # 从环境变量获取token
-    token = os.getenv('TUSHARE_TOKEN')
+    config = get_tushare_config()
+    token = config['token']
+    
     if not token:
         print("警告: 未设置TUSHARE_TOKEN环境变量，Tushare连接器将无法使用")
+        print("请设置环境变量: export TUSHARE_TOKEN='你的token'")
+        print("或在.env文件中配置")
         return False
     
     try:
@@ -54,6 +72,171 @@ def _init_tushare() -> bool:
         return False
 
 
+import time
+import hashlib
+import pickle
+from pathlib import Path
+from functools import wraps
+from typing import Callable, Any
+
+
+def retry_on_failure(max_retries: int = None, delay: float = None):
+    """重试装饰器"""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            config = get_tushare_config()
+            retries = max_retries or config['max_retries']
+            retry_delay = delay or config['request_interval']
+            
+            for attempt in range(retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == retries - 1:
+                        raise
+                    print(f"尝试 {attempt + 1}/{retries} 失败: {e}, {retry_delay}秒后重试...")
+                    time.sleep(retry_delay)
+            return None
+        return wrapper
+    return decorator
+
+
+def get_cache_key(func_name: str, *args, **kwargs) -> str:
+    """生成缓存键"""
+    key_data = f"{func_name}:{args}:{sorted(kwargs.items())}"
+    return hashlib.md5(key_data.encode()).hexdigest()
+
+
+def get_cache_path(cache_key: str) -> Path:
+    """获取缓存文件路径"""
+    config = get_tushare_config()
+    cache_dir = Path(config['cache_dir'])
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / f"{cache_key}.pkl"
+
+
+def is_cache_valid(cache_path: Path) -> bool:
+    """检查缓存是否有效"""
+    config = get_tushare_config()
+    if not config['enable_cache']:
+        return False
+    
+    if not cache_path.exists():
+        return False
+    
+    # 检查缓存是否过期
+    cache_age = time.time() - cache_path.stat().st_mtime
+    max_age = config['cache_ttl'] * 3600  # 转换为秒
+    
+    return cache_age < max_age
+
+
+def load_from_cache(cache_path: Path) -> Any:
+    """从缓存加载数据"""
+    try:
+        with open(cache_path, 'rb') as f:
+            return pickle.load(f)
+    except Exception as e:
+        print(f"加载缓存失败: {e}")
+        return None
+
+
+def save_to_cache(cache_path: Path, data: Any) -> bool:
+    """保存数据到缓存"""
+    try:
+        with open(cache_path, 'wb') as f:
+            pickle.dump(data, f)
+        return True
+    except Exception as e:
+        print(f"保存缓存失败: {e}")
+        return False
+
+
+def validate_ohlcv_data(data: List[OHLCV]) -> tuple[bool, str]:
+    """验证OHLCV数据质量"""
+    if not data:
+        return False, "数据为空"
+    
+    # 检查数据完整性
+    for i, ohlcv in enumerate(data):
+        # 检查价格数据
+        if ohlcv.open <= 0 or ohlcv.high <= 0 or ohlcv.low <= 0 or ohlcv.close <= 0:
+            return False, f"第{i}条数据价格异常: open={ohlcv.open}, high={ohlcv.high}, low={ohlcv.low}, close={ohlcv.close}"
+        
+        # 检查价格关系
+        if ohlcv.high < ohlcv.low:
+            return False, f"第{i}条数据: 最高价({ohlcv.high}) < 最低价({ohlcv.low})"
+        
+        if ohlcv.high < ohlcv.open or ohlcv.high < ohlcv.close:
+            return False, f"第{i}条数据: 最高价({ohlcv.high})不是最高值"
+        
+        if ohlcv.low > ohlcv.open or ohlcv.low > ohlcv.close:
+            return False, f"第{i}条数据: 最低价({ohlcv.low})不是最低值"
+        
+        # 检查成交量
+        if ohlcv.volume < 0:
+            return False, f"第{i}条数据: 成交量({ohlcv.volume})为负数"
+    
+    # 检查时间顺序（应该是倒序，最新在前）
+    for i in range(len(data) - 1):
+        if data[i].timestamp < data[i + 1].timestamp:
+            return False, f"时间顺序异常: 第{i}条时间({data[i].timestamp}) < 第{i+1}条时间({data[i+1].timestamp})"
+    
+    return True, "数据质量正常"
+
+
+def log_data_stats(data: List[OHLCV], symbol: str):
+    """记录数据统计信息"""
+    if not data:
+        print(f"{symbol}: 无数据")
+        return
+    
+    print(f"{symbol}: 获取到 {len(data)} 条数据")
+    print(f"  时间范围: {data[-1].timestamp.date()} 到 {data[0].timestamp.date()}")
+    print(f"  最新收盘价: {data[0].close:.2f}")
+    print(f"  平均成交量: {sum(d.volume for d in data) / len(data):,.0f}")
+    
+    # 检查数据质量
+    is_valid, message = validate_ohlcv_data(data)
+    if is_valid:
+        print(f"  ✓ 数据质量: {message}")
+    else:
+        print(f"  ⚠ 数据质量问题: {message}")
+
+
+def cached(func: Callable) -> Callable:
+    """缓存装饰器"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        config = get_tushare_config()
+        if not config['enable_cache']:
+            return func(*args, **kwargs)
+        
+        # 生成缓存键
+        cache_key = get_cache_key(func.__name__, *args, **kwargs)
+        cache_path = get_cache_path(cache_key)
+        
+        # 检查缓存
+        if is_cache_valid(cache_path):
+            cached_data = load_from_cache(cache_path)
+            if cached_data is not None:
+                print(f"使用缓存数据: {cache_path.name}")
+                return cached_data
+        
+        # 获取新数据
+        data = func(*args, **kwargs)
+        
+        # 保存缓存
+        if data is not None:
+            save_to_cache(cache_path, data)
+        
+        return data
+    return wrapper
+
+
+@retry_on_failure()
+@cached
 def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str = ""):
     """拉取日/周/月 K 线 DataFrame，使用Tushare接口"""
     if ts is None or pd is None:
@@ -194,6 +377,9 @@ def fetch_ohlcv(
             code=row.get("code", _normalize_symbol(code)),
         )
         ohlcv_list.append(ohlcv)
+    
+    # 记录统计信息和验证数据质量
+    log_data_stats(ohlcv_list, code)
     
     return ohlcv_list
 

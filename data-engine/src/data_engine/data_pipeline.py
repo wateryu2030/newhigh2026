@@ -1,9 +1,10 @@
-"""Data pipeline: fetch from Binance / Yahoo / akshare -> normalize -> store in ClickHouse."""
+"""Data pipeline: fetch from Binance / Yahoo / akshare / Tushare -> normalize -> store in ClickHouse."""
 from datetime import datetime, timedelta, timezone
 from typing import List
 
 from .connector_binance import fetch_klines
 from .connector_akshare import fetch_klines_akshare
+from .connector_tushare import fetch_ohlcv
 from .clickhouse_storage import get_client, ensure_tables, insert_ohlcv
 
 
@@ -83,4 +84,52 @@ def run_pipeline_ashare(
         if rows:
             insert_ohlcv(client, rows, interval)
             total += len(rows)
+    return total
+
+
+def run_pipeline_tushare(
+    symbols: List[str],
+    start_date: str | None = None,
+    end_date: str | None = None,
+    period: str = "daily",
+    adjust: str = "",
+    clickhouse_host: str = "localhost",
+    clickhouse_port: int = 9000,
+) -> int:
+    """
+    拉取 A 股数据（Tushare）并写入 ClickHouse。
+    symbols: 6 位代码列表，如 ["000001", "600519"]
+    start_date/end_date: "20240101"，默认最近 30 天
+    period: "daily" | "weekly" | "monthly"
+    adjust: 复权类型，"qfq"（前复权）、"hfq"（后复权）、""（不复权）
+    """
+    if not end_date:
+        end_d = datetime.now(timezone.utc)
+        end_date = end_d.strftime("%Y%m%d")
+    if not start_date:
+        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y%m%d")
+    
+    interval = "1d" if period == "daily" else "1w" if period == "weekly" else "1M"
+    client = get_client(host=clickhouse_host, port=clickhouse_port)
+    ensure_tables(client)
+    total = 0
+    
+    for symbol in symbols:
+        try:
+            rows = fetch_ohlcv(
+                code=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period=period,
+                adjust=adjust,
+            )
+            if rows:
+                insert_ohlcv(client, rows, interval)
+                total += len(rows)
+                print(f"✓ 成功获取 {symbol} 数据: {len(rows)} 条")
+            else:
+                print(f"⚠ 未获取到 {symbol} 数据")
+        except Exception as e:
+            print(f"✗ 获取 {symbol} 数据失败: {e}")
+    
     return total
