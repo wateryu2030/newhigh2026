@@ -11,8 +11,9 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 
 # 添加项目路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data-engine/src'))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'data-engine/src'))
 
 class TestTushareIntegration(unittest.TestCase):
     """Tushare集成测试类"""
@@ -31,7 +32,17 @@ class TestTushareIntegration(unittest.TestCase):
     def test_import_tushare_connector(self):
         """测试导入Tushare连接器"""
         try:
-            from data_engine.src.data_engine import connector_tushare
+            # 尝试不同的导入路径
+            try:
+                from data_engine.src.data_engine import connector_tushare
+            except ImportError:
+                # 尝试直接导入
+                import importlib.util
+                connector_path = os.path.join(project_root, 'data-engine/src/data_engine/connector_tushare.py')
+                spec = importlib.util.spec_from_file_location("connector_tushare", connector_path)
+                connector_tushare = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(connector_tushare)
+            
             self.assertIsNotNone(connector_tushare)
             print("✓ Tushare连接器导入成功")
         except ImportError as e:

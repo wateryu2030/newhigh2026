@@ -28,14 +28,21 @@ class JsonFormatter(logging.Formatter):
             log_obj["exception"] = self.formatException(record.exc_info)
         return json.dumps(log_obj, ensure_ascii=False)
 
-def configure_logging(level: str | None = None, json_output: bool | None = None, logger_name: str | None = None) -> None:
+
+def configure_logging(
+        level: str | None = None,
+        json_output: bool | None = None,
+        logger_name: str | None = None) -> None:
     lvl = (level or os.environ.get("LOG_LEVEL", "INFO")).upper()
-    use_json = json_output if json_output is not None else os.environ.get("LOG_JSON", "").lower() in ("1", "true", "yes")
-    logger = logging.getLogger(logger_name) if logger_name else logging.getLogger()
+    use_json = json_output if json_output is not None else os.environ.get(
+        "LOG_JSON", "").lower() in ("1", "true", "yes")
+    logger = logging.getLogger(
+        logger_name) if logger_name else logging.getLogger()
     logger.setLevel(getattr(logging, lvl, logging.INFO))
     if logger.handlers:
         for h in logger.handlers[:]:
             logger.removeHandler(h)
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter() if use_json else logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s"))
+    handler.setFormatter(JsonFormatter() if use_json else logging.Formatter(
+        "%(asctime)s %(levelname)s [%(name)s] %(message)s"))
     logger.addHandler(handler)

@@ -2,7 +2,13 @@
 from __future__ import annotations
 import os
 
-def run_daily(update_all_kline: bool = False, kline_codes_limit: int = 0, collect_news: bool = True) -> None:
+def run_daily(
+    update_all_kline: bool = False, 
+    kline_codes_limit: int = 0, 
+    collect_news: bool = True,
+    use_tushare: bool = False,
+    tushare_days_back: int = 30
+) -> None:
     from ..collectors.stock_list import update_stock_list
     from ..collectors.fund_flow import update_fundflow
     from ..collectors.longhubang import update_longhubang
@@ -13,6 +19,18 @@ def run_daily(update_all_kline: bool = False, kline_codes_limit: int = 0, collec
     print(f"资金流更新: {n2} 条")
     n3 = update_longhubang()
     print(f"龙虎榜更新: {n3} 条")
+    
+    # Tushare 日 K 线数据更新（可选）
+    if use_tushare:
+        try:
+            from ..collectors.tushare_daily import update_all_tushare_daily
+            n_tushare = update_all_tushare_daily(days_back=tushare_days_back)
+            print(f"Tushare 日 K 线更新: {n_tushare} 条")
+        except ImportError as e:
+            print(f"Tushare 收集器未找到: {e}")
+            print("请确保已安装 tushare: pip install tushare")
+        except Exception as e:
+            print(f"Tushare 数据更新失败: {e}")
     
     # 新闻采集（可选）
     if collect_news:
@@ -28,6 +46,7 @@ def run_daily(update_all_kline: bool = False, kline_codes_limit: int = 0, collec
         except Exception as e:
             print(f"财新新闻采集失败: {e}")
     
+    # 使用 akshare 更新日 K 线（备用）
     if update_all_kline and kline_codes_limit > 0:
         from ..collectors.daily_kline import update_daily_kline
         from ..storage.duckdb_manager import get_conn

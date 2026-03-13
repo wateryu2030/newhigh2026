@@ -32,7 +32,12 @@ def _to_utc(dt: datetime) -> datetime:
     return dt
 
 
-def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str):
+def _fetch_hist_df(
+        code: str,
+        start_date: str,
+        end_date: str,
+        period: str,
+        adjust: str):
     """拉取日/周/月 K 线 DataFrame，优先东方财富接口（支持沪深京/北交所）。"""
     # 优先东方财富（沪深京含北交所）
     if getattr(ak, "stock_zh_a_hist_em", None) is not None:
@@ -78,7 +83,8 @@ def fetch_klines_akshare(
         raise ImportError("akshare is required: pip install akshare")
     code = str(symbol).strip().split(".")[0]
     if not code or len(code) < 5 or len(code) > 8:
-        raise ValueError("A-share/BSE symbol: 6 or 8 digits, e.g. 000001, 830799")
+        raise ValueError(
+            "A-share/BSE symbol: 6 or 8 digits, e.g. 000001, 830799")
     df = _fetch_hist_df(code, start_date, end_date, period, adjust)
     if df is None or df.empty:
         return []
@@ -139,7 +145,8 @@ def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
                     continue
                 sym = _normalize_symbol(code)
                 market = "sh" if sym.endswith(".SH") else "sz"
-                out.append({"symbol": sym, "name": name or code, "market": market})
+                out.append(
+                    {"symbol": sym, "name": name or code, "market": market})
     except Exception:
         pass
     if include_bse:
@@ -152,12 +159,23 @@ def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
                     code_col = "code" if "code" in df_bj.columns else "证券代码"
                     name_col = "name" if "name" in df_bj.columns else "证券简称"
                     for _, row in df_bj.iterrows():
-                        code = str(row.get(code_col, row.get("证券代码", ""))).strip()
-                        name = str(row.get(name_col, row.get("证券简称", ""))).strip()
+                        code = str(
+                            row.get(
+                                code_col,
+                                row.get(
+                                    "证券代码",
+                                    ""))).strip()
+                        name = str(
+                            row.get(
+                                name_col,
+                                row.get(
+                                    "证券简称",
+                                    ""))).strip()
                         if not code:
                             continue
                         sym = _normalize_symbol(code)
-                        out.append({"symbol": sym, "name": name or code, "market": "bse"})
+                        out.append(
+                            {"symbol": sym, "name": name or code, "market": "bse"})
         except Exception:
             pass
     return out

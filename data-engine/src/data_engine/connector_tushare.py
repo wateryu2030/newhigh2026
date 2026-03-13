@@ -162,7 +162,11 @@ def validate_ohlcv_data(data: List[OHLCV]) -> tuple[bool, str]:
     for i, ohlcv in enumerate(data):
         # 检查价格数据
         if ohlcv.open <= 0 or ohlcv.high <= 0 or ohlcv.low <= 0 or ohlcv.close <= 0:
-            return False, f"第{i}条数据价格异常: open={ohlcv.open}, high={ohlcv.high}, low={ohlcv.low}, close={ohlcv.close}"
+            return False, f"第{i}条数据价格异常: open={
+                ohlcv.open}, high={
+                ohlcv.high}, low={
+                ohlcv.low}, close={
+                ohlcv.close}"
 
         # 检查价格关系
         if ohlcv.high < ohlcv.low:
@@ -181,7 +185,9 @@ def validate_ohlcv_data(data: List[OHLCV]) -> tuple[bool, str]:
     # 检查时间顺序（应该是倒序，最新在前）
     for i in range(len(data) - 1):
         if data[i].timestamp < data[i + 1].timestamp:
-            return False, f"时间顺序异常: 第{i}条时间({data[i].timestamp}) < 第{i + 1}条时间({data[i + 1].timestamp})"
+            return False, f"时间顺序异常: 第{i}条时间({data[i].timestamp}) < 第{i +
+                                                                     1}条时间({data[i +
+                                                                                 1].timestamp})"
 
     return True, "数据质量正常"
 
@@ -447,8 +453,11 @@ def fetch_realtime_quotes(codes: List[str]) -> pd.DataFrame:
         raise
 
 
-def fetch_financial_data(code: str, report_type: str = "income",
-                         start_date: str = "", end_date: str = "") -> pd.DataFrame:
+def fetch_financial_data(
+        code: str,
+        report_type: str = "income",
+        start_date: str = "",
+        end_date: str = "") -> pd.DataFrame:
     """
     获取财务数据
 
