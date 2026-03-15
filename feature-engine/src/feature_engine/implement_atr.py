@@ -1,4 +1,5 @@
 """ATR (Average True Range)."""
+
 from typing import List, Union
 
 import numpy as np

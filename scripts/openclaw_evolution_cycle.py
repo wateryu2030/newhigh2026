@@ -16,8 +16,9 @@ OpenClaw 自我进化单轮执行 — 按 OPENCLAW_MASTER_SYSTEM / OPENCLAW_AUTO
   python scripts/openclaw_evolution_cycle.py --no-ensure-data   # 跳过数据补全（quant + market）
   python scripts/openclaw_evolution_cycle.py --no-features     # 跳过特征计算落库
   python scripts/openclaw_evolution_cycle.py --data-loop
-  每轮会执行：ensure_ashare_data_completeness（quant.duckdb）、ensure_market_data（market.duckdb 仅池+涨停/龙虎榜/资金流）、data_health_check（表条数写入 .openclaw_state.json）
+  每轮会执行：ensure_ashare_data_completeness（quant_system.duckdb）、ensure_market_data（quant_system.duckdb 仅池+涨停/龙虎榜/资金流）、data_health_check（表条数写入 .openclaw_state.json）
 """
+
 from __future__ import annotations
 
 import argparse
@@ -57,7 +58,7 @@ def read_project_plan() -> dict:
 
 
 def ensure_data_completeness() -> dict:
-    """缺数据时从 akshare/北交所 等拉取并写入 DuckDB（quant.duckdb），保证分析数据完整。"""
+    """缺数据时从 akshare/北交所 等拉取并写入 DuckDB（quant_system.duckdb），保证分析数据完整。"""
     script = os.path.join(ROOT, "scripts", "ensure_ashare_data_completeness.py")
     if not os.path.isfile(script):
         _log("ensure_ashare_data_completeness.py not found; skip data fill")
@@ -78,12 +79,12 @@ def ensure_data_completeness() -> dict:
 
 
 def ensure_market_data() -> dict:
-    """填充 market.duckdb（股票池、涨停/龙虎榜/资金流），支撑情绪/狙击/AI 交易页。快速模式避免长时间阻塞。"""
+    """填充 quant_system.duckdb（股票池、涨停/龙虎榜/资金流），支撑情绪/狙击/AI 交易页。快速模式避免长时间阻塞。"""
     script = os.path.join(ROOT, "scripts", "ensure_market_data.py")
     if not os.path.isfile(script):
         _log("ensure_market_data.py not found; skip market data fill")
         return {"ok": False, "returncode": -1}
-    _log("Ensuring market.duckdb (stock list + limitup/longhubang/fundflow)...")
+    _log("Ensuring quant_system.duckdb (stock list + limitup/longhubang/fundflow)...")
     r = subprocess.run(
         [sys.executable, script, "--skip-kline"],
         cwd=ROOT,
@@ -103,11 +104,19 @@ def data_health_check() -> dict:
     health = {}
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
         if not os.path.isfile(get_db_path()):
             health["market_db"] = "missing"
             return health
         conn = get_conn(read_only=True)
-        for table in ["a_stock_basic", "a_stock_daily", "a_stock_limitup", "market_emotion", "sniper_candidates", "trade_signals"]:
+        for table in [
+            "a_stock_basic",
+            "a_stock_daily",
+            "a_stock_limitup",
+            "market_emotion",
+            "sniper_candidates",
+            "trade_signals",
+        ]:
             try:
                 row = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
                 health[table] = int(row[0]) if row and row[0] is not None else 0
@@ -133,6 +142,10 @@ def run_tests() -> bool:
 def run_strategy_loop() -> list[str]:
     """连接 pipeline 并执行 strategy_loop（run_evolution_pipeline）。"""
     _log("Strategy loop: connect_pipeline -> run_evolution_pipeline")
+    # 优先注入 scheduler/src 路径
+    scheduler_src = os.path.join(ROOT, "scheduler", "src")
+    if os.path.isdir(scheduler_src) and scheduler_src not in sys.path:
+        sys.path.insert(0, scheduler_src)
     sys.path.insert(0, ROOT)
     try:
         from scheduler import connect_pipeline
@@ -216,9 +229,17 @@ def write_state(
 def main() -> int:
     parser = argparse.ArgumentParser(description="OpenClaw self-evolution cycle")
     parser.add_argument("--skip-tests", action="store_true", help="Skip test run (not recommended)")
-    parser.add_argument("--no-ensure-data", action="store_true", help="Skip A-share/BSE data completeness step")
-    parser.add_argument("--no-features", action="store_true", help="Skip feature compute (daily_bars -> features_daily)")
-    parser.add_argument("--data-loop", action="store_true", help="Run data_loop after strategy_loop")
+    parser.add_argument(
+        "--no-ensure-data", action="store_true", help="Skip A-share/BSE data completeness step"
+    )
+    parser.add_argument(
+        "--no-features",
+        action="store_true",
+        help="Skip feature compute (daily_bars -> features_daily)",
+    )
+    parser.add_argument(
+        "--data-loop", action="store_true", help="Run data_loop after strategy_loop"
+    )
     args = parser.parse_args()
 
     os.chdir(ROOT)
@@ -250,7 +271,15 @@ def main() -> int:
     if args.data_loop and data_ran is not None:
         _log("Data loop completed: " + ", ".join(data_ran))
 
-    write_state(plan, not args.skip_tests, strategy_ran, data_ran, data_completeness, market_data, data_health)
+    write_state(
+        plan,
+        not args.skip_tests,
+        strategy_ran,
+        data_ran,
+        data_completeness,
+        market_data,
+        data_health,
+    )
     _log("OpenClaw evolution cycle finished.")
     return 0
 

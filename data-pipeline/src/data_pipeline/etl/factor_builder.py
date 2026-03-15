@@ -1,5 +1,7 @@
 """因子构建：基于 a_stock_daily 计算简单因子，可扩展对接 feature-engine。"""
+
 from __future__ import annotations
+
 
 def build_factors(code: str | None = None, lookback: int = 60) -> int:
     """

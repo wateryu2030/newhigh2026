@@ -1,4 +1,5 @@
 """Strategy 数据（当前为 stub，后续接回测/策略引擎）。"""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List

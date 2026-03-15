@@ -1,10 +1,13 @@
 """Volatility filter: disable or scale when volatility too high."""
+
 from typing import List, Union
 
 import numpy as np
 
 
-def volatility_annualized(returns: Union[List[float], np.ndarray], periods_per_year: int = 252) -> float:
+def volatility_annualized(
+    returns: Union[List[float], np.ndarray], periods_per_year: int = 252
+) -> float:
     """Annualized volatility of returns."""
     r = np.asarray(returns, dtype=float)
     r = r[~np.isnan(r)]

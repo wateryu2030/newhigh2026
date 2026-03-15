@@ -2,6 +2,7 @@
 Prometheus 指标：data_pipeline_latency、scan_latency、ai_latency、trade_latency 等。
 供 /metrics 暴露，Grafana 可据此绘图。
 """
+
 from __future__ import annotations
 
 _latency = None
@@ -14,6 +15,7 @@ def _get_latency_histogram():
         return _latency
     try:
         from prometheus_client import Histogram
+
         _latency = Histogram(
             "pipeline_stage_latency_seconds",
             "Request latency by pipeline stage (data/scan/ai/trade)",
@@ -31,6 +33,7 @@ def _get_request_count():
         return _request_count
     try:
         from prometheus_client import Counter
+
         _request_count = Counter(
             "gateway_requests_total",
             "Total API requests by stage",

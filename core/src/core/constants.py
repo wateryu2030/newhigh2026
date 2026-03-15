@@ -1,4 +1,5 @@
 """Shared constants."""
+
 # Table names for market data (ClickHouse)
 TABLE_1M = "market_1m"
 TABLE_5M = "market_5m"

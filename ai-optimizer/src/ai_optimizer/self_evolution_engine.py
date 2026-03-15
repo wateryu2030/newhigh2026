@@ -2,6 +2,7 @@
 AI 自进化引擎：根据策略收益 vs 市场收益自动调权重/淘汰策略。
 逻辑：strategy_return < market_return → reduce_weight；否则 increase_weight。
 """
+
 from __future__ import annotations
 
 from typing import Dict, Optional
@@ -28,6 +29,7 @@ class SelfEvolutionEngine:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
             import os
+
             if not os.path.isfile(get_db_path()):
                 return None
             conn = get_conn(read_only=True)
@@ -41,7 +43,9 @@ class SelfEvolutionEngine:
         """市场收益（占位：指数或全市场涨跌幅）。"""
         return None
 
-    def step(self, strategy_return: Optional[float] = None, market_return: Optional[float] = None) -> Dict[str, float]:
+    def step(
+        self, strategy_return: Optional[float] = None, market_return: Optional[float] = None
+    ) -> Dict[str, float]:
         """
         根据收益比较调整权重。
         strategy_return < market_return → 降低当前策略权重（这里简化为略降 trend）；

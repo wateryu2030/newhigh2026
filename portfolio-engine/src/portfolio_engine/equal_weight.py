@@ -1,4 +1,5 @@
 """Equal weight allocation: 1/n per asset."""
+
 from typing import List
 
 

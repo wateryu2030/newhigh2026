@@ -1,4 +1,5 @@
 """Tests for akshare A-share connector (mock to avoid network)."""
+
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
@@ -21,14 +22,17 @@ def test_normalize_symbol():
 @patch("data_engine.connector_akshare.ak")
 def test_fetch_klines_akshare_mock(mock_ak):
     import pandas as pd
-    df = pd.DataFrame({
-        "日期": ["2024-01-02", "2024-01-03"],
-        "开盘": [100.0, 101.0],
-        "收盘": [101.0, 102.0],
-        "最高": [102.0, 103.0],
-        "最低": [99.0, 100.0],
-        "成交量": [1e6, 1.2e6],
-    })
+
+    df = pd.DataFrame(
+        {
+            "日期": ["2024-01-02", "2024-01-03"],
+            "开盘": [100.0, 101.0],
+            "收盘": [101.0, 102.0],
+            "最高": [102.0, 103.0],
+            "最低": [99.0, 100.0],
+            "成交量": [1e6, 1.2e6],
+        }
+    )
     mock_ak.stock_zh_a_hist_em.side_effect = Exception("mock skip em")
     mock_ak.stock_zh_a_hist.return_value = df
     rows = fetch_klines_akshare("600519", "20240101", "20240110", period="daily")

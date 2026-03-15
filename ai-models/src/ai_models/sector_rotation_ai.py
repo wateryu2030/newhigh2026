@@ -2,6 +2,7 @@
 主线题材识别AI系统：板块资金/成交额排名 → 主线题材。
 决定买什么。
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -15,6 +16,7 @@ class SectorRotationAI:
         if self._connection is not None:
             return self._connection
         from ._storage import _get_conn
+
         return _get_conn()
 
     def sector_strength(self) -> pd.DataFrame:
@@ -22,6 +24,7 @@ class SectorRotationAI:
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -60,7 +63,11 @@ class SectorRotationAI:
         if df is None or df.empty:
             return 0
         from ._storage import write_sector_strength
-        rows = [(r["sector"], float(r.get("total_volume", 0)), int(r.get("rank", 0))) for _, r in df.iterrows()]
+
+        rows = [
+            (r["sector"], float(r.get("total_volume", 0)), int(r.get("rank", 0)))
+            for _, r in df.iterrows()
+        ]
         write_sector_strength(rows)
         return len(rows)
 
@@ -73,6 +80,7 @@ class SectorRotationAI:
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -96,5 +104,6 @@ def run_sector_rotation_ai() -> int:
         ai.save_main_themes(main)
         return len(main)
     from ._storage import write_sector_strength
+
     write_sector_strength([("全市场", 50.0, 1)])
     return 1

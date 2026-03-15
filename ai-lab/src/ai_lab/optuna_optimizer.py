@@ -1,4 +1,5 @@
 """Optuna hyperparameter optimizer for strategies."""
+
 from typing import Any, Callable, Dict, Optional
 
 import optuna

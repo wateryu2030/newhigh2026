@@ -7,13 +7,14 @@
 - features_daily：日线特征（RSI/MACD/ATR 等），供策略与回测使用
 - backtest_runs：回测结果落库，供 Alpha 评分与实盘前验证
 """
+
 from __future__ import annotations
 
 import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_NEWHIGH_DUCKDB_PATH = os.path.join(ROOT, "data", "quant.duckdb")
+DEFAULT_NEWHIGH_DUCKDB_PATH = os.path.join(ROOT, "data", "quant_system.duckdb")
 
 
 def _duckdb_path() -> str:
@@ -23,7 +24,10 @@ def _duckdb_path() -> str:
 def main() -> int:
     path = _duckdb_path()
     if not path or not os.path.isfile(path):
-        print(f"DuckDB not found: {path}. Run copy_astock_duckdb_to_newhigh.py first.", file=sys.stderr)
+        print(
+            f"DuckDB not found: {path}. Run copy_astock_duckdb_to_newhigh.py first.",
+            file=sys.stderr,
+        )
         return 1
     try:
         import duckdb

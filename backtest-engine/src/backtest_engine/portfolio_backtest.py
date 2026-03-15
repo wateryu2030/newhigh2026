@@ -1,6 +1,7 @@
 """
 多策略组合回测：按策略分配权重，各策略独立回测后按权重合并资金曲线与指标。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -53,6 +54,7 @@ def run_portfolio_backtest(
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
+
             conn = get_conn(read_only=False)
         except Exception:
             result["error"] = "no_db"
@@ -64,12 +66,14 @@ def run_portfolio_backtest(
         for sid, weight in allocated:
             symbols = get_symbols_for_strategy(sid, conn=conn)
             if not symbols:
-                result["per_strategy"].append({
-                    "strategy_id": sid,
-                    "weight": weight,
-                    "equity_curve": [],
-                    "error": "no_signals",
-                })
+                result["per_strategy"].append(
+                    {
+                        "strategy_id": sid,
+                        "weight": weight,
+                        "equity_curve": [],
+                        "error": "no_signals",
+                    }
+                )
                 continue
             r = run_backtest_multi_from_db(
                 symbols=symbols,
@@ -82,17 +86,19 @@ def run_portfolio_backtest(
                 slippage=slippage,
                 conn=conn,
             )
-            result["per_strategy"].append({
-                "strategy_id": sid,
-                "weight": weight,
-                "equity_curve": r.get("equity_curve") or [],
-                "sharpe_ratio": r.get("sharpe_ratio"),
-                "max_drawdown": r.get("max_drawdown"),
-                "total_return": r.get("total_return"),
-                "total_profit": r.get("total_profit"),
-                "trade_count": r.get("trade_count"),
-                "error": r.get("error"),
-            })
+            result["per_strategy"].append(
+                {
+                    "strategy_id": sid,
+                    "weight": weight,
+                    "equity_curve": r.get("equity_curve") or [],
+                    "sharpe_ratio": r.get("sharpe_ratio"),
+                    "max_drawdown": r.get("max_drawdown"),
+                    "total_return": r.get("total_return"),
+                    "total_profit": r.get("total_profit"),
+                    "trade_count": r.get("trade_count"),
+                    "error": r.get("error"),
+                }
+            )
             curves.append((weight, r.get("equity_curve") or []))
 
         if not curves:
@@ -116,14 +122,18 @@ def run_portfolio_backtest(
         result["total_return"] = agg.get("total_return")
         result["max_drawdown"] = agg.get("max_drawdown")
         result["sharpe_ratio"] = agg.get("sharpe_ratio")
-        result["total_profit"] = sum(
-            p.get("total_profit") or 0 for p in result["per_strategy"]
-        )
-        result["trade_count"] = sum(
-            p.get("trade_count") or 0 for p in result["per_strategy"]
-        )
-        wrs = [p.get("win_rate_pct") for p in result["per_strategy"] if p.get("win_rate_pct") is not None]
-        pfs = [p.get("profit_factor") for p in result["per_strategy"] if p.get("profit_factor") is not None]
+        result["total_profit"] = sum(p.get("total_profit") or 0 for p in result["per_strategy"])
+        result["trade_count"] = sum(p.get("trade_count") or 0 for p in result["per_strategy"])
+        wrs = [
+            p.get("win_rate_pct")
+            for p in result["per_strategy"]
+            if p.get("win_rate_pct") is not None
+        ]
+        pfs = [
+            p.get("profit_factor")
+            for p in result["per_strategy"]
+            if p.get("profit_factor") is not None
+        ]
         result["win_rate_pct"] = sum(wrs) / len(wrs) if wrs else None
         result["profit_factor"] = sum(pfs) / len(pfs) if pfs else None
     finally:

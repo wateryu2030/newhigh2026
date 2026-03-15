@@ -7,7 +7,14 @@ from .evolution_orchestrator import run_evolution_cycle
 from .multi_objective import composite_fitness, fitness_from_backtest_result
 
 __all__ = [
-    "StrategyGene", "crossover", "mutate", "selection",
-    "evaluate_gene", "load_population_from_market", "save_gene_to_market",
-    "run_evolution_cycle", "composite_fitness", "fitness_from_backtest_result",
+    "StrategyGene",
+    "crossover",
+    "mutate",
+    "selection",
+    "evaluate_gene",
+    "load_population_from_market",
+    "save_gene_to_market",
+    "run_evolution_cycle",
+    "composite_fitness",
+    "fitness_from_backtest_result",
 ]

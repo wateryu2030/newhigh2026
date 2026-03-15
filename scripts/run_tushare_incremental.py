@@ -5,6 +5,7 @@
   python scripts/run_tushare_incremental.py
   python scripts/run_tushare_incremental.py --full   # 全量
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +21,7 @@ _env = os.path.join(ROOT, ".env")
 if os.path.isfile(_env):
     try:
         from dotenv import load_dotenv
+
         load_dotenv(_env)
     except ImportError:
         pass

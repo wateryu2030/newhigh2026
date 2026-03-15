@@ -1,5 +1,7 @@
 """将 market_signals 聚合为 trade_signals（code, signal, confidence, target_price, stop_loss）。"""
+
 from __future__ import annotations
+
 
 def aggregate_market_signals_to_trade_signals(
     market_signals: list[dict],
@@ -11,6 +13,7 @@ def aggregate_market_signals_to_trade_signals(
     返回: [(code, signal, confidence, target_price, stop_loss), ...]
     """
     from core import Signal
+
     out = []
     sorted_s = sorted(
         [s for s in market_signals if float(s.get("score") or 0) >= min_score],

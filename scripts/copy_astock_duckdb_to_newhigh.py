@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 把 astock 的 DuckDB 数据复制到 newhigh 本地，两套目录完全独立。
-复制后 newhigh 只读本仓库 data/quant.duckdb，不再依赖 astock 目录。
+复制后 newhigh 只读本仓库 data/quant_system.duckdb，不再依赖 astock 目录。
 
 用法（在 newhigh 仓库根目录）:
   python scripts/copy_astock_duckdb_to_newhigh.py
-  python scripts/copy_astock_duckdb_to_newhigh.py --source /path/to/astock/data/quant.duckdb --dest ./data/quant.duckdb
+  python scripts/copy_astock_duckdb_to_newhigh.py --source /path/to/astock/data/quant_system.duckdb --dest ./data/quant_system.duckdb
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,14 +15,24 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_SOURCE = "/Users/apple/astock/data/quant.duckdb"
+DEFAULT_SOURCE = "/Users/apple/astock/data/quant_system.duckdb"
 DEFAULT_DEST = os.path.join(ROOT, "data", "quant_system.duckdb")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Copy astock DuckDB to newhigh/data/quant.duckdb")
-    parser.add_argument("--source", default=os.environ.get("ASTOCK_DUCKDB_PATH", DEFAULT_SOURCE), help="Source DuckDB (astock)")
-    parser.add_argument("--dest", default=os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", os.environ.get("NEWHIGH_DUCKDB_PATH", DEFAULT_DEST)), help="Destination DuckDB (newhigh, default quant_system.duckdb)")
+    parser = argparse.ArgumentParser(description="Copy astock DuckDB to newhigh/data/quant_system.duckdb")
+    parser.add_argument(
+        "--source",
+        default=os.environ.get("ASTOCK_DUCKDB_PATH", DEFAULT_SOURCE),
+        help="Source DuckDB (astock)",
+    )
+    parser.add_argument(
+        "--dest",
+        default=os.environ.get(
+            "QUANT_SYSTEM_DUCKDB_PATH", os.environ.get("NEWHIGH_DUCKDB_PATH", DEFAULT_DEST)
+        ),
+        help="Destination DuckDB (newhigh, default quant_system.duckdb)",
+    )
     parser.add_argument("--skip-news", action="store_true", help="Skip copying news_items")
     args = parser.parse_args()
 

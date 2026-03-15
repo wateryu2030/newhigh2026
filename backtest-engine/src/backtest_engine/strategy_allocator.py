@@ -2,6 +2,7 @@
 策略资金分配：输入策略 ID 列表与可选权重，输出 (strategy_id, weight) 列表。
 等权时 weight_i = 1/n；否则按传入 weights 归一化。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
@@ -37,6 +38,7 @@ def get_symbols_for_strategy(strategy_id: str, conn: Any = None) -> List[str]:
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
+
             conn = get_conn(read_only=True)
             close_conn = True
         except Exception:

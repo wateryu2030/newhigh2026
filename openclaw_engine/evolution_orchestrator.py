@@ -1,6 +1,7 @@
 """
 进化周期编排：加载种群 → 选择 → 交叉/变异 → 回测评估 → 优秀个体写入策略市场。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -23,7 +24,14 @@ def run_evolution_cycle(
     若子代适应度超过阈值则写入 strategy_market。
     返回 { "generation": 1, "population_size", "offspring_evaluated", "saved": int, "best_fitness", "error" }。
     """
-    result = {"generation": 1, "population_size": 0, "offspring_evaluated": 0, "saved": 0, "best_fitness": None, "error": None}
+    result = {
+        "generation": 1,
+        "population_size": 0,
+        "offspring_evaluated": 0,
+        "saved": 0,
+        "best_fitness": None,
+        "error": None,
+    }
     try:
         population = load_population_from_market(limit=population_limit)
         if len(population) < 2:
@@ -57,7 +65,9 @@ def run_evolution_cycle(
                 save_gene_to_market(
                     child,
                     name=child.strategy_id,
-                    return_pct=ev.get("total_return") * 100 if ev.get("total_return") is not None else None,
+                    return_pct=(
+                        ev.get("total_return") * 100 if ev.get("total_return") is not None else None
+                    ),
                     sharpe_ratio=ev.get("sharpe_ratio"),
                     max_drawdown=ev.get("max_drawdown"),
                     status="active",

@@ -2,6 +2,7 @@
 多环境配置加载：按 APP_ENV 加载 config/dev|staging|prod.yaml，与环境变量合并。
 环境变量优先于 yaml。与 core.config 配合使用。
 """
+
 from __future__ import annotations
 
 import os
@@ -15,6 +16,7 @@ _ENV_KEY = "APP_ENV"
 def _load_yaml(path: Path) -> Dict[str, Any]:
     try:
         import yaml
+
         with open(path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
     except Exception:

@@ -9,6 +9,7 @@ A 股/北交所数据完整性：检测 DuckDB 缺失区间，从 akshare/东方
   python scripts/ensure_ashare_data_completeness.py --symbols 600519,000001 --days 60
   python scripts/ensure_ashare_data_completeness.py --from-akshare-only   # 仅从 akshare 拉列表，不读 DuckDB
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,11 +24,13 @@ sys.path.insert(0, os.path.join(ROOT, "core", "src"))
 
 def _duckdb_path() -> str:
     from data_engine.connector_astock_duckdb import DEFAULT_NEWHIGH_DUCKDB_PATH
+
     return os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip() or DEFAULT_NEWHIGH_DUCKDB_PATH
 
 
 def _symbol_to_order_book_id(symbol: str) -> str:
     from data_engine.connector_astock_duckdb import _symbol_to_order_book_id as _ob
+
     return _ob(symbol)
 
 
@@ -48,32 +51,37 @@ def run(
 
     path = duckdb_path or _duckdb_path()
     if not path or not os.path.isfile(path):
-        return {"filled": 0, "skipped": 0, "errors": 1, "details": ["DuckDB not found: " + str(path)]}
+        return {
+            "filled": 0,
+            "skipped": 0,
+            "errors": 1,
+            "details": ["DuckDB not found: " + str(path)],
+        }
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     end_date = datetime.now(timezone.utc).strftime("%Y%m%d")
     start_fallback = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y%m%d")
 
     if symbols:
-        symbol_list = [s.strip().split(".")[0] or s.strip() for s in symbols if s.strip()]
+        symbol_list = [s.strip().split(".", maxsplit=1)[0] or s.strip() for s in symbols if s.strip()]
         symbol_list = [s for s in symbol_list if 5 <= len(s) <= 8]
     elif from_akshare_only:
         try:
             rows = get_stock_list_akshare(include_bse=True)
-            symbol_list = [r["symbol"].split(".")[0] for r in rows[:max_symbols]]
+            symbol_list = [r["symbol"].split(".", maxsplit=1)[0] for r in rows[:max_symbols]]
         except Exception:
             symbol_list = []
     else:
         if not get_astock_duckdb_available():
             try:
                 rows = get_stock_list_akshare(include_bse=True)
-                symbol_list = [r["symbol"].split(".")[0] for r in rows[:max_symbols]]
+                symbol_list = [r["symbol"].split(".", maxsplit=1)[0] for r in rows[:max_symbols]]
             except Exception:
                 symbol_list = []
         else:
             try:
                 rows = get_stocks_for_api()
-                symbol_list = [r["symbol"].split(".")[0] for r in rows[:max_symbols]]
+                symbol_list = [r["symbol"].split(".", maxsplit=1)[0] for r in rows[:max_symbols]]
             except Exception:
                 symbol_list = []
 
@@ -85,14 +93,26 @@ def run(
     details = []
 
     def _code_to_ob(c: str) -> str:
-        suf = ".SH" if c.startswith("6") else (".BSE" if (c.startswith(("4", "8", "9")) or len(c) == 8) else ".SZ")
+        suf = (
+            ".SH"
+            if c.startswith("6")
+            else (".BSE" if (c.startswith(("4", "8", "9")) or len(c) == 8) else ".SZ")
+        )
         return _symbol_to_order_book_id(c + suf)
 
     for code in symbol_list:
         try:
             ob = _code_to_ob(code)
             if not ob or "." not in ob:
-                ob = code + ".XSHG" if code.startswith("6") else (code + ".BSE" if len(code) == 8 or code.startswith(("4", "8", "9")) else code + ".XSHE")
+                ob = (
+                    code + ".XSHG"
+                    if code.startswith("6")
+                    else (
+                        code + ".BSE"
+                        if len(code) == 8 or code.startswith(("4", "8", "9"))
+                        else code + ".XSHE"
+                    )
+                )
             cur = conn.execute(
                 "SELECT MAX(trade_date) AS md FROM daily_bars WHERE order_book_id = ?",
                 [ob],
@@ -166,10 +186,18 @@ def run(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Ensure A-share/BSE data completeness in DuckDB")
     parser.add_argument("--symbols", type=str, default=None, help="Comma-separated 6/8 digit codes")
-    parser.add_argument("--days", type=int, default=365, help="Days to look back when no existing data")
-    parser.add_argument("--duckdb", type=str, default=None, help="Path to quant.duckdb")
-    parser.add_argument("--from-akshare-only", action="store_true", help="Get symbol list only from akshare (A+北交所)")
-    parser.add_argument("--max-symbols", type=int, default=500, help="Max symbols to process when using list")
+    parser.add_argument(
+        "--days", type=int, default=365, help="Days to look back when no existing data"
+    )
+    parser.add_argument("--duckdb", type=str, default=None, help="Path to quant_system.duckdb")
+    parser.add_argument(
+        "--from-akshare-only",
+        action="store_true",
+        help="Get symbol list only from akshare (A+北交所)",
+    )
+    parser.add_argument(
+        "--max-symbols", type=int, default=500, help="Max symbols to process when using list"
+    )
     args = parser.parse_args()
 
     symbols = args.symbols.split(",") if args.symbols else None

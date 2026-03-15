@@ -1,4 +1,5 @@
 """A 股数据连接器：通过 Tushare 拉取 A 股/北交所日线/分钟线，归一化为 core.OHLCV。"""
+
 from __future__ import annotations
 from typing import Callable, Any
 from functools import wraps
@@ -23,7 +24,7 @@ except ImportError:
 
 def _normalize_symbol(code: str) -> str:
     """A 股/北交所代码转为带交易所后缀：600519->600519.SH, 000001->000001.SZ, 830799->830799.BSE。"""
-    code = str(code).strip().split(".")[0]
+    code = str(code).strip().split(".", maxsplit=1)[0]
     if not code:
         return code
     # 北交所：4/8/9 开头或 8 位
@@ -44,14 +45,14 @@ def _to_utc(dt: datetime) -> datetime:
 def get_tushare_config():
     """获取Tushare配置"""
     config = {
-        'token': os.getenv('TUSHARE_TOKEN', '').strip(),
-        'request_interval': float(os.getenv('TUSHARE_REQUEST_INTERVAL', '1')),
-        'max_retries': int(os.getenv('TUSHARE_MAX_RETRIES', '3')),
-        'cache_dir': os.getenv('TUSHARE_CACHE_DIR', '/tmp/tushare_cache'),
-        'enable_cache': os.getenv('TUSHARE_ENABLE_CACHE', 'true').lower() == 'true',
-        'cache_ttl': int(os.getenv('TUSHARE_CACHE_TTL', '24')),
-        'output_format': os.getenv('TUSHARE_OUTPUT_FORMAT', 'csv'),
-        'default_adjust': os.getenv('TUSHARE_DEFAULT_ADJUST', 'qfq')
+        "token": os.getenv("TUSHARE_TOKEN", "").strip(),
+        "request_interval": float(os.getenv("TUSHARE_REQUEST_INTERVAL", "1")),
+        "max_retries": int(os.getenv("TUSHARE_MAX_RETRIES", "3")),
+        "cache_dir": os.getenv("TUSHARE_CACHE_DIR", "/tmp/tushare_cache"),
+        "enable_cache": os.getenv("TUSHARE_ENABLE_CACHE", "true").lower() == "true",
+        "cache_ttl": int(os.getenv("TUSHARE_CACHE_TTL", "24")),
+        "output_format": os.getenv("TUSHARE_OUTPUT_FORMAT", "csv"),
+        "default_adjust": os.getenv("TUSHARE_DEFAULT_ADJUST", "qfq"),
     }
     return config
 
@@ -62,7 +63,7 @@ def _init_tushare() -> bool:
         return False
 
     config = get_tushare_config()
-    token = config['token']
+    token = config["token"]
 
     if not token:
         print("警告: 未设置TUSHARE_TOKEN环境变量，Tushare连接器将无法使用")
@@ -80,12 +81,13 @@ def _init_tushare() -> bool:
 
 def retry_on_failure(max_retries: int = None, delay: float = None):
     """重试装饰器"""
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
             config = get_tushare_config()
-            retries = max_retries or config['max_retries']
-            retry_delay = delay or config['request_interval']
+            retries = max_retries or config["max_retries"]
+            retry_delay = delay or config["request_interval"]
 
             for attempt in range(retries):
                 try:
@@ -93,12 +95,13 @@ def retry_on_failure(max_retries: int = None, delay: float = None):
                 except Exception as e:
                     if attempt == retries - 1:
                         raise
-                    print(
-                        f"尝试 {
-                            attempt + 1}/{retries} 失败: {e}, {retry_delay}秒后重试...")
+                    print(f"尝试 {
+                        attempt + 1}/{retries} 失败: {e}, {retry_delay}秒后重试...")
                     time.sleep(retry_delay)
             return None
+
         return wrapper
+
     return decorator
 
 
@@ -111,7 +114,7 @@ def get_cache_key(func_name: str, *args, **kwargs) -> str:
 def get_cache_path(cache_key: str) -> Path:
     """获取缓存文件路径"""
     config = get_tushare_config()
-    cache_dir = Path(config['cache_dir'])
+    cache_dir = Path(config["cache_dir"])
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir / f"{cache_key}.pkl"
 
@@ -119,7 +122,7 @@ def get_cache_path(cache_key: str) -> Path:
 def is_cache_valid(cache_path: Path) -> bool:
     """检查缓存是否有效"""
     config = get_tushare_config()
-    if not config['enable_cache']:
+    if not config["enable_cache"]:
         return False
 
     if not cache_path.exists():
@@ -127,7 +130,7 @@ def is_cache_valid(cache_path: Path) -> bool:
 
     # 检查缓存是否过期
     cache_age = time.time() - cache_path.stat().st_mtime
-    max_age = config['cache_ttl'] * 3600  # 转换为秒
+    max_age = config["cache_ttl"] * 3600  # 转换为秒
 
     return cache_age < max_age
 
@@ -135,7 +138,7 @@ def is_cache_valid(cache_path: Path) -> bool:
 def load_from_cache(cache_path: Path) -> Any:
     """从缓存加载数据"""
     try:
-        with open(cache_path, 'rb') as f:
+        with open(cache_path, "rb") as f:
             return pickle.load(f)
     except Exception as e:
         print(f"加载缓存失败: {e}")
@@ -145,7 +148,7 @@ def load_from_cache(cache_path: Path) -> Any:
 def save_to_cache(cache_path: Path, data: Any) -> bool:
     """保存数据到缓存"""
     try:
-        with open(cache_path, 'wb') as f:
+        with open(cache_path, "wb") as f:
             pickle.dump(data, f)
         return True
     except Exception as e:
@@ -213,10 +216,11 @@ def log_data_stats(data: List[OHLCV], symbol: str):
 
 def cached(func: Callable) -> Callable:
     """缓存装饰器"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         config = get_tushare_config()
-        if not config['enable_cache']:
+        if not config["enable_cache"]:
             return func(*args, **kwargs)
 
         # 生成缓存键
@@ -238,13 +242,13 @@ def cached(func: Callable) -> Callable:
             save_to_cache(cache_path, data)
 
         return data
+
     return wrapper
 
 
 @retry_on_failure()
 @cached
-def _fetch_hist_df(code: str, start_date: str, end_date: str,
-                   period: str, adjust: str = ""):
+def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str = ""):
     """拉取日/周/月 K 线 DataFrame，使用Tushare接口"""
     if ts is None or pd is None:
         raise ImportError("Tushare或pandas未安装")
@@ -261,79 +265,75 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str,
     try:
         if period == "daily":
             # 日线数据
-            df = pro.daily(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.daily(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:
-                raise ValueError(
-                    f"未找到{normalized_code}在{start_date}到{end_date}的数据")
+                raise ValueError(f"未找到{normalized_code}在{start_date}到{end_date}的数据")
 
             # 重命名列以匹配标准格式
-            df = df.rename(columns={
-                'trade_date': 'date',
-                'ts_code': 'code',
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'vol': 'volume',
-                'amount': 'amount'
-            })
+            df = df.rename(
+                columns={
+                    "trade_date": "date",
+                    "ts_code": "code",
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "vol": "volume",
+                    "amount": "amount",
+                }
+            )
 
             # 转换日期格式
-            df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
-            df = df.sort_values('date', ascending=False)
+            df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+            df = df.sort_values("date", ascending=False)
 
             return df
 
         elif period == "weekly":
             # 周线数据
-            df = pro.weekly(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.weekly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:
                 raise ValueError(f"未找到{normalized_code}周线数据")
 
-            df = df.rename(columns={
-                'trade_date': 'date',
-                'ts_code': 'code',
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'vol': 'volume',
-                'amount': 'amount'
-            })
+            df = df.rename(
+                columns={
+                    "trade_date": "date",
+                    "ts_code": "code",
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "vol": "volume",
+                    "amount": "amount",
+                }
+            )
 
-            df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
-            df = df.sort_values('date', ascending=False)
+            df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+            df = df.sort_values("date", ascending=False)
 
             return df
 
         elif period == "monthly":
             # 月线数据
-            df = pro.monthly(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.monthly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:
                 raise ValueError(f"未找到{normalized_code}月线数据")
 
-            df = df.rename(columns={
-                'trade_date': 'date',
-                'ts_code': 'code',
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'vol': 'volume',
-                'amount': 'amount'
-            })
+            df = df.rename(
+                columns={
+                    "trade_date": "date",
+                    "ts_code": "code",
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "vol": "volume",
+                    "amount": "amount",
+                }
+            )
 
-            df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
-            df = df.sort_values('date', ascending=False)
+            df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+            df = df.sort_values("date", ascending=False)
 
             return df
 
@@ -419,9 +419,9 @@ def fetch_stock_basic() -> pd.DataFrame:
     try:
         # 获取所有上市股票
         df = pro.stock_basic(
-            exchange='',
-            list_status='L',
-            fields='ts_code,symbol,name,area,industry,list_date,market,is_hs'
+            exchange="",
+            list_status="L",
+            fields="ts_code,symbol,name,area,industry,list_date,market,is_hs",
         )
         return df
     except Exception as e:
@@ -444,8 +444,7 @@ def fetch_realtime_quotes(codes: List[str]) -> pd.DataFrame:
 
     try:
         # 注意：此函数可能需要相应权限
-        normalized_codes = [_normalize_symbol(
-            code).split('.')[0] for code in codes]
+        normalized_codes = [_normalize_symbol(code).split(".", maxsplit=1)[0] for code in codes]
         df = ts.get_realtime_quotes(normalized_codes)
         return df
     except Exception as e:
@@ -454,10 +453,8 @@ def fetch_realtime_quotes(codes: List[str]) -> pd.DataFrame:
 
 
 def fetch_financial_data(
-        code: str,
-        report_type: str = "income",
-        start_date: str = "",
-        end_date: str = "") -> pd.DataFrame:
+    code: str, report_type: str = "income", start_date: str = "", end_date: str = ""
+) -> pd.DataFrame:
     """
     获取财务数据
 
@@ -481,20 +478,11 @@ def fetch_financial_data(
 
     try:
         if report_type == "income":
-            df = pro.income(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.income(ts_code=normalized_code, start_date=start_date, end_date=end_date)
         elif report_type == "balancesheet":
-            df = pro.balancesheet(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.balancesheet(ts_code=normalized_code, start_date=start_date, end_date=end_date)
         elif report_type == "cashflow":
-            df = pro.cashflow(
-                ts_code=normalized_code,
-                start_date=start_date,
-                end_date=end_date)
+            df = pro.cashflow(ts_code=normalized_code, start_date=start_date, end_date=end_date)
         else:
             raise ValueError(f"不支持的报表类型: {report_type}")
 
@@ -510,7 +498,7 @@ def test_tushare_connector():
     print("测试Tushare连接器...")
 
     # 检查环境变量
-    token = os.getenv('TUSHARE_TOKEN')
+    token = os.getenv("TUSHARE_TOKEN")
     if not token:
         print("⚠ 未设置TUSHARE_TOKEN环境变量")
         print("请设置: export TUSHARE_TOKEN='你的token'")
@@ -527,9 +515,7 @@ def test_tushare_connector():
         # 测试获取股票基本信息
         print("测试获取股票基本信息...")
         pro = ts.pro_api()
-        df = pro.stock_basic(
-            ts_code='000001.SZ',
-            fields='ts_code,name,industry,list_date')
+        df = pro.stock_basic(ts_code="000001.SZ", fields="ts_code,name,industry,list_date")
         if not df.empty:
             print(f"✓ 获取股票信息成功: {df.iloc[0]['name']}")
         else:

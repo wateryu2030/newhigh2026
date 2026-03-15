@@ -1,4 +1,5 @@
 """从 quant_system.duckdb 加载日 K 与信号，供回测使用。"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -12,7 +13,7 @@ def _norm_code(symbol: str) -> str:
     s = (symbol or "").strip()
     if not s:
         return ""
-    code = s.split(".")[0]
+    code = s.split(".", maxsplit=1)[0]
     if len(code) == 6 and code.isdigit():
         if code.startswith("6"):
             return f"{code}.SH"
@@ -50,6 +51,7 @@ def load_ohlcv_from_db(
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
+
             conn = get_conn(read_only=True)
             close_conn = True
         except Exception:
@@ -74,6 +76,7 @@ def load_ohlcv_from_db(
             out_df = df[["date", "open", "high", "low", "close", "volume"]].copy()
             try:
                 from core import OHLCV
+
                 for _, row in df.iterrows():
                     ohlcv_list.append(
                         OHLCV(
@@ -119,6 +122,7 @@ def load_signals_from_db(
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
+
             conn = get_conn(read_only=True)
             close_conn = True
         except Exception:

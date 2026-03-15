@@ -1,4 +1,5 @@
 """Tests for equal weight allocation."""
+
 from portfolio_engine import equal_weight_weights, equal_weight_position_sizes
 
 

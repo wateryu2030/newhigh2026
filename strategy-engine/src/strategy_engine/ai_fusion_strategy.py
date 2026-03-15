@@ -11,6 +11,7 @@ from typing import List, Tuple
 # Optional imports - handled gracefully if not available
 try:
     from ai_models.emotion_cycle_model import EmotionCycleModel
+
     EMOTION_MODEL_AVAILABLE = True
 except ImportError:
     EmotionCycleModel = None  # type: ignore
@@ -18,6 +19,7 @@ except ImportError:
 
 try:
     from data_pipeline.storage.duckdb_manager import get_conn, get_db_path, ensure_tables
+
     DUCKDB_MANAGER_AVAILABLE = True
 except ImportError:
     get_conn = None  # type: ignore
@@ -91,9 +93,7 @@ def _get_main_theme() -> list:
             return [("全市场", 1)]
 
         conn = get_conn(read_only=True)
-        df = conn.execute(
-            "SELECT sector, rank FROM main_themes ORDER BY rank LIMIT 10"
-        ).fetchdf()
+        df = conn.execute("SELECT sector, rank FROM main_themes ORDER BY rank LIMIT 10").fetchdf()
         conn.close()
         if df is None or df.empty:
             return [("全市场", 1)]
@@ -188,16 +188,12 @@ class AIFusionStrategy:
                         conn.close()
                         if ms is not None and not ms.empty:
                             candidate_codes = [
-                                str(r.get("code", ""))
-                                for _, r in ms.iterrows()
-                                if r.get("code")
+                                str(r.get("code", "")) for _, r in ms.iterrows() if r.get("code")
                             ]
                 except Exception:
                     pass
 
-        fund_map = {
-            code: s for code, s in hotmoney if len(code) == 6 and code.isdigit()
-        }
+        fund_map = {code: s for code, s in hotmoney if len(code) == 6 and code.isdigit()}
         scored = []
         for code in candidate_codes:
             fund_score = fund_map.get(code, 0.5)
@@ -215,9 +211,7 @@ class AIFusionStrategy:
         scored.sort(key=lambda x: -x[5])
         return scored[:top_n]
 
-    def save_signals(
-        self, signals: List[Tuple[str, str, float, float, float, float]]
-    ) -> int:
+    def save_signals(self, signals: List[Tuple[str, str, float, float, float, float]]) -> int:
         """写入 trade_signals 表（含 signal_score）。"""
         if not signals:
             return 0

@@ -1,4 +1,5 @@
 """ClickHouse storage for OHLCV. Tables: market_1m, market_5m, market_1h, market_1d."""
+
 from datetime import datetime
 from typing import List
 
@@ -15,8 +16,7 @@ def get_client(host: str = "localhost", port: int = 9000, database: str = "defau
 def ensure_tables(client: Client) -> None:
     """Create market_* tables if they do not exist."""
     for table in ("market_1m", "market_5m", "market_1h", "market_1d"):
-        client.execute(
-            f"""
+        client.execute(f"""
             CREATE TABLE IF NOT EXISTS {table} (
                 symbol String,
                 timestamp DateTime64(3),
@@ -28,8 +28,7 @@ def ensure_tables(client: Client) -> None:
                 interval String
             ) ENGINE = MergeTree()
             ORDER BY (symbol, timestamp)
-            """
-        )
+            """)
 
 
 def insert_ohlcv(client: Client, rows: List[OHLCV], interval: str) -> None:

@@ -1,4 +1,5 @@
 """Tests for Binance connector."""
+
 import pytest
 from unittest.mock import patch, Mock
 
@@ -13,7 +14,11 @@ def test_fetch_klines_normalizes_response(mock_get):
             return_value=[
                 [
                     1609459200000,  # ts
-                    "29000", "29500", "28800", "29200", "1000.5",  # o,h,l,c,v
+                    "29000",
+                    "29500",
+                    "28800",
+                    "29200",
+                    "1000.5",  # o,h,l,c,v
                     1609462799999,
                     "29000000",
                     100,

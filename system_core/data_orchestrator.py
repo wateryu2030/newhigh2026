@@ -1,6 +1,7 @@
 """
 数据调度：统一调用 data_pipeline collectors，执行股票池、日K、实时、资金流、涨停、龙虎榜更新。
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any
@@ -56,13 +57,16 @@ def update(
         if use_incremental_daily_kline:
             try:
                 from data_pipeline import run_incremental
+
                 result["daily_kline"] = run_incremental("ashare_daily_kline", force_full=False)
             except Exception as e:
                 result["errors"].append(f"daily_kline incremental: {e}")
         elif daily_kline_codes_limit > 0:
             try:
                 conn = get_conn(read_only=True)
-                df = conn.execute("SELECT code FROM a_stock_basic LIMIT ?", [daily_kline_codes_limit]).fetchdf()
+                df = conn.execute(
+                    "SELECT code FROM a_stock_basic LIMIT ?", [daily_kline_codes_limit]
+                ).fetchdf()
                 conn.close()
                 if df is not None and not df.empty:
                     for code in df["code"].astype(str).tolist():
@@ -95,6 +99,7 @@ def update(
         if use_incremental_longhubang:
             try:
                 from data_pipeline import run_incremental
+
                 result["longhubang"] = run_incremental("ashare_longhubang", force_full=False)
             except Exception as e:
                 result["errors"].append(f"longhubang incremental: {e}")

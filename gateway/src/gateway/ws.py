@@ -1,4 +1,5 @@
 """WebSocket endpoints: /ws/market, /ws/trades, /ws/portfolio (stub for real-time push)."""
+
 import asyncio
 from typing import Set
 

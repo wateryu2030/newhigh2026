@@ -1,4 +1,5 @@
 """MACD (Moving Average Convergence Divergence) indicator."""
+
 from typing import List, Tuple
 
 import numpy as np

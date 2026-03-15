@@ -1,4 +1,5 @@
 """Celery 任务：数据管道。事件驱动架构下由 Worker 独立执行。"""
+
 from __future__ import annotations
 
 try:
@@ -20,6 +21,7 @@ if app is not None:
         daily_kline_codes_limit: int = 0,
     ):
         from system_core.data_orchestrator import update
+
         return update(
             run_stock_list=run_stock_list,
             run_daily_kline=run_daily_kline,

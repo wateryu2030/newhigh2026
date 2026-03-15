@@ -1,4 +1,5 @@
 """Kelly criterion allocation: fraction = (win_rate * payoff - (1 - win_rate)) / payoff."""
+
 from typing import List, Optional
 
 
@@ -55,6 +56,7 @@ def kelly_position_sizes(
 ) -> dict:
     """Position size per symbol in notional."""
     from .equal_weight import equal_weight_weights
+
     w = kelly_weights(symbols, win_rates, avg_wins, avg_losses, kelly_frac=kelly_frac)
     if not w:
         w = equal_weight_weights(symbols)

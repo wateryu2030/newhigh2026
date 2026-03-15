@@ -1,4 +1,5 @@
 """Realtime stream: subscribe to Binance WebSocket klines and yield OHLCV updates."""
+
 import json
 import threading
 from datetime import datetime, timezone

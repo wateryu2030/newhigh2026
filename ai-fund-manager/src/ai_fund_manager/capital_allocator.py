@@ -2,6 +2,7 @@
 Capital Allocator — 资金配置系统
 AI 自动分配资金：按策略 Alpha 分/风险分配 capital
 """
+
 from typing import Dict, List, Optional
 
 from evolution_engine import StrategyPool, StrategyRecord, StrategyStatus

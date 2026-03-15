@@ -1,4 +1,5 @@
 """Trend following strategy: MA crossover, momentum."""
+
 from typing import List, Tuple
 
 import numpy as np

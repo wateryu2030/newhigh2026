@@ -1,4 +1,5 @@
 """RSI (Relative Strength Index)."""
+
 from typing import List, Union
 
 import numpy as np

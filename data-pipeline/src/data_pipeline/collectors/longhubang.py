@@ -1,7 +1,9 @@
 """龙虎榜明细：游资席位/资金跟踪，写入 a_stock_longhubang。"""
+
 from __future__ import annotations
 
-import datetime
+import datetime as dt
+
 
 def update_longhubang() -> int:
     try:
@@ -21,14 +23,16 @@ def update_longhubang() -> int:
             return 0
     if df is None or df.empty:
         return 0
-    now = datetime.datetime.now()
+    now = dt.datetime.now()
     df = df.copy()
     df["snapshot_time"] = now
     code_col = "代码" if "代码" in df.columns else "code"
     name_col = "名称" if "名称" in df.columns else "name"
     date_col = "成交日期" if "成交日期" in df.columns else "lhb_date"
     net_col = "净买入" if "净买入" in df.columns else "net_buy"
-    df = df.rename(columns={code_col: "code", name_col: "name", date_col: "lhb_date", net_col: "net_buy"})
+    df = df.rename(
+        columns={code_col: "code", name_col: "name", date_col: "lhb_date", net_col: "net_buy"}
+    )
     for c in ["code", "name", "lhb_date", "net_buy"]:
         if c not in df.columns:
             df[c] = "" if c in ("code", "name") else None

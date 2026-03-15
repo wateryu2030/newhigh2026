@@ -3,6 +3,7 @@ Alpha Scoring Engine — 评分模型
 alpha_score = sharpe + stability + return - drawdown - volatility
 Input: backtest results. Output: alpha_score. Top 10% 进入策略池.
 """
+
 from typing import Any, Dict, List, Tuple
 
 

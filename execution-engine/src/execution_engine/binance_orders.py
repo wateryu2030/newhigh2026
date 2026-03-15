@@ -1,4 +1,5 @@
 """Binance order execution: place_order, cancel_order (REST API)."""
+
 import os
 import time
 from typing import Any, Dict, Optional
@@ -52,7 +53,14 @@ def place_order(
         params["quantity"] = quantity
     if quote_order_qty is not None:
         params["quoteOrderQty"] = quote_order_qty
-    return _signed_request("POST", "/api/v3/order", params=params, base_url=base_url, api_key=api_key, api_secret=api_secret)
+    return _signed_request(
+        "POST",
+        "/api/v3/order",
+        params=params,
+        base_url=base_url,
+        api_key=api_key,
+        api_secret=api_secret,
+    )
 
 
 def cancel_order(
@@ -65,9 +73,12 @@ def cancel_order(
     """Cancel order by order_id."""
     sym = symbol.replace("/", "").upper()
     return _signed_request(
-        "DELETE", "/api/v3/order",
+        "DELETE",
+        "/api/v3/order",
         params={"symbol": sym, "orderId": order_id},
-        base_url=base_url, api_key=api_key, api_secret=api_secret,
+        base_url=base_url,
+        api_key=api_key,
+        api_secret=api_secret,
     )
 
 
@@ -80,7 +91,10 @@ def fetch_open_orders(
     """Fetch open orders for symbol."""
     sym = symbol.replace("/", "").upper()
     return _signed_request(
-        "GET", "/api/v3/openOrders",
+        "GET",
+        "/api/v3/openOrders",
         params={"symbol": sym},
-        base_url=base_url, api_key=api_key, api_secret=api_secret,
+        base_url=base_url,
+        api_key=api_key,
+        api_secret=api_secret,
     )

@@ -1,8 +1,11 @@
 """趋势扫描：从 a_stock_realtime 按涨跌幅生成 trend 类 market_signals。"""
+
 from __future__ import annotations
+
 
 def run_trend_scanner() -> int:
     from ._storage import _get_conn, write_signals
+
     conn = _get_conn()
     try:
         df = conn.execute(

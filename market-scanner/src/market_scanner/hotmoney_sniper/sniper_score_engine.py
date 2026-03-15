@@ -2,6 +2,7 @@
 游资狙击评分：题材 30% + 资金异动 30% + 量能结构 20% + 涨停行为 20% → Sniper Score。
 输出 sniper_candidates（score > 0.7）。
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -21,14 +22,22 @@ class SniperScoreEngine:
             return self._conn
         try:
             from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+
             c = get_conn(read_only=False)
             ensure_tables(c)
             return c
         except Exception:
             import os
             import duckdb
-            root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            path = os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "") or os.environ.get("NEWHIGH_MARKET_DUCKDB_PATH", "") or os.path.join(root, "data", "quant_system.duckdb")
+
+            root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            )
+            path = (
+                os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "")
+                or os.environ.get("NEWHIGH_MARKET_DUCKDB_PATH", "")
+                or os.path.join(root, "data", "quant_system.duckdb")
+            )
             os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
             return duckdb.connect(path)
 
@@ -87,7 +96,9 @@ class SniperScoreEngine:
         code_sector = {}
         try:
             for c in codes:
-                row = conn.execute("SELECT sector FROM a_stock_basic WHERE code = ?", [c]).fetchone()
+                row = conn.execute(
+                    "SELECT sector FROM a_stock_basic WHERE code = ?", [c]
+                ).fetchone()
                 code_sector[c] = str(row[0]) if row and row[0] else "未分类"
         except Exception:
             for c in codes:
@@ -118,12 +129,18 @@ class SniperScoreEngine:
 
             score = self.calculate_score(theme_score, fund_score, volume_score, limit_score)
             confidence = min(0.99, score)
-            results.append({"code": code, "theme": theme, "sniper_score": score, "confidence": confidence})
+            results.append(
+                {"code": code, "theme": theme, "sniper_score": score, "confidence": confidence}
+            )
 
         df = pd.DataFrame(results)
         if df.empty:
             return pd.DataFrame(columns=["code", "theme", "sniper_score", "confidence"])
-        df = df[df["sniper_score"] >= min_score].sort_values("sniper_score", ascending=False).head(top_n)
+        df = (
+            df[df["sniper_score"] >= min_score]
+            .sort_values("sniper_score", ascending=False)
+            .head(top_n)
+        )
         return df.reset_index(drop=True)
 
 
@@ -136,6 +153,7 @@ def run_sniper(min_score: float = 0.7, top_n: int = 50) -> int:
     conn = engine._get_conn()
     try:
         from data_pipeline.storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
     except Exception:
         pass

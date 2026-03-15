@@ -1,6 +1,7 @@
 """
 数据源抽象基类与注册表：支持多数据源插件与增量更新。
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -65,6 +66,7 @@ class BaseDataSource(ABC):
     def default_end_key(self) -> str:
         """默认结束 key（如今天 YYYYMMDD），子类可覆盖。"""
         from datetime import datetime
+
         return datetime.now().strftime("%Y%m%d")
 
     def run_incremental(self, conn: Any, force_full: bool = False, **kwargs: Any) -> int:

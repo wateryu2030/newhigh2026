@@ -2,6 +2,7 @@
 可配置风控规则：从 risk_rules 表加载，在信号执行前评估。
 规则类型：single_position_pct_max, max_drawdown_pct, max_exposure_pct。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -14,6 +15,7 @@ def _get_conn():
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
+
         if not os.path.isfile(get_db_path()):
             return None
         return get_conn(read_only=True)
@@ -77,34 +79,43 @@ def evaluate(
                 notional = qty * prices.get(code, 0)
                 pct = notional / total_assets
                 if pct > value:
-                    violations.append({
-                        "rule_type": rule_type,
-                        "value": value,
-                        "message": f"single_position_pct {code} {pct:.2%} > {value:.2%}",
-                    })
+                    violations.append(
+                        {
+                            "rule_type": rule_type,
+                            "value": value,
+                            "message": f"single_position_pct {code} {pct:.2%} > {value:.2%}",
+                        }
+                    )
         elif rule_type == "max_drawdown_pct" and equity_curve:
             if not drawdown_ok(equity_curve, max_drawdown_pct=value):
                 dd = current_drawdown(equity_curve)
-                violations.append({
-                    "rule_type": rule_type,
-                    "value": value,
-                    "message": f"current_drawdown {dd:.2%} > {value:.2%}",
-                })
+                violations.append(
+                    {
+                        "rule_type": rule_type,
+                        "value": value,
+                        "message": f"current_drawdown {dd:.2%} > {value:.2%}",
+                    }
+                )
         elif rule_type == "max_exposure_pct" and total_assets > 0:
             exposure_pct = pos_notional / total_assets
             if exposure_pct > value:
-                violations.append({
-                    "rule_type": rule_type,
-                    "value": value,
-                    "message": f"exposure_pct {exposure_pct:.2%} > {value:.2%}",
-                })
+                violations.append(
+                    {
+                        "rule_type": rule_type,
+                        "value": value,
+                        "message": f"exposure_pct {exposure_pct:.2%} > {value:.2%}",
+                    }
+                )
     return {"pass": len(violations) == 0, "violations": violations}
 
 
-def save_rule(rule_type: str, value: float, enabled: bool = True, rule_id: Optional[int] = None) -> bool:
+def save_rule(
+    rule_type: str, value: float, enabled: bool = True, rule_id: Optional[int] = None
+) -> bool:
     """写入或更新一条风控规则。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+
         conn = get_conn(read_only=False)
         ensure_tables(conn)
         if rule_id is not None:

@@ -2,6 +2,7 @@
 风控动作：根据违规类型执行 reject_order、reduce_position、alert。
 与 execution_engine 联动（拒绝下单、触发减仓）；alert 可写审计或发告警。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -22,9 +23,17 @@ def execute_action(
 
     if "single" in rule_type or "position" in rule_type:
         if dry_run:
-            return {"action": "reduce_position", "done": False, "message": "dry_run: would reduce position"}
+            return {
+                "action": "reduce_position",
+                "done": False,
+                "message": "dry_run: would reduce position",
+            }
         # 实际减仓需调用 execution_engine 的平仓接口，此处仅返回建议
-        return {"action": "reduce_position", "done": False, "message": "trigger reduce_position via execution"}
+        return {
+            "action": "reduce_position",
+            "done": False,
+            "message": "trigger reduce_position via execution",
+        }
 
     if "drawdown" in rule_type or "loss" in rule_type:
         _emit_alert(violation, context)
@@ -32,8 +41,16 @@ def execute_action(
 
     if context.get("order_id") is not None:
         if dry_run:
-            return {"action": "reject_order", "done": False, "message": "dry_run: would reject order"}
-        return {"action": "reject_order", "done": True, "message": "order should be rejected by caller"}
+            return {
+                "action": "reject_order",
+                "done": False,
+                "message": "dry_run: would reject order",
+            }
+        return {
+            "action": "reject_order",
+            "done": True,
+            "message": "order should be rejected by caller",
+        }
 
     _emit_alert(violation, context)
     return {"action": "alert", "done": True, "message": "alert emitted"}
@@ -44,6 +61,7 @@ def _emit_alert(violation: Dict[str, Any], context: Dict[str, Any]) -> None:
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path, ensure_tables
         import os
+
         if not os.path.isfile(get_db_path()):
             return
         conn = get_conn(read_only=False)

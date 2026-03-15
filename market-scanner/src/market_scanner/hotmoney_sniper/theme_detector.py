@@ -1,4 +1,5 @@
 """题材爆发识别：当日涨停集中板块 → hot_themes。"""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -13,14 +14,22 @@ class ThemeDetector:
             return self._conn
         try:
             from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+
             c = get_conn(read_only=False)
             ensure_tables(c)
             return c
         except Exception:
             import os
             import duckdb
-            root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            path = os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "") or os.environ.get("NEWHIGH_MARKET_DUCKDB_PATH", "") or os.path.join(root, "data", "quant_system.duckdb")
+
+            root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            )
+            path = (
+                os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "")
+                or os.environ.get("NEWHIGH_MARKET_DUCKDB_PATH", "")
+                or os.path.join(root, "data", "quant_system.duckdb")
+            )
             os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
             return duckdb.connect(path)
 

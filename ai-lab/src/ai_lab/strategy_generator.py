@@ -1,4 +1,5 @@
 """Strategy generator: LLM-based strategy discovery (stub: returns config dict)."""
+
 from typing import Any, Dict, List, Optional
 
 
@@ -32,12 +33,14 @@ def generate_strategies_batch(
     types = strategy_types or ["trend_following", "mean_reversion", "breakout"]
     results = []
     for i, st in enumerate(types[:count]):
-        results.append({
-            "name": f"generated_{st}_{i}",
-            "strategy_type": st,
-            "params": _default_params(st),
-            "symbols": ["BTCUSDT"],
-        })
+        results.append(
+            {
+                "name": f"generated_{st}_{i}",
+                "strategy_type": st,
+                "params": _default_params(st),
+                "symbols": ["BTCUSDT"],
+            }
+        )
     return results
 
 

@@ -1,4 +1,5 @@
 """Tests for trend following strategy."""
+
 from datetime import datetime, timezone
 
 from core import OHLCV
@@ -9,7 +10,16 @@ def test_trend_following_signals():
     # Minimal series: 60 bars so we have slow_period=50
     base = 100.0
     ohlcv = [
-        OHLCV("BTC", datetime.now(timezone.utc), base + i * 0.1, base + i * 0.1 + 1, base + i * 0.1 - 1, base + i * 0.1, 1000.0, "1h")
+        OHLCV(
+            "BTC",
+            datetime.now(timezone.utc),
+            base + i * 0.1,
+            base + i * 0.1 + 1,
+            base + i * 0.1 - 1,
+            base + i * 0.1,
+            1000.0,
+            "1h",
+        )
         for i in range(60)
     ]
     signals = trend_following_signals(ohlcv, fast_period=5, slow_period=20)

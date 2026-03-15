@@ -8,6 +8,7 @@
   python scripts/run_automated.py --no-full-cycle       # 只拉 Tushare，不跑全周期
   python scripts/run_automated.py --full-cycle-with-data  # 全周期含数据填充（ensure_market_data）
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,12 +24,19 @@ _env = os.path.join(ROOT, ".env")
 if os.path.isfile(_env):
     try:
         from dotenv import load_dotenv
+
         load_dotenv(_env)
     except ImportError:
         pass
 
 SCRIPTS = os.path.join(ROOT, "scripts")
-for _d in ["data-pipeline/src", "market-scanner/src", "ai-models/src", "strategy-engine/src", "core/src"]:
+for _d in [
+    "data-pipeline/src",
+    "market-scanner/src",
+    "ai-models/src",
+    "strategy-engine/src",
+    "core/src",
+]:
     _p = os.path.join(ROOT, _d)
     if os.path.isdir(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
@@ -45,6 +53,7 @@ def run_tushare() -> int:
         print("[automated] 未设置 TUSHARE_TOKEN，跳过 Tushare 拉取")
         return 0
     from data_pipeline import run_incremental
+
     try:
         n = run_incremental("tushare_daily", force_full=False)
         print(f"[automated] tushare_daily 写入行数: {n}")
@@ -56,6 +65,7 @@ def run_tushare() -> int:
 
 def run_full_cycle(skip_data: bool = True) -> int:
     from run_full_cycle import main as full_cycle_main
+
     # 通过修改 sys.argv 传入 --skip-data
     old_argv = sys.argv
     try:
@@ -66,10 +76,16 @@ def run_full_cycle(skip_data: bool = True) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="自动化执行：Tushare 拉取 + 全周期（扫描→AI→信号）")
+    parser = argparse.ArgumentParser(
+        description="自动化执行：Tushare 拉取 + 全周期（扫描→AI→信号）"
+    )
     parser.add_argument("--no-tushare", action="store_true", help="不拉 Tushare，只跑全周期")
     parser.add_argument("--no-full-cycle", action="store_true", help="只拉 Tushare，不跑全周期")
-    parser.add_argument("--full-cycle-with-data", action="store_true", help="全周期含数据填充（ensure_market_data，用 akshare）")
+    parser.add_argument(
+        "--full-cycle-with-data",
+        action="store_true",
+        help="全周期含数据填充（ensure_market_data，用 akshare）",
+    )
     args = parser.parse_args()
 
     code = 0

@@ -1,6 +1,7 @@
 """
 AI 分析调度：执行情绪周期、游资席位、主线题材。
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any

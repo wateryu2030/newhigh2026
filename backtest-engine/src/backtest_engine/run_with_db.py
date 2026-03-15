@@ -1,4 +1,5 @@
 """基于 DuckDB 数据与信号运行回测，返回资金曲线与风险指标。"""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -68,7 +69,12 @@ def run_backtest_from_db(
             result["error"] = "no_ohlcv"
             return result
         entries_by_date, exits_by_date = load_signals_from_db(
-            symbol, start_date, end_date, signal_source=signal_source, strategy_id=strategy_id, conn=conn
+            symbol,
+            start_date,
+            end_date,
+            signal_source=signal_source,
+            strategy_id=strategy_id,
+            conn=conn,
         )
         date_index = pd.DatetimeIndex(ohlcv_df["date"])
         entries, exits = _align_signals_to_dates(date_index, entries_by_date, exits_by_date)
@@ -103,7 +109,11 @@ def run_backtest_from_db(
         except Exception:
             pass
         try:
-            result["trade_count"] = len(pf.trades.records_readable) if hasattr(pf, "trades") and pf.trades is not None else None
+            result["trade_count"] = (
+                len(pf.trades.records_readable)
+                if hasattr(pf, "trades") and pf.trades is not None
+                else None
+            )
         except Exception:
             pass
     except Exception as e:
@@ -129,7 +139,7 @@ def _metrics_from_equity_curve(equity_curve: List[Dict[str, Any]]) -> Dict[str, 
         out["max_drawdown"] = float(dd.min()) if len(dd.dropna()) else None
         rets = vals.pct_change().dropna()
         if len(rets) > 0 and rets.std() != 0:
-            out["sharpe_ratio"] = float(rets.mean() / rets.std() * (252 ** 0.5))
+            out["sharpe_ratio"] = float(rets.mean() / rets.std() * (252**0.5))
     except Exception:
         pass
     return out

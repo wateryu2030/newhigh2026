@@ -1,6 +1,7 @@
 """
 Binance K 线数据源（公开 API）：拉取现货 K 线写入 binance_klines 表。
 """
+
 from __future__ import annotations
 
 import os
@@ -78,13 +79,33 @@ class BinanceKlinesSource(BaseDataSource):
             return __import__("pandas").DataFrame()
         if not rows:
             return pd.DataFrame()
-        df = pd.DataFrame(rows, columns=[
-            "open_time", "open", "high", "low", "close", "volume",
-            "close_time", "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore",
-        ])
-        df = df.astype({
-            "open_time": int, "open": float, "high": float, "low": float, "close": float, "volume": float,
-        })
+        df = pd.DataFrame(
+            rows,
+            columns=[
+                "open_time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "close_time",
+                "quote_volume",
+                "trades",
+                "taker_buy_base",
+                "taker_buy_quote",
+                "ignore",
+            ],
+        )
+        df = df.astype(
+            {
+                "open_time": int,
+                "open": float,
+                "high": float,
+                "low": float,
+                "close": float,
+                "volume": float,
+            }
+        )
         df["symbol"] = sym
         df["interval"] = inv
         return df[["symbol", "interval", "open_time", "open", "high", "low", "close", "volume"]]
@@ -93,6 +114,7 @@ class BinanceKlinesSource(BaseDataSource):
         if data is None or (hasattr(data, "empty") and data.empty):
             return 0
         import pandas as pd
+
         if not isinstance(data, pd.DataFrame):
             return 0
         _ensure_binance_table(conn)
@@ -107,16 +129,24 @@ class BinanceKlinesSource(BaseDataSource):
         except Exception:
             for _, row in data.iterrows():
                 try:
-                    conn.execute("""
+                    conn.execute(
+                        """
                         INSERT INTO binance_klines (symbol, interval, open_time, open, high, low, close, volume)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         ON CONFLICT (symbol, interval, open_time) DO UPDATE SET
                         open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, volume=EXCLUDED.volume
-                    """, [
-                        row["symbol"], row["interval"], int(row["open_time"]),
-                        float(row["open"]), float(row["high"]), float(row["low"]),
-                        float(row["close"]), float(row["volume"]),
-                    ])
+                    """,
+                        [
+                            row["symbol"],
+                            row["interval"],
+                            int(row["open_time"]),
+                            float(row["open"]),
+                            float(row["high"]),
+                            float(row["low"]),
+                            float(row["close"]),
+                            float(row["volume"]),
+                        ],
+                    )
                 except Exception:
                     pass
         return int(len(data))

@@ -1,6 +1,7 @@
 """
 JWT 签发与校验：SECRET_KEY、过期时间；可选启用后对 /api/* 除 /api/auth/login、/health 外校验。
 """
+
 from __future__ import annotations
 
 import os

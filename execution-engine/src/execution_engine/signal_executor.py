@@ -2,6 +2,7 @@
 信号执行器：根据 trade_signals.signal_score 决定买卖（可接实盘/模拟）。
 规则：signal_score > 0.7 执行买入，< 0.3 执行卖出。
 """
+
 from __future__ import annotations
 
 from typing import List, Tuple
@@ -17,15 +18,19 @@ def get_actionable_signals(
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
+
         if not os.path.isfile(get_db_path()):
             return buys, sells
         conn = get_conn(read_only=True)
-        df = conn.execute("""
+        df = conn.execute(
+            """
             SELECT code, signal, confidence, target_price, stop_loss, signal_score, snapshot_time
             FROM trade_signals
             ORDER BY snapshot_time DESC
             LIMIT ?
-        """, [limit * 2]).fetchdf()
+        """,
+            [limit * 2],
+        ).fetchdf()
         conn.close()
         if df is None or df.empty:
             return buys, sells

@@ -6,6 +6,7 @@
 - 数据管道 API：/api/market/realtime, /api/market/limitup, /api/market/fundflow
 使用 TestClient 进程内检查（无需先启动服务）；若需测已启动服务可设 USE_LIVE=1。
 """
+
 from __future__ import annotations
 
 import os
@@ -17,25 +18,34 @@ for d in ["gateway/src", "core/src", "data-engine/src", "data-pipeline/src"]:
     if os.path.isdir(p) and p not in sys.path:
         sys.path.insert(0, p)
 
+
 def main() -> int:
     import json
+
     use_live = os.environ.get("USE_LIVE", "").strip().lower() in ("1", "true", "yes")
     results = []
 
     if use_live:
         import urllib.request
+
         base = os.environ.get("API_BASE", "http://127.0.0.1:8000")
+
         def get(path: str) -> tuple[int, dict | list]:
             try:
-                req = urllib.request.Request(f"{base}{path}", headers={"Accept": "application/json"})
+                req = urllib.request.Request(
+                    f"{base}{path}", headers={"Accept": "application/json"}
+                )
                 with urllib.request.urlopen(req, timeout=15) as r:
                     return r.status, json.loads(r.read().decode())
             except Exception as e:
                 return 0, {"error": str(e)}
+
     else:
         from fastapi.testclient import TestClient
         from gateway.app import app
+
         client = TestClient(app)
+
         def get(path: str) -> tuple[int, dict | list]:
             try:
                 r = client.get(path, timeout=15)
@@ -50,7 +60,11 @@ def main() -> int:
 
     # 2. MVP 数据桥
     status, body = get("/api/dashboard")
-    ok = status == 200 and isinstance(body, dict) and ("total_equity" in body or "equity_curve" in body)
+    ok = (
+        status == 200
+        and isinstance(body, dict)
+        and ("total_equity" in body or "equity_curve" in body)
+    )
     results.append(("MVP Dashboard /api/dashboard", ok, f"status={status}"))
 
     status, body = get("/api/stocks?limit=5")
@@ -75,7 +89,7 @@ def main() -> int:
     ok = status == 200 and isinstance(body, list)
     results.append(("管道 Fundflow /api/market/fundflow", ok, f"status={status}"))
 
-    # 4. 数据状态（quant.duckdb）
+    # 4. 数据状态（quant_system.duckdb）
     status, body = get("/api/data/status")
     ok = status == 200 and isinstance(body, dict)
     results.append(("Data Status /api/data/status", ok, f"status={status}"))

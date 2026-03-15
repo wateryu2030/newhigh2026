@@ -30,10 +30,11 @@
 ### 2.2 百炼（DashScope）配置（已补齐）
 
 - **openclaw.json** 的 `models.providers` 中已增加 **dashscope**：
-  - `baseUrl`: `https://dashscope.aliyuncs.com/compatible-mode/v1`
-  - `apiKey`: 使用你提供的百炼专属 Key（sk-sp-...）
-  - 模型：`qwen-plus`（通义千问 Plus）、`qwen-turbo`（通义千问 Turbo）
-- **~/.openclaw/.env** 中已增加 `DASHSCOPE_API_KEY=sk-sp-...`，供依赖环境变量的逻辑使用。
+  - **Coding Plan 套餐**：`baseUrl` 使用 `https://coding.dashscope.aliyuncs.com/v1`，Key 用控制台「套餐专属 API Key」。
+  - 兼容模式：`baseUrl` 为 `https://dashscope.aliyuncs.com/compatible-mode/v1`。
+  - `apiKey`: 使用环境变量 `DASHSCOPE_API_KEY`（在 `.env` 或 LaunchAgent 中配置）。
+  - 模型：`qwen-max`、`qwen-plus`、`qwen-turbo`。
+- **~/.openclaw/.env** 中已增加 `DASHSCOPE_API_KEY`，供 Gateway 进程使用。
 
 使用 OpenClaw 时，可在模型选择处选用「通义千问 Plus（百炼）」或「通义千问 Turbo（百炼）」以走百炼 API。
 
@@ -66,8 +67,45 @@ bash scripts/open_openclaw.sh
 
 ---
 
-## 四、小结
+## 四、百炼 Coding Plan 与 VPN
+
+- **Coding Plan**：若订阅的是「Coding Plan」，必须使用 Base URL `https://coding.dashscope.aliyuncs.com/v1` 和该套餐页的「套餐专属 API Key」，否则会 401。
+- **VPN**：LaunchAgent 已设置 `NO_PROXY=*.aliyuncs.com,*.alibaba.com`，请求阿里云时不走系统代理，避免 VPN 导致超时或连不上。若仍异常，可尝试关闭 VPN 后重试，或在本机网络设置中对 `*.aliyuncs.com` 做分流。
+- **验证 Key**：`bash scripts/test_dashscope_key.sh`（脚本默认使用 Coding Plan 的 Base URL）。
+
+---
+
+## 五、Gateway 无法打开时（required secrets are unavailable）
+
+**现象**：Dashboard 打不开、`openclaw doctor` 报 `Gateway not running`，Last gateway error 为：
+```text
+Startup failed: required secrets are unavailable.
+SecretRefResolutionError: Environment variable "VOLCENGINE_API_KEY" is missing or empty.
+```
+
+**原因**：`openclaw.json` 里配置了 `volcengine` / `moonshot` 等 provider，且引用 `${VOLCENGINE_API_KEY}`、`${MOONSHOT_API_KEY}`。LaunchAgent 启动 Gateway 时**不会**自动加载 `~/.openclaw/.env`，导致进程环境中没有这两个变量，Gateway 视为“必需密钥缺失”而拒绝启动。
+
+**修复**：在 LaunchAgent 的 plist 中为这两个变量注入占位值（无需真实 Key，仅用于通过启动校验）：
+
+```bash
+# 注入环境变量（若键已存在可改用 Set）
+/usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:VOLCENGINE_API_KEY string 'optional'" ~/Library/LaunchAgents/ai.openclaw.gateway.plist 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Set :EnvironmentVariables:VOLCENGINE_API_KEY 'optional'" ~/Library/LaunchAgents/ai.openclaw.gateway.plist
+/usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:MOONSHOT_API_KEY string 'optional'" ~/Library/LaunchAgents/ai.openclaw.gateway.plist 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Set :EnvironmentVariables:MOONSHOT_API_KEY 'optional'" ~/Library/LaunchAgents/ai.openclaw.gateway.plist
+
+# 重启 Gateway
+launchctl bootout gui/$(id -u)/ai.openclaw.gateway
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.gateway.plist
+```
+
+完成后 `http://127.0.0.1:18789/` 应返回 200，Dashboard 可正常打开。
+
+---
+
+## 六、小结
 
 - **本机已安装 OpenClaw**，配置目录与主配置完整。
-- **百炼 API Key 已接入**：在 `~/.openclaw/openclaw.json` 中增加了 dashscope 提供方，并在 `~/.openclaw/.env` 中设置了 `DASHSCOPE_API_KEY`。
+- **百炼**：已按 Coding Plan 配置 `coding.dashscope.aliyuncs.com/v1` 及套餐专属 Key；VPN 环境下通过 NO_PROXY 直连阿里云。
 - **红山项目侧**：OPENCLAW 控制文件、项目 .env、Cursor 规则与启动脚本均就绪；在项目根执行 `bash scripts/open_openclaw.sh` 即可加载项目 .env 并检查/启动 Gateway。
+- **Gateway 无法启动**：若报 `VOLCENGINE_API_KEY` / `MOONSHOT_API_KEY` 缺失，按第五节在 LaunchAgent 中注入占位值并重启即可。

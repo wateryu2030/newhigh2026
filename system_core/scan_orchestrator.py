@@ -1,6 +1,7 @@
 """
 市场扫描调度：执行 limit_up、fund_flow、volume_spike、trend 扫描与 hotmoney_sniper。
 """
+
 from __future__ import annotations
 
 from typing import Dict, Any

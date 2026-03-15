@@ -2,6 +2,7 @@
 Strategy Pool — 策略池
 策略生命周期：candidate → backtested → approved → live → suspended → retired
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -9,12 +10,12 @@ from typing import Any, Dict, List, Optional
 
 
 class StrategyStatus(str, Enum):
-    CANDIDATE = "candidate"      # AI 生成，待回测
-    BACKTESTED = "backtested"   # 已回测，待评分
-    APPROVED = "approved"       # Alpha 达标，待上线
-    LIVE = "live"              # 实盘运行
-    SUSPENDED = "suspended"    # 暂停（风控/回撤）
-    RETIRED = "retired"        # 淘汰
+    CANDIDATE = "candidate"  # AI 生成，待回测
+    BACKTESTED = "backtested"  # 已回测，待评分
+    APPROVED = "approved"  # Alpha 达标，待上线
+    LIVE = "live"  # 实盘运行
+    SUSPENDED = "suspended"  # 暂停（风控/回撤）
+    RETIRED = "retired"  # 淘汰
 
 
 @dataclass

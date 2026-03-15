@@ -1,6 +1,7 @@
 """
 A 股日 K 线数据源：支持按全局最新日期增量拉取多标的。
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -58,7 +59,7 @@ class AShareDailyKlineSource(BaseDataSource):
             return pd.DataFrame()
         out = []
         for code in codes:
-            code = str(code).strip().split(".")[0]
+            code = str(code).strip().split(".", maxsplit=1)[0]
             if not code or len(code) < 5:
                 continue
             df = None
@@ -83,10 +84,16 @@ class AShareDailyKlineSource(BaseDataSource):
                 continue
             df = df.copy()
             df["code"] = code
-            df = df.rename(columns={
-                "开盘": "open", "收盘": "close", "最高": "high", "最低": "low",
-                "成交量": "volume", "成交额": "amount",
-            })
+            df = df.rename(
+                columns={
+                    "开盘": "open",
+                    "收盘": "close",
+                    "最高": "high",
+                    "最低": "low",
+                    "成交量": "volume",
+                    "成交额": "amount",
+                }
+            )
             df["date"] = pd.to_datetime(df[col_date]).dt.date
             df = df[["code", "date", "open", "high", "low", "close", "volume", "amount"]]
             out.append(df)
@@ -98,9 +105,11 @@ class AShareDailyKlineSource(BaseDataSource):
         if data is None or (hasattr(data, "empty") and data.empty):
             return 0
         import pandas as pd
+
         if not isinstance(data, pd.DataFrame):
             return 0
         from ..storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
         conn.register("tmp", data)
         conn.execute("""
@@ -118,6 +127,7 @@ class AShareDailyKlineSource(BaseDataSource):
     ) -> int:
         """若未传 codes 则从 a_stock_daily / a_stock_basic 取。"""
         from ..storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
         if codes is None:
             try:

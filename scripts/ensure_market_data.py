@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-自动化填充 market.duckdb，保证有足够数据量支撑情绪周期、游资席位、主线题材等分析。
+自动化填充 quant_system.duckdb，保证有足够数据量支撑情绪周期、游资席位、主线题材等分析。
 顺序：股票池 → 日K线(批量) → 涨停池/龙虎榜/资金流 → 可选实时行情。
 可单独运行或由 run_full_cycle.py 调用。
 """
+
 from __future__ import annotations
 
 import argparse
@@ -21,6 +22,7 @@ for d in ["data-pipeline/src", "core/src"]:
 
 def _ensure_tables() -> None:
     from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+
     conn = get_conn(read_only=False)
     ensure_tables(conn)
     conn.close()
@@ -28,6 +30,7 @@ def _ensure_tables() -> None:
 
 def _update_stock_list() -> int:
     from data_pipeline.collectors.stock_list import update_stock_list
+
     return update_stock_list()
 
 
@@ -71,21 +74,25 @@ def _update_daily_kline_batch(
 
 def _update_limitup() -> int:
     from data_pipeline.collectors.limit_up import update_limitup
+
     return update_limitup()
 
 
 def _update_longhubang() -> int:
     from data_pipeline.collectors.longhubang import update_longhubang
+
     return update_longhubang()
 
 
 def _update_fundflow() -> int:
     from data_pipeline.collectors.fund_flow import update_fundflow
+
     return update_fundflow()
 
 
 def _update_realtime() -> int:
     from data_pipeline.collectors.realtime_quotes import update_realtime_quotes
+
     return update_realtime_quotes()
 
 
@@ -110,7 +117,7 @@ def run(
         "realtime": 0,
     }
 
-    print("Ensuring market.duckdb tables...")
+    print("Ensuring quant_system.duckdb tables...")
     _ensure_tables()
 
     print("Updating stock list (a_stock_basic)...")
@@ -149,11 +156,26 @@ def run(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Fill market.duckdb for AI analysis (emotion/hotmoney/sector).")
-    parser.add_argument("--days", type=int, default=250, help="Days of history for daily klines (default 250)")
-    parser.add_argument("--max-symbols", type=int, default=800, help="Max symbols to fetch klines for (default 800)")
-    parser.add_argument("--delay", type=float, default=0.15, help="Delay between kline requests in seconds (default 0.15)")
-    parser.add_argument("--skip-kline", action="store_true", help="Skip daily kline batch (only list + limitup + longhubang + fundflow)")
+    parser = argparse.ArgumentParser(
+        description="Fill quant_system.duckdb for AI analysis (emotion/hotmoney/sector)."
+    )
+    parser.add_argument(
+        "--days", type=int, default=250, help="Days of history for daily klines (default 250)"
+    )
+    parser.add_argument(
+        "--max-symbols", type=int, default=800, help="Max symbols to fetch klines for (default 800)"
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=0.15,
+        help="Delay between kline requests in seconds (default 0.15)",
+    )
+    parser.add_argument(
+        "--skip-kline",
+        action="store_true",
+        help="Skip daily kline batch (only list + limitup + longhubang + fundflow)",
+    )
     parser.add_argument("--realtime", action="store_true", help="Also update realtime quotes")
     args = parser.parse_args()
 

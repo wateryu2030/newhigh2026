@@ -1,5 +1,7 @@
 """A股股票池：沪A+深A+北交所，来自 akshare。"""
+
 from __future__ import annotations
+
 
 def update_stock_list() -> int:
     try:

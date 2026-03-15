@@ -4,6 +4,7 @@ import random
 from typing import Dict, List
 from .gene import StrategyGene
 
+
 def crossover(parent1: StrategyGene, parent2: StrategyGene) -> StrategyGene:
     c = parent1.copy()
     if random.random() < 0.5 and parent2.rule_tree:
@@ -21,6 +22,7 @@ def crossover(parent1: StrategyGene, parent2: StrategyGene) -> StrategyGene:
                 c.params[k] = v
     return c
 
+
 def mutate(gene: StrategyGene, mutation_rate: float = 0.1) -> StrategyGene:
     c = gene.copy()
     for k in list(c.params.keys()):
@@ -29,12 +31,17 @@ def mutate(gene: StrategyGene, mutation_rate: float = 0.1) -> StrategyGene:
             c.params[k] = c.params[k] + delta
     return c
 
-def selection(population: List[Dict], fitness_scores: List[float], elite_size: int = 2) -> List[StrategyGene]:
+
+def selection(
+    population: List[Dict], fitness_scores: List[float], elite_size: int = 2
+) -> List[StrategyGene]:
     if not population or not fitness_scores or len(population) != len(fitness_scores):
         return []
     indexed = list(zip(population, fitness_scores))
     indexed.sort(key=lambda x: (x[1] or 0), reverse=True)
-    elites = [StrategyGene.from_dict(p) if isinstance(p, dict) else p for p, _ in indexed[:elite_size]]
+    elites = [
+        StrategyGene.from_dict(p) if isinstance(p, dict) else p for p, _ in indexed[:elite_size]
+    ]
     rest = indexed[elite_size:]
     if not rest:
         return elites

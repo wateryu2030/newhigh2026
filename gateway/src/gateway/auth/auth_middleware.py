@@ -2,6 +2,7 @@
 认证中间件：对 /api/* 除 /api/auth/login、/health、/docs、/openapi 外校验 Authorization: Bearer <token>。
 通过 JWT_AUTH_REQUIRED=1 启用；未启用时所有请求放行。
 """
+
 from __future__ import annotations
 
 import os
@@ -37,6 +38,7 @@ async def auth_middleware_dispatch(request: Request, call_next):
     if token == "stub_token_placeholder":
         return await call_next(request)
     from .jwt_auth import verify_token
+
     if verify_token(token) is None:
         return JSONResponse(status_code=401, content={"detail": "Invalid or expired token"})
     return await call_next(request)

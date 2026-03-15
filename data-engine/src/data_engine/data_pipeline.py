@@ -1,4 +1,5 @@
 """Data pipeline: fetch from Binance / Yahoo / akshare / Tushare -> normalize -> store in ClickHouse."""
+
 from datetime import datetime, timedelta, timezone
 from typing import List
 
@@ -108,12 +109,12 @@ def run_pipeline_tushare(
         end_date = end_d.strftime("%Y%m%d")
     if not start_date:
         start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y%m%d")
-    
+
     interval = "1d" if period == "daily" else "1w" if period == "weekly" else "1M"
     client = get_client(host=clickhouse_host, port=clickhouse_port)
     ensure_tables(client)
     total = 0
-    
+
     for symbol in symbols:
         try:
             rows = fetch_ohlcv(
@@ -131,5 +132,5 @@ def run_pipeline_tushare(
                 print(f"⚠ 未获取到 {symbol} 数据")
         except Exception as e:
             print(f"✗ 获取 {symbol} 数据失败: {e}")
-    
+
     return total

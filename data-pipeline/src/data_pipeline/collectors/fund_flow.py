@@ -1,7 +1,9 @@
 """个股资金流排名：主力净流入等，写入 a_stock_fundflow。"""
+
 from __future__ import annotations
 
-import datetime
+import datetime as dt
+
 
 def update_fundflow() -> int:
     try:
@@ -14,7 +16,7 @@ def update_fundflow() -> int:
     df = ak.stock_individual_fund_flow_rank(indicator="今日")
     if df is None or df.empty:
         return 0
-    now = datetime.datetime.now()
+    now = dt.datetime.now()
     today = now.date()
     # 列名因 akshare 版本可能为 代码/名称/主力净流入 等
     df = df.copy()

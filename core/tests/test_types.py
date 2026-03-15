@@ -1,4 +1,5 @@
 """Tests for core types."""
+
 from datetime import datetime
 
 import pytest

@@ -9,7 +9,7 @@ data_pipeline:
       - binance
       - yahoo_finance
       - akshare   # A 股 + 北交所 日线/分钟线（东方财富等网络拉取）
-      - local_duckdb   # newhigh/data/quant.duckdb，由 copy 脚本复制 + ensure_ashare_data_completeness 自动补全
+      - local_duckdb   # newhigh/data/quant_system.duckdb，由 copy 脚本复制 + ensure_ashare_data_completeness 自动补全
 
   storage:
     market_data:

@@ -3,6 +3,7 @@
 游资狙击回测：T 日识别 → T+1 买入 → T+3 卖出。
 输出：胜率、平均收益、最大回撤（占位）。
 """
+
 from __future__ import annotations
 
 import os
@@ -20,6 +21,7 @@ def load_sniper_signals(limit: int = 200) -> list:
     """从 sniper_candidates 历史或当前快照加载（当前实现为当前快照）。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
         if not os.path.isfile(get_db_path()):
             return []
         conn = get_conn(read_only=True)
@@ -54,6 +56,7 @@ def sniper_backtest(holding_days: int = 3) -> dict:
     """
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
         if not os.path.isfile(get_db_path()):
             return {"win_rate": None, "avg_return": None, "max_drawdown": None, "trades": 0}
         conn = get_conn(read_only=True)
@@ -78,11 +81,14 @@ def sniper_backtest(holding_days: int = 3) -> dict:
                 continue
             # T+holding_days：取之后第 holding_days 个交易日
             try:
-                next_dates = conn.execute("""
+                next_dates = conn.execute(
+                    """
                     SELECT date FROM a_stock_daily
                     WHERE code = ? AND date > ?
                     ORDER BY date LIMIT ?
-                """, [code, latest, holding_days]).fetchdf()
+                """,
+                    [code, latest, holding_days],
+                ).fetchdf()
                 if next_dates is None or len(next_dates) < holding_days:
                     continue
                 sell_date = next_dates["date"].iloc[holding_days - 1]
@@ -101,9 +107,20 @@ def sniper_backtest(holding_days: int = 3) -> dict:
         avg_return = sum(returns) / len(returns)
         # 最大回撤占位
         max_drawdown = None
-        return {"win_rate": win_rate, "avg_return": avg_return, "max_drawdown": max_drawdown, "trades": len(returns)}
+        return {
+            "win_rate": win_rate,
+            "avg_return": avg_return,
+            "max_drawdown": max_drawdown,
+            "trades": len(returns),
+        }
     except Exception as e:
-        return {"win_rate": None, "avg_return": None, "max_drawdown": None, "trades": 0, "error": str(e)}
+        return {
+            "win_rate": None,
+            "avg_return": None,
+            "max_drawdown": None,
+            "trades": 0,
+            "error": str(e),
+        }
 
 
 def main() -> int:

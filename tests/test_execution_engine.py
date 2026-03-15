@@ -1,9 +1,11 @@
 """Integration tests for execution engine (order lifecycle, simulated)."""
+
 import pytest
 
 
 def test_order_state_enum():
     from execution_engine.order_lifecycle import OrderState
+
     assert OrderState.NEW.value == "new"
     assert OrderState.FILLED.value == "filled"
 

@@ -1,6 +1,7 @@
 """
 策略基因表示：可序列化的规则树 + 参数，供遗传操作与回测。
 """
+
 from __future__ import annotations
 
 import copy
@@ -12,7 +13,7 @@ class StrategyGene:
 
     def __init__(self, rule_tree: Dict[str, Any], params: Dict[str, Any], strategy_id: str = ""):
         self.rule_tree = rule_tree  # 如 {'and': [{'>': ('emotion_cycle', 0.8)}, {'in': ('hotmoney_seat', 'top3')}]}
-        self.params = params        # 如 {'position_pct': 0.1, 'stop_loss': 0.05}
+        self.params = params  # 如 {'position_pct': 0.1, 'stop_loss': 0.05}
         self.strategy_id = strategy_id or ""
 
     def to_dict(self) -> Dict[str, Any]:

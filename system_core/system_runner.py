@@ -1,6 +1,7 @@
 """
 统一系统运行入口：数据更新 → 市场扫描 → AI 分析 → 策略生成 → 系统监控，循环执行。
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +13,13 @@ import time
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
-for _d in ["data-pipeline/src", "market-scanner/src", "ai-models/src", "strategy-engine/src", "core/src"]:
+for _d in [
+    "data-pipeline/src",
+    "market-scanner/src",
+    "ai-models/src",
+    "strategy-engine/src",
+    "core/src",
+]:
     _p = os.path.join(_ROOT, _d)
     if os.path.isdir(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
@@ -21,6 +28,7 @@ if os.path.isdir(_opt) and _opt not in sys.path:
     sys.path.insert(0, _opt)
 try:
     from core.logging_config import configure_logging
+
     configure_logging()
 except Exception:
     pass
@@ -118,8 +126,12 @@ def main() -> int:
     parser.add_argument("--no-scan", action="store_true", help="跳过扫描")
     parser.add_argument("--no-ai", action="store_true", help="跳过 AI 分析")
     parser.add_argument("--no-strategy", action="store_true", help="跳过策略生成")
-    parser.add_argument("--daily-kline", action="store_true", help="本轮包含日 K 批量更新（仅 once 或首轮有效）")
-    parser.add_argument("--daily-kline-limit", type=int, default=0, help="日 K 更新标的数上限（默认 0 不更新）")
+    parser.add_argument(
+        "--daily-kline", action="store_true", help="本轮包含日 K 批量更新（仅 once 或首轮有效）"
+    )
+    parser.add_argument(
+        "--daily-kline-limit", type=int, default=0, help="日 K 更新标的数上限（默认 0 不更新）"
+    )
     args = parser.parse_args()
 
     os.chdir(_ROOT)

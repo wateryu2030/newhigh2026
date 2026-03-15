@@ -1,6 +1,7 @@
 """
 Tushare A 股日 K 数据源：需 TUSHARE_TOKEN，拉取后写入 a_stock_daily。
 """
+
 from __future__ import annotations
 
 import os
@@ -74,15 +75,17 @@ class TushareDailySource(BaseDataSource):
             df = df.copy()
             code = tc.split(".")[0] if "." in tc else tc
             df["code"] = code
-            df = df.rename(columns={
-                "trade_date": "date",
-                "open": "open",
-                "high": "high",
-                "low": "low",
-                "close": "close",
-                "vol": "volume",
-                "amount": "amount",
-            })
+            df = df.rename(
+                columns={
+                    "trade_date": "date",
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "vol": "volume",
+                    "amount": "amount",
+                }
+            )
             if "date" not in df.columns and "trade_date" in df.columns:
                 df["date"] = pd.to_datetime(df["trade_date"]).dt.date
             cols = ["code", "date", "open", "high", "low", "close", "volume", "amount"]
@@ -99,9 +102,11 @@ class TushareDailySource(BaseDataSource):
         if data is None or (hasattr(data, "empty") and data.empty):
             return 0
         import pandas as pd
+
         if not isinstance(data, pd.DataFrame):
             return 0
         from ..storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
         conn.register("tmp_ts", data)
         conn.execute("""
@@ -114,15 +119,23 @@ class TushareDailySource(BaseDataSource):
         return int(len(data))
 
     def run_incremental(
-        self, conn: Any, force_full: bool = False, ts_codes: Optional[List[str]] = None, **kwargs: Any
+        self,
+        conn: Any,
+        force_full: bool = False,
+        ts_codes: Optional[List[str]] = None,
+        **kwargs: Any,
     ) -> int:
         from ..storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
         if ts_codes is None:
             try:
                 df = conn.execute("SELECT DISTINCT code FROM a_stock_daily LIMIT 3000").fetchdf()
                 if df is not None and not df.empty:
-                    ts_codes = [str(c) + ".SZ" if str(c).startswith(("0", "3")) else str(c) + ".SH" for c in df["code"]]
+                    ts_codes = [
+                        str(c) + ".SZ" if str(c).startswith(("0", "3")) else str(c) + ".SH"
+                        for c in df["code"]
+                    ]
             except Exception:
                 pass
         if not ts_codes:

@@ -1,6 +1,7 @@
 """
 PostgreSQL 适配器（占位）：交易库订单/持仓。当前未启用，交易数据仍用 DuckDB。
 """
+
 from __future__ import annotations
 
 from typing import Any, List, Optional
@@ -9,11 +10,13 @@ from typing import Any, List, Optional
 def get_trade_conn() -> Optional[Any]:
     """返回 PostgreSQL 连接；未配置 DATABASE_URL 时返回 None。"""
     import os
+
     url = os.environ.get("DATABASE_URL", "").strip()
     if not url:
         return None
     try:
         import psycopg2
+
         return psycopg2.connect(url)
     except Exception:
         return None

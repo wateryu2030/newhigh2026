@@ -1,4 +1,5 @@
 """Rebalance: compute target positions from weights and current positions."""
+
 from typing import Dict
 
 
@@ -32,7 +33,4 @@ def rebalance_deltas(
 ) -> Dict[str, float]:
     """Return delta units to trade: target_units - current_units."""
     targets = rebalance(weights, prices, capital, current_positions)
-    return {
-        s: targets[s] - current_positions.get(s, 0.0)
-        for s in targets
-    }
+    return {s: targets[s] - current_positions.get(s, 0.0) for s in targets}

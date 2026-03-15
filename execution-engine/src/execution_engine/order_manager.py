@@ -1,4 +1,5 @@
 """Order manager: fetch positions, aggregate place/cancel."""
+
 from typing import Any, Dict, List, Optional
 
 from core import Position
@@ -16,13 +17,16 @@ def fetch_positions(
     Returns list of Position (symbol, side, quantity, entry_price, unrealized_pnl).
     """
     import os
+
     api_key = api_key or os.environ.get("BINANCE_API_KEY", "")
     api_secret = api_secret or os.environ.get("BINANCE_API_SECRET", "")
     if not api_key:
         return []
     # Spot account balances
     try:
-        acc = _signed_request("GET", "/api/v3/account", base_url=base_url, api_key=api_key, api_secret=api_secret)
+        acc = _signed_request(
+            "GET", "/api/v3/account", base_url=base_url, api_key=api_key, api_secret=api_secret
+        )
     except Exception:
         return []
     positions = []

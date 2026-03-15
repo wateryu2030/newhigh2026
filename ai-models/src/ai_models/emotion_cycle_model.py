@@ -2,6 +2,7 @@
 AI情绪周期识别系统：涨停数量、连板高度、成交额 → 冰点/启动/主升/高潮/退潮。
 决定仓位与风格。
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -15,6 +16,7 @@ class EmotionCycleModel:
         if self._connection is not None:
             return self._connection
         from ._storage import _get_conn
+
         return _get_conn()
 
     def calculate_metrics(self):
@@ -22,9 +24,11 @@ class EmotionCycleModel:
         conn = self._get_connection()
         if conn is None:
             from ._storage import _get_conn
+
             conn = _get_conn()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -52,7 +56,15 @@ class EmotionCycleModel:
         if volume is None or volume.empty:
             volume = pd.DataFrame(columns=["trade_date", "market_volume"])
         if limitup.empty and volume.empty:
-            return pd.DataFrame(columns=["trade_date", "limitup_count", "max_height", "market_volume", "emotion_state"])
+            return pd.DataFrame(
+                columns=[
+                    "trade_date",
+                    "limitup_count",
+                    "max_height",
+                    "market_volume",
+                    "emotion_state",
+                ]
+            )
         if limitup.empty:
             limitup["limitup_count"] = 0
             limitup["max_height"] = 0
@@ -67,7 +79,15 @@ class EmotionCycleModel:
         if df is None:
             df = self.calculate_metrics()
         if df is None or df.empty:
-            df = pd.DataFrame(columns=["trade_date", "limitup_count", "max_height", "market_volume", "emotion_state"])
+            df = pd.DataFrame(
+                columns=[
+                    "trade_date",
+                    "limitup_count",
+                    "max_height",
+                    "market_volume",
+                    "emotion_state",
+                ]
+            )
             return df
         states = []
         for _, row in df.iterrows():
@@ -97,6 +117,7 @@ class EmotionCycleModel:
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -129,7 +150,13 @@ class EmotionCycleModel:
                 }
         except Exception:
             pass
-        return {"trade_date": None, "limitup_count": 0, "max_height": 0, "market_volume": 0, "emotion_state": "—"}
+        return {
+            "trade_date": None,
+            "limitup_count": 0,
+            "max_height": 0,
+            "market_volume": 0,
+            "emotion_state": "—",
+        }
 
 
 def run_emotion_cycle() -> str:
@@ -142,9 +169,11 @@ def run_emotion_cycle() -> str:
         return str(latest.get("emotion_state", "—"))
     # 回退：仅用 limitup 总数
     from ._storage import _get_conn
+
     conn = _get_conn()
     try:
         from data_pipeline.storage.duckdb_manager import ensure_tables
+
         ensure_tables(conn)
         row = conn.execute("SELECT COUNT(*) FROM a_stock_limitup").fetchone()
         n = int(row[0]) if row and row[0] is not None else 0

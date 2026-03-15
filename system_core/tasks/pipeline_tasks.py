@@ -1,8 +1,11 @@
 """Celery 任务：全周期链式调用 data → scan → ai → strategy，供 worker 与 beat 调用。"""
+
 from __future__ import annotations
+
 
 def _run_full_cycle_sync() -> dict:
     from system_core.system_runner import run_once
+
     return run_once(
         run_data=True,
         run_scan=True,
@@ -11,6 +14,7 @@ def _run_full_cycle_sync() -> dict:
         data_include_daily_kline=False,
         data_daily_kline_limit=0,
     )
+
 
 try:
     from system_core.celery_app import app
@@ -31,6 +35,7 @@ if app is not None:
         from system_core.tasks.scan_tasks import run_scan_task
         from system_core.tasks.ai_tasks import run_ai_task
         from system_core.tasks.strategy_tasks import run_strategy_task
+
         return chain(
             run_data_task.s(),
             run_scan_task.s(),
@@ -43,6 +48,7 @@ if app is not None:
         """OpenClaw 进化周期：从策略市场加载种群，遗传操作，回测评估，优秀个体写回。"""
         try:
             from openclaw_engine import run_evolution_cycle
+
             return run_evolution_cycle(population_limit=population_limit, symbol=symbol)
         except Exception as e:
             return {"error": str(e), "saved": 0}

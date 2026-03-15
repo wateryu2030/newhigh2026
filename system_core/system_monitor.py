@@ -1,6 +1,7 @@
 """
 系统监控：汇总 data_status、scanner_status、ai_status、strategy_status，写入 system_status 表。
 """
+
 from __future__ import annotations
 
 import json
@@ -14,6 +15,7 @@ def collect_status(
     strategy_result: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, str]:
     """将各编排器结果转为简短状态字符串。"""
+
     def _summarize(name: str, r: Optional[Dict[str, Any]]) -> str:
         if r is None:
             return "not_run"
@@ -50,6 +52,7 @@ def write_status(
     """写入 system_status 表；同步写入 OpenClaw 进化任务与 Skill 统计（若表有对应列）。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+
         conn = get_conn(read_only=False)
         ensure_tables(conn)
         # 尝试读取最新进化任务与 Skill 统计（供 OpenClaw 前端展示）
@@ -64,7 +67,9 @@ def write_status(
         except Exception:
             pass
         try:
-            r = conn.execute("SELECT call_count, last_call_time FROM skill_stats LIMIT 1").fetchone()
+            r = conn.execute(
+                "SELECT call_count, last_call_time FROM skill_stats LIMIT 1"
+            ).fetchone()
             if r:
                 skill_count, skill_time = int(r[0] or 0), r[1]
         except Exception:
@@ -77,9 +82,15 @@ def write_status(
                     skill_call_count, skill_last_call_time
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 [
-                    data_status, scanner_status, ai_status, strategy_status,
-                    ev_task_id, ev_status, ev_result,
-                    skill_count, skill_time,
+                    data_status,
+                    scanner_status,
+                    ai_status,
+                    strategy_status,
+                    ev_task_id,
+                    ev_status,
+                    ev_result,
+                    skill_count,
+                    skill_time,
                 ],
             )
         except Exception:

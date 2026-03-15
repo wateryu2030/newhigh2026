@@ -1,10 +1,13 @@
 """Tests for strategy pool."""
+
 from evolution_engine import StrategyPool, StrategyRecord, StrategyStatus
 
 
 def test_pool_add_get():
     pool = StrategyPool()
-    r = StrategyRecord("s1", "test", "trend_following", {"fast": 10}, ["BTCUSDT"], StrategyStatus.CANDIDATE)
+    r = StrategyRecord(
+        "s1", "test", "trend_following", {"fast": 10}, ["BTCUSDT"], StrategyStatus.CANDIDATE
+    )
     pool.add(r)
     assert pool.get("s1") is not None
     assert pool.get("s1").name == "test"

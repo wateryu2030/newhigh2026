@@ -1,4 +1,5 @@
 """Feature pipeline: OHLCV -> RSI, MACD, VWAP, ATR, Momentum, Volatility -> feature matrix."""
+
 from typing import List, Optional
 
 import numpy as np
@@ -58,7 +59,9 @@ def build_feature_matrix(
     volumes = np.array([b.volume for b in ohlcv_list])
 
     rsi_arr = rsi(ohlcv_list, period=rsi_period)
-    macd_line, macd_sig, macd_hist = macd(ohlcv_list, fast=macd_fast, slow=macd_slow, signal_period=macd_signal)
+    macd_line, macd_sig, macd_hist = macd(
+        ohlcv_list, fast=macd_fast, slow=macd_slow, signal_period=macd_signal
+    )
     vwap_arr = vwap(ohlcv_list)
     atr_arr = atr(ohlcv_list, period=atr_period)
     mom_arr = momentum_returns(closes, period=momentum_period)

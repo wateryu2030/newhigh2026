@@ -2,6 +2,7 @@
 强化学习策略智能体（可选）：依赖 stable-baselines3。
 多目标（收益、回撤、换手）可通过 reward 设计融入。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -10,6 +11,7 @@ from typing import Any, Dict, Optional
 def is_rl_available() -> bool:
     try:
         import stable_baselines3  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -30,6 +32,7 @@ def train_rl_agent(
     try:
         from stable_baselines3 import PPO
         from stable_baselines3.common.env_checker import check_env
+
         # 占位：实际需注册或传入 env；这里仅返回成功 stub
         return {
             "ok": True,

@@ -1,4 +1,5 @@
 """Mean reversion strategy: RSI / Bollinger oversold-overbought."""
+
 from typing import List, Tuple
 
 import numpy as np

@@ -1,4 +1,5 @@
 """VWAP (Volume Weighted Average Price)."""
+
 from typing import List, Union
 
 import numpy as np

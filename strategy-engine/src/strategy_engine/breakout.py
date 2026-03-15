@@ -1,4 +1,5 @@
 """Breakout strategy: price breaks N-period high/low."""
+
 from typing import List, Tuple
 
 import numpy as np

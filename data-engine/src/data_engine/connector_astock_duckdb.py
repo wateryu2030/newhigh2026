@@ -2,6 +2,7 @@
 读取 newhigh 统一 DuckDB（data/quant_system.duckdb），与 data_pipeline 共用同一库。
 表结构：daily_bars, stocks, news_items（与 astock 一致）；数据可由 copy_astock_duckdb_to_newhigh.py 写入。
 """
+
 from __future__ import annotations
 
 import os
@@ -12,7 +13,7 @@ from core import OHLCV
 
 # newhigh 仓库根目录（data_engine -> src -> data-engine -> newhigh，向上 4 级）
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-_DATA_ENGINE_SRC = os.path.dirname(_THIS_DIR)   # data_engine
+_DATA_ENGINE_SRC = os.path.dirname(_THIS_DIR)  # data_engine
 _DATA_ENGINE_ROOT = os.path.dirname(_DATA_ENGINE_SRC)  # data-engine
 _NEWHIGH_ROOT = os.path.dirname(_DATA_ENGINE_ROOT)  # newhigh
 # 与 data_pipeline 统一：data/quant_system.duckdb
@@ -45,7 +46,7 @@ def _order_book_id_to_symbol(order_book_id: str) -> str:
 
 def _symbol_to_order_book_id(symbol: str) -> str:
     """newhigh symbol 或 6/8 位代码 -> astock order_book_id。600519.SH->600519.XSHG，830799.BSE->830799.BSE。"""
-    s = (symbol or "").strip().split(".")[0]
+    s = (symbol or "").strip().split(".", maxsplit=1)[0]
     if not s or len(s) < 5 or len(s) > 8:
         return symbol or ""
     if s.startswith("6"):
@@ -62,6 +63,7 @@ def _get_conn(read_only: bool = True):
         return None
     try:
         import duckdb
+
         return duckdb.connect(path, read_only=read_only)
     except Exception:
         return None
@@ -96,6 +98,7 @@ def fetch_klines_from_astock_duckdb(
     ob = _symbol_to_order_book_id(symbol)
     if not ob:
         return []
+
     # 归一化日期
     def _norm(d: str | None) -> str | None:
         if not d:
@@ -104,6 +107,7 @@ def fetch_klines_from_astock_duckdb(
         if len(d) == 8:
             return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
         return None
+
     start = _norm(start_date)
     end = _norm(end_date)
     base = (
@@ -168,16 +172,22 @@ def get_stocks_from_astock_duckdb() -> List[Tuple[str, str, str]]:
         df = conn.execute("SELECT order_book_id, symbol, name FROM stocks").fetchdf()
         if df is not None and not df.empty:
             return [
-                (str(row["order_book_id"]), str(row.get("symbol") or row["order_book_id"]), str(row.get("name") or ""))
+                (
+                    str(row["order_book_id"]),
+                    str(row.get("symbol") or row["order_book_id"]),
+                    str(row.get("name") or ""),
+                )
                 for _, row in df.iterrows()
             ]
     except Exception:
         pass
     try:
-        df = conn.execute("SELECT DISTINCT order_book_id FROM daily_bars ORDER BY order_book_id").fetchdf()
+        df = conn.execute(
+            "SELECT DISTINCT order_book_id FROM daily_bars ORDER BY order_book_id"
+        ).fetchdf()
         if df is not None and not df.empty:
             return [
-                (ob, ob.split(".")[0] if "." in ob else ob, "")
+                (ob, ob.split(".", maxsplit=1)[0], "")
                 for ob in df["order_book_id"].astype(str).tolist()
             ]
     except Exception:
@@ -191,7 +201,7 @@ def get_stocks_for_api() -> List[Dict[str, Any]]:
     out = []
     for ob, _code, name in rows:
         unified = _order_book_id_to_symbol(ob)
-        out.append({"symbol": unified, "name": name or unified.split(".")[0]})
+        out.append({"symbol": unified, "name": name or unified.split(".", maxsplit=1)[0]})
     return out
 
 
@@ -206,7 +216,9 @@ def get_duckdb_data_status() -> Dict[str, Any]:
         if stocks_n == 0:
             df = conn.execute("SELECT DISTINCT order_book_id FROM daily_bars").fetchdf()
             stocks_n = len(df) if df is not None and not df.empty else 0
-        bars = conn.execute("SELECT COUNT(*) AS n, MIN(trade_date) AS dmin, MAX(trade_date) AS dmax FROM daily_bars").fetchone()
+        bars = conn.execute(
+            "SELECT COUNT(*) AS n, MIN(trade_date) AS dmin, MAX(trade_date) AS dmax FROM daily_bars"
+        ).fetchone()
         if bars:
             return {
                 "stocks": stocks_n,
@@ -229,7 +241,7 @@ def get_news_from_astock_duckdb(
         return []
     try:
         if symbol:
-            code = (symbol or "").strip().split(".")[0]
+            code = (symbol or "").strip().split(".", maxsplit=1)[0]
             if len(code) == 6:
                 sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items WHERE symbol = ? OR symbol LIKE ? ORDER BY publish_time DESC LIMIT ?"
                 params = [code, f"{code}.%", limit]

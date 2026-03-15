@@ -1,4 +1,5 @@
 """Shared types for the AI hedge fund platform."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -7,6 +8,7 @@ from typing import Optional
 
 class Signal(str, Enum):
     """Trading signal."""
+
     BUY = "BUY"
     SELL = "SELL"
     HOLD = "HOLD"
@@ -15,6 +17,7 @@ class Signal(str, Enum):
 @dataclass
 class OHLCV:
     """Normalized OHLCV bar."""
+
     symbol: str
     timestamp: datetime
     open: float
@@ -40,6 +43,7 @@ class OHLCV:
 @dataclass
 class Position:
     """Position info."""
+
     symbol: str
     side: str  # LONG, SHORT
     quantity: float

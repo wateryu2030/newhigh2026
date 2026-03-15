@@ -1,100 +1,156 @@
 # 量化平台改进计划
-## 2026-03-12
+## 2026-03-15
 
-基于对 `newhigh` 项目的静态分析（pylint），识别出以下可落地的改进点：
+基于对 `newhigh` 项目的静态分析（pylint），识别出以下可落地的改进点。
+
+---
+
+## ✅ 已完成改进（历史回溯）
+
+### 2026-03-12
+- 自动代码格式化（autopep8）
+- pylint 评分：8.15 → 8.70/10
+
+### 2026-03-14
+- 修复 `ai_decision.py`, `notification.py` 的 logging-fstring 问题
+- 修复 `ai_fusion_strategy.py` 的导入问题
+- pylint 评分：8.87 → 9.33/10
+
+---
+
+## 2026-03-15 静态分析结果
+
+**当前 pylint 评分：9.33/10** (本月内提升 1.18 分)
+
+### 问题统计总计 59 个问题
+
+| 问题代码 | 数量 | 说明 |
+|---------|------|------|
+| C0415 (import-outside-toplevel) | 6 | 函数内的导入语句 |
+| C0301 (line-too-long) | 11 | 行超过 100 字符 |
+| R0917 (too-many-positional-arguments) | 9 | 函数参数过多 |
+| R0912 (too-many-branches) | 4 | 分支过多 |
+| R1702 (too-many-nested-blocks) | 2 | 嵌套过深 |
+| W0407 (preferred-module) | 8 | 应使用别名导入 (np, dt) |
+| W0611 (unused-import) | 4 | 未使用的导入 |
+| C0207 (use-maxsplit-arg) | 5 | split 应指定 maxsplit |
+| W0404/W0412 (reimported/ungrouped) | 2 | 重复导入/分组问题 |
+| R0801 (duplicate-code) | 2 | 重复代码块 |
+| E1101/E1123/E1120 (no-member/keyword-arg/value) | 4 | 代码逻辑问题 |
+
+### 问题文件 Top 5
+
+| 排名 | 文件 | 问题数 | 主要问题 |
+|------|------|--------|----------|
+| 1 | `data-engine/src/data_engine/connector_akshare.py` | 9 | 参数过多、嵌套深、maxsplit |
+| 2 | `data-engine/src/data_engine/connector_tushare.py` | 8 | 参数过多、return 语句多 |
+| 3 | `data-engine/src/data_engine/connector_astock_duckdb.py` | 8 | 参数过多、分支多、长行 |
+| 4 | `core/src/core/data_service/db.py` | 2 | 导入位置不当 |
+| 5 | `strategy-engine/src/strategy_engine/ai_fusion_strategy.py` | 5 | 参数过多、嵌套深 |
+
+---
 
 ## 改进点优先级排序
 
-### 1. 高优先级：修复代码规范问题（立即实施）
-**当前问题：**
-- 多个文件存在尾随空格（trailing whitespace），特别是 `data_engine/connector_tushare.py` 有超过50处
-- 导入顺序混乱，标准库导入未放在第三方库之前
-- 缺少模块/函数/类文档字符串
+### 🔴 高优先级：修复代码逻辑问题（今日实施）
 
-**预期收益：**
-- 提高代码可读性和维护性
-- 符合Python PEP8规范
-- 减少代码审查时间
+**问题 1：`data-engine/src/data_engine/connector_akshare.py:146` - 嵌套过深**
+- **问题**：6 层嵌套（限制 5）
+- **预期收益**：提高可读性
+- **具体方案**：使用提前返回（early return）减少嵌套
+- **风险**：低 (需验证逻辑)
+- **成本**：30 分钟
 
-**具体修改方案：**
-1. 运行 `autopep8` 或 `black` 自动格式化代码
-2. 添加缺失的文档字符串
-3. 重新组织导入顺序（标准库 → 第三方库 → 本地模块）
+**问题 2：`connector_akshare.py:11` 等处 - 使用 maxsplit 参数**
+- **问题**：`split('.')[0]` 应为 `split('.', maxsplit=1)[0]`
+- **预期收益**：避免意外分割
+- **具体方案**：全局替换为 maxsplit=1
+- **风险**：极低
+- **成本**：10 分钟
 
-**可能的风险：**
-- 自动格式化可能改变代码风格，需要确保不影响功能
-- 需要运行测试验证修改
+**实施计划**：
+```bash
+# 修复嵌套问题
+autopep8 --in-place --max-per-line 120 \
+  data-engine/src/data_engine/connector_akshare.py
+```
 
-### 2. 中优先级：优化异常处理模式（本周内实施）
-**当前问题：**
-- 多处使用 `except Exception:` 捕获过于宽泛的异常
-- 缺少具体的异常类型处理
-- 异常处理逻辑重复
+---
 
-**预期收益：**
-- 更精确的错误诊断和调试
-- 避免隐藏潜在的程序错误
-- 提高系统稳定性
+### 🟡 中优先级：统一导入规范（本周内实施）
 
-**具体修改方案：**
-1. 将 `except Exception:` 替换为具体的异常类型
-2. 添加异常日志记录
-3. 提取重复的异常处理代码为公共函数
+**问题：`W0407` 警告 - 应使用别名导入**
+- **文件**：`connector_akshare.py`, `connector_tushare.py`, `connector_yahoo.py`, `clickhouse_storage.py`, `realtime_stream.py`, `mean_reversion.py`, `breakout.py`
+- **问题**：`import datetime` → `import datetime as dt`, `import pandas` → `import pandas as pd`, `import numpy` → `import numpy as np`
+- **预期收益**：符合行业规范，提高代码简洁性
+- **具体方案**：
+  1. 运行 `autopep8 --in-place --aggressive` 自动修复
+  2. 手动检查保留项
+- **风险**：极低
+- **成本**：20 分钟
 
-**可能的风险：**
-- 需要仔细分析每个异常场景
-- 可能引入新的错误处理逻辑
+---
 
-### 3. 低优先级：重构复杂函数（下周计划）
-**当前问题：**
-- 多个函数参数过多（超过5个）
-- 函数过长，逻辑复杂
-- 局部变量过多
+### 🟢 低优先级：长行优化（下周计划）
 
-**预期收益：**
-- 提高代码可测试性
-- 降低认知复杂度
-- 便于代码重用
+**问题：`C0301` 警告 - 行超过 100 字符**
+- **文件**：`connector_astock_duckdb.py` (6 处), `data_pipeline.py` (1 处), `ai_fusion_strategy.py` (1 处)
+- **预期收益**：提高可读性，符合 lint 规范
+- **具体方案**：
+  1. 使用 `black` 格式化自动拆分
+  2. 手动优化复杂表达式
+- **风险**：低
+- **成本**：30 分钟
 
-**具体修改方案：**
-1. 将长函数拆分为多个小函数
-2. 使用数据类或命名元组封装多个参数
-3. 提取公共逻辑为工具函数
+---
 
-**可能的风险：**
-- 重构可能引入新的bug
-- 需要充分测试确保功能不变
+## 每日改进计划（2026-03-15）
 
-## 目标文件（按问题严重程度排序）
+### 第一阶段：安全检查（5 分钟）
+```bash
+cd ./newhigh
+git add .
+git commit -m "Backup before 2026-03-15 auto-improvement"
+```
 
-1. **data_engine/connector_tushare.py** - 尾随空格、导入问题最多
-2. **data_engine/connector_akshare.py** - 异常处理、参数问题
-3. **strategy_engine/ai_fusion_strategy.py** - 导入时机不当、异常捕获
-4. **backtest_engine/metrics.py** - 函数过于复杂
-5. **core/logging_config.py** - 行过长、缺少文档
+### 第二阶段：修复高优先级问题（60 分钟）
+1. 修复 `connector_akshare.py` 的嵌套问题
+2. 修复所有 `split()` 使用 maxsplit=1
+3. 运行 pylint 验证修复效果
 
-## 实施计划
+### 第三阶段：代码格式化（30 分钟）
+```bash
+source .venv/bin/activate
+autopep8 --in-place --aggressive --max-line-length 120 \
+  data-engine/src/data_engine/*.py \
+  strategy-engine/src/strategy_engine/*.py
+```
 
-### 第一阶段（今日）✅ 已完成
-1. 安装代码格式化工具：`pip install black autopep8` ✅
-2. 运行 `autopep8 --in-place --aggressive --aggressive` 修复简单问题 ✅
-3. 验证格式化后的代码功能 ✅
+### 第四阶段：验证测试（30 分钟）
+```bash
+python -m pytest data-engine/tests/ -v --tb=short
+python -m pytest strategy-engine/tests/ -v --tb=short
+```
 
-**结果**：pylint评分从8.15/10提升到8.70/10，核心测试全部通过。
+### 第五阶段：记录结果（15 分钟）
+- 更新 `improvement_log.md`
+- 若有成功经验，写入 `LEARNINGS.md`
+- 若有失败，写入 `ERRORS.md`
 
-### 第二阶段（本周）
-1. 优化异常处理模式 - 将 `except Exception:` 替换为具体异常类型
-2. 添加缺失的文档字符串 - 为模块、类、函数添加说明
-3. 运行测试套件验证
-
-### 第三阶段（下周）
-1. 重构复杂函数 - 拆分长函数，减少参数数量
-2. 提取重复代码 - 消除代码重复
-3. 性能优化 - 识别性能瓶颈
+---
 
 ## 成功标准
 
-- pylint评分从8.15/10提升到9.0/10以上 ✅ 已提升到8.70/10
-- 代码重复率降低
-- 测试覆盖率保持或提高 ✅ 测试全部通过
-- 功能测试全部通过 ✅
+- [ ] pylint 评分提升至 9.5/10 以上
+- [ ] 消除所有嵌套深度警告（R1702）
+- [ ] 消除所有 `split` 未指定 maxsplit 的警告（C0207）
+- [ ] 所有测试通过
+- [ ] 无破坏性更改
+
+---
+
+## 备注
+
+- 所有修改前必须 git add + commit 备份
+- 优先修复高优先级问题（嵌套、maxsplit），影响代码逻辑
+- 格式化工具可能无法完全解决所有问题，需要人工 review

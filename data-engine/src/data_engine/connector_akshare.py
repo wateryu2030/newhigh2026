@@ -1,4 +1,5 @@
 """A 股数据连接器：通过 akshare 拉取 A 股/北交所日线/分钟线，归一化为 core.OHLCV。"""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -14,7 +15,7 @@ except ImportError:
 
 def _normalize_symbol(code: str) -> str:
     """A 股/北交所代码转为带交易所后缀：600519->600519.SH, 000001->000001.SZ, 830799->830799.BSE。"""
-    code = str(code).strip().split(".")[0]
+    code = str(code).strip().split(".", maxsplit=1)[0]
     if not code:
         return code
     # 北交所：4/8/9 开头或 8 位
@@ -32,12 +33,7 @@ def _to_utc(dt: datetime) -> datetime:
     return dt
 
 
-def _fetch_hist_df(
-        code: str,
-        start_date: str,
-        end_date: str,
-        period: str,
-        adjust: str):
+def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str):
     """拉取日/周/月 K 线 DataFrame，优先东方财富接口（支持沪深京/北交所）。"""
     # 优先东方财富（沪深京含北交所）
     if getattr(ak, "stock_zh_a_hist_em", None) is not None:
@@ -81,10 +77,9 @@ def fetch_klines_akshare(
     """
     if ak is None:
         raise ImportError("akshare is required: pip install akshare")
-    code = str(symbol).strip().split(".")[0]
+    code = str(symbol).strip().split(".", maxsplit=1)[0]
     if not code or len(code) < 5 or len(code) > 8:
-        raise ValueError(
-            "A-share/BSE symbol: 6 or 8 digits, e.g. 000001, 830799")
+        raise ValueError("A-share/BSE symbol: 6 or 8 digits, e.g. 000001, 830799")
     df = _fetch_hist_df(code, start_date, end_date, period, adjust)
     if df is None or df.empty:
         return []
@@ -126,6 +121,30 @@ def fetch_klines_akshare(
     return result
 
 
+def _fetch_bse_stock_list() -> List[Dict[str, Any]]:
+    """拉取北交所股票列表。"""
+    out: List[Dict[str, Any]] = []
+    bj = getattr(ak, "stock_info_bj_name_code", None) if ak else None
+    if bj is None:
+        return out
+    try:
+        df_bj = ak.stock_info_bj_name_code()
+    except Exception:
+        return out
+    if df_bj is None or df_bj.empty:
+        return out
+    code_col = "code" if "code" in df_bj.columns else "证券代码"
+    name_col = "name" if "name" in df_bj.columns else "证券简称"
+    for _, row in df_bj.iterrows():
+        code = str(row.get(code_col, row.get("证券代码", ""))).strip()
+        name = str(row.get(name_col, row.get("证券简称", ""))).strip()
+        if not code:
+            continue
+        sym = _normalize_symbol(code)
+        out.append({"symbol": sym, "name": name or code, "market": "bse"})
+    return out
+
+
 def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
     """
     从 akshare 拉取 A 股 + 北交所股票列表，供补全数据时使用。
@@ -145,39 +164,11 @@ def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
                     continue
                 sym = _normalize_symbol(code)
                 market = "sh" if sym.endswith(".SH") else "sz"
-                out.append(
-                    {"symbol": sym, "name": name or code, "market": market})
+                out.append({"symbol": sym, "name": name or code, "market": market})
     except Exception:
         pass
     if include_bse:
-        try:
-            # 北交所股票列表
-            bj = getattr(ak, "stock_info_bj_name_code", None)
-            if bj is not None:
-                df_bj = ak.stock_info_bj_name_code()
-                if df_bj is not None and not df_bj.empty:
-                    code_col = "code" if "code" in df_bj.columns else "证券代码"
-                    name_col = "name" if "name" in df_bj.columns else "证券简称"
-                    for _, row in df_bj.iterrows():
-                        code = str(
-                            row.get(
-                                code_col,
-                                row.get(
-                                    "证券代码",
-                                    ""))).strip()
-                        name = str(
-                            row.get(
-                                name_col,
-                                row.get(
-                                    "证券简称",
-                                    ""))).strip()
-                        if not code:
-                            continue
-                        sym = _normalize_symbol(code)
-                        out.append(
-                            {"symbol": sym, "name": name or code, "market": "bse"})
-        except Exception:
-            pass
+        out.extend(_fetch_bse_stock_list())
     return out
 
 
@@ -194,7 +185,7 @@ def fetch_klines_akshare_minute(
     """
     if ak is None:
         raise ImportError("akshare is required: pip install akshare")
-    code = str(symbol).strip().split(".")[0]
+    code = str(symbol).strip().split(".", maxsplit=1)[0]
     if not code or len(code) != 6:
         raise ValueError("A-share symbol must be 6 digits")
     try:

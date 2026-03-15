@@ -1,6 +1,7 @@
 """
 风控监控：定时或按请求评估当前持仓与资金曲线，返回 violations 与建议动作。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -10,6 +11,7 @@ def _get_conn():
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
+
         if not os.path.isfile(get_db_path()):
             return None
         return get_conn(read_only=True)
@@ -31,6 +33,7 @@ def evaluate_current(
     返回: { "pass": bool, "violations": [...], "recommended_actions": ["reject_order"|"reduce_position"|"alert", ...] }
     """
     from .rules import evaluate
+
     close_conn = conn is None
     if conn is None:
         conn = _get_conn()
@@ -44,15 +47,25 @@ def evaluate_current(
                 positions = []
                 if df is not None and not df.empty:
                     for _, r in df.iterrows():
-                        positions.append({"code": r.get("code"), "qty": r.get("qty"), "avg_price": r.get("avg_price") or 0})
+                        positions.append(
+                            {
+                                "code": r.get("code"),
+                                "qty": r.get("qty"),
+                                "avg_price": r.get("avg_price") or 0,
+                            }
+                        )
             if total_assets is None:
-                row = conn.execute("SELECT total_assets FROM sim_account_snapshots ORDER BY snapshot_time DESC LIMIT 1").fetchone()
+                row = conn.execute(
+                    "SELECT total_assets FROM sim_account_snapshots ORDER BY snapshot_time DESC LIMIT 1"
+                ).fetchone()
                 total_assets = float(row[0]) if row and row[0] is not None else 0.0
         except Exception:
             positions = positions or []
             total_assets = total_assets or 0.0
 
-    res = evaluate(positions=positions, total_assets=total_assets, equity_curve=equity_curve, conn=conn)
+    res = evaluate(
+        positions=positions, total_assets=total_assets, equity_curve=equity_curve, conn=conn
+    )
     violations = res.get("violations") or []
     recommended = []
     for v in violations:

@@ -7,6 +7,7 @@
   python scripts/compute_features_to_duckdb.py
   python scripts/compute_features_to_duckdb.py --symbols 600519,000001 --limit 200
 """
+
 from __future__ import annotations
 
 import os
@@ -21,6 +22,7 @@ for d in ["data-engine/src", "core/src", "feature-engine/src"]:
 
 def _duckdb_path() -> str:
     from data_engine.connector_astock_duckdb import DEFAULT_NEWHIGH_DUCKDB_PATH
+
     return os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip() or DEFAULT_NEWHIGH_DUCKDB_PATH
 
 
@@ -37,7 +39,9 @@ def _safe_float(v) -> float | None:
         return None
 
 
-def run(symbols: list[str] | None = None, limit_per_symbol: int = 500, max_symbols: int = 200) -> dict:
+def run(
+    symbols: list[str] | None = None, limit_per_symbol: int = 500, max_symbols: int = 200
+) -> dict:
     """计算特征并写入 features_daily。返回 { written: int, symbols_processed: int, errors: int }。"""
     import duckdb
     from data_engine.connector_astock_duckdb import (
@@ -72,14 +76,19 @@ def run(symbols: list[str] | None = None, limit_per_symbol: int = 500, max_symbo
                 [max_symbols],
             ).fetchdf()
             if df is not None and not df.empty:
-                symbol_list = [_order_book_id_to_symbol(ob) for ob in df["order_book_id"].astype(str).tolist()]
+                symbol_list = [
+                    _order_book_id_to_symbol(ob) for ob in df["order_book_id"].astype(str).tolist()
+                ]
             if not symbol_list:
                 df = conn_read.execute(
                     "SELECT DISTINCT order_book_id FROM daily_bars ORDER BY order_book_id LIMIT ?",
                     [max_symbols],
                 ).fetchdf()
                 if df is not None and not df.empty:
-                    symbol_list = [_order_book_id_to_symbol(ob) for ob in df["order_book_id"].astype(str).tolist()]
+                    symbol_list = [
+                        _order_book_id_to_symbol(ob)
+                        for ob in df["order_book_id"].astype(str).tolist()
+                    ]
         except Exception:
             pass
     if not symbol_list:
@@ -121,7 +130,11 @@ def run(symbols: list[str] | None = None, limit_per_symbol: int = 500, max_symbo
         for sym_code, df in pending:
             for _, row in df.iterrows():
                 ts = row.get("timestamp")
-                if ts is None or (hasattr(ts, "__bool__") and getattr(ts, "year", 1) == 1 and str(ts).startswith("NaT")):
+                if ts is None or (
+                    hasattr(ts, "__bool__")
+                    and getattr(ts, "year", 1) == 1
+                    and str(ts).startswith("NaT")
+                ):
                     continue
                 if hasattr(ts, "strftime"):
                     trade_date = ts.strftime("%Y-%m-%d")
@@ -168,16 +181,27 @@ def run(symbols: list[str] | None = None, limit_per_symbol: int = 500, max_symbo
 
 def main() -> int:
     import argparse
-    parser = argparse.ArgumentParser(description="Compute features from daily_bars -> features_daily")
-    parser.add_argument("--symbols", type=str, default=None, help="Comma-separated symbols (default: from DuckDB)")
+
+    parser = argparse.ArgumentParser(
+        description="Compute features from daily_bars -> features_daily"
+    )
+    parser.add_argument(
+        "--symbols", type=str, default=None, help="Comma-separated symbols (default: from DuckDB)"
+    )
     parser.add_argument("--limit", type=int, default=500, help="Bars per symbol")
-    parser.add_argument("--max-symbols", type=int, default=200, help="Max symbols when loading from DB")
+    parser.add_argument(
+        "--max-symbols", type=int, default=200, help="Max symbols when loading from DB"
+    )
     args = parser.parse_args()
     symbols = args.symbols.split(",") if args.symbols else None
     out = run(symbols=symbols, limit_per_symbol=args.limit, max_symbols=args.max_symbols)
-    print("Written:", out["written"], "Symbols:", out["symbols_processed"], "Errors:", out["errors"])
+    print(
+        "Written:", out["written"], "Symbols:", out["symbols_processed"], "Errors:", out["errors"]
+    )
     if out["errors"] > 0 and out["symbols_processed"] == 0:
-        sys.stderr.write("Hint: if DuckDB is locked, close other processes using data/quant.duckdb and retry.\n")
+        sys.stderr.write(
+            "Hint: if DuckDB is locked, close other processes using data/quant_system.duckdb and retry.\n"
+        )
     return 0 if out["errors"] == 0 else 1
 
 

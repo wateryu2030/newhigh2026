@@ -1,4 +1,5 @@
 """Tests for StrategyGene and multi_objective."""
+
 import pytest
 from openclaw_engine.gene import StrategyGene
 from openclaw_engine.multi_objective import composite_fitness, fitness_from_backtest_result

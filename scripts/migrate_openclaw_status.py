@@ -3,6 +3,7 @@
 OpenClaw 进化与 Skill 状态表结构迁移：为 system_status 增加 evolution/skill 字段，新建 skill_stats、evolution_tasks。
 执行一次即可：python scripts/migrate_openclaw_status.py
 """
+
 from __future__ import annotations
 
 import os

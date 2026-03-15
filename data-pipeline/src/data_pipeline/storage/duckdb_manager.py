@@ -1,4 +1,5 @@
 """统一 DuckDB 数据仓库：data/quant_system.duckdb，管道 + 日K/新闻/扫描/AI/策略 共用。"""
+
 from __future__ import annotations
 
 import os
@@ -23,6 +24,7 @@ def get_conn(read_only: bool = False):
     path = get_db_path()
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     import duckdb
+
     return duckdb.connect(path, read_only=read_only)
 
 

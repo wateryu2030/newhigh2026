@@ -2,6 +2,7 @@
 Strategy Evolution Engine — 遗传算法
 Select top strategies → crossover → mutate → new population.
 """
+
 import copy
 import random
 from typing import Any, Callable, Dict, List, Tuple
@@ -34,7 +35,9 @@ def crossover(s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
     if random.random() < 0.5:
         child["params"] = _deep_merge(child.get("params", {}), s2.get("params", {}))
     if random.random() < 0.5 and "indicators" in s2:
-        child["indicators"] = list(set((child.get("indicators", []) or []) + (s2["indicators"] or [])))[:4]
+        child["indicators"] = list(
+            set((child.get("indicators", []) or []) + (s2["indicators"] or []))
+        )[:4]
     if random.random() < 0.5:
         child["timeframe"] = s2.get("timeframe", child.get("timeframe", "1h"))
     return child
@@ -49,7 +52,11 @@ def _random_params(strategy_type: str) -> Dict[str, Any]:
     if strategy_type == "trend_following":
         return {"fast_period": random.randint(5, 30), "slow_period": random.randint(30, 120)}
     if strategy_type == "mean_reversion":
-        return {"rsi_period": random.randint(7, 21), "oversold": random.uniform(20, 40), "overbought": random.uniform(60, 80)}
+        return {
+            "rsi_period": random.randint(7, 21),
+            "oversold": random.uniform(20, 40),
+            "overbought": random.uniform(60, 80),
+        }
     if strategy_type == "breakout":
         return {"lookback": random.randint(10, 50)}
     return {}

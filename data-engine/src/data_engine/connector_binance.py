@@ -1,4 +1,5 @@
 """Binance connector: fetch klines and normalize to OHLCV."""
+
 from datetime import datetime, timezone
 from typing import List
 

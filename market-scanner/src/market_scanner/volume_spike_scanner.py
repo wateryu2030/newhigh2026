@@ -1,8 +1,11 @@
 """量能异动扫描：从 a_stock_realtime 按成交额排序生成 volume 类 market_signals。"""
+
 from __future__ import annotations
+
 
 def run_volume_spike_scanner() -> int:
     from ._storage import _get_conn, write_signals
+
     conn = _get_conn()
     try:
         df = conn.execute(

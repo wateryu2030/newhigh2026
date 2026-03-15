@@ -2,9 +2,9 @@
 Alpha Factory — 策略工厂
 Generate large numbers of trading strategy candidates: LLM stub, genetic, random indicator combinations.
 """
+
 import random
 from typing import Any, Dict, List
-
 
 # Indicator combinations and rule templates
 INDICATORS = ["rsi", "macd", "vwap", "atr", "momentum", "volatility"]
@@ -64,11 +64,13 @@ def generate_indicator_rules() -> List[Dict[str, Any]]:
     candidates = []
     for st in STRATEGY_TYPES:
         for _ in range(5):
-            candidates.append({
-                "strategy_type": st,
-                "params": _random_params(st),
-                "indicators": ["rsi"],
-                "timeframe": random.choice(TIMEFRAMES),
-                "entry_exit_rules": "RSI_threshold",
-            })
+            candidates.append(
+                {
+                    "strategy_type": st,
+                    "params": _random_params(st),
+                    "indicators": ["rsi"],
+                    "timeframe": random.choice(TIMEFRAMES),
+                    "entry_exit_rules": "RSI_threshold",
+                }
+            )
     return candidates

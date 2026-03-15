@@ -1,4 +1,5 @@
 """Tests for task scheduler."""
+
 from scheduler import TaskScheduler, connect_pipeline, get_default_scheduler
 
 

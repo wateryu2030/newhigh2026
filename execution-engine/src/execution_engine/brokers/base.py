@@ -1,4 +1,5 @@
 """统一交易经纪抽象：下单、撤单、查持仓。"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -49,6 +50,8 @@ class BaseBroker(ABC):
         """当前持仓列表。"""
         ...
 
-    def get_orders(self, symbol: Optional[str] = None, limit: int = 100, **kwargs: Any) -> List[Dict[str, Any]]:
+    def get_orders(
+        self, symbol: Optional[str] = None, limit: int = 100, **kwargs: Any
+    ) -> List[Dict[str, Any]]:
         """订单列表（可选）。"""
         return []

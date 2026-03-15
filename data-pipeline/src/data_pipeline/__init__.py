@@ -2,7 +2,14 @@
 from .storage.duckdb_manager import get_db_path, get_conn, ensure_tables
 from .data_sources import get_source, list_sources
 
-__all__ = ["get_db_path", "get_conn", "ensure_tables", "get_source", "list_sources", "run_incremental"]
+__all__ = [
+    "get_db_path",
+    "get_conn",
+    "ensure_tables",
+    "get_source",
+    "list_sources",
+    "run_incremental",
+]
 
 
 def run_incremental(source_id: str, force_full: bool = False, **kwargs) -> int:

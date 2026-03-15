@@ -1,4 +1,5 @@
 """Task scheduler: run pipeline steps on a schedule or trigger."""
+
 import logging
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
@@ -44,7 +45,9 @@ class TaskScheduler:
             logger.exception("Task %s failed: %s", name, e)
             return False
 
-    def run_pipeline(self, from_step: Optional[str] = None, to_step: Optional[str] = None) -> List[str]:
+    def run_pipeline(
+        self, from_step: Optional[str] = None, to_step: Optional[str] = None
+    ) -> List[str]:
         """
         Run pipeline in order. Optionally from_step/to_step (inclusive).
         Returns list of step names that completed successfully.

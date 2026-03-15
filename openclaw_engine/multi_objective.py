@@ -1,6 +1,7 @@
 """
 多目标适应度：收益、回撤、换手率加权综合，供进化选择。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional

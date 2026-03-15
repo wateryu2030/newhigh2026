@@ -1,5 +1,11 @@
 """Tests for drawdown control."""
-from risk_engine import current_drawdown, max_drawdown, drawdown_ok, should_disable_strategy_drawdown
+
+from risk_engine import (
+    current_drawdown,
+    max_drawdown,
+    drawdown_ok,
+    should_disable_strategy_drawdown,
+)
 
 
 def test_current_drawdown():

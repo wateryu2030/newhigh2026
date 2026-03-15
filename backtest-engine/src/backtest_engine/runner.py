@@ -1,4 +1,5 @@
 """Backtest runner using vectorbt."""
+
 from typing import List, Optional
 
 import numpy as np

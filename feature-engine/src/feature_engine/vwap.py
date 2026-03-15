@@ -1,4 +1,5 @@
 """VWAP (Volume Weighted Average Price) indicator."""
+
 from typing import List
 
 import numpy as np
@@ -6,7 +7,9 @@ import numpy as np
 from core import OHLCV
 
 
-def vwap_from_ohlc(high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray) -> np.ndarray:
+def vwap_from_ohlc(
+    high: np.ndarray, low: np.ndarray, close: np.ndarray, volume: np.ndarray
+) -> np.ndarray:
     """Compute typical price VWAP per bar (cumulative). Typical price = (H+L+C)/3."""
     typical = (high + low + close) / 3.0
     vol = np.asarray(volume, dtype=float)

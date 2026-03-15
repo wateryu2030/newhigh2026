@@ -8,7 +8,7 @@ import asyncio
 import logging
 import json
 import os
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 from .config import DailyStockConfig
@@ -16,6 +16,7 @@ from .config import DailyStockConfig
 # 尝试导入dashscope（百炼/通义SDK）
 try:
     import dashscope
+
     DASHSCOPE_AVAILABLE = True
 except ImportError:
     DASHSCOPE_AVAILABLE = False
@@ -25,143 +26,155 @@ except ImportError:
 # 尝试导入openai
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
     openai = None
 
-# 尝试导入google.generativeai (Gemini)
+# 尝试导入google.genai (Gemini - 新版SDK)
 try:
-    import google.generativeai as genai
+    import google.genai as genai
+
     GEMINI_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
-    genai = None
+    # 回退到旧版google.generativeai
+    try:
+        import google.generativeai as genai
+
+        GEMINI_AVAILABLE = True
+        print("警告: 使用已弃用的google.generativeai，建议升级到google.genai")
+    except ImportError:
+        GEMINI_AVAILABLE = False
+        genai = None
 
 
 class AIDecisionMaker:
     """AI决策器"""
-    
+
     def __init__(self, config: DailyStockConfig):
         self.config = config
         self.logger = logging.getLogger(f"daily_stock_analysis.ai_decision")
-        
+
         # 加载API Keys
         self.api_keys = self._load_api_keys()
-        
+
         # AI模型配置 - 添加真实调用
         self.ai_models = {
             "gemini-pro": self._call_gemini_ai,  # Gemini Pro（优先，因为有可用API Key）
-            "qwen-max": self._call_qwen_ai,      # 百炼/通义
+            "qwen-max": self._call_qwen_ai,  # 百炼/通义
             "qwen-plus": self._call_qwen_ai,
             "qwen-turbo": self._call_qwen_ai,
             "gpt-4": self._call_gpt4_ai,
             "claude-3": self._call_claude_ai,
         }
-        
+
         # 初始化AI客户端
         self._init_ai_clients()
-    
+
     def _load_api_keys(self) -> Dict[str, str]:
         """加载API Keys"""
         api_keys = {}
-        
+
         # 从环境变量加载
         env_vars = {
             "dashscope": ["DASHSCOPE_API_KEY", "BAILIAN_API_KEY"],
             "openai": ["OPENAI_API_KEY"],
             "gemini": ["GEMINI_API_KEY"],
             "anthropic": ["ANTHROPIC_API_KEY"],
-            "deepseek": ["DEEPSEEK_API_KEY"]
+            "deepseek": ["DEEPSEEK_API_KEY"],
         }
-        
+
         for service, key_names in env_vars.items():
             for key_name in key_names:
                 key_value = os.getenv(key_name)
                 if key_value:
                     api_keys[service] = key_value
-                    self.logger.info(f"加载{service} API Key: {key_name}")
+                    self.logger.info("加载{service} API Key: {key_name}")
                     break
-        
-        self.logger.info(f"共加载 {len(api_keys)} 个API Key")
+
+        self.logger.info("共加载 {len(api_keys)} 个API Key")
         return api_keys
-    
+
     def _init_ai_clients(self):
         """初始化AI客户端"""
         # 初始化dashscope（百炼/通义）
         if DASHSCOPE_AVAILABLE and "dashscope" in self.api_keys:
             dashscope.api_key = self.api_keys["dashscope"]
             self.logger.info("dashscope客户端初始化成功")
-        
+
         # 初始化openai
         if OPENAI_AVAILABLE and "openai" in self.api_keys:
             openai.api_key = self.api_keys["openai"]
             self.logger.info("OpenAI客户端初始化成功")
-        
+
         # 初始化gemini
         if GEMINI_AVAILABLE and "gemini" in self.api_keys:
-            genai.configure(api_key=self.api_keys["gemini"])
-            self.logger.info("Gemini客户端初始化成功")
-    
+            # 新版google.genai不需要configure，直接使用Client
+            # 这里只记录API Key可用
+            self.logger.info("Gemini API Key可用: {self.api_keys['gemini'][:10]}...")
+
     async def analyze_market_data(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         分析市场数据，生成AI决策
-        
+
         Args:
             market_data: 市场数据
-            
+
         Returns:
             AI分析结果
         """
         self.logger.info("开始AI市场数据分析")
-        
+
         try:
             # 准备分析数据
             analysis_data = self._prepare_analysis_data(market_data)
-            
+
             # 调用AI模型
             ai_result = await self._call_ai_model(analysis_data)
-            
+
             # 解析AI响应
             recommendations = self._parse_ai_response(ai_result)
-            
+
             result = {
                 "timestamp": datetime.now().isoformat(),
                 "model_used": self.config.ai_model,
                 "analysis_data_summary": {
                     "market_count": len(analysis_data.get("markets", {})),
-                    "total_symbols": sum(len(m.get("symbols", [])) for m in analysis_data.get("markets", {}).values()),
-                    "data_sources": analysis_data.get("data_sources", [])
+                    "total_symbols": sum(
+                        len(m.get("symbols", [])) for m in analysis_data.get("markets", {}).values()
+                    ),
+                    "data_sources": analysis_data.get("data_sources", []),
                 },
                 "recommendations": recommendations,
                 "raw_ai_response": ai_result,
-                "status": "success"
+                "status": "success",
             }
-            
-            self.logger.info(f"AI分析完成，生成 {len(recommendations.get('stocks', []))} 条推荐")
+
+            self.logger.info("AI分析完成，生成 {len(recommendations.get('stocks', []))} 条推荐")
             return result
-            
+
         except Exception as e:
-            self.logger.error(f"AI分析失败: {e}", exc_info=True)
+            self.logger.error("AI分析失败: {e}", exc_info=True)
             return {
                 "timestamp": datetime.now().isoformat(),
                 "model_used": self.config.ai_model,
                 "error": str(e),
-                "status": "error"
+                "status": "error",
             }
-    
+
     def _prepare_analysis_data(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
         """准备分析数据"""
         analysis_data = {
             "timestamp": market_data.get("timestamp", datetime.now().isoformat()),
             "data_sources": market_data.get("data_sources_used", []),
-            "markets": {}
+            "markets": {},
         }
-        
+
         # 提取关键数据
         for market_name, market_info in market_data.get("markets", {}).items():
             market_summary = market_info.get("summary", {})
-            
+
             # 收集股票数据
             stocks_data = []
             for source, source_data in market_info.get("data", {}).items():
@@ -174,142 +187,175 @@ class AIDecisionMaker:
                         "volume": quote.get("volume"),
                         "market_cap": quote.get("market_cap"),
                         "pe_ratio": quote.get("pe_ratio"),
-                        "source": source
+                        "source": source,
                     }
                     stocks_data.append(stock_info)
-            
+
             analysis_data["markets"][market_name] = {
                 "symbol_count": market_summary.get("symbol_count", 0),
                 "data_sources": market_summary.get("data_sources", []),
                 "data_points": market_summary.get("data_points", 0),
-                "stocks": stocks_data[:20]  # 限制数量
+                "stocks": stocks_data[:20],  # 限制数量
             }
-        
+
         return analysis_data
-    
+
     async def _call_ai_model(self, analysis_data: Dict[str, Any]) -> str:
         """调用AI模型"""
         model_handler = self.ai_models.get(self.config.ai_model)
-        
+
         if not model_handler:
-            self.logger.warning(f"AI模型 {self.config.ai_model} 未实现，使用模拟响应")
+            self.logger.warning("AI模型 {self.config.ai_model} 未实现，使用模拟响应")
             return await self._generate_mock_ai_response(analysis_data)
-        
+
         try:
             return await model_handler(analysis_data)
         except Exception as e:
-            self.logger.error(f"调用AI模型 {self.config.ai_model} 失败: {e}")
+            self.logger.error("调用AI模型 {self.config.ai_model} 失败: {e}")
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
-    
+
     async def _call_gemini_ai(self, analysis_data: Dict[str, Any]) -> str:
         """调用Gemini AI（真实API）"""
         if not GEMINI_AVAILABLE:
             self.logger.warning("google.generativeai模块未安装，使用模拟响应")
             return await self._generate_mock_ai_response(analysis_data)
-        
+
         if "gemini" not in self.api_keys:
             self.logger.warning("未配置Gemini API Key，使用模拟响应")
             return await self._generate_mock_ai_response(analysis_data)
-        
+
         try:
             # 准备分析提示
             prompt = self._prepare_gemini_prompt(analysis_data)
-            
+
             self.logger.info("调用Gemini AI API...")
-            
-            # 创建模型
-            model = genai.GenerativeModel('gemini-pro')
-            
-            # 生成内容
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=self.config.ai_temperature,
-                    max_output_tokens=2000,
+
+            # 尝试使用新版google.genai
+            try:
+                from google.genai import Client
+
+                # 创建客户端
+                client = Client(api_key=self.api_keys["gemini"])
+
+                # 生成内容
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                    config={
+                        "temperature": self.config.ai_temperature,
+                        "max_output_tokens": 2000,
+                    }
                 )
-            )
-            
-            if response.text:
-                ai_text = response.text
-                self.logger.info(f"Gemini响应长度: {len(ai_text)} 字符")
-                return ai_text
-            else:
-                self.logger.error(f"Gemini API调用失败: {response.prompt_feedback}")
-                # 降级到模拟响应
-                return await self._generate_mock_ai_response(analysis_data)
-                
+
+                if response.text:
+                    ai_text = response.text
+                    self.logger.info("Gemini响应长度: {len(ai_text)} 字符")
+                    return ai_text
+                else:
+                    self.logger.error("Gemini API调用失败: 无响应文本")
+                    # 降级到模拟响应
+                    return await self._generate_mock_ai_response(analysis_data)
+
+            except ImportError:
+                # 回退到旧版google.generativeai
+                import google.generativeai as genai_old
+
+                # 配置Gemini
+                genai_old.configure(api_key=self.api_keys["gemini"])
+
+                # 创建模型
+                model = genai_old.GenerativeModel("gemini-pro")
+
+                # 生成内容
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai_old.types.GenerationConfig(
+                        temperature=self.config.ai_temperature,
+                        max_output_tokens=2000,
+                    ),
+                )
+
+                if response.text:
+                    ai_text = response.text
+                    self.logger.info("Gemini响应长度: {len(ai_text)} 字符")
+                    return ai_text
+                else:
+                    self.logger.error("Gemini API调用失败: {response.prompt_feedback}")
+                    # 降级到模拟响应
+                    return await self._generate_mock_ai_response(analysis_data)
+
         except Exception as e:
-            self.logger.error(f"调用Gemini AI异常: {e}")
+            self.logger.error("调用Gemini AI异常: {e}")
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
-    
+
     async def _call_gpt4_ai(self, analysis_data: Dict[str, Any]) -> str:
         """调用GPT-4 AI（模拟）"""
         # 这里应该集成实际的OpenAI API
-        
+
         await asyncio.sleep(0.5)
         return await self._generate_mock_ai_response(analysis_data)
-    
+
     async def _call_claude_ai(self, analysis_data: Dict[str, Any]) -> str:
         """调用Claude AI（模拟）"""
         # 这里应该集成实际的Anthropic API
-        
+
         await asyncio.sleep(0.5)
         return await self._generate_mock_ai_response(analysis_data)
-    
+
     async def _call_qwen_ai(self, analysis_data: Dict[str, Any]) -> str:
         """调用通义千问 AI（真实API）"""
         if not DASHSCOPE_AVAILABLE:
             self.logger.warning("dashscope模块未安装，使用模拟响应")
             return await self._generate_mock_ai_response(analysis_data)
-        
+
         if "dashscope" not in self.api_keys:
             self.logger.warning("未配置dashscope API Key，使用模拟响应")
             return await self._generate_mock_ai_response(analysis_data)
-        
+
         try:
             # 准备分析提示
             prompt = self._prepare_qwen_prompt(analysis_data)
-            
+
             # 根据配置选择模型
             model_map = {
                 "qwen-max": "qwen-max",
-                "qwen-plus": "qwen-plus", 
-                "qwen-turbo": "qwen-turbo"
+                "qwen-plus": "qwen-plus",
+                "qwen-turbo": "qwen-turbo",
             }
             model_name = model_map.get(self.config.ai_model, "qwen-max")
-            
-            self.logger.info(f"调用通义千问AI: {model_name}")
-            
+
+            self.logger.info("调用通义千问AI: {model_name}")
+
             # 调用dashscope API
             response = dashscope.Generation.call(
                 model=model_name,
                 prompt=prompt,
                 temperature=self.config.ai_temperature,
-                max_tokens=2000
+                max_tokens=2000,
             )
-            
+
             if response.status_code == 200:
                 ai_text = response.output.text
-                self.logger.info(f"AI响应长度: {len(ai_text)} 字符")
+                self.logger.info("AI响应长度: {len(ai_text)} 字符")
                 return ai_text
             else:
-                self.logger.error(f"通义千问API调用失败: {response.code} - {response.message}")
+                self.logger.error("通义千问API调用失败: {response.code} - {response.message}")
                 # 降级到模拟响应
                 return await self._generate_mock_ai_response(analysis_data)
-                
+
         except Exception as e:
-            self.logger.error(f"调用通义千问AI异常: {e}")
+            self.logger.error("调用通义千问AI异常: {e}")
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
-    
+
     def _prepare_qwen_prompt(self, analysis_data: Dict[str, Any]) -> str:
         """准备通义千问分析提示"""
         # 提取关键信息
         timestamp = analysis_data.get("timestamp", "")
         markets = analysis_data.get("markets", {})
-        
+
         prompt_lines = [
             "你是一个专业的股票分析师，请分析以下股票数据并提供投资建议。",
             "要求：",
@@ -319,9 +365,9 @@ class AIDecisionMaker:
             "4. 提供行业配置建议",
             "5. 给出风险提示",
             "",
-            "股票数据："
+            "股票数据：",
         ]
-        
+
         # 添加市场数据
         for market_name, market_info in markets.items():
             prompt_lines.append(f"\n{market_name}市场：")
@@ -331,28 +377,30 @@ class AIDecisionMaker:
                 name = stock.get("name", "")
                 price = stock.get("price", "未知")
                 change = stock.get("change", "未知")
-                
+
                 prompt_lines.append(f"  - {symbol} {name}: 价格{price}, 涨跌幅{change}")
-        
-        prompt_lines.extend([
-            "",
-            "请以JSON格式回复，包含以下字段：",
-            "1. analysis: 包含market_overview, market_sentiment, risk_level, opportunity_areas",
-            "2. recommendations: 包含top_picks数组（每个元素有symbol, name, action, reason, confidence）",
-            "3. sector_allocation: 行业配置百分比",
-            "4. risk_warnings: 风险提示数组",
-            "",
-            "现在开始分析："
-        ])
-        
+
+        prompt_lines.extend(
+            [
+                "",
+                "请以JSON格式回复，包含以下字段：",
+                "1. analysis: 包含market_overview, market_sentiment, risk_level, opportunity_areas",
+                "2. recommendations: 包含top_picks数组（每个元素有symbol, name, action, reason, confidence）",
+                "3. sector_allocation: 行业配置百分比",
+                "4. risk_warnings: 风险提示数组",
+                "",
+                "现在开始分析：",
+            ]
+        )
+
         return "\n".join(prompt_lines)
-    
+
     def _prepare_gemini_prompt(self, analysis_data: Dict[str, Any]) -> str:
         """准备Gemini分析提示"""
         # 提取关键信息
         timestamp = analysis_data.get("timestamp", "")
         markets = analysis_data.get("markets", {})
-        
+
         prompt_lines = [
             "你是一个专业的股票分析师，请分析以下股票数据并提供投资建议。",
             "要求：",
@@ -368,9 +416,9 @@ class AIDecisionMaker:
             "- sector_allocation: 行业配置百分比",
             "- risk_warnings: 风险提示数组",
             "",
-            "股票数据："
+            "股票数据：",
         ]
-        
+
         # 添加市场数据
         for market_name, market_info in markets.items():
             prompt_lines.append(f"\n{market_name}市场：")
@@ -380,53 +428,63 @@ class AIDecisionMaker:
                 name = stock.get("name", "")
                 price = stock.get("price", "未知")
                 change = stock.get("change", "未知")
-                
+
                 prompt_lines.append(f"  - {symbol} {name}: 价格{price}, 涨跌幅{change}")
-        
+
         prompt_lines.append("\n现在开始分析，请返回JSON格式的结果：")
-        
+
         return "\n".join(prompt_lines)
-    
+
     async def _generate_mock_ai_response(self, analysis_data: Dict[str, Any]) -> str:
         """生成模拟AI响应"""
         await asyncio.sleep(0.1)
-        
+
         # 创建模拟分析
         market_count = len(analysis_data.get("markets", {}))
-        total_stocks = sum(len(m.get("stocks", [])) for m in analysis_data.get("markets", {}).values())
-        
+        total_stocks = sum(
+            len(m.get("stocks", [])) for m in analysis_data.get("markets", {}).values()
+        )
+
         mock_response = {
             "analysis": {
                 "market_overview": f"分析了 {market_count} 个市场的 {total_stocks} 只股票",
                 "market_sentiment": "中性偏积极",
                 "risk_level": "中等",
-                "opportunity_areas": ["科技", "消费", "新能源"]
+                "opportunity_areas": ["科技", "消费", "新能源"],
             },
             "recommendations": {
                 "top_picks": [
-                    {"symbol": "000001.SZ", "name": "平安银行", "reason": "估值合理，基本面稳健", "action": "持有", "confidence": 0.8},
-                    {"symbol": "600519.SH", "name": "贵州茅台", "reason": "品牌护城河深，长期价值", "action": "买入", "confidence": 0.75},
-                    {"symbol": "00700.HK", "name": "腾讯控股", "reason": "游戏业务复苏，云服务增长", "action": "买入", "confidence": 0.7}
+                    {
+                        "symbol": "000001.SZ",
+                        "name": "平安银行",
+                        "reason": "估值合理，基本面稳健",
+                        "action": "持有",
+                        "confidence": 0.8,
+                    },
+                    {
+                        "symbol": "600519.SH",
+                        "name": "贵州茅台",
+                        "reason": "品牌护城河深，长期价值",
+                        "action": "买入",
+                        "confidence": 0.75,
+                    },
+                    {
+                        "symbol": "00700.HK",
+                        "name": "腾讯控股",
+                        "reason": "游戏业务复苏，云服务增长",
+                        "action": "买入",
+                        "confidence": 0.7,
+                    },
                 ],
-                "sector_allocation": {
-                    "科技": 35,
-                    "消费": 25,
-                    "金融": 20,
-                    "医药": 15,
-                    "其他": 5
-                },
-                "risk_warnings": [
-                    "注意市场波动风险",
-                    "关注政策变化影响",
-                    "控制仓位，分散投资"
-                ]
+                "sector_allocation": {"科技": 35, "消费": 25, "金融": 20, "医药": 15, "其他": 5},
+                "risk_warnings": ["注意市场波动风险", "关注政策变化影响", "控制仓位，分散投资"],
             },
             "timestamp": datetime.now().isoformat(),
-            "model": "mock-ai"
+            "model": "mock-ai",
         }
-        
+
         return json.dumps(mock_response, ensure_ascii=False, indent=2)
-    
+
     def _parse_ai_response(self, ai_response: str) -> Dict[str, Any]:
         """解析AI响应"""
         try:
@@ -437,77 +495,78 @@ class AIDecisionMaker:
             # 如果不是JSON，尝试提取关键信息
             self.logger.warning("AI响应不是有效的JSON，尝试文本解析")
             return self._parse_text_response(ai_response)
-    
+
     def _parse_text_response(self, text_response: str) -> Dict[str, Any]:
         """解析文本响应"""
         # 简单的文本解析逻辑
-        lines = text_response.split('\n')
-        
+        lines = text_response.split("\n")
+
         stocks = []
         current_stock = {}
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
+
             # 尝试提取股票信息
             if "推荐" in line or "建议" in line:
                 parts = line.split()
                 if len(parts) >= 2:
                     symbol = parts[0]
                     action = "买入" if "买入" in line else "持有" if "持有" in line else "卖出"
-                    stocks.append({
-                        "symbol": symbol,
-                        "action": action,
-                        "reason": line,
-                        "confidence": 0.6
-                    })
-        
+                    stocks.append(
+                        {"symbol": symbol, "action": action, "reason": line, "confidence": 0.6}
+                    )
+
         return {
             "stocks": stocks[:10],  # 限制数量
             "analysis_summary": "从文本响应中提取的推荐",
-            "raw_text": text_response[:500]  # 截断
+            "raw_text": text_response[:500],  # 截断
         }
-    
-    async def get_stock_analysis(self, symbol: str, market_data: Dict[str, Any] = None) -> Dict[str, Any]:
+
+    async def get_stock_analysis(
+        self, symbol: str, market_data: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """获取单个股票的详细分析"""
-        self.logger.info(f"获取股票 {symbol} 的详细分析")
-        
+        self.logger.info("获取股票 {symbol} 的详细分析")
+
         try:
             # 准备股票特定数据
             stock_data = await self._prepare_stock_data(symbol, market_data)
-            
+
             # 调用AI分析
             ai_result = await self._call_ai_model({"stocks": [stock_data]})
-            
+
             # 解析结果
             parsed_result = self._parse_ai_response(ai_result)
-            
+
             result = {
                 "symbol": symbol,
                 "analysis": parsed_result,
                 "timestamp": datetime.now().isoformat(),
                 "model": self.config.ai_model,
-                "status": "success"
+                "status": "success",
             }
-            
+
             return result
-            
+
         except Exception as e:
-            self.logger.error(f"股票分析失败: {e}")
+            self.logger.error("股票分析失败: {e}")
             return {
                 "symbol": symbol,
                 "error": str(e),
                 "timestamp": datetime.now().isoformat(),
-                "status": "error"
+                "status": "error",
             }
-    
-    async def _prepare_stock_data(self, symbol: str, market_data: Dict[str, Any] = None) -> Dict[str, Any]:
+
+    async def _prepare_stock_data(
+        self, symbol: str, market_data: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """准备股票数据"""
         # 这里应该从市场数据中提取特定股票的信息
         # 目前返回模拟数据
-        
+
         return {
             "symbol": symbol,
             "name": f"股票{symbol}",
@@ -517,5 +576,5 @@ class AIDecisionMaker:
             "market_cap": hash(symbol) % 5000000000,
             "pe_ratio": 10 + (hash(symbol) % 30),
             "sector": ["科技", "金融", "消费", "医药"][hash(symbol) % 4],
-            "description": f"{symbol}是一家优秀的上市公司"
+            "description": f"{symbol}是一家优秀的上市公司",
         }

@@ -1,6 +1,7 @@
 """
 Redis 缓存适配器：实时行情、会话等。未安装 redis 时返回 None。
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -14,9 +15,13 @@ def get_client() -> Optional[Any]:
     if _redis_client is not None:
         return _redis_client
     import os
-    url = os.environ.get("REDIS_URL", os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")).strip()
+
+    url = os.environ.get(
+        "REDIS_URL", os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+    ).strip()
     try:
         import redis
+
         _redis_client = redis.from_url(url)
         _redis_client.ping()
         return _redis_client

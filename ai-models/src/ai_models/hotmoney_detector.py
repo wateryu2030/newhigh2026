@@ -2,6 +2,7 @@
 龙虎榜游资席位胜率系统：席位统计、胜率、平均收益 → 顶级游资席位。
 决定跟谁。
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -15,6 +16,7 @@ class HotMoneyAnalyzer:
         if self._connection is not None:
             return self._connection
         from ._storage import _get_conn
+
         return _get_conn()
 
     def seat_statistics(self) -> pd.DataFrame:
@@ -22,6 +24,7 @@ class HotMoneyAnalyzer:
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -44,13 +47,18 @@ class HotMoneyAnalyzer:
                 FROM a_stock_longhubang
                 GROUP BY code
             """).fetchdf()
-        return df if df is not None and not df.empty else pd.DataFrame(columns=["seat", "trade_count", "total_buy"])
+        return (
+            df
+            if df is not None and not df.empty
+            else pd.DataFrame(columns=["seat", "trade_count", "total_buy"])
+        )
 
     def calculate_winrate(self, forward_days: int = 5) -> pd.DataFrame:
         """结合后续涨幅算席位胜率与平均收益。买价用龙虎榜当日收盘价近似。"""
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -90,14 +98,18 @@ class HotMoneyAnalyzer:
             return pd.DataFrame(columns=["seat", "win_rate", "avg_return"])
         return result
 
-    def detect_top_hotmoney(self, min_win_rate: float = 0.55, min_avg_return: float = 0.03) -> pd.DataFrame:
+    def detect_top_hotmoney(
+        self, min_win_rate: float = 0.55, min_avg_return: float = 0.03
+    ) -> pd.DataFrame:
         """筛选顶级游资：胜率 > min_win_rate，平均收益 > min_avg_return。"""
         df = self.calculate_winrate()
         if df is None or df.empty:
             return pd.DataFrame(columns=["seat_name", "trade_count", "win_rate", "avg_return"])
         stats = self.seat_statistics()
         if not stats.empty:
-            df = df.merge(stats[["seat", "trade_count"]], left_on="seat", right_on="seat", how="left")
+            df = df.merge(
+                stats[["seat", "trade_count"]], left_on="seat", right_on="seat", how="left"
+            )
         else:
             df["trade_count"] = 0
         df = df[(df["win_rate"] > min_win_rate) & (df["avg_return"] > min_avg_return)]
@@ -113,6 +125,7 @@ class HotMoneyAnalyzer:
         conn = self._get_connection()
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables
+
             ensure_tables(conn)
         except Exception:
             pass
@@ -140,6 +153,7 @@ def run_hotmoney_detector() -> int:
             signals.append((str(row.get("seat_name", "")), "游资", float(row.get("win_rate", 0.5))))
     if not signals:
         from ._storage import _get_conn
+
         conn = _get_conn()
         try:
             df = conn.execute(
@@ -152,5 +166,6 @@ def run_hotmoney_detector() -> int:
             pass
         conn.close()
     from ._storage import write_hotmoney_signals
+
     write_hotmoney_signals(signals)
     return len(signals)

@@ -1,4 +1,5 @@
 """执行模式：simulated | live，供 Gateway 与执行层统一读取。"""
+
 from __future__ import annotations
 
 import os

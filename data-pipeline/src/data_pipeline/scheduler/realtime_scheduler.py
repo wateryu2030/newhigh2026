@@ -1,7 +1,9 @@
 """交易时间实时调度：每 30 秒更新行情与涨停池。"""
+
 from __future__ import annotations
 
 import time
+
 
 def run_realtime_loop(interval_seconds: int = 30) -> None:
     from ..collectors.realtime_quotes import update_realtime_quotes

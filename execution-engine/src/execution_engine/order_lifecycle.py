@@ -2,6 +2,7 @@
 订单生命周期：状态机 NEW → SUBMITTED → FILLED / CANCELLED。
 与 sim_orders 表配合，供执行引擎与 Gateway 使用。
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -28,6 +29,7 @@ DB_TO_STATE = {v: k for k, v in STATE_TO_DB.items()}
 def _get_conn():
     from data_pipeline.storage.duckdb_manager import get_conn, get_db_path, ensure_tables
     import os
+
     if not os.path.isfile(get_db_path()):
         os.makedirs(os.path.dirname(get_db_path()) or ".", exist_ok=True)
     conn = get_conn(read_only=False)
@@ -65,18 +67,29 @@ def transition(
                     [STATE_TO_DB[OrderState.SUBMITTED], order_id],
                 )
                 return {"ok": True, "order_id": order_id, "state": OrderState.SUBMITTED.value}
-            return {"ok": False, "order_id": order_id, "state": current.value, "error": "invalid_transition"}
+            return {
+                "ok": False,
+                "order_id": order_id,
+                "state": current.value,
+                "error": "invalid_transition",
+            }
 
         if event == "fill":
             if current in (OrderState.NEW, OrderState.SUBMITTED):
                 from datetime import datetime, timezone
+
                 now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 conn.execute(
                     "UPDATE sim_orders SET status = ?, filled_at = ? WHERE id = ?",
                     [STATE_TO_DB[OrderState.FILLED], now, order_id],
                 )
                 return {"ok": True, "order_id": order_id, "state": OrderState.FILLED.value}
-            return {"ok": False, "order_id": order_id, "state": current.value, "error": "invalid_transition"}
+            return {
+                "ok": False,
+                "order_id": order_id,
+                "state": current.value,
+                "error": "invalid_transition",
+            }
 
         if event == "cancel":
             if current in (OrderState.NEW, OrderState.SUBMITTED):
@@ -85,7 +98,12 @@ def transition(
                     [STATE_TO_DB[OrderState.CANCELLED], order_id],
                 )
                 return {"ok": True, "order_id": order_id, "state": OrderState.CANCELLED.value}
-            return {"ok": False, "order_id": order_id, "state": current.value, "error": "invalid_transition"}
+            return {
+                "ok": False,
+                "order_id": order_id,
+                "state": current.value,
+                "error": "invalid_transition",
+            }
 
         return {"ok": False, "order_id": order_id, "state": current.value, "error": "unknown_event"}
     finally:

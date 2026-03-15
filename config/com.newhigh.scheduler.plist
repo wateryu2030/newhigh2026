@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.newhigh.scheduler</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/apple/Ahope/newhigh/.venv/bin/python</string>
+        <string>/Users/apple/Ahope/newhigh/scripts/start_schedulers.py</string>
+        <string>monitor</string>
+    </array>
+    
+    <key>WorkingDirectory</key>
+    <string>/Users/apple/Ahope/newhigh</string>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <true/>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/scheduler.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/scheduler.error.log</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>PYTHONPATH</key>
+        <string>/Users/apple/Ahope/newhigh</string>
+    </dict>
+    
+    <key>StartInterval</key>
+    <integer>300</integer>
+    
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <key>Nice</key>
+    <integer>10</integer>
+    
+    <key>LowPriorityIO</key>
+    <true/>
+    
+    <key>LaunchOnlyOnce</key>
+    <false/>
+</dict>
+</plist>

@@ -1,4 +1,5 @@
 """RL trader: PPO/SAC training with Stable-Baselines3 (stub + optional SB3)."""
+
 from typing import Any, Dict, Optional
 
 # Optional: from stable_baselines3 import PPO, SAC; from sb3_contrib import RecurrentPPO
@@ -26,6 +27,7 @@ def train_ppo(
     """Train PPO agent (stub). Requires stable_baselines3."""
     try:
         from stable_baselines3 import PPO
+
         model = PPO(
             "MlpPolicy",
             env,
@@ -46,6 +48,7 @@ def train_sac(
     """Train SAC agent (stub). Requires stable_baselines3."""
     try:
         from stable_baselines3 import SAC
+
         model = SAC("MlpPolicy", env, **kwargs)
         model.learn(total_timesteps=total_timesteps)
         return model

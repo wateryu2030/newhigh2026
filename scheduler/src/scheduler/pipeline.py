@@ -1,4 +1,5 @@
 """Connect pipeline: wire data_update, feature_generation, ... to engines."""
+
 import logging
 from typing import Callable, Optional
 
@@ -22,6 +23,7 @@ def connect_pipeline(
     Returns the scheduler with steps registered.
     """
     from .task_scheduler import TaskScheduler, get_default_scheduler
+
     s = scheduler or get_default_scheduler()
 
     def data_update() -> None:
@@ -71,6 +73,7 @@ def connect_pipeline(
     def generate_strategies() -> None:
         try:
             from alpha_factory import generate_population
+
             pop = generate_population(100)
             logger.info("generate_strategies: %d candidates", len(pop))
         except ImportError:
@@ -82,6 +85,7 @@ def connect_pipeline(
     def score_alpha() -> None:
         try:
             from alpha_scoring import alpha_score
+
             logger.info("score_alpha (alpha_scoring ready)")
         except ImportError:
             logger.info("score_alpha (alpha_scoring not installed)")
@@ -89,6 +93,7 @@ def connect_pipeline(
     def evolve_population() -> None:
         try:
             from strategy_evolution import evolve_population
+
             logger.info("evolve_population (strategy_evolution ready)")
         except ImportError:
             logger.info("evolve_population (strategy_evolution not installed)")
@@ -96,6 +101,7 @@ def connect_pipeline(
     def deploy_top_strategies() -> None:
         try:
             from meta_fund_manager import select_strategies
+
             logger.info("deploy_top_strategies (meta_fund_manager ready)")
         except ImportError:
             logger.info("deploy_top_strategies (meta_fund_manager not installed)")

@@ -3,13 +3,20 @@
 AI 交易终端单轮：扫描 → AI 分析 → 策略聚合 → 写 trade_signals。
 可与 data-pipeline 配合：先跑 pipeline 更新行情/涨停/资金流，再跑本脚本。
 """
+
 from __future__ import annotations
 
 import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for d in ["data-pipeline/src", "market-scanner/src", "ai-models/src", "strategy-engine/src", "core/src"]:
+for d in [
+    "data-pipeline/src",
+    "market-scanner/src",
+    "ai-models/src",
+    "strategy-engine/src",
+    "core/src",
+]:
     p = os.path.join(ROOT, d)
     if os.path.isdir(p) and p not in sys.path:
         sys.path.insert(0, p)
@@ -18,10 +25,18 @@ _opt = os.path.join(ROOT, "ai-optimizer/src")
 if os.path.isdir(_opt) and _opt not in sys.path:
     sys.path.insert(0, _opt)
 
+
 def main() -> int:
     # 1) 市场扫描 + 游资狙击
     try:
-        from market_scanner import run_limit_up_scanner, run_fund_flow_scanner, run_volume_spike_scanner, run_trend_scanner, run_sniper
+        from market_scanner import (
+            run_limit_up_scanner,
+            run_fund_flow_scanner,
+            run_volume_spike_scanner,
+            run_trend_scanner,
+            run_sniper,
+        )
+
         n1 = run_limit_up_scanner()
         n2 = run_fund_flow_scanner()
         n3 = run_volume_spike_scanner()
@@ -34,6 +49,7 @@ def main() -> int:
     # 2) AI 分析
     try:
         from ai_models import run_emotion_cycle, run_hotmoney_detector, run_sector_rotation_ai
+
         stage = run_emotion_cycle()
         h = run_hotmoney_detector()
         s = run_sector_rotation_ai()
@@ -44,18 +60,23 @@ def main() -> int:
     # 3) AI 融合策略 → trade_signals（含 signal_score）
     try:
         from strategy_engine.ai_fusion_strategy import run_ai_fusion
+
         n_fusion = run_ai_fusion()
         if n_fusion > 0:
             print(f"AI fusion trade signals: {n_fusion}")
         else:
             from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
             import os as _os
+
             if _os.path.isfile(get_db_path()):
                 conn = get_conn(read_only=True)
                 df = conn.execute("SELECT code, signal_type, score FROM market_signals").fetchdf()
                 conn.close()
                 if df is not None and not df.empty:
-                    from strategy_engine.trade_signal_aggregator import aggregate_market_signals_to_trade_signals
+                    from strategy_engine.trade_signal_aggregator import (
+                        aggregate_market_signals_to_trade_signals,
+                    )
+
                     signals = df.to_dict(orient="records")
                     trades = aggregate_market_signals_to_trade_signals(signals, top_n=20)
                     conn = get_conn(read_only=False)

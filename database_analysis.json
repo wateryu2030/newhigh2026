@@ -1,0 +1,235 @@
+{
+  "market.duckdb": {
+    "path": "data/market.duckdb",
+    "size_mb": 1.01171875,
+    "table_count": 11,
+    "tables": {
+      "a_stock_basic": {
+        "row_count": 0,
+        "column_count": 2,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR"
+          }
+        ],
+        "sample": []
+      },
+      "a_stock_daily": {
+        "row_count": 0,
+        "column_count": 8,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "date",
+            "type": "DATE"
+          },
+          {
+            "name": "open",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "high",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "low",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "close",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "volume",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "amount",
+            "type": "DOUBLE"
+          }
+        ],
+        "sample": []
+      },
+      "a_stock_fundflow": {
+        "row_count": 0,
+        "column_count": 5,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "main_net_inflow",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "snapshot_date",
+            "type": "DATE"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": []
+      },
+      "a_stock_limitup": {
+        "row_count": 0,
+        "column_count": 6,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "price",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "change_pct",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "limit_up_times",
+            "type": "INTEGER"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": []
+      },
+      "a_stock_longhubang": {
+        "row_count": 0,
+        "column_count": 5,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "lhb_date",
+            "type": "DATE"
+          },
+          {
+            "name": "net_buy",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": []
+      },
+      "a_stock_realtime": {
+        "row_count": 0,
+        "column_count": 7,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "latest_price",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "change_pct",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "volume",
+            "type": "BIGINT"
+          },
+          {
+            "name": "amount",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": []
+      },
+      "hotmoney_signals": {
+        "row_count": 0,
+        "column_count": 4,
+        "columns": [
+          {
+            "name": "code",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "seat_type",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "win_rate",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": []
+      },
+      "market_emotion_state": {
+        "row_count": 1,
+        "column_count": 5,
+        "columns": [
+          {
+            "name": "state",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "stage",
+            "type": "VARCHAR"
+          },
+          {
+            "name": "limit_up_count",
+            "type": "INTEGER"
+          },
+          {
+            "name": "score",
+            "type": "DOUBLE"
+          },
+          {
+            "name": "snapshot_time",
+            "type": "TIMESTAMP"
+          }
+        ],
+        "sample": [
+          [
+            "cold",
+            "冰点期",
+            0,
+            25.0,
+            
