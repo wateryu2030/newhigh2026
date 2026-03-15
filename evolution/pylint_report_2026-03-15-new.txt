@@ -1,0 +1,189 @@
+************* Module core.types
+core/src/core/types.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+************* Module core.data_service.db
+core/src/core/data_service/db.py:19:8: C0415: Import outside toplevel (core.config.get_db_path) (import-outside-toplevel)
+core/src/core/data_service/db.py:37:8: C0415: Import outside toplevel (duckdb) (import-outside-toplevel)
+************* Module core.data_service.strategy_service
+core/src/core/data_service/strategy_service.py:5:0: W0611: Unused List imported from typing (unused-import)
+************* Module data_engine.clickhouse_storage
+data-engine/src/data_engine/clickhouse_storage.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/clickhouse_storage.py:6:0: E0401: Unable to import 'clickhouse_driver' (import-error)
+data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_yahoo
+data-engine/src/data_engine/connector_yahoo.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.data_pipeline
+data-engine/src/data_engine/data_pipeline.py:1:0: C0301: Line too long (104/100) (line-too-long)
+data-engine/src/data_engine/data_pipeline.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+************* Module data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:5:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:11:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/connector_tushare.py:18:4: W0407: Prefer importing 'pd' instead of 'pandas' (preferred-module)
+data-engine/src/data_engine/connector_tushare.py:158:0: R0911: Too many return statements (8/6) (too-many-return-statements)
+data-engine/src/data_engine/connector_tushare.py:265:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+data-engine/src/data_engine/connector_tushare.py:12:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:33:0: C0301: Line too long (103/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:48:0: C0301: Line too long (105/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:125:0: C0301: Line too long (108/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:246:0: C0301: Line too long (226/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:249:0: C0301: Line too long (192/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:252:0: C0301: Line too long (188/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:8:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/connector_astock_duckdb.py:65:8: C0415: Import outside toplevel (duckdb) (import-outside-toplevel)
+data-engine/src/data_engine/connector_astock_duckdb.py:77:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_astock_duckdb.py:77:0: R0912: Too many branches (16/15) (too-many-branches)
+data-engine/src/data_engine/connector_astock_duckdb.py:10:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module data_engine.realtime_stream
+data-engine/src/data_engine/realtime_stream.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+data-engine/src/data_engine/realtime_stream.py:43:12: C0104: Disallowed name "bar" (disallowed-name)
+************* Module strategies.daily_stock_analysis.test_basic
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:17:0: C0413: Import "import importlib.util" should be placed at the top of the module (wrong-import-position)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:61:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:69:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:86:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:99:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:119:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:138:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: W0621: Redefining name 'DailyStockConfig' from outer scope (line 31) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: E0401: Unable to import 'strategy_engine.strategies.daily_stock_analysis.config' (import-error)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: C0415: Import outside toplevel (strategy_engine.strategies.daily_stock_analysis.config.DailyStockConfig) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: E0611: No name 'strategies' in module 'strategy_engine' (no-name-in-module)
+************* Module strategies.daily_stock_analysis.config
+strategy-engine/src/strategies/daily_stock_analysis/config.py:6:0: W0611: Unused import os (unused-import)
+************* Module strategies.daily_stock_analysis.notification
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:203:0: C0301: Line too long (112/100) (line-too-long)
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:9:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:19:40: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:314:8: C0415: Import outside toplevel (json) (import-outside-toplevel)
+************* Module strategies.daily_stock_analysis.ai_decision
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:12:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:37:4: R0402: Use 'from google import genai' instead (consider-using-from-import)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:57:40: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:213:8: W0612: Unused variable 'e' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:236:16: C0415: Import outside toplevel (google.genai.Client) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:251:16: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:262:16: C0415: Import outside toplevel (google.generativeai) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:279:16: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:218:4: R0911: Too many return statements (7/6) (too-many-return-statements)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:288:8: W0612: Unused variable 'e' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:339:12: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:348:8: W0612: Unused variable 'e' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:356:8: W0612: Unused variable 'timestamp' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:401:8: W0612: Unused variable 'timestamp' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:505:8: W0612: Unused variable 'current_stock' (unused-variable)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:37:4: W0611: Unused google.genai imported as genai (unused-import)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:43:8: W0611: Unused google.generativeai imported as genai (unused-import)
+************* Module strategies.daily_stock_analysis.data_fetcher
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:9:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:19:40: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:43:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:56:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:60:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:65:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:69:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:90:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:99:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:102:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/data_fetcher.py:8:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module strategies.daily_stock_analysis.main
+strategy-engine/src/strategies/daily_stock_analysis/main.py:9:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:34:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:42:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:80:8: W0621: Redefining name 'results' from outer scope (line 238) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:71:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:105:37: E1101: Instance of 'AIDecisionMaker' has no 'analyze' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:112:36: E1101: Instance of 'AIDecisionMaker' has no 'generate_recommendations' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:119:28: E1101: Instance of 'AIDecisionMaker' has no 'generate_summary' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:127:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:132:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:153:36: E1101: Instance of 'AIDecisionMaker' has no 'generate_recommendations' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:158:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:162:14: W0621: Redefining name 'results' from outer scope (line 238) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:177:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:180:27: E1101: Instance of 'NotificationSender' has no 'send_all' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:183:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+************* Module strategies.daily_stock_analysis.news_analyzer
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:9:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:19:40: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:38:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:56:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:59:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:61:24: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:71:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:75:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:117:46: E0602: Undefined variable 'topic' (undefined-variable)
+strategy-engine/src/strategies/daily_stock_analysis/news_analyzer.py:8:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module strategy_engine.breakout
+strategy-engine/src/strategy_engine/breakout.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
+************* Module strategy_engine.ai_fusion_strategy
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:250:0: C0301: Line too long (101/100) (line-too-long)
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:134:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module strategy_engine.trade_signal_aggregator
+strategy-engine/src/strategy_engine/trade_signal_aggregator.py:15:4: C0415: Import outside toplevel (core.Signal) (import-outside-toplevel)
+************* Module strategy_engine.trend_following
+strategy-engine/src/strategy_engine/trend_following.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
+************* Module strategy_engine.mean_reversion
+strategy-engine/src/strategy_engine/mean_reversion.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
+strategy-engine/src/strategy_engine/mean_reversion.py:1:0: R0801: Similar lines in 2 files
+==data_engine.connector_akshare:[17:38]
+==data_engine.connector_tushare:[25:45]
+    code = str(code).strip().split(".", maxsplit=1)[0]
+    if not code:
+        return code
+    # 北交所：4/8/9 开头或 8 位
+    if code.startswith(("4", "8", "9")) or len(code) == 8:
+        return f"{code}.BSE"
+    if code.startswith("6"):
+        return f"{code}.SH"
+    return f"{code}.SZ"
+
+
+def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
+    """若为 naive 则视为本地时间并转为 UTC（A 股 15:00 收盘）。"""
+    if dt_obj.tzinfo is None:
+        dt_obj = dt_obj.replace(tzinfo=dt.timezone.utc)
+    return dt_obj
+
+
+def get_tushare_config():
+    """获取Tushare配置""" (duplicate-code)
+strategy-engine/src/strategy_engine/mean_reversion.py:1:0: R0801: Similar lines in 2 files
+==core.data_service.market_service:[12:26]
+==data_engine.connector_astock_duckdb:[34:48]
+    if "." in ob:
+        code, market = ob.split(".", 1)
+        if market.upper() == "XSHG":
+            return f"{code}.SH"
+        if market.upper() == "XSHE":
+            return f"{code}.SZ"
+        if market.upper() == "BSE":
+            return f"{code}.BSE"
+        return f"{code}.{market}"
+    return ob
+
+
+def _symbol_to_order_book_id(symbol: str) -> str:
+    """newhigh symbol 或 6/8 位代码 -> astock order_book_id。600519.SH->600519.XSHG，830799.BSE->830799.BSE。""" (duplicate-code)
+strategy-engine/src/strategy_engine/mean_reversion.py:1:0: R0801: Similar lines in 2 files
+==core.data_service.db:[33:41]
+==data_engine.connector_astock_duckdb:[61:73]
+    if not path or not os.path.isfile(path):
+        return None
+    try:
+        import duckdb
+
+        return duckdb.connect(path, read_only=read_only)
+    except Exception:
+        return None (duplicate-code)
+
+------------------------------------------------------------------
+Your code has been rated at 9.29/10 (previous run: 8.87/10, +0.41)
+
