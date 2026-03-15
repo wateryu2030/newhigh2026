@@ -1,6 +1,6 @@
 """ClickHouse storage for OHLCV. Tables: market_1m, market_5m, market_1h, market_1d."""
 
-from datetime import datetime
+import datetime as dt
 from typing import List
 
 from clickhouse_driver import Client
@@ -63,8 +63,8 @@ def query_ohlcv(
     client: Client,
     symbol: str,
     interval: str,
-    start: datetime | None = None,
-    end: datetime | None = None,
+    start: dt.datetime | None = None,
+    end: dt.datetime | None = None,
     limit: int = 10000,
 ) -> List[OHLCV]:
     """Query OHLCV from storage."""

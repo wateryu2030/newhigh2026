@@ -1,6 +1,6 @@
 """Data pipeline: fetch from Binance / Yahoo / akshare / Tushare -> normalize -> store in ClickHouse."""
 
-from datetime import datetime, timedelta, timezone
+import datetime as dt
 from typing import List
 
 from .connector_binance import fetch_klines
@@ -66,10 +66,10 @@ def run_pipeline_ashare(
     period: "daily" | "weekly" | "monthly"
     """
     if not end_date:
-        end_d = datetime.now(timezone.utc)
+        end_d = dt.datetime.now(dt.timezone.utc)
         end_date = end_d.strftime("%Y%m%d")
     if not start_date:
-        start_date = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y%m%d")
+        start_date = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=365)).strftime("%Y%m%d")
     interval = "1d" if period == "daily" else "1w" if period == "weekly" else "1M"
     client = get_client(host=clickhouse_host, port=clickhouse_port)
     ensure_tables(client)
@@ -105,10 +105,10 @@ def run_pipeline_tushare(
     adjust: 复权类型，"qfq"（前复权）、"hfq"（后复权）、""（不复权）
     """
     if not end_date:
-        end_d = datetime.now(timezone.utc)
+        end_d = dt.datetime.now(dt.timezone.utc)
         end_date = end_d.strftime("%Y%m%d")
     if not start_date:
-        start_date = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y%m%d")
+        start_date = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=30)).strftime("%Y%m%d")
 
     interval = "1d" if period == "daily" else "1w" if period == "weekly" else "1M"
     client = get_client(host=clickhouse_host, port=clickhouse_port)

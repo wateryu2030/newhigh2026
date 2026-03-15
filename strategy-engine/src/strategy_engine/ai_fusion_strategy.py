@@ -149,49 +149,9 @@ class AIFusionStrategy:
 
         # 主升期才大量出信号；其他阶段也可出但数量收紧
         if state == "主升":
-            candidate_codes = set()
-            for code_or_seat, _fund_s in hotmoney:
-                if len(code_or_seat) == 6 and code_or_seat.isdigit():
-                    candidate_codes.add(code_or_seat)
-
-            if DUCKDB_MANAGER_AVAILABLE:
-                try:
-                    db_path = get_db_path()
-                    if db_path and os.path.isfile(db_path):
-                        conn = get_conn(read_only=True)
-                        ms = conn.execute(
-                            "SELECT code, score FROM market_signals "
-                            "ORDER BY score DESC NULLS LAST LIMIT 200"
-                        ).fetchdf()
-                        conn.close()
-                        if ms is not None and not ms.empty:
-                            for _, r in ms.iterrows():
-                                candidate_codes.add(str(r.get("code", "")))
-                except Exception:
-                    pass
-            candidate_codes = [c for c in candidate_codes if c]
+            candidate_codes = self._get_candidate_codes_bullish(hotmoney)
         else:
-            candidate_codes = []
-            for code_or_seat, _ in hotmoney:
-                if len(code_or_seat) == 6 and code_or_seat.isdigit():
-                    candidate_codes.append(code_or_seat)
-
-            if not candidate_codes and DUCKDB_MANAGER_AVAILABLE:
-                try:
-                    db_path = get_db_path()
-                    if db_path and os.path.isfile(db_path):
-                        conn = get_conn(read_only=True)
-                        ms = conn.execute(
-                            "SELECT code FROM market_signals "
-                            "ORDER BY snapshot_time DESC LIMIT 50"
-                        ).fetchdf()
-                        conn.close()
-                        if ms is not None and not ms.empty:
-                            candidate_codes = [
-                                str(r.get("code", "")) for _, r in ms.iterrows() if r.get("code")
-                            ]
-                except Exception:
-                    pass
+            candidate_codes = self._get_candidate_codes_normal(hotmoney)
 
         fund_map = {code: s for code, s in hotmoney if len(code) == 6 and code.isdigit()}
         scored = []
@@ -210,6 +170,67 @@ class AIFusionStrategy:
 
         scored.sort(key=lambda x: -x[5])
         return scored[:top_n]
+
+    def _get_candidate_codes_bullish(self, hotmoney: list) -> List[str]:
+        """主升期获取候选标的（宽松筛选）。"""
+        candidate_codes = set()
+        for code_or_seat, _fund_s in hotmoney:
+            if len(code_or_seat) == 6 and code_or_seat.isdigit():
+                candidate_codes.add(code_or_seat)
+
+        if not DUCKDB_MANAGER_AVAILABLE:
+            return [c for c in candidate_codes if c]
+
+        try:
+            db_path = get_db_path()
+            if not db_path or not os.path.isfile(db_path):
+                return [c for c in candidate_codes if c]
+
+            conn = get_conn(read_only=True)
+            ms = conn.execute(
+                "SELECT code, score FROM market_signals "
+                "ORDER BY score DESC NULLS LAST LIMIT 200"
+            ).fetchdf()
+            conn.close()
+
+            if ms is not None and not ms.empty:
+                for _, r in ms.iterrows():
+                    candidate_codes.add(str(r.get("code", "")))
+        except Exception:
+            pass
+
+        return [c for c in candidate_codes if c]
+
+    def _get_candidate_codes_normal(self, hotmoney: list) -> List[str]:
+        """非主升期获取候选标的（收紧筛选）。"""
+        candidate_codes = []
+        for code_or_seat, _ in hotmoney:
+            if len(code_or_seat) == 6 and code_or_seat.isdigit():
+                candidate_codes.append(code_or_seat)
+
+        if candidate_codes or not DUCKDB_MANAGER_AVAILABLE:
+            return candidate_codes
+
+        try:
+            db_path = get_db_path()
+            if not db_path or not os.path.isfile(db_path):
+                return candidate_codes
+
+            conn = get_conn(read_only=True)
+            ms = conn.execute(
+                "SELECT code FROM market_signals "
+                "ORDER BY snapshot_time DESC LIMIT 50"
+            ).fetchdf()
+            conn.close()
+
+            if ms is not None and not ms.empty:
+                candidate_codes = [
+                    str(r.get("code", "")) for _, r in ms.iterrows() if r.get("code")
+                ]
+        except Exception:
+            pass
+
+        return candidate_codes
 
     def save_signals(self, signals: List[Tuple[str, str, float, float, float, float]]) -> int:
         """写入 trade_signals 表（含 signal_score）。"""

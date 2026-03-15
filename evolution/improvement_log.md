@@ -1,5 +1,61 @@
 # 改进日志
 
+## 2026-03-15
+
+### 修改内容
+
+1. **修复嵌套过深问题 (R1702)**
+   - 重构 `strategy-engine/src/strategy_engine/ai_fusion_strategy.py` 的 `generate_signals` 方法
+   - 提取 `_get_candidate_codes_bullish` 和 `_get_candidate_codes_normal` 辅助方法
+   - 使用提前返回（early return）减少嵌套层级
+   - 嵌套深度：6 层 → 3 层
+
+2. **统一导入别名规范 (W0407)**
+   - 修改 10 个文件的 datetime 导入为 `import datetime as dt`
+   - 更新所有相关用法：`datetime.now()` → `dt.datetime.now()`, `timezone.utc` → `dt.timezone.utc`
+   - 修复变量命名冲突（避免 `dt` 变量遮蔽模块）
+   - 受影响文件:
+     - `data-engine/src/data_engine/data_pipeline.py`
+     - `data-engine/src/data_engine/realtime_stream.py`
+     - `data-engine/src/data_engine/connector_tushare.py`
+     - `data-engine/src/data_engine/connector_akshare.py`
+     - `data-engine/src/data_engine/connector_astock_duckdb.py`
+     - `data-engine/src/data_engine/connector_binance.py`
+     - `data-engine/src/data_engine/connector_yahoo.py`
+     - `data-engine/src/data_engine/clickhouse_storage.py`
+     - `core/src/core/types.py`
+
+3. **修复 OHLCV 构造函数调用**
+   - 修复 `connector_tushare.py` 中错误的 OHLCV 构造函数调用
+   - 移除不存在的参数 (`amount`, `code`)
+   - 添加必需参数 (`symbol`, `interval`)
+   - 修复变量命名冲突 (`ts` 变量遮蔽 tushare 模块)
+
+4. **清理导入语句**
+   - 移除重复导入 (`Any` 重复导入)
+   - 移除未使用导入 (`Dict`, `Optional`)
+   - 统一导入分组顺序
+
+### 验证结果
+- pylint 评分：9.33 → 9.60/10 (+0.28)
+- 数据引擎测试：`pytest data-engine/tests/` - 10/10 通过
+- 策略引擎测试：`pytest strategy-engine/tests/` - 2/2 通过
+- 核心测试：`pytest core/tests/` - 2/2 通过
+- 功能正常，无破坏性更改
+
+### 预期改进
+- 代码可读性提高（减少嵌套）
+- 符合 Python 量化行业规范（统一导入别名）
+- 消除潜在 bug（变量命名冲突）
+- 为后续重构奠定基础
+
+### 下一步计划
+1. 修复剩余 R0917 参数过多问题（需要 API 重构）
+2. 修复 C0301 长行问题（使用 black 格式化）
+3. 消除 R0801 重复代码（提取公共函数）
+
+---
+
 ## 2026-03-12
 
 ### 修改内容

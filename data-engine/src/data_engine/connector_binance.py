@@ -1,6 +1,6 @@
 """Binance connector: fetch klines and normalize to OHLCV."""
 
-from datetime import datetime, timezone
+import datetime as dt
 from typing import List
 
 import requests
@@ -45,7 +45,7 @@ def fetch_klines(
         result.append(
             OHLCV(
                 symbol=symbol,
-                timestamp=datetime.fromtimestamp(ts / 1000, tz=timezone.utc),
+                timestamp=dt.datetime.fromtimestamp(ts / 1000, tz=dt.timezone.utc),
                 open=o,
                 high=h,
                 low=l,

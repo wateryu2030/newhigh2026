@@ -5,8 +5,8 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import os
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from core import OHLCV
@@ -141,11 +141,11 @@ def fetch_klines_from_astock_duckdb(
             if hasattr(td, "to_pydatetime"):
                 ts = td.to_pydatetime()
             elif isinstance(td, str):
-                ts = datetime.strptime(td[:10], "%Y-%m-%d")
+                ts = dt.datetime.strptime(td[:10], "%Y-%m-%d")
             else:
-                ts = datetime.now(timezone.utc)
+                ts = dt.datetime.now(dt.timezone.utc)
             if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=timezone.utc)
+                ts = ts.replace(tzinfo=dt.timezone.utc)
             result.append(
                 OHLCV(
                     symbol=out_symbol,

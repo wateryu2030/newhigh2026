@@ -1,6 +1,6 @@
 """Yahoo Finance connector: fetch OHLCV and normalize to core.OHLCV."""
 
-from datetime import datetime, timezone
+import datetime as dt
 from typing import List
 
 from core import OHLCV
@@ -42,9 +42,9 @@ def fetch_klines_yahoo(
     for ts, row in hist.iterrows():
         t = ts.timestamp() if hasattr(ts, "timestamp") else None
         ts_utc = (
-            datetime.fromtimestamp(t, tz=timezone.utc)
+            dt.datetime.fromtimestamp(t, tz=dt.timezone.utc)
             if t is not None
-            else datetime.now(timezone.utc)
+            else dt.datetime.now(dt.timezone.utc)
         )
         result.append(
             OHLCV(

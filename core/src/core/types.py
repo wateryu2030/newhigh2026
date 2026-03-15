@@ -1,7 +1,7 @@
 """Shared types for the AI hedge fund platform."""
 
+import datetime as dt
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -19,7 +19,7 @@ class OHLCV:
     """Normalized OHLCV bar."""
 
     symbol: str
-    timestamp: datetime
+    timestamp: dt.datetime
     open: float
     high: float
     low: float

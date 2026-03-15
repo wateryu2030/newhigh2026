@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import datetime as dt
 from typing import Any, Dict, List
 
 from core import OHLCV
@@ -26,11 +26,11 @@ def _normalize_symbol(code: str) -> str:
     return f"{code}.SZ"
 
 
-def _to_utc(dt: datetime) -> datetime:
+def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
     """若为 naive 则视为本地时间并转为 UTC（A 股 15:00 收盘）。"""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    if dt_obj.tzinfo is None:
+        dt_obj = dt_obj.replace(tzinfo=dt.timezone.utc)
+    return dt_obj
 
 
 def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str):
@@ -94,13 +94,13 @@ def fetch_klines_akshare(
     result = []
     for _, row in df.iterrows():
         try:
-            dt = row[col_date]
-            if hasattr(dt, "to_pydatetime"):
-                ts = dt.to_pydatetime()
-            elif isinstance(dt, str):
-                ts = datetime.strptime(dt[:10], "%Y-%m-%d")
+            date_val = row[col_date]
+            if hasattr(date_val, "to_pydatetime"):
+                ts = date_val.to_pydatetime()
+            elif isinstance(date_val, str):
+                ts = dt.datetime.strptime(date_val[:10], "%Y-%m-%d")
             else:
-                ts = datetime.now(timezone.utc)
+                ts = dt.datetime.now(dt.timezone.utc)
             ts = _to_utc(ts)
             result.append(
                 OHLCV(
@@ -204,16 +204,16 @@ def fetch_klines_akshare_minute(
     result = []
     for _, row in df.iterrows():
         try:
-            dt = row.get("时间", row.get("日期", None))
-            if dt is None:
+            date_val = row.get("时间", row.get("日期", None))
+            if date_val is None:
                 continue
-            if hasattr(dt, "to_pydatetime"):
-                ts = dt.to_pydatetime()
-            elif isinstance(dt, str):
-                if " " in dt:
-                    ts = datetime.strptime(dt[:19], "%Y-%m-%d %H:%M:%S")
+            if hasattr(date_val, "to_pydatetime"):
+                ts = date_val.to_pydatetime()
+            elif isinstance(date_val, str):
+                if " " in date_val:
+                    ts = dt.datetime.strptime(date_val[:19], "%Y-%m-%d %H:%M:%S")
                 else:
-                    ts = datetime.strptime(dt[:10], "%Y-%m-%d")
+                    ts = dt.datetime.strptime(date_val[:10], "%Y-%m-%d")
             else:
                 continue
             ts = _to_utc(ts)

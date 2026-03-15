@@ -1,8 +1,8 @@
 """Realtime stream: subscribe to Binance WebSocket klines and yield OHLCV updates."""
 
+import datetime as dt
 import json
 import threading
-from datetime import datetime, timezone
 from typing import Callable, Optional
 
 import websocket
@@ -14,7 +14,7 @@ def _parse_ws_kline(msg: dict) -> OHLCV:
     k = msg.get("k", {})
     return OHLCV(
         symbol=k.get("s", ""),
-        timestamp=datetime.fromtimestamp(int(k.get("t", 0)) / 1000, tz=timezone.utc),
+        timestamp=dt.datetime.fromtimestamp(int(k.get("t", 0)) / 1000, tz=dt.timezone.utc),
         open=float(k.get("o", 0)),
         high=float(k.get("h", 0)),
         low=float(k.get("l", 0)),

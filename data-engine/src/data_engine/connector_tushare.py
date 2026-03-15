@@ -1,16 +1,15 @@
 """A 股数据连接器：通过 Tushare 拉取 A 股/北交所日线/分钟线，归一化为 core.OHLCV。"""
 
 from __future__ import annotations
-from typing import Callable, Any
 from functools import wraps
 from pathlib import Path
 import pickle
 import hashlib
 import time
-
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 import os
+
+import datetime as dt
+from typing import Callable, Any, Dict, List
 
 from core import OHLCV
 
@@ -35,11 +34,11 @@ def _normalize_symbol(code: str) -> str:
     return f"{code}.SZ"
 
 
-def _to_utc(dt: datetime) -> datetime:
+def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
     """若为 naive 则视为本地时间并转为 UTC（A 股 15:00 收盘）。"""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    if dt_obj.tzinfo is None:
+        dt_obj = dt_obj.replace(tzinfo=dt.timezone.utc)
+    return dt_obj
 
 
 def get_tushare_config():
@@ -382,16 +381,16 @@ def fetch_ohlcv(
     # 转换为 OHLCV 对象列表
     ohlcv_list = []
     for _, row in df.iterrows():
-        dt = _to_utc(row["date"].to_pydatetime())
+        ts_utc = _to_utc(row["date"].to_pydatetime())
         ohlcv = OHLCV(
-            timestamp=dt,
+            symbol=_normalize_symbol(code),
+            timestamp=ts_utc,
             open=float(row["open"]),
             high=float(row["high"]),
             low=float(row["low"]),
             close=float(row["close"]),
             volume=float(row.get("volume", 0)),
-            amount=float(row.get("amount", 0)),
-            code=row.get("code", _normalize_symbol(code)),
+            interval="1d" if period == "daily" else "1w" if period == "weekly" else "1M",
         )
         ohlcv_list.append(ohlcv)
 
