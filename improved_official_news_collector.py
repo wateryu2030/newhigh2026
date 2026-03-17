@@ -215,7 +215,7 @@ class ImprovedOfficialNewsCollector:
         except Exception as e:
             print(f"采集{department}新闻失败: {e}")
             # 返回模拟数据作为备选
-            return self.get_mock_gov_news(department)
+            pass  # 不使用模拟数据
         
         return news_list
     
@@ -418,10 +418,10 @@ class ImprovedOfficialNewsCollector:
         
         # 3. 采集住建部新闻
         print("\n🏗️ 采集住建部新闻...")
-        # 暂时使用模拟数据
-        mohurd_news = self.get_mock_gov_news('mohurd')
-        all_news.extend(mohurd_news)
-        print(f"  住建部新闻: {len(mohurd_news)} 条")
+#         # 暂时使用模拟数据
+#         mohurd_news = self.get_mock_gov_news('mohurd')
+#         all_news.extend(mohurd_news)
+#         print(f"  住建部新闻: {len(mohurd_news)} 条")
         
         # 汇总统计
         print("\n" + "=" * 60)

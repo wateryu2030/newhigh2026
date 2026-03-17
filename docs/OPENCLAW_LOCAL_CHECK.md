@@ -109,3 +109,20 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.gateway.plis
 - **百炼**：已按 Coding Plan 配置 `coding.dashscope.aliyuncs.com/v1` 及套餐专属 Key；VPN 环境下通过 NO_PROXY 直连阿里云。
 - **红山项目侧**：OPENCLAW 控制文件、项目 .env、Cursor 规则与启动脚本均就绪；在项目根执行 `bash scripts/open_openclaw.sh` 即可加载项目 .env 并检查/启动 Gateway。
 - **Gateway 无法启动**：若报 `VOLCENGINE_API_KEY` / `MOONSHOT_API_KEY` 缺失，按第五节在 LaunchAgent 中注入占位值并重启即可。
+
+---
+
+## 七、飞书/机器人报「400 model qwen-plus is not supported」
+
+**现象**：飞书里 newhigh 机器人或 OpenClaw 会话返回 `400 model qwen-plus is not supported`。
+
+**原因**：百炼/Coding Plan 部分套餐或端点已不再支持模型 ID `qwen-plus`，需改用 `qwen-turbo` 或（Coding Plan）`qwen3.5-plus`。
+
+**处理**：
+
+1. **若机器人走 OpenClaw**：  
+   编辑 `~/.openclaw/openclaw.json`：
+   - 将 `agents.defaults.model.primary` 设为 `dashscope/qwen3.5-plus`（或 `dashscope/qwen-turbo`，视套餐支持而定）。
+   - 在 `agents.defaults.model.fallbacks` 中**不要**使用 `dashscope/qwen-plus`，改为 `dashscope/qwen3.5-plus` 或 `dashscope/qwen-turbo`，否则主模型不可用时仍会报 400。  
+   保存后**完全退出 OpenClaw 再打开**，或新开一条会话再试。
+2. **若走 newhigh 本仓策略**：`strategy-engine` 里 `ai_decision` 已把配置中的 `qwen-plus` 映射为调用 `qwen-turbo`，并带 400 时自动降级，无需改配置。

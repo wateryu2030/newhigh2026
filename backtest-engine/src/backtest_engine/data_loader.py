@@ -35,6 +35,39 @@ def _to_ts(d) -> datetime:
     return t
 
 
+def _build_ohlcv_list(df: pd.DataFrame, symbol: str, code: str) -> List[Any]:
+    """从 DataFrame 构建 OHLCV 对象列表。"""
+    ohlcv_list: List[Any] = []
+    try:
+        from core import OHLCV
+
+        for _, row in df.iterrows():
+            ohlcv_list.append(
+                OHLCV(
+                    symbol=symbol or code,
+                    timestamp=_to_ts(row["date"]),
+                    open=float(row["open"] or 0),
+                    high=float(row["high"] or 0),
+                    low=float(row["low"] or 0),
+                    close=float(row["close"] or 0),
+                    volume=float(row["volume"] or 0),
+                    interval="1d",
+                )
+            )
+    except ImportError:
+        pass
+    return ohlcv_list
+
+
+def _try_close_conn(conn: Any) -> None:
+    """尝试关闭数据库连接。"""
+    if conn is not None:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 def load_ohlcv_from_db(
     symbol: str,
     start_date: str,
@@ -48,10 +81,10 @@ def load_ohlcv_from_db(
     """
     code = _norm_code(symbol)
     close_conn = False
+
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
-
             conn = get_conn(read_only=True)
             close_conn = True
         except Exception:
@@ -70,36 +103,66 @@ def load_ohlcv_from_db(
                ORDER BY date""",
             [code, start, end],
         ).fetchdf()
-        if df is not None and not df.empty:
-            df = df.rename(columns={"date": "date"})
-            df["date"] = pd.to_datetime(df["date"])
-            out_df = df[["date", "open", "high", "low", "close", "volume"]].copy()
-            try:
-                from core import OHLCV
 
-                for _, row in df.iterrows():
-                    ohlcv_list.append(
-                        OHLCV(
-                            symbol=symbol or code,
-                            timestamp=_to_ts(row["date"]),
-                            open=float(row["open"] or 0),
-                            high=float(row["high"] or 0),
-                            low=float(row["low"] or 0),
-                            close=float(row["close"] or 0),
-                            volume=float(row["volume"] or 0),
-                            interval="1d",
-                        )
-                    )
-            except ImportError:
-                pass
+        if df is None or df.empty:
+            return out_df, ohlcv_list
+
+        df = df.rename(columns={"date": "date"})
+        df["date"] = pd.to_datetime(df["date"])
+        out_df = df[["date", "open", "high", "low", "close", "volume"]].copy()
+        ohlcv_list = _build_ohlcv_list(df, symbol, code)
+
     except Exception:
         pass
-    if close_conn and conn is not None:
-        try:
-            conn.close()
-        except Exception:
-            pass
+    finally:
+        if close_conn:
+            _try_close_conn(conn)
+
     return out_df, ohlcv_list
+
+
+def _is_entry_signal(sig: str) -> bool:
+    """判断是否为买入信号。"""
+    return any(x in sig for x in ("buy", "long", "买入", "多"))
+
+
+def _is_exit_signal(sig: str) -> bool:
+    """判断是否为卖出信号。"""
+    return any(x in sig for x in ("sell", "short", "卖出", "空"))
+
+
+def _format_date_key(ts) -> str:
+    """将时间戳格式化为日期字符串 YYYY-MM-DD。"""
+    if hasattr(ts, "strftime"):
+        return ts.strftime("%Y-%m-%d")
+    return str(ts)[:10]
+
+
+def _query_signals(conn, code: str, start: str, end: str, signal_source: str, strategy_id: Optional[str]) -> pd.DataFrame:
+    """根据信号源查询信号数据。"""
+    if signal_source == "trade_signals":
+        if strategy_id and str(strategy_id).strip():
+            return conn.execute(
+                """SELECT code, signal, snapshot_time
+                   FROM trade_signals
+                   WHERE code = ? AND strategy_id = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
+                   ORDER BY snapshot_time""",
+                [code, str(strategy_id).strip(), start, end],
+            ).fetchdf()
+        return conn.execute(
+            """SELECT code, signal, snapshot_time
+               FROM trade_signals
+               WHERE code = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
+               ORDER BY snapshot_time""",
+            [code, start, end],
+        ).fetchdf()
+    return conn.execute(
+        """SELECT code, signal_type, score, snapshot_time
+           FROM market_signals
+           WHERE code = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
+           ORDER BY snapshot_time""",
+        [code, start, end],
+    ).fetchdf()
 
 
 def load_signals_from_db(
@@ -119,10 +182,10 @@ def load_signals_from_db(
     """
     code = _norm_code(symbol)
     close_conn = False
+
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
-
             conn = get_conn(read_only=True)
             close_conn = True
         except Exception:
@@ -134,52 +197,25 @@ def load_signals_from_db(
     exits: dict = {}
 
     try:
-        if signal_source == "trade_signals":
-            if strategy_id and str(strategy_id).strip():
-                df = conn.execute(
-                    """SELECT code, signal, snapshot_time
-                       FROM trade_signals
-                       WHERE code = ? AND strategy_id = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
-                       ORDER BY snapshot_time""",
-                    [code, str(strategy_id).strip(), start, end],
-                ).fetchdf()
-            else:
-                df = conn.execute(
-                    """SELECT code, signal, snapshot_time
-                       FROM trade_signals
-                       WHERE code = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
-                       ORDER BY snapshot_time""",
-                    [code, start, end],
-                ).fetchdf()
-        else:
-            df = conn.execute(
-                """SELECT code, signal_type, score, snapshot_time
-                   FROM market_signals
-                   WHERE code = ? AND DATE(snapshot_time) >= ? AND DATE(snapshot_time) <= ?
-                   ORDER BY snapshot_time""",
-                [code, start, end],
-            ).fetchdf()
-        if df is not None and not df.empty:
-            for _, row in df.iterrows():
-                ts = row.get("snapshot_time")
-                if ts is None:
-                    continue
-                d = ts if hasattr(ts, "strftime") else str(ts)[:10]
-                if hasattr(d, "strftime"):
-                    date_key = d.strftime("%Y-%m-%d")
-                else:
-                    date_key = str(d)[:10]
-                sig = str(row.get("signal") or row.get("signal_type") or "").lower()
-                if any(x in sig for x in ("buy", "long", "买入", "多")):
-                    entries[date_key] = True
-                if any(x in sig for x in ("sell", "short", "卖出", "空")):
-                    exits[date_key] = True
+        df = _query_signals(conn, code, start, end, signal_source, strategy_id)
+        if df is None or df.empty:
+            return entries, exits
+
+        for _, row in df.iterrows():
+            ts = row.get("snapshot_time")
+            if ts is None:
+                continue
+            date_key = _format_date_key(ts)
+            sig = str(row.get("signal") or row.get("signal_type") or "").lower()
+            if _is_entry_signal(sig):
+                entries[date_key] = True
+            if _is_exit_signal(sig):
+                exits[date_key] = True
+
     except Exception:
         pass
-    if close_conn and conn is not None:
-        try:
-            conn.close()
-        except Exception:
-            pass
+    finally:
+        if close_conn:
+            _try_close_conn(conn)
 
     return entries, exits

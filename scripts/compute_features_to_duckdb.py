@@ -110,7 +110,7 @@ def run(
             df = build_feature_matrix(bars)
             if df is None or df.empty:
                 continue
-            sym_code = sym.split(".")[0] if "." in sym else sym
+            sym_code = sym.split(".", maxsplit=1)[0] if "." in sym else sym
             pending.append((sym_code, df))
         except Exception:
             errors += 1
@@ -127,6 +127,49 @@ def run(
     except Exception:
         return {"written": written, "symbols_processed": len(symbol_list), "errors": errors + 1}
     try:
+        # 确保 features_daily 表存在且带主键（ON CONFLICT 依赖）
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS features_daily (
+                symbol VARCHAR NOT NULL,
+                trade_date DATE NOT NULL,
+                open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume DOUBLE,
+                rsi DOUBLE, macd DOUBLE, macd_signal DOUBLE, macd_hist DOUBLE,
+                vwap DOUBLE, atr DOUBLE, momentum DOUBLE, volatility DOUBLE,
+                PRIMARY KEY (symbol, trade_date)
+            )
+        """)
+        _table_recreated = False
+
+        def _do_insert(c, sym_code, trade_date, row):
+            c.execute(
+                """
+                INSERT INTO features_daily
+                (symbol, trade_date, open, high, low, close, volume, rsi, macd, macd_signal, macd_hist, vwap, atr, momentum, volatility)
+                VALUES (?, ?::DATE, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (symbol, trade_date) DO UPDATE SET
+                open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, volume=EXCLUDED.volume,
+                rsi=EXCLUDED.rsi, macd=EXCLUDED.macd, macd_signal=EXCLUDED.macd_signal, macd_hist=EXCLUDED.macd_hist,
+                vwap=EXCLUDED.vwap, atr=EXCLUDED.atr, momentum=EXCLUDED.momentum, volatility=EXCLUDED.volatility
+                """,
+                [
+                    sym_code,
+                    trade_date,
+                    _safe_float(row.get("open")),
+                    _safe_float(row.get("high")),
+                    _safe_float(row.get("low")),
+                    _safe_float(row.get("close")),
+                    _safe_float(row.get("volume")),
+                    _safe_float(row.get("rsi")),
+                    _safe_float(row.get("macd")),
+                    _safe_float(row.get("macd_signal")),
+                    _safe_float(row.get("macd_hist")),
+                    _safe_float(row.get("vwap")),
+                    _safe_float(row.get("atr")),
+                    _safe_float(row.get("momentum")),
+                    _safe_float(row.get("volatility")),
+                ],
+            )
+
         for sym_code, df in pending:
             for _, row in df.iterrows():
                 ts = row.get("timestamp")
@@ -143,37 +186,36 @@ def run(
                 if trade_date.startswith("NaT") or len(trade_date) < 10:
                     continue
                 try:
-                    conn.execute(
-                        """
-                        INSERT INTO features_daily
-                        (symbol, trade_date, open, high, low, close, volume, rsi, macd, macd_signal, macd_hist, vwap, atr, momentum, volatility)
-                        VALUES (?, ?::DATE, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ON CONFLICT (symbol, trade_date) DO UPDATE SET
-                        open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low, close=EXCLUDED.close, volume=EXCLUDED.volume,
-                        rsi=EXCLUDED.rsi, macd=EXCLUDED.macd, macd_signal=EXCLUDED.macd_signal, macd_hist=EXCLUDED.macd_hist,
-                        vwap=EXCLUDED.vwap, atr=EXCLUDED.atr, momentum=EXCLUDED.momentum, volatility=EXCLUDED.volatility
-                        """,
-                        [
-                            sym_code,
-                            trade_date,
-                            _safe_float(row.get("open")),
-                            _safe_float(row.get("high")),
-                            _safe_float(row.get("low")),
-                            _safe_float(row.get("close")),
-                            _safe_float(row.get("volume")),
-                            _safe_float(row.get("rsi")),
-                            _safe_float(row.get("macd")),
-                            _safe_float(row.get("macd_signal")),
-                            _safe_float(row.get("macd_hist")),
-                            _safe_float(row.get("vwap")),
-                            _safe_float(row.get("atr")),
-                            _safe_float(row.get("momentum")),
-                            _safe_float(row.get("volatility")),
-                        ],
-                    )
+                    _do_insert(conn, sym_code, trade_date, row)
                     written += 1
-                except Exception:
-                    errors += 1
+                except Exception as e:
+                    err_msg = str(e)
+                    if not _table_recreated and (
+                        "UNIQUE/PRIMARY KEY" in err_msg or "conflict target" in err_msg
+                    ):
+                        try:
+                            conn.execute("DROP TABLE IF EXISTS features_daily")
+                            conn.execute("""
+                                CREATE TABLE features_daily (
+                                    symbol VARCHAR NOT NULL,
+                                    trade_date DATE NOT NULL,
+                                    open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, volume DOUBLE,
+                                    rsi DOUBLE, macd DOUBLE, macd_signal DOUBLE, macd_hist DOUBLE,
+                                    vwap DOUBLE, atr DOUBLE, momentum DOUBLE, volatility DOUBLE,
+                                    PRIMARY KEY (symbol, trade_date)
+                                )
+                            """)
+                            _table_recreated = True
+                            _do_insert(conn, sym_code, trade_date, row)
+                            written += 1
+                        except Exception:
+                            errors += 1
+                            if os.environ.get("DEBUG_FEATURES") == "1" and errors <= 1:
+                                sys.stderr.write(f"[DEBUG] features_daily INSERT error: {e}\n")
+                    else:
+                        errors += 1
+                        if os.environ.get("DEBUG_FEATURES") == "1" and errors <= 1:
+                            sys.stderr.write(f"[DEBUG] features_daily INSERT error: {e}\n")
     finally:
         conn.close()
     return {"written": written, "symbols_processed": len(symbol_list), "errors": errors}

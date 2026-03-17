@@ -49,7 +49,9 @@ def test_fetch_klines_from_astock_duckdb_mock(mock_conn):
 
 
 def test_get_astock_duckdb_available_no_file():
-    with patch("data_engine.connector_astock_duckdb.os.path.isfile", return_value=False):
+    """Test that get_astock_duckdb_available returns False when DB file doesn't exist."""
+    # Patch get_conn to return None (simulating missing DB file)
+    with patch("core.data_service.db.get_conn", return_value=None):
         from data_engine.connector_astock_duckdb import get_astock_duckdb_available
 
         assert get_astock_duckdb_available() is False

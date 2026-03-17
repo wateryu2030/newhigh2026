@@ -4,6 +4,11 @@ from __future__ import annotations
 
 import os
 
+try:
+    import duckdb
+except ImportError:
+    duckdb = None  # type: ignore[assignment]
+
 # 从 core/data_service 定位到 newhigh 根：data_service -> core -> src -> core -> newhigh
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _CORE_DIR = os.path.dirname(_THIS_DIR)  # core
@@ -30,12 +35,17 @@ def get_db_path() -> str:
 
 def get_conn(read_only: bool = True):
     """获取 DuckDB 连接。Data Service 读多写少，默认只读。"""
+    if duckdb is None:
+        return None
     path = get_db_path()
     if not path or not os.path.isfile(path):
         return None
     try:
-        import duckdb
-
         return duckdb.connect(path, read_only=read_only)
     except Exception:
         return None
+
+
+def get_astock_duckdb_available() -> bool:
+    """检查 newhigh 本地 A 股 DuckDB 是否可用（已通过复制脚本写入数据）。"""
+    return get_conn() is not None

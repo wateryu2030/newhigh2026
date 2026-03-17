@@ -38,7 +38,12 @@ def update_longhubang() -> int:
             df[c] = "" if c in ("code", "name") else None
     df["lhb_date"] = pd.to_datetime(df["lhb_date"], errors="coerce").dt.date
     out = df[["code", "name", "lhb_date", "net_buy", "snapshot_time"]].dropna(subset=["code"])
-    out = out.fillna(0)
+    # 只填充数值列，日期列保留 None
+    numeric_cols = ["net_buy"]
+    for c in numeric_cols:
+        if c in out.columns and out[c].dtype in ["int64", "float64"]:
+            out[c] = out[c].fillna(0)
+    out = out.fillna({"code": "", "name": "", "snapshot_time": now})
 
     conn = get_conn()
     ensure_tables(conn)

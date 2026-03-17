@@ -189,7 +189,7 @@ class PracticalNewsCollector:
         except Exception as e:
             print(f"  采集失败: {e}")
             # 返回模拟数据作为备选
-            return self.get_mock_news(source_config)
+            pass  # 不使用模拟数据
         
         return news_list
     

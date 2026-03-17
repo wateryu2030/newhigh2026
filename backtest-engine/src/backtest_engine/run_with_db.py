@@ -28,6 +28,30 @@ def _align_signals_to_dates(
     return entries, exits
 
 
+def _extract_equity_curve(pf, result: Dict[str, Any]) -> None:
+    """从投资组合中提取资金曲线。"""
+    try:
+        val = pf.value()
+        if val is not None and len(val) > 0:
+            for t, v in val.items():
+                dt = t.strftime("%Y-%m-%d") if hasattr(t, "strftime") else str(t)[:10]
+                result["equity_curve"].append({"date": dt, "value": float(v)})
+    except Exception:
+        pass
+
+
+def _extract_trade_count(pf, result: Dict[str, Any]) -> None:
+    """从投资组合中提取交易次数。"""
+    try:
+        result["trade_count"] = (
+            len(pf.trades.records_readable)
+            if hasattr(pf, "trades") and pf.trades is not None
+            else None
+        )
+    except Exception:
+        pass
+
+
 def run_backtest_from_db(
     symbol: str,
     start_date: str,
@@ -63,27 +87,30 @@ def run_backtest_from_db(
         "trade_count": None,
         "error": None,
     }
+
     try:
-        ohlcv_df, ohlcv_list = load_ohlcv_from_db(symbol, start_date, end_date, conn=conn)
+        ohlcv_df, _ = load_ohlcv_from_db(symbol, start_date, end_date, conn=conn)
         if ohlcv_df is None or ohlcv_df.empty:
             result["error"] = "no_ohlcv"
             return result
+
         entries_by_date, exits_by_date = load_signals_from_db(
-            symbol,
-            start_date,
-            end_date,
+            symbol, start_date, end_date,
             signal_source=signal_source,
             strategy_id=strategy_id,
             conn=conn,
         )
+
         date_index = pd.DatetimeIndex(ohlcv_df["date"])
         entries, exits = _align_signals_to_dates(date_index, entries_by_date, exits_by_date)
+
         close = ohlcv_df.set_index("date")["close"]
         close = close.reindex(date_index).ffill().fillna(0)
+
         if close.max() <= 0:
             result["error"] = "invalid_prices"
             return result
-        # 滑点近似为双边额外成本，与手续费合并
+
         effective_fees = fees + 2.0 * float(slippage)
         pf = run_backtest(
             close,
@@ -93,31 +120,23 @@ def run_backtest_from_db(
             fees=effective_fees,
             freq="1D",
         )
+
         metrics = compute_metrics(pf, freq="1D")
-        result["sharpe_ratio"] = metrics.get("sharpe_ratio")
-        result["max_drawdown"] = metrics.get("max_drawdown")
-        result["total_return"] = metrics.get("total_return")
-        result["win_rate_pct"] = metrics.get("win_rate_pct")
-        result["profit_factor"] = metrics.get("profit_factor")
-        result["total_profit"] = metrics.get("total_profit")
-        try:
-            val = pf.value()
-            if val is not None and len(val) > 0:
-                for t, v in val.items():
-                    dt = t.strftime("%Y-%m-%d") if hasattr(t, "strftime") else str(t)[:10]
-                    result["equity_curve"].append({"date": dt, "value": float(v)})
-        except Exception:
-            pass
-        try:
-            result["trade_count"] = (
-                len(pf.trades.records_readable)
-                if hasattr(pf, "trades") and pf.trades is not None
-                else None
-            )
-        except Exception:
-            pass
+        result.update({
+            "sharpe_ratio": metrics.get("sharpe_ratio"),
+            "max_drawdown": metrics.get("max_drawdown"),
+            "total_return": metrics.get("total_return"),
+            "win_rate_pct": metrics.get("win_rate_pct"),
+            "profit_factor": metrics.get("profit_factor"),
+            "total_profit": metrics.get("total_profit"),
+        })
+
+        _extract_equity_curve(pf, result)
+        _extract_trade_count(pf, result)
+
     except Exception as e:
         result["error"] = str(e)
+
     return result
 
 

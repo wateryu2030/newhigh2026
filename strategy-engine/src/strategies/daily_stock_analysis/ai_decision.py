@@ -318,15 +318,15 @@ class AIDecisionMaker:
             # 准备分析提示
             prompt = self._prepare_qwen_prompt(analysis_data)
 
-            # 根据配置选择模型
+            # 根据配置选择模型（百炼/Coding Plan 部分套餐不支持 qwen-plus，用 qwen-turbo 替代）
             model_map = {
                 "qwen-max": "qwen-max",
-                "qwen-plus": "qwen-plus",
+                "qwen-plus": "qwen-turbo",  # 避免 400 model qwen-plus is not supported
                 "qwen-turbo": "qwen-turbo",
             }
-            model_name = model_map.get(self.config.ai_model, "qwen-max")
+            model_name = model_map.get(self.config.ai_model, "qwen-turbo")
 
-            self.logger.info("调用通义千问AI: {model_name}")
+            self.logger.info("调用通义千问AI: %s", model_name)
 
             # 调用dashscope API
             response = dashscope.Generation.call(
@@ -338,16 +338,29 @@ class AIDecisionMaker:
 
             if response.status_code == 200:
                 ai_text = response.output.text
-                self.logger.info("AI响应长度: {len(ai_text)} 字符")
+                self.logger.info("AI响应长度: %s 字符", len(ai_text))
                 return ai_text
-            else:
-                self.logger.error("通义千问API调用失败: {response.code} - {response.message}")
-                # 降级到模拟响应
+            if response.status_code == 400 and "not supported" in str(getattr(response, "message", "")):
+                if model_name != "qwen-turbo":
+                    self.logger.warning("模型 %s 不可用，降级为 qwen-turbo", model_name)
+                    response = dashscope.Generation.call(
+                        model="qwen-turbo",
+                        prompt=prompt,
+                        temperature=self.config.ai_temperature,
+                        max_tokens=2000,
+                    )
+                    if response.status_code == 200:
+                        return response.output.text
+            if response.status_code != 200:
+                self.logger.error(
+                    "通义千问API调用失败: %s - %s",
+                    getattr(response, "code", response.status_code),
+                    getattr(response, "message", ""),
+                )
                 return await self._generate_mock_ai_response(analysis_data)
 
         except Exception as e:
-            self.logger.error("调用通义千问AI异常: {e}")
-            # 降级到模拟响应
+            self.logger.error("调用通义千问AI异常: %s", e)
             return await self._generate_mock_ai_response(analysis_data)
 
     def _prepare_qwen_prompt(self, analysis_data: Dict[str, Any]) -> str:

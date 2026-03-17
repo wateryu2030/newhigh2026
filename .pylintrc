@@ -35,10 +35,7 @@ max-attributes=12
 
 [IMPORTS]
 deprecated-modules=
-preferred-modules=
-    pandas:pd,
-    numpy:np,
-    datetime:dt
+preferred-modules=pandas:pd,numpy:np
 
 [TYPECHECK]
 ignored-modules=

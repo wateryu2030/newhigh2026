@@ -85,15 +85,21 @@ def _update_longhubang() -> int:
 
 
 def _update_fundflow() -> int:
-    from data_pipeline.collectors.fund_flow import update_fundflow
-
-    return update_fundflow()
+    try:
+        from data_pipeline.collectors.fund_flow import update_fundflow
+        return update_fundflow()
+    except Exception:
+        # 东方财富资金流接口可能网络受限，降级返回 0
+        return 0
 
 
 def _update_realtime() -> int:
-    from data_pipeline.collectors.realtime_quotes import update_realtime_quotes
-
-    return update_realtime_quotes()
+    try:
+        from data_pipeline.collectors.realtime_quotes import update_realtime_quotes
+        return update_realtime_quotes()
+    except Exception:
+        # 东方财富实时行情接口可能网络受限，降级返回 0
+        return 0
 
 
 def run(

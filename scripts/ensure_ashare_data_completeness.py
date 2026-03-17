@@ -23,9 +23,10 @@ sys.path.insert(0, os.path.join(ROOT, "core", "src"))
 
 
 def _duckdb_path() -> str:
-    from data_engine.connector_astock_duckdb import DEFAULT_NEWHIGH_DUCKDB_PATH
-
-    return os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip() or DEFAULT_NEWHIGH_DUCKDB_PATH
+    import os
+    # 使用 data/quant_system.duckdb 作为默认路径
+    default_path = os.path.join(ROOT, "data", "quant_system.duckdb")
+    return os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip() or default_path
 
 
 def _symbol_to_order_book_id(symbol: str) -> str:

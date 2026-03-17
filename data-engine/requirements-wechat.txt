@@ -1,0 +1,16 @@
+# 微信公众号采集器依赖
+# 安装：pip install -r requirements-wechat.txt
+
+# 核心依赖（完整功能）
+wespy>=1.0.0
+
+# 基础依赖（降级模式）
+requests>=2.20.0
+beautifulsoup4>=4.9.0
+
+# 数据库（已在主项目安装）
+# duckdb>=0.9.0
+
+# 可选：HTML 转 Markdown（更好的转换效果）
+# markdown>=3.4.0
+# html2text>=2020.1.16

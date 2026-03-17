@@ -6,27 +6,10 @@
 from __future__ import annotations
 
 import datetime as dt
-import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from core import OHLCV
-
-# newhigh 仓库根目录（data_engine -> src -> data-engine -> newhigh，向上 4 级）
-_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-_DATA_ENGINE_SRC = os.path.dirname(_THIS_DIR)  # data_engine
-_DATA_ENGINE_ROOT = os.path.dirname(_DATA_ENGINE_SRC)  # data-engine
-_NEWHIGH_ROOT = os.path.dirname(_DATA_ENGINE_ROOT)  # newhigh
-# 与 data_pipeline 统一：data/quant_system.duckdb
-DEFAULT_NEWHIGH_DUCKDB_PATH = os.path.join(_NEWHIGH_ROOT, "data", "quant_system.duckdb")
-
-
-def _duckdb_path() -> str:
-    """统一 DuckDB 路径（与 duckdb_manager.get_db_path 一致）。"""
-    return (
-        os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "").strip()
-        or os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip()
-        or DEFAULT_NEWHIGH_DUCKDB_PATH
-    )
+from core.data_service.db import get_conn as get_db_conn, get_astock_duckdb_available as check_astock_available
 
 
 def _order_book_id_to_symbol(order_book_id: str) -> str:
@@ -56,22 +39,15 @@ def _symbol_to_order_book_id(symbol: str) -> str:
     return f"{s}.XSHE"
 
 
+# 使用 core.data_service.db 中的统一函数
 def _get_conn(read_only: bool = True):
-    """获取 newhigh 本地 DuckDB 连接。"""
-    path = _duckdb_path()
-    if not path or not os.path.isfile(path):
-        return None
-    try:
-        import duckdb
-
-        return duckdb.connect(path, read_only=read_only)
-    except Exception:
-        return None
+    """获取 newhigh 本地 DuckDB 连接（代理到 core.data_service.db.get_conn）。"""
+    return get_db_conn(read_only=read_only)
 
 
 def get_astock_duckdb_available() -> bool:
-    """检查 newhigh 本地 A 股 DuckDB 是否可用（已通过复制脚本写入数据）。"""
-    return _get_conn() is not None
+    """检查 newhigh 本地 A 股 DuckDB 是否可用（代理到 core.data_service.db.get_astock_duckdb_available）。"""
+    return check_astock_available()
 
 
 def fetch_klines_from_astock_duckdb(

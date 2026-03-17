@@ -56,6 +56,35 @@
 
 ---
 
+## 2026-03-16 心跳任务执行记录
+
+### 执行时间
+2026-03-16 01:55 (Asia/Shanghai)
+
+### 执行内容
+
+1. **生成改进计划**
+   - 创建 `improvement_plan_2026-03-16.md`
+   - 识别 6 个改进点 (3 个高优先级，2 个中优先级，1 个低优先级)
+   - 最高优先级：修复新闻采集器数据源选择器
+
+2. **系统状态检查**
+   - core 模块 pylint 评分：9.88/10
+   - 新闻采集系统：21% 数据源覆盖率 (3/14)
+   - 定时任务：正常运行
+
+3. **待执行改进**
+   - 修复 core/types.py 导入 (pylint 误报，已确认代码正确)
+   - 安装 feedparser (已确认安装)
+   - 修复失效数据源选择器 (待执行)
+
+### 下一步计划
+1. 修复 2-3 个财经新闻数据源选择器
+2. 集成多源采集器到定时任务
+3. 添加数据源健康监控
+
+---
+
 ## 2026-03-12
 
 ### 修改内容
@@ -216,4 +245,35 @@
 ```bash
 bash scripts/run_quality_automation.sh
 ```
+
+---
+
+## 2026-03-16 特征计算修复与带数据进化
+
+### 1. 特征计算 96831 错误成因与修复
+
+**现象**：`compute_features_to_duckdb.py` 输出 `Written: 0 Symbols: 200 Errors: 96831`。
+
+**原因**：
+- `features_daily` 表若由旧逻辑创建或不存在，可能**没有 PRIMARY KEY**。
+- DuckDB 的 `ON CONFLICT (symbol, trade_date) DO UPDATE` 要求冲突列上有 UNIQUE/PRIMARY KEY，否则报 `Binder Error: ... are not referenced by a UNIQUE/PRIMARY KEY CONSTRAINT`，导致每条 INSERT 都失败。
+
+**修复**（`scripts/compute_features_to_duckdb.py`）：
+1. 写入前执行 `CREATE TABLE IF NOT EXISTS features_daily (..., PRIMARY KEY (symbol, trade_date))`。
+2. 若首次 INSERT 仍报上述 Binder 错误，则 **DROP TABLE features_daily** 后按带主键的 schema 重新 **CREATE TABLE**，再重试该条插入；后续插入正常。
+3. `sym.split(".")` 改为 `sym.split(".", maxsplit=1)`（C0207）。
+4. 可选：`DEBUG_FEATURES=1` 时打印首条 INSERT 异常，便于排查。
+
+**验证**：同轮进化中特征计算输出 **Written: 96838 Symbols: 200 Errors: 0**，全量测试通过。
+
+### 2. 带数据补全的进化一轮
+
+- 执行：`python scripts/openclaw_evolution_cycle.py`（未加 `--no-ensure-data`）。
+- 数据：A 股/北交所补全 Filled 224、Skipped 285、Errors 0；market 表更新；特征计算 96838 行写入、0 错误。
+- 测试：全模块通过。
+- 策略循环：generate_strategies → backtest_strategies → score_alpha → evolve_population → deploy_top_strategies 已跑完。
+
+### 3. improvement_plan 小进化
+
+- **core/data_service/db.py**：将 `import duckdb` 从 `get_conn()` 内移到模块顶部（C0415），并用 `try/except ImportError` 赋 `duckdb = None`，避免函数内导入。
 
