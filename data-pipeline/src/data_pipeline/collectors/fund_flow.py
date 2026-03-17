@@ -5,7 +5,16 @@ from __future__ import annotations
 import datetime as dt
 
 
-def update_fundflow() -> int:
+def update_fundflow(max_retries: int = 3) -> int:
+    """
+    采集资金流数据
+    
+    Args:
+        max_retries: 最大重试次数（网络错误时）
+    
+    Returns:
+        采集条数，失败返回 0
+    """
     try:
         import akshare as ak
         import pandas as pd
@@ -13,7 +22,24 @@ def update_fundflow() -> int:
         return 0
     from ..storage.duckdb_manager import get_conn, ensure_tables
 
-    df = ak.stock_individual_fund_flow_rank(indicator="今日")
+    # 网络重试逻辑
+    df = None
+    for attempt in range(max_retries):
+        try:
+            df = ak.stock_individual_fund_flow_rank(indicator="今日")
+            if df is not None and not df.empty:
+                break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                import time
+                wait_time = (attempt + 1) * 2  # 2s, 4s, 6s
+                print(f"  资金流采集失败 (尝试 {attempt+1}/{max_retries}): {e}")
+                print(f"  {wait_time}秒后重试...")
+                time.sleep(wait_time)
+            else:
+                print(f"  资金流采集失败，已达最大重试次数：{e}")
+                return 0
+    
     if df is None or df.empty:
         return 0
     now = dt.datetime.now()
