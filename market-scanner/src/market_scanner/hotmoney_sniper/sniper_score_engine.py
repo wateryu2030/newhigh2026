@@ -30,8 +30,15 @@ class SniperScoreEngine:
             import os
             import duckdb
 
+            # Go up 5 levels: hotmoney_sniper → market_scanner → market-scanner → src → newhigh
             root = os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(os.path.abspath(__file__))
+                        )
+                    )
+                )
             )
             path = (
                 os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "")

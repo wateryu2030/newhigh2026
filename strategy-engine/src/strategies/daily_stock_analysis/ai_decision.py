@@ -34,7 +34,9 @@ except ImportError:
 
 # 尝试导入google.genai (Gemini - 新版SDK)
 try:
+# pylint: disable=unused-import
     import google.genai as genai
+# pylint: disable=unused-import
 
     GEMINI_AVAILABLE = True
 except ImportError:
@@ -211,7 +213,7 @@ class AIDecisionMaker:
         try:
             return await model_handler(analysis_data)
         except Exception as e:
-            self.logger.error("调用AI模型 {self.config.ai_model} 失败: {e}")
+            self.logger.error("调用 AI 模型 %s 失败：%s", self.config.ai_model, e)
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
 
@@ -250,12 +252,11 @@ class AIDecisionMaker:
 
                 if response.text:
                     ai_text = response.text
-                    self.logger.info("Gemini响应长度: {len(ai_text)} 字符")
+                    self.logger.info("Gemini 响应长度： %d 字符", len(ai_text))
                     return ai_text
-                else:
-                    self.logger.error("Gemini API调用失败: 无响应文本")
-                    # 降级到模拟响应
-                    return await self._generate_mock_ai_response(analysis_data)
+                self.logger.error("Gemini API调用失败: 无响应文本")
+                # 降级到模拟响应
+                return await self._generate_mock_ai_response(analysis_data)
 
             except ImportError:
                 # 回退到旧版google.generativeai
@@ -278,15 +279,14 @@ class AIDecisionMaker:
 
                 if response.text:
                     ai_text = response.text
-                    self.logger.info("Gemini响应长度: {len(ai_text)} 字符")
+                    self.logger.info("Gemini 响应长度： %d 字符", len(ai_text))
                     return ai_text
-                else:
-                    self.logger.error("Gemini API调用失败: {response.prompt_feedback}")
-                    # 降级到模拟响应
-                    return await self._generate_mock_ai_response(analysis_data)
+                self.logger.error("Gemini API 调用失败：%s", response.prompt_feedback)
+                # 降级到模拟响应
+                return await self._generate_mock_ai_response(analysis_data)
 
         except Exception as e:
-            self.logger.error("调用Gemini AI异常: {e}")
+            self.logger.error("调用 Gemini AI 异常：%s", e)
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
 
@@ -366,7 +366,6 @@ class AIDecisionMaker:
     def _prepare_qwen_prompt(self, analysis_data: Dict[str, Any]) -> str:
         """准备通义千问分析提示"""
         # 提取关键信息
-        timestamp = analysis_data.get("timestamp", "")
         markets = analysis_data.get("markets", {})
 
         prompt_lines = [
@@ -411,7 +410,6 @@ class AIDecisionMaker:
     def _prepare_gemini_prompt(self, analysis_data: Dict[str, Any]) -> str:
         """准备Gemini分析提示"""
         # 提取关键信息
-        timestamp = analysis_data.get("timestamp", "")
         markets = analysis_data.get("markets", {})
 
         prompt_lines = [
@@ -515,7 +513,6 @@ class AIDecisionMaker:
         lines = text_response.split("\n")
 
         stocks = []
-        current_stock = {}
 
         for line in lines:
             line = line.strip()
@@ -565,7 +562,7 @@ class AIDecisionMaker:
             return result
 
         except Exception as e:
-            self.logger.error("股票分析失败: {e}")
+            self.logger.error("股票分析失败：%s", e)
             return {
                 "symbol": symbol,
                 "error": str(e),

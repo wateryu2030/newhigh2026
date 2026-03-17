@@ -124,7 +124,7 @@ class DailyStockAnalyzer:
             duration = (end_time - start_time).total_seconds()
             results["duration_seconds"] = duration
 
-            self.logger.info("市场分析完成，耗时: %s秒", duration:.2f)
+            self.logger.info("市场分析完成，耗时：%.2f 秒", duration)
 
             return results
 

@@ -5,7 +5,7 @@
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime, timedelta
 
 from .config import DailyStockConfig
@@ -16,7 +16,7 @@ class NewsAnalyzer:
 
     def __init__(self, config: DailyStockConfig):
         self.config = config
-        self.logger = logging.getLogger(f"daily_stock_analysis.news_analyzer")
+        self.logger = logging.getLogger("daily_stock_analysis.news_analyzer")
 
         # 新闻源映射
         self.news_source_handlers = {
@@ -114,7 +114,7 @@ class NewsAnalyzer:
                 {
                     "source": "caixin",
                     "title": f"财新网：{topics[i % len(topics)]}深度报道",
-                    "content": f"财新网对{topic}进行了深入分析...",
+                    "content": f"财新网对{topics[i % len(topics)]}进行了深入分析...",
                     "url": f"https://caixin.com/article/{datetime.now().strftime('%Y%m%d')}_{i}",
                     "publish_time": (datetime.now() - timedelta(hours=i * 2)).isoformat(),
                     "related_markets": markets,

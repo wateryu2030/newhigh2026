@@ -1,5 +1,96 @@
 # 学习记录
 
+## 2026-03-17
+
+### 问题
+1. **f-string 语法错误**：`duration:.2f` 错误地将格式说明符放在参数位置
+2. **f-string 缺少 f 前缀**：`logger.error("...{e}")` 缺少 `f` 前缀，导致变量不插值
+3. **未定义变量**：循环中使用 `topic` 但实际应使用 `topics[i % len(topics)]`
+4. **未使用的导入和变量**：`Optional` 导入未使用，`timestamp`、`current_stock` 变量提取后未使用
+5. **no-else-return 模式**：`if: return` 后的 `else` 不必要，增加代码嵌套
+
+### 解决方案
+1. **修复 f-string 格式说明符位置**
+   - 错误：`logger.info("耗时： %s 秒", duration:.2f)`
+   - 正确：`logger.info("耗时：%.2f 秒", duration)`
+   - 或：`logger.info(f"耗时：{duration:.2f}秒")`
+
+2. **统一使用 lazy % formatting**
+   - 错误：`logger.error("失败：{e}")` (缺少 f 前缀)
+   - 正确：`logger.error("失败：%s", e)` (与项目规范一致)
+   - 日志模块的 % formatting 支持 lazy evaluation，性能更好
+
+3. **修复未定义变量**
+   - 错误：`f"对{topic}进行深入分析"` (topic 未定义)
+   - 正确：`f"对{topics[i % len(topics)]}进行深入分析"`
+   - 使用循环索引访问列表元素
+
+4. **清理死代码**
+   - 移除未使用的 `Optional` 导入
+   - 移除提取但未使用的 `timestamp`、`current_stock` 变量
+   - 保持代码简洁
+
+5. **应用 no-else-return 模式**
+   - 错误：
+     ```python
+     if response.text:
+         return ai_text
+     else:
+         logger.error("...")
+         return mock_response
+     ```
+   - 正确：
+     ```python
+     if response.text:
+         return ai_text
+     logger.error("...")
+     return mock_response
+     ```
+
+### 效果
+1. daily_stock_analysis 模块 pylint 评分：9.40 → 9.47/10 (+0.07)
+2. 消除 E0001 Parsing failed 错误 (语法错误)
+3. 消除 E0602 Undefined variable 错误
+4. 消除 W1309 f-string-without-interpolation 警告
+5. 所有 12 个测试用例通过 (strategy-engine 2/2, data-engine 10/10)
+
+### 经验教训
+1. **f-string 语法要准确**：格式说明符 `:.2f` 必须在花括号内 `{duration:.2f}`，不能放在参数位置
+2. **日志格式化优先使用 %**：`logger.info("...", arg)` 支持 lazy evaluation，比 f-string 性能更好
+3. **循环变量要准确**：在循环中使用列表元素时，确保使用正确的索引表达式
+4. **及时清理死代码**：未使用的导入和变量不仅产生警告，还会误导阅读代码的人
+5. **no-else-return 提高可读性**：提前返回后不需要 else，直接写后续逻辑更清晰
+
+### 常见 f-string 错误模式
+```python
+# 错误 1: 格式说明符位置错误
+logger.info("耗时： %s 秒", duration:.2f)  # SyntaxError
+# 正确:
+logger.info("耗时：%.2f 秒", duration)
+logger.info(f"耗时：{duration:.2f}秒")
+
+# 错误 2: 缺少 f 前缀
+logger.error("错误：{e}")  # 输出字面量 "{e}"
+# 正确:
+logger.error(f"错误：{e}")
+logger.error("错误：%s", e)  # 推荐 (lazy evaluation)
+
+# 错误 3: getLogger 使用 f-string 无插值
+logger = logging.getLogger(f"module.name")  # W1309
+# 正确:
+logger = logging.getLogger("module.name")
+```
+
+### 代码审查检查清单
+- [ ] f-string 是否有 f 前缀？
+- [ ] 格式说明符是否在花括号内？
+- [ ] 日志是否使用 lazy % formatting？
+- [ ] 循环变量是否正确定义？
+- [ ] 是否有未使用的导入或变量？
+- [ ] `if: return` 后是否有不必要的 `else`？
+
+---
+
 ## 2026-03-15
 
 ### 问题
