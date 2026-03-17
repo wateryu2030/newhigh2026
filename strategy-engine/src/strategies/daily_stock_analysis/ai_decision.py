@@ -54,7 +54,7 @@ class AIDecisionMaker:
 
     def __init__(self, config: DailyStockConfig):
         self.config = config
-        self.logger = logging.getLogger(f"daily_stock_analysis.ai_decision")
+        self.logger = logging.getLogger("daily_stock_analysis.ai_decision")
 
         # 加载API Keys
         self.api_keys = self._load_api_keys()

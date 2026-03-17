@@ -16,7 +16,7 @@ class NotificationSender:
 
     def __init__(self, config: DailyStockConfig):
         self.config = config
-        self.logger = logging.getLogger(f"daily_stock_analysis.notification")
+        self.logger = logging.getLogger("daily_stock_analysis.notification")
 
         # 通知渠道处理器
         self.channel_handlers = {

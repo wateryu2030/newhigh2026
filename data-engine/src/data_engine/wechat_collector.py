@@ -140,7 +140,11 @@ class WeChatCollector:
         self.session = requests.Session() if REQUESTS_AVAILABLE else None
         if self.session:
             self.session.headers.update({
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': (
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/120.0.0.0 Safari/537.36'
+                )
             })
 
     def is_wechat_url(self, url: str) -> bool:
@@ -172,12 +176,11 @@ class WeChatCollector:
             if WESPY_AVAILABLE and self.wespy_fetcher:
                 # 使用 WeSpy 完整功能
                 return self._fetch_with_wespy(url, save_to_file)
-            elif REQUESTS_AVAILABLE:
+            if REQUESTS_AVAILABLE:
                 # 降级：基础 HTTP 抓取
                 return self._fetch_with_http(url)
-            else:
-                logger.error("无可用抓取工具（需安装 WeSpy 或 requests）")
-                return None
+            logger.error("无可用抓取工具（需安装 WeSpy 或 requests）")
+            return None
 
         except Exception as e:
             logger.error("抓取文章失败：%s", e)
@@ -331,7 +334,12 @@ class WeChatCollector:
             # 逐篇抓取
             articles = []
             for i, article_meta in enumerate(article_list):
-                logger.info("[%d/%d] 抓取：%s", i + 1, len(article_list), article_meta.get('title', '未知'))
+                logger.info(
+                    "[%d/%d] 抓取：%s",
+                    i + 1,
+                    len(article_list),
+                    article_meta.get('title', '未知')
+                )
 
                 article_url = article_meta.get('url')
                 if not article_url:
@@ -554,10 +562,10 @@ if __name__ == "__main__":
 
     # 示例：抓取单篇文章
     test_url = "https://mp.weixin.qq.com/s/example"
-    collector = WeChatCollector()
-    article = collector.fetch_article(test_url)
+    test_collector = WeChatCollector()
+    test_article = test_collector.fetch_article(test_url)
 
-    if article:
-        print(f"标题：{article.title}")
-        print(f"作者：{article.author}")
-        print(f"内容长度：{len(article.content_md)} 字符")
+    if test_article:
+        print(f"标题：{test_article.title}")
+        print(f"作者：{test_article.author}")
+        print(f"内容长度：{len(test_article.content_md)} 字符")

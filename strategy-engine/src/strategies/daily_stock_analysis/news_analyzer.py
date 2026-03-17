@@ -35,7 +35,7 @@ class NewsAnalyzer:
         Returns:
             新闻数据字典
         """
-        self.logger.info(f"开始获取新闻数据: markets={markets}")
+        self.logger.info("开始获取新闻数据: markets=%s", markets)
 
         results = {
             "timestamp": datetime.now().isoformat(),
@@ -53,12 +53,12 @@ class NewsAnalyzer:
             for source in self.config.news_sources:
                 if source in self.news_source_handlers:
                     try:
-                        self.logger.debug(f"从 {source} 获取新闻")
+                        self.logger.debug("从 %s 获取新闻", source)
                         articles = await self.news_source_handlers[source](markets)
                         all_articles.extend(articles)
-                        self.logger.info(f"从 {source} 获取到 {len(articles)} 条新闻")
+                        self.logger.info("从 %s 获取到 %s 条新闻", source, len(articles))
                     except Exception as e:
-                        self.logger.warning(f"从 {source} 获取新闻失败: {e}")
+                        self.logger.warning("从 %s 获取新闻失败: %s", source, e)
 
             # 分析新闻情感
             results["articles"] = all_articles
@@ -68,11 +68,11 @@ class NewsAnalyzer:
                 sentiment_results = await self.analyze_sentiment(all_articles)
                 results["sentiment_analysis"] = sentiment_results
 
-            self.logger.info(f"新闻获取完成，共获取 {len(all_articles)} 条新闻")
+            self.logger.info("新闻获取完成，共获取 %s 条新闻", len(all_articles))
             return results
 
         except Exception as e:
-            self.logger.error(f"获取新闻数据失败: {e}", exc_info=True)
+            self.logger.error("获取新闻数据失败: %s", e, exc_info=True)
             results["status"] = "error"
             results["error"] = str(e)
             return results

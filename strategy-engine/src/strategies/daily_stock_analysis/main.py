@@ -31,7 +31,7 @@ class DailyStockAnalyzer:
         # 验证配置
         errors = self.config.validate()
         if errors:
-            self.logger.warning(f"配置验证警告: {errors}")
+            self.logger.warning("配置验证警告: %s", errors)
 
         # 初始化组件
         self.data_fetcher = DataFetcher(self.config)
@@ -39,7 +39,7 @@ class DailyStockAnalyzer:
         self.ai_decision_maker = AIDecisionMaker(self.config)
         self.notification_sender = NotificationSender(self.config)
 
-        self.logger.info(f"DailyStockAnalyzer初始化完成，配置: {self.config.to_dict()}")
+        self.logger.info("DailyStockAnalyzer初始化完成，配置: %s", self.config.to_dict())
 
     def _setup_logger(self) -> logging.Logger:
         """设置日志记录器"""
@@ -68,7 +68,7 @@ class DailyStockAnalyzer:
             分析结果字典
         """
         start_time = datetime.now()
-        self.logger.info(f"开始市场分析: markets={markets}, symbols={symbols}")
+        self.logger.info("开始市场分析: markets=%s, symbols=%s", markets, symbols)
 
         # 使用配置中的默认值
         if markets is None:
@@ -124,12 +124,12 @@ class DailyStockAnalyzer:
             duration = (end_time - start_time).total_seconds()
             results["duration_seconds"] = duration
 
-            self.logger.info(f"市场分析完成，耗时: {duration:.2f}秒")
+            self.logger.info("市场分析完成，耗时: %s秒", duration:.2f)
 
             return results
 
         except Exception as e:
-            self.logger.error(f"市场分析失败: {e}", exc_info=True)
+            self.logger.error("市场分析失败: %s", e, exc_info=True)
             results["error"] = str(e)
             return results
 
@@ -155,7 +155,7 @@ class DailyStockAnalyzer:
             )
             return recommendations
         except Exception as e:
-            self.logger.error(f"生成推荐失败: {e}", exc_info=True)
+            self.logger.error("生成推荐失败: %s", e, exc_info=True)
             return {"error": str(e)}
 
     async def send_notifications(
@@ -174,13 +174,13 @@ class DailyStockAnalyzer:
         if channels is None:
             channels = self.config.notification_channels
 
-        self.logger.info(f"发送通知到渠道: {channels}")
+        self.logger.info("发送通知到渠道: %s", channels)
 
         try:
             status = await self.notification_sender.send_all(results, channels)
             return status
         except Exception as e:
-            self.logger.error(f"发送通知失败: {e}", exc_info=True)
+            self.logger.error("发送通知失败: %s", e, exc_info=True)
             return {channel: False for channel in channels}
 
     async def run_daily_analysis(self) -> Dict[str, Any]:

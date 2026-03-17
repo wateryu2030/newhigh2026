@@ -16,7 +16,7 @@ class DataFetcher:
 
     def __init__(self, config: DailyStockConfig):
         self.config = config
-        self.logger = logging.getLogger(f"daily_stock_analysis.data_fetcher")
+        self.logger = logging.getLogger("daily_stock_analysis.data_fetcher")
 
         # 数据源映射
         self.data_source_handlers = {
@@ -40,7 +40,7 @@ class DataFetcher:
         Returns:
             市场数据字典
         """
-        self.logger.info(f"开始获取市场数据: markets={markets}")
+        self.logger.info("开始获取市场数据: markets=%s", markets)
 
         results = {
             "timestamp": datetime.now().isoformat(),
@@ -53,20 +53,20 @@ class DataFetcher:
             # 为每个市场获取数据
             for market in markets:
                 if market not in symbols:
-                    self.logger.warning(f"市场 {market} 没有股票代码，跳过")
+                    self.logger.warning("市场 %s 没有股票代码，跳过", market)
                     continue
 
                 market_symbols = symbols[market]
-                self.logger.info(f"获取市场 {market} 的数据，股票数量: {len(market_symbols)}")
+                self.logger.info("获取市场 %s 的数据，股票数量: %s", market, len(market_symbols))
 
                 market_data = await self._fetch_market_specific_data(market, market_symbols)
                 results["markets"][market] = market_data
 
-            self.logger.info(f"市场数据获取完成，共获取 {len(results['markets'])} 个市场数据")
+            self.logger.info("市场数据获取完成，共获取 %d 个市场数据", len(results['markets']))
             return results
 
         except Exception as e:
-            self.logger.error(f"获取市场数据失败: {e}", exc_info=True)
+            self.logger.error("获取市场数据失败: %s", e, exc_info=True)
             results["status"] = "error"
             results["error"] = str(e)
             return results
@@ -87,7 +87,7 @@ class DataFetcher:
         for source in self.config.data_sources:
             if source in self.data_source_handlers:
                 try:
-                    self.logger.debug(f"尝试从 {source} 获取 {market} 市场数据")
+                    self.logger.debug("尝试从 %s 获取 %s 市场数据", source, market)
 
                     # 这里应该调用实际的数据获取函数
                     # 由于原始代码不可用，我们创建模拟数据
@@ -96,10 +96,10 @@ class DataFetcher:
                     if source_data:
                         market_data["data"][source] = source_data
                         successful_sources.append(source)
-                        self.logger.info(f"从 {source} 成功获取 {market} 市场数据")
+                        self.logger.info("从 %s 成功获取 %s 市场数据", source, market)
 
                 except Exception as e:
-                    self.logger.warning(f"从 {source} 获取 {market} 数据失败: {e}")
+                    self.logger.warning("从 %s 获取 %s 数据失败: %s", source, market, e)
 
         # 生成摘要
         if successful_sources:
