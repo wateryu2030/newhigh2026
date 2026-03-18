@@ -1,67 +1,86 @@
+************* Module core.data_service.db
+core/src/core/data_service/db.py:24:8: C0415: Import outside toplevel (core.config.get_db_path) (import-outside-toplevel)
+************* Module core.data_service.strategy_service
+core/src/core/data_service/strategy_service.py:5:0: W0611: Unused List imported from typing (unused-import)
 ************* Module data_engine.clickhouse_storage
-data-engine/src/data_engine/clickhouse_storage.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
 data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.connector_akshare
-data-engine/src/data_engine/connector_akshare.py:5:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
-data-engine/src/data_engine/connector_akshare.py:41:19: E1101: Module 'akshare' has no 'stock_zh_a_hist_em' member (no-member)
-data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.connector_astock_duckdb
-data-engine/src/data_engine/connector_astock_duckdb.py:33:0: C0301: Line too long (103/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:48:0: C0301: Line too long (105/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:125:0: C0301: Line too long (108/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:246:0: C0301: Line too long (226/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:249:0: C0301: Line too long (192/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:252:0: C0301: Line too long (188/100) (line-too-long)
-data-engine/src/data_engine/connector_astock_duckdb.py:9:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
-data-engine/src/data_engine/connector_astock_duckdb.py:65:8: C0415: Import outside toplevel (duckdb) (import-outside-toplevel)
-data-engine/src/data_engine/connector_astock_duckdb.py:77:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
-data-engine/src/data_engine/connector_astock_duckdb.py:77:0: R0912: Too many branches (16/15) (too-many-branches)
-data-engine/src/data_engine/connector_astock_duckdb.py:10:0: W0611: Unused Optional imported from typing (unused-import)
-************* Module data_engine.connector_binance
-data-engine/src/data_engine/connector_binance.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
-data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.connector_tushare
-data-engine/src/data_engine/connector_tushare.py:11:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
-data-engine/src/data_engine/connector_tushare.py:12:0: W0404: Reimport 'Any' (imported line 4) (reimported)
-data-engine/src/data_engine/connector_tushare.py:19:4: W0407: Prefer importing 'pd' instead of 'pandas' (preferred-module)
-data-engine/src/data_engine/connector_tushare.py:159:0: R0911: Too many return statements (8/6) (too-many-return-statements)
-data-engine/src/data_engine/connector_tushare.py:266:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
-data-engine/src/data_engine/connector_tushare.py:386:16: E1123: Unexpected keyword argument 'amount' in constructor call (unexpected-keyword-arg)
-data-engine/src/data_engine/connector_tushare.py:386:16: E1123: Unexpected keyword argument 'code' in constructor call (unexpected-keyword-arg)
-data-engine/src/data_engine/connector_tushare.py:386:16: E1120: No value for argument 'symbol' in constructor call (no-value-for-parameter)
-data-engine/src/data_engine/connector_tushare.py:386:16: E1120: No value for argument 'interval' in constructor call (no-value-for-parameter)
-data-engine/src/data_engine/connector_tushare.py:12:0: C0412: Imports from package typing are not grouped (ungrouped-imports)
-data-engine/src/data_engine/connector_tushare.py:12:0: W0611: Unused Dict imported from typing (unused-import)
-data-engine/src/data_engine/connector_tushare.py:12:0: W0611: Unused Optional imported from typing (unused-import)
 ************* Module data_engine.connector_yahoo
-data-engine/src/data_engine/connector_yahoo.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
 data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
 ************* Module data_engine.data_pipeline
 data-engine/src/data_engine/data_pipeline.py:1:0: C0301: Line too long (104/100) (line-too-long)
-data-engine/src/data_engine/data_pipeline.py:3:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
 data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
 data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+************* Module data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:41:19: E1101: Module 'akshare' has no 'stock_zh_a_hist_em' member (no-member)
+data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:18:4: W0407: Prefer importing 'pd' instead of 'pandas' (preferred-module)
+data-engine/src/data_engine/connector_tushare.py:158:0: R0911: Too many return statements (8/6) (too-many-return-statements)
+data-engine/src/data_engine/connector_tushare.py:265:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+data-engine/src/data_engine/connector_tushare.py:12:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:12:0: C0301: Line too long (111/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:16:0: C0301: Line too long (103/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:31:0: C0301: Line too long (105/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:101:0: C0301: Line too long (108/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:222:0: C0301: Line too long (226/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:225:0: C0301: Line too long (192/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:228:0: C0301: Line too long (188/100) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_astock_duckdb.py:53:0: R0912: Too many branches (16/15) (too-many-branches)
 ************* Module data_engine.realtime_stream
-data-engine/src/data_engine/realtime_stream.py:5:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
 data-engine/src/data_engine/realtime_stream.py:43:12: C0104: Disallowed name "bar" (disallowed-name)
-************* Module strategy_engine.ai_fusion_strategy
-strategy-engine/src/strategy_engine/ai_fusion_strategy.py:229:0: C0301: Line too long (101/100) (line-too-long)
-strategy-engine/src/strategy_engine/ai_fusion_strategy.py:134:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-strategy-engine/src/strategy_engine/ai_fusion_strategy.py:151:8: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
-strategy-engine/src/strategy_engine/ai_fusion_strategy.py:134:4: R0912: Too many branches (17/15) (too-many-branches)
+************* Module data_engine.wechat_collector
+data-engine/src/data_engine/wechat_collector.py:306:17: W0511: TODO: 实现降级模式 (fixme)
+************* Module strategies.daily_stock_analysis.test_basic
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:17:0: C0413: Import "import importlib.util" should be placed at the top of the module (wrong-import-position)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:61:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:69:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:86:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:99:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:119:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:138:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: W0621: Redefining name 'DailyStockConfig' from outer scope (line 31) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: E0401: Unable to import 'strategy_engine.strategies.daily_stock_analysis.config' (import-error)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: C0415: Import outside toplevel (strategy_engine.strategies.daily_stock_analysis.config.DailyStockConfig) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/test_basic.py:163:8: E0611: No name 'strategies' in module 'strategy_engine' (no-name-in-module)
+************* Module strategies.daily_stock_analysis.config
+strategy-engine/src/strategies/daily_stock_analysis/config.py:6:0: W0611: Unused import os (unused-import)
+************* Module strategies.daily_stock_analysis.notification
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:203:0: C0301: Line too long (112/100) (line-too-long)
+strategy-engine/src/strategies/daily_stock_analysis/notification.py:314:8: C0415: Import outside toplevel (json) (import-outside-toplevel)
+************* Module strategies.daily_stock_analysis.ai_decision
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:343:0: C0301: Line too long (104/100) (line-too-long)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:38:4: R0402: Use 'from google import genai' instead (consider-using-from-import)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:238:16: C0415: Import outside toplevel (google.genai.Client) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:263:16: C0415: Import outside toplevel (google.generativeai) (import-outside-toplevel)
+strategy-engine/src/strategies/daily_stock_analysis/ai_decision.py:220:4: R0911: Too many return statements (7/6) (too-many-return-statements)
+************* Module strategies.daily_stock_analysis.main
+strategy-engine/src/strategies/daily_stock_analysis/main.py:80:8: W0621: Redefining name 'results' from outer scope (line 238) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:105:37: E1101: Instance of 'AIDecisionMaker' has no 'analyze' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:112:36: E1101: Instance of 'AIDecisionMaker' has no 'generate_recommendations' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:119:28: E1101: Instance of 'AIDecisionMaker' has no 'generate_summary' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:153:36: E1101: Instance of 'AIDecisionMaker' has no 'generate_recommendations' member (no-member)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:162:14: W0621: Redefining name 'results' from outer scope (line 238) (redefined-outer-name)
+strategy-engine/src/strategies/daily_stock_analysis/main.py:180:27: E1101: Instance of 'NotificationSender' has no 'send_all' member (no-member)
 ************* Module strategy_engine.breakout
 strategy-engine/src/strategy_engine/breakout.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
-************* Module strategy_engine.mean_reversion
-strategy-engine/src/strategy_engine/mean_reversion.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
+************* Module strategy_engine.ai_fusion_strategy
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:248:0: C0301: Line too long (101/100) (line-too-long)
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:134:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:191:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
+strategy-engine/src/strategy_engine/ai_fusion_strategy.py:220:0: W1404: Implicit string concatenation found in call (implicit-str-concat)
 ************* Module strategy_engine.trade_signal_aggregator
 strategy-engine/src/strategy_engine/trade_signal_aggregator.py:15:4: C0415: Import outside toplevel (core.Signal) (import-outside-toplevel)
 ************* Module strategy_engine.trend_following
 strategy-engine/src/strategy_engine/trend_following.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
-************* Module core.types
-core/src/core/types.py:4:0: W0407: Prefer importing 'dt' instead of 'datetime' (preferred-module)
-core/src/core/types.py:1:0: R0801: Similar lines in 2 files
+************* Module strategy_engine.mean_reversion
+strategy-engine/src/strategy_engine/mean_reversion.py:5:0: W0407: Prefer importing 'np' instead of 'numpy' (preferred-module)
+strategy-engine/src/strategy_engine/mean_reversion.py:1:0: R0801: Similar lines in 2 files
 ==data_engine.connector_akshare:[17:38]
-==data_engine.connector_tushare:[26:46]
+==data_engine.connector_tushare:[25:45]
     code = str(code).strip().split(".", maxsplit=1)[0]
     if not code:
         return code
@@ -73,17 +92,34 @@ core/src/core/types.py:1:0: R0801: Similar lines in 2 files
     return f"{code}.SZ"
 
 
-def _to_utc(dt: datetime) -> datetime:
+def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
     """若为 naive 则视为本地时间并转为 UTC（A 股 15:00 收盘）。"""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    if dt_obj.tzinfo is None:
+        dt_obj = dt_obj.replace(tzinfo=dt.timezone.utc)
+    return dt_obj
 
 
 def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str):
     """拉取日/周/月 K 线 DataFrame，优先东方财富接口（支持沪深京/北交所）。"""
     # 优先东方财富（沪深京含北交所） (duplicate-code)
+strategy-engine/src/strategy_engine/mean_reversion.py:1:0: R0801: Similar lines in 2 files
+==core.data_service.market_service:[12:26]
+==data_engine.connector_astock_duckdb:[17:31]
+    if "." in ob:
+        code, market = ob.split(".", 1)
+        if market.upper() == "XSHG":
+            return f"{code}.SH"
+        if market.upper() == "XSHE":
+            return f"{code}.SZ"
+        if market.upper() == "BSE":
+            return f"{code}.BSE"
+        return f"{code}.{market}"
+    return ob
+
+
+def get_stock_list(limit: int = 100) -> List[Dict[str, Any]]:
+    """返回 A 股标的列表，供 /api/stocks。字段：ts_code, name, industry（无则空串）。""" (duplicate-code)
 
 ------------------------------------------------------------------
-Your code has been rated at 9.37/10 (previous run: 9.60/10, -0.23)
+Your code has been rated at 9.60/10 (previous run: 9.59/10, +0.02)
 
