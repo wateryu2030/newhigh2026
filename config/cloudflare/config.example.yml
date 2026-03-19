@@ -1,0 +1,22 @@
+# Cloudflare Tunnel 配置示例（命名隧道方式）
+# 使用前：
+#   1. cloudflared tunnel login
+#   2. cloudflared tunnel create newhigh-local
+#   3. 记下隧道 UUID，将下方 tunnel 行改为该 UUID（或隧道名，视 cloudflared 版本而定）
+#   4. 在 Cloudflare Zero Trust 中为该隧道添加 Public Hostname：newhigh.com.cn → http://127.0.0.1:4173
+# 复制本文件为 config.yml 后执行：cloudflared tunnel --config config.yml run
+
+# tunnel: <YOUR_TUNNEL_UUID>
+# credentials-file: /Users/YOU/.cloudflared/<UUID>.json
+
+ingress:
+  # 主站：前端构建预览（先本地执行 npm run build && npm run preview -- --host 127.0.0.1 --port 4173）
+  - hostname: newhigh.com.cn
+    service: http://127.0.0.1:4173
+  # 可选：www 子域
+  # - hostname: www.newhigh.com.cn
+  #   service: http://127.0.0.1:4173
+  # 可选：仅静态展示页（python3 -m http.server 8090 --directory site）
+  # - hostname: newhigh.com.cn
+  #   service: http://127.0.0.1:8090
+  - service: http_status:404

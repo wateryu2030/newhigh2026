@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.newhigh.tunnel-stack</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/apple/Ahope/newhigh/scripts/run_tunnel_stack.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/apple/Ahope/newhigh</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/apple/Ahope/newhigh/logs/tunnel_stack_launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/apple/Ahope/newhigh/logs/tunnel_stack_launchd.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>PYTHONPATH</key>
+    <string>/Users/apple/Ahope/newhigh</string>
+  </dict>
+</dict>
+</plist>

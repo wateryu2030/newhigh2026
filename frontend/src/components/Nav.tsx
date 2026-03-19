@@ -12,6 +12,7 @@ const items: { href: string; key: string }[] = [
   { href: '/market', key: 'nav.market' },
   { href: '/ai-trading', key: 'nav.aiTrading' },
   { href: '/news', key: 'nav.news' },
+  { href: '/research', key: 'nav.research' },
   { href: '/strategies', key: 'nav.strategies' },
   { href: '/alpha-lab', key: 'nav.alphaLab' },
   { href: '/evolution', key: 'nav.evolution' },

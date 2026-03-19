@@ -91,13 +91,17 @@ def update_caixin_news(keywords: str = "*", days_back: int = 7) -> int:
         conn = get_conn()
         ensure_tables(conn)
 
-        # 检查是否已存在相同URL的新闻（避免重复）
+        # 检查是否已存在相同 URL 或相同 (title, publish_time) 的新闻（避免与财新或其他采集器重复）
         for _, row in df.iterrows():
-            existing = conn.execute(
+            by_url = conn.execute(
                 "SELECT COUNT(*) FROM news_items WHERE url = ?", [row["url"]]
             ).fetchone()[0]
+            by_title_time = conn.execute(
+                "SELECT COUNT(*) FROM news_items WHERE TRIM(COALESCE(title,'')) = ? AND TRIM(COALESCE(publish_time,'')) = ?",
+                [str(row.get("title") or "").strip(), str(row.get("publish_time") or "").strip()],
+            ).fetchone()[0]
 
-            if existing == 0:
+            if by_url == 0 and by_title_time == 0:
                 conn.execute(
                     """
                     INSERT INTO news_items 

@@ -66,14 +66,19 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {source && <p className="text-slate-500 text-sm">{t('news.dataSource')}：{source}</p>}
+      {source && (
+        <p className="text-slate-500 text-sm">
+          {t('news.dataSource')}：{source}
+          {source === 'duckdb' && '（列表已按标题+时间去重，仅展示最近 100 条；库内总条数见上方系统数据概览）'}
+        </p>
+      )}
 
       {loading ? (
         <p className="text-slate-500">{t('common.loading')}</p>
       ) : (
         <ul className="space-y-3">
           {news.map((item, i) => (
-            <li key={i} className="card list-none">
+            <li key={item.url || `${item.title ?? ''}-${item.publish_time ?? ''}-${i}`} className="card list-none">
               {item.title && (
                 <h3 className="font-medium text-white">
                   {item.url ? (
@@ -101,7 +106,7 @@ export default function NewsPage() {
                   {item.tag && <span className="rounded bg-slate-600 px-1.5 py-0.5">{item.tag}</span>}
                 </div>
               )}
-              {item.content && (
+              {item.content && !/^[\d.\s\-]+$/.test((item.content || '').trim()) && (
                 <p className="mt-2 text-sm text-slate-400 line-clamp-4">{item.content}</p>
               )}
             </li>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Nav } from '@/components/Nav';
 import { ClientProviders } from '@/components/ClientProviders';
+import { HotTickerBanner } from '@/components/HotTickerBanner';
 
 export const metadata: Metadata = {
   title: 'AI 对冲基金 控制台',
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="zh" className="dark">
       <body className="min-h-screen">
         <ClientProviders>
+          <HotTickerBanner />
           <Nav />
           <main className="mx-auto min-h-screen max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pb-6 sm:pt-6 lg:px-8 md:pb-6">
             {children}

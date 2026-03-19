@@ -48,6 +48,18 @@
 2. **确认 API Key**：Settings → Config → `models.providers.dashscope.apiKey` 是否为你的百炼专属 Key（sk-sp-...）。
 3. **再重启 + 新会话**：再完整退一次 OpenClaw、重新打开、再 New 一个 Chat 试一次。
 
+### 3.1 「All models failed」：超时 + 上下文不足
+
+若报错类似：`dashscope/deepseek: LLM request timed out` 且 `volcengine/doubao-pro-4k`、`moonshot/moonshot-v1-8k` 报 **Model context window too small (4000/8000 tokens). Minimum is 16000**：
+
+- **原因**：主模型与通义/DeepSeek 超时后，后备链里豆包 4K、Kimi 8K 的上下文只有 4k/8k，而心跳等任务常需 16k+ tokens，导致全部失败。
+- **处理**：已提供脚本，将 fallbacks 改为仅大上下文模型（≥32k），避免轮到 4k/8k 时必败：
+  ```bash
+  python scripts/fix_openclaw_fallbacks.py
+  ./scripts/restart_newhigh_bot.sh
+  ```
+- **超时**：OpenClaw 当前对 LLM 请求的超时可能偏短，若通义/DeepSeek 经常 timeout，可关注上游 [openclaw#46049](https://github.com/openclaw/openclaw/issues/46049) 是否支持配置 `requestTimeout`。
+
 ---
 
 ## 4. 本机 Gateway 由 LaunchAgent 管理
@@ -61,9 +73,9 @@
 ## 5. 多模型配置（百炼为主，其余备用）
 
 - **主力**：百炼（dashscope），API Key 直接写在 `openclaw.json` 的 `models.providers.dashscope.apiKey`，确保 LaunchAgent 启动时无需读 .env 即可用。
-- **备用链**：`agents.defaults.model.fallbacks` 为 `["dashscope/qwen-plus", "openai/gpt-4o-mini", "deepseek/deepseek-chat"]`，主模型不可用时自动切换。
+- **备用链**：`agents.defaults.model.fallbacks` 建议**仅保留上下文 ≥32k 的模型**（如 qwen3.5-plus、qwen3-coder-next、deepseek-chat、deepseek-coder、moonshot-v1-32k、gpt-4o-mini），避免心跳等大上下文任务在 4k/8k 模型上报「Model context window too small」。一键修复：`python scripts/fix_openclaw_fallbacks.py` 后重启 Gateway。
 - **备用 Key**：OPENAI、DEEPSEEK、GEMINI 的 Key 写在 `~/.openclaw/.env`，并已注入到 LaunchAgent 的 `EnvironmentVariables`，Gateway 进程能解析 `${OPENAI_API_KEY}` 等。
-- **默认模型**：`dashscope/qwen-max`（百炼 Max）。
+- **默认模型**：以当前 `openclaw.json` 为准（如 `dashscope/qwen3.5-plus`）。
 
 ## 6. 提醒与自主运行（Heartbeat + Cron）
 

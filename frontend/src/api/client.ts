@@ -1,8 +1,39 @@
-/** Gateway 地址：浏览器与 SSR 均请求此 origin，避免 404。可通过 NEXT_PUBLIC_API_TARGET 覆盖。 */
-const API_BASE = process.env.NEXT_PUBLIC_API_TARGET || 'http://127.0.0.1:8000';
+/**
+ * 可选：强制指定 API 根（如单独子域 https://api.xxx.com）。
+ * 不填时浏览器默认走「当前站点同源 /api」，由 Next rewrites 转到本机 Gateway——
+ * Cloudflare Tunnel 只暴露 :3000 时外网才能通，勿再请求 127.0.0.1:8000。
+ */
+export const API_BASE_STORAGE_KEY = 'newhigh_api_base';
+
+const SERVER_API_BASE = process.env.NEXT_PUBLIC_API_TARGET || 'http://127.0.0.1:8000';
+
+export function getApiBase(): string {
+  if (typeof window === 'undefined') {
+    return SERVER_API_BASE;
+  }
+  try {
+    const v = localStorage.getItem(API_BASE_STORAGE_KEY)?.trim();
+    if (
+      v &&
+      (v.startsWith('http://') || v.startsWith('https://')) &&
+      v.length >= 12
+    ) {
+      return v.replace(/\/$/, '');
+    }
+  } catch {
+    /* ignore */
+  }
+  /** 空字符串 → fetch(`/api/...`) 与页面同域（HTTPS），经 Next 反代到 Gateway */
+  return '';
+}
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const url = path.startsWith('http') ? path : `${API_BASE}/api${path}`;
+  const base = getApiBase();
+  const url = path.startsWith('http')
+    ? path
+    : base
+      ? `${base}/api${path}`
+      : `/api${path}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
   return res.json();
@@ -23,7 +54,10 @@ export interface MarketSummaryResponse {
 }
 
 export const api = {
-  baseURL: () => API_BASE + '/api',
+  baseURL: () => {
+    const b = getApiBase();
+    return b ? `${b}/api` : '/api';
+  },
   dashboard: () => apiGet<DashboardResponse>('/dashboard'),
   dataStatus: () => apiGet<DataStatusResponse>('/data/status'),
   marketSummary: () => apiGet<MarketSummaryResponse>('/market/summary'),
@@ -38,15 +72,18 @@ export const api = {
   ashareStocks: () => apiGet<AshareStocksResponse>('/market/ashare/stocks'),
   news: (symbol?: string, limit?: number) =>
     apiGet<NewsResponse>(`/news?limit=${limit ?? 100}${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`),
+  hotTicker: () => apiGet<HotTickerResponse>('/news/hot-ticker'),
   trades: () => apiGet<TradesResponse>('/trades'),
   evolution: () => apiGet<EvolutionResponse>('/evolution'),
   alphaLab: () => apiGet<AlphaLabResponse>('/alpha-lab'),
   positions: () => apiGet<PositionsResponse>('/positions'),
   marketEmotion: () => apiGet<MarketEmotionResponse>('/market/emotion'),
+  marketSentiment7d: () => apiGet<MarketSentiment7dResponse>('/market/sentiment-7d'),
   marketHotmoney: (limit?: number) => apiGet<HotmoneySeatItem[]>(`/market/hotmoney${limit != null ? `?limit=${limit}` : ''}`),
   marketMainThemes: (limit?: number) => apiGet<MainThemeItem[]>(`/market/main-themes${limit != null ? `?limit=${limit}` : ''}`),
   strategySignals: (limit?: number) => apiGet<TradeSignalItem[]>(`/strategy/signals${limit != null ? `?limit=${limit}` : ''}`),
   sniperCandidates: (limit?: number) => apiGet<SniperCandidateItem[]>(`/market/sniper-candidates${limit != null ? `?limit=${limit}` : ''}`),
+  systemDataOverview: () => apiGet<SystemDataOverviewResponse>('/system/data-overview'),
   systemStatus: (limit?: number) =>
     apiGet<SystemStatusResponse>(`/system/status${limit != null ? `?limit=${limit}` : ''}`),
   aiDecision: () => apiGet<AiDecisionResponse>('/ai/decision'),
@@ -66,7 +103,7 @@ export const api = {
     ),
   executionMode: () => apiGet<{ mode: string; error?: string }>('/execution/mode'),
   ensureStocks: () =>
-    fetch(`${API_BASE}/api/data/ensure-stocks`, { method: 'POST', cache: 'no-store' }).then((r) => r.json() as Promise<{ ok: boolean; rows: number; error?: string }>),
+    fetch(`${getApiBase()}/api/data/ensure-stocks`, { method: 'POST', cache: 'no-store' }).then((r) => r.json() as Promise<{ ok: boolean; rows: number; error?: string }>),
   simulatedOrders: (limit?: number, status?: string) => {
     const q = new URLSearchParams();
     if (limit != null) q.set('limit', String(limit));
@@ -81,7 +118,7 @@ export const api = {
     const params = new URLSearchParams({ task_type: taskType });
     if (populationLimit != null) params.set('population_limit', String(populationLimit));
     if (symbol) params.set('symbol', symbol);
-    return fetch(`${API_BASE}/api/evolution/trigger?${params}`, { method: 'POST', cache: 'no-store' }).then(
+    return fetch(`${getApiBase()}/api/evolution/trigger?${params}`, { method: 'POST', cache: 'no-store' }).then(
       (r) => r.json() as Promise<{ task_id: string; status: string }>
     );
   },
@@ -176,6 +213,19 @@ export interface MarketEmotionResponse {
   trade_date?: string | null;
   max_height?: number;
   market_volume?: number;
+}
+
+export interface MarketSentiment7dResponse {
+  score?: number;
+  level?: string;
+  emoji?: string;
+  description?: string;
+  dimensions?: Record<string, number>;
+  weights?: Record<string, number>;
+  stats?: Record<string, unknown>;
+  data_source?: string;
+  error?: string;
+  detail?: string;
 }
 
 export interface HotmoneySeatItem {
@@ -276,6 +326,18 @@ export interface NewsResponse {
   sentiment?: { count: number; avg_score?: number; positive_ratio?: number } | null;
 }
 
+export interface HotTickerLine {
+  type: string;
+  text: string;
+  code?: string | null;
+}
+
+export interface HotTickerResponse {
+  lines: HotTickerLine[];
+  banner: string;
+  updated_at: string;
+}
+
 export interface DataStatusResponse {
   ok: boolean;
   source: string | null;
@@ -300,6 +362,29 @@ export interface AlphaLabResponse {
   passed_backtest: number;
   passed_risk: number;
   deployed: number;
+}
+
+export interface SystemDataOverviewResponse {
+  ok: boolean;
+  counts: {
+    limitup_pool: number;
+    sniper_candidates: number;
+    trade_signals: number;
+    news_items: number;
+    stock_pool: number;
+    daily_bars: number;
+    longhubang: number;
+    fundflow: number;
+    emotion_state: string | null;
+    hotmoney_seats: number;
+  };
+  summary: {
+    limitup_pool: number;
+    sniper_candidates: number;
+    trade_signals: number;
+    news_items: number;
+  };
+  error?: string;
 }
 
 export interface PositionsResponse {

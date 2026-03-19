@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api, type MarketEmotionResponse, type HotmoneySeatItem, type MainThemeItem, type TradeSignalItem, type SniperCandidateItem, type AiDecisionResponse } from '@/api/client';
+import { api, type MarketEmotionResponse, type HotmoneySeatItem, type MainThemeItem, type TradeSignalItem, type SniperCandidateItem, type AiDecisionResponse, type SystemDataOverviewResponse } from '@/api/client';
+import { SystemDataOverview } from '@/components/SystemDataOverview';
 import { useLang } from '@/context/LangContext';
 
 export default function AITradingPage() {
@@ -12,6 +13,7 @@ export default function AITradingPage() {
   const [signals, setSignals] = useState<TradeSignalItem[]>([]);
   const [sniper, setSniper] = useState<SniperCandidateItem[]>([]);
   const [decision, setDecision] = useState<AiDecisionResponse | null>(null);
+  const [dataOverview, setDataOverview] = useState<SystemDataOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +21,7 @@ export default function AITradingPage() {
     setLoading(true);
     setError(null);
     Promise.all([
+      api.systemDataOverview().catch(() => null).then((r) => { if (r?.ok) setDataOverview(r); return null; }),
       api.marketEmotion().catch((e) => { setError(e instanceof Error ? e.message : 'API 404'); return null; }),
       api.marketHotmoney(50).catch(() => []),
       api.marketMainThemes(10).catch(() => []),
@@ -26,7 +29,7 @@ export default function AITradingPage() {
       api.sniperCandidates(50).catch(() => []),
       api.aiDecision().catch(() => null),
     ])
-      .then(([e, h, th, s, sn, dec]) => {
+      .then(([, e, h, th, s, sn, dec]) => {
         if (e) setEmotion(e);
         setHotmoney(Array.isArray(h) ? h : []);
         setThemes(Array.isArray(th) ? th : []);
@@ -48,6 +51,9 @@ export default function AITradingPage() {
 
   return (
     <div className="space-y-8 min-h-screen pb-24 md:pb-6">
+      {/* 系统数据概览 */}
+      <SystemDataOverview />
+
       <div>
         <h1 className="text-2xl font-bold text-white">{t('aiTrading.title')}</h1>
         <p className="text-slate-400 text-sm mt-1">{t('aiTrading.hint')}</p>

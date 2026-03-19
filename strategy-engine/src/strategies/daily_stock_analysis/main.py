@@ -102,21 +102,28 @@ class DailyStockAnalyzer:
 
             # 3. AI分析
             self.logger.info("步骤3: AI分析")
-            analysis_results = await self.ai_decision_maker.analyze(
-                market_data=market_data, news_data=news_data
+            analysis_results = await self.ai_decision_maker.analyze_market_data(
+                market_data=market_data
             )
             results["analysis"] = analysis_results
 
             # 4. 生成推荐
             self.logger.info("步骤4: 生成投资推荐")
-            recommendations = await self.ai_decision_maker.generate_recommendations(
-                analysis_results
+            recommendations = await self.ai_decision_maker.get_stock_analysis(
+                symbol=list(symbols.keys())[0] if symbols and isinstance(symbols, dict) else "000001",
+                market_data=market_data
             )
             results["recommendations"] = recommendations
 
             # 5. 生成摘要
             self.logger.info("步骤5: 生成分析摘要")
-            summary = await self.ai_decision_maker.generate_summary(results)
+            # 从 analysis_results 中提取关键信息生成摘要
+            analysis_data = analysis_results.get("analysis_data_summary", {})
+            summary = {
+                "overview": f"分析了 {analysis_data.get('market_count', 0)} 个市场的 {analysis_data.get('total_symbols', 0)} 只股票",
+                "timestamp": datetime.now().isoformat(),
+                "model_used": self.config.ai_model,
+            }
             results["summary"] = summary
 
             # 计算耗时
@@ -150,8 +157,11 @@ class DailyStockAnalyzer:
             analysis_results = await self.analyze_market()
 
         try:
-            recommendations = await self.ai_decision_maker.generate_recommendations(
-                analysis_results
+            # 使用配置中的默认 symbol
+            default_symbol = list(self.config.symbol_examples.keys())[0] if self.config.symbol_examples else "000001"
+            recommendations = await self.ai_decision_maker.get_stock_analysis(
+                symbol=default_symbol,
+                market_data=analysis_results.get("data", {}),
             )
             return recommendations
         except Exception as e:
@@ -177,7 +187,7 @@ class DailyStockAnalyzer:
         self.logger.info("发送通知到渠道: %s", channels)
 
         try:
-            status = await self.notification_sender.send_all(results, channels)
+            status = await self.notification_sender.send_analysis_results(results)
             return status
         except Exception as e:
             self.logger.error("发送通知失败: %s", e, exc_info=True)

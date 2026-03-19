@@ -126,6 +126,8 @@ def main() -> int:
         pass
     conn.close()
     print(f"Done. Newhigh DB: {dest}")
+    if not args.skip_news:
+        print("提示：若源库 news_items 有重复，可执行去重: python scripts/dedup_news_items.py --dry-run 查看后，再执行 python scripts/dedup_news_items.py")
     return 0
 
 

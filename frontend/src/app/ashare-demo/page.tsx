@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/api/client';
+import { api, getApiBase } from '@/api/client';
 
 interface StockBasic {
   ts_code: string;
@@ -68,7 +68,7 @@ export default function AShareDemoPage() {
     try {
       // 1. 测试股票基本信息
       console.log('测试股票基本信息API...');
-      const basicRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/stock-basic?name=茅台');
+      const basicRes = await fetch(`${getApiBase()}/api/skill/ashare/stock-basic?name=茅台`);
       const basicData = await basicRes.json();
       if (basicData.data) {
         setStockBasic(basicData.data);
@@ -76,7 +76,7 @@ export default function AShareDemoPage() {
 
       // 2. 测试日线行情
       console.log('测试日线行情API...');
-      const dailyRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/daily?ts_code=600519.SH&start_date=20240301');
+      const dailyRes = await fetch(`${getApiBase()}/api/skill/ashare/daily?ts_code=600519.SH&start_date=20240301`);
       const dailyData = await dailyRes.json();
       if (dailyData.data) {
         setDailyPrice(dailyData.data.slice(-5)); // 只显示最近5天
@@ -84,7 +84,7 @@ export default function AShareDemoPage() {
 
       // 3. 测试财务指标
       console.log('测试财务指标API...');
-      const financeRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/finance-indicator?ts_code=600519.SH');
+      const financeRes = await fetch(`${getApiBase()}/api/skill/ashare/finance-indicator?ts_code=600519.SH`);
       const financeData = await financeRes.json();
       if (financeData.data) {
         setFinanceIndicator(financeData.data);
@@ -92,7 +92,7 @@ export default function AShareDemoPage() {
 
       // 4. 测试涨停跌停
       console.log('测试涨停跌停API...');
-      const limitRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/limit-up-down');
+      const limitRes = await fetch(`${getApiBase()}/api/skill/ashare/limit-up-down`);
       const limitData = await limitRes.json();
       if (limitData.data) {
         setLimitUpDown(limitData.data.slice(0, 10)); // 只显示前10个
@@ -100,7 +100,7 @@ export default function AShareDemoPage() {
 
       // 5. 测试行业排行
       console.log('测试行业排行API...');
-      const industryRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/industry-ranking?top_n=10');
+      const industryRes = await fetch(`${getApiBase()}/api/skill/ashare/industry-ranking?top_n=10`);
       const industryData = await industryRes.json();
       if (industryData.data) {
         setIndustryRanking(industryData.data);
@@ -108,7 +108,7 @@ export default function AShareDemoPage() {
 
       // 6. 测试市场概览
       console.log('测试市场概览API...');
-      const marketRes = await fetch('http://127.0.0.1:8000/api/skill/ashare/market-overview');
+      const marketRes = await fetch(`${getApiBase()}/api/skill/ashare/market-overview`);
       const marketData = await marketRes.json();
       if (marketData.data) {
         setMarketOverview(marketData.data);

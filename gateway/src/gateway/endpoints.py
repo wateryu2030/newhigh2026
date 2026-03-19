@@ -6,6 +6,13 @@ from fastapi import APIRouter, Body, HTTPException
 
 router = APIRouter()
 
+# 导入系统数据概览端点
+try:
+    from .endpoints_system_data import get_system_data_overview
+    router.get("/system/data-overview")(get_system_data_overview)
+except Exception:
+    pass
+
 
 def _is_ashare_symbol(symbol: str) -> bool:
     code = (symbol or "").strip().split(".", maxsplit=1)[0]
@@ -418,6 +425,20 @@ def get_market_emotion() -> dict:
     }
 
 
+@router.get("/market/sentiment-7d")
+def get_market_sentiment_7d() -> dict:
+    """
+    全市场 7 维情绪评分（对齐 ClawHub A Stock Monitor 思路，本仓库安全实现）。
+    数据：优先 a_stock_realtime，否则 akshare 现货。
+    """
+    try:
+        from data_pipeline.sentiment_7d import get_market_sentiment_7d
+
+        return get_market_sentiment_7d(prefer_db=True)
+    except Exception as e:
+        return {"error": str(e), "score": 0, "level": "未知", "emoji": "❓"}
+
+
 @router.get("/strategy/signals")
 def get_strategy_signals(limit: int = 50) -> list:
     """交易信号（trade_signals 表，含 signal_score），供终端与自动交易。"""
@@ -718,6 +739,348 @@ def get_news(symbol: Optional[str] = None, limit: int = 100) -> dict:
             source = "akshare"
     sentiment = _news_sentiment_summary(items)
     return {"news": items, "source": source, "sentiment": sentiment}
+
+
+@router.get("/news/coverage")
+def get_news_coverage() -> dict:
+    """
+    新闻检索能力分层说明（借鉴 AI-Search-Hub 多平台原生搜索理念，见 docs/NEWS_SEARCH_AI_SEARCH_HUB.md）。
+    不含外部调用，供前端/Agent 展示扩展路径。
+    """
+    return {
+        "tier1_in_repo": {
+            "description": "站内默认：DuckDB news_items + akshare 东方财富",
+            "api": "GET /api/news",
+            "summary_api": "POST /api/research/news-summary",
+        },
+        "tier2_extended_philosophy": {
+            "description": "社媒/公众号/X/全球网页等多源舆情，借力各平台原生搜索",
+            "reference": "https://github.com/minsight-ai-info/AI-Search-Hub",
+            "routing_idea": "抖音热点→豆包系；公众号→元宝系；X→Grok；网页发现→Gemini 等",
+            "integration": "本仓库不内置浏览器自动化；可本机跑 AI-Search-Hub 将结果贴回投研，或后续接官方联网 API",
+        },
+        "doc": "docs/NEWS_SEARCH_AI_SEARCH_HUB.md",
+        "web_insight_api": "POST /api/news/web-insight（豆包/通义 + 现有 Key；抖音类热点需在火山控制台开联网插件）",
+        "channels_doc": "docs/NEWS_CHANNELS_WITH_EXISTING_KEYS.md",
+    }
+
+
+def _fetch_hot_ticker_payload() -> dict:
+    """东财热榜 + 快讯标题，供顶部滚动条。"""
+    import datetime as dt
+
+    lines: List[dict] = []
+    prefix = "🔥 "
+    try:
+        import akshare as ak
+
+        df = ak.stock_hot_rank_em()
+        if df is not None and not df.empty:
+            for _, row in df.head(12).iterrows():
+                name = str(row.get("股票名称") or "").strip()
+                pct = row.get("涨跌幅")
+                code = str(row.get("代码") or "").replace("SH", "").replace("SZ", "").replace("BJ", "")
+                if not name:
+                    continue
+                try:
+                    p = float(pct)
+                    ps = f"{p:+.2f}%"
+                except (TypeError, ValueError):
+                    ps = str(pct or "")
+                lines.append(
+                    {
+                        "type": "hot_rank",
+                        "text": f"{name} {ps}",
+                        "code": code[-6:] if len(code) >= 6 else code,
+                    }
+                )
+    except Exception:
+        pass
+
+    if len(lines) < 6:
+        try:
+            extra = _news_fallback_akshare(None, 15)
+            for n in extra[:10]:
+                t = (n.get("title") or "").strip()
+                if t and len(t) > 8:
+                    lines.append({"type": "news", "text": t[:60], "code": None})
+        except Exception:
+            pass
+
+    if not lines:
+        lines = [
+            {"type": "tip", "text": "热点加载中，请稍后刷新；确保本机可访问东财数据", "code": None}
+        ]
+
+    parts = [x["text"] for x in lines[:20]]
+    banner = prefix + " · ".join(parts)
+    return {
+        "lines": lines[:20],
+        "banner": banner[:1200],
+        "updated_at": dt.datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+@router.get("/news/hot-ticker")
+def get_news_hot_ticker() -> dict:
+    """顶部滚动热点：东方财富热榜 + 财经快讯标题。"""
+    return _fetch_hot_ticker_payload()
+
+
+@router.post("/news/web-insight")
+def post_news_web_insight(payload: dict = Body(default_factory=dict)) -> dict:
+    """
+    用现有 DOUBAO 或 DASHSCOPE Key 做「联网向」舆情问答（抖音/中文热点依赖方舟是否开启联网内容插件）。
+    Body: { "query": "...", "provider": "doubao" | "dashscope" }
+    """
+    import os
+
+    import requests
+
+    query = (payload.get("query") or "").strip()
+    if not query or len(query) > 2000:
+        raise HTTPException(status_code=400, detail="query 必填，最长 2000 字")
+    provider = (payload.get("provider") or "doubao").lower().strip()
+    sys_msg = (
+        "你是中文互联网舆情与热点分析助手。若具备联网检索能力，请结合最新公开信息回答；"
+        "若无，须首句说明无法实时检索。涉及抖音/短视频/微博等仅基于你能访问的公开信息归纳。"
+        "文末写：不构成投资建议。"
+    )
+    user_msg = f"用户问题：\n{query}"
+
+    if provider == "doubao":
+        key = os.environ.get("DOUBAO_API_KEY") or os.environ.get("VOLCANO_ENGINE_API_KEY")
+        model = (os.environ.get("DOUBAO_MODEL") or "").strip()
+        if not key or not model:
+            return {
+                "ok": False,
+                "error": "missing_doubao_config",
+                "hint": "配置 DOUBAO_API_KEY 与 DOUBAO_MODEL（推理接入点 ID）。抖音类时效需在火山方舟为该接入点开启联网内容插件，见 docs/NEWS_CHANNELS_WITH_EXISTING_KEYS.md",
+            }
+        base = os.environ.get("ARK_API_BASE", "https://ark.cn-beijing.volces.com/api/v3")
+        try:
+            r = requests.post(
+                f"{base.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                timeout=120,
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": sys_msg},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "max_tokens": 4096,
+                },
+            )
+            data = r.json()
+            if r.status_code != 200:
+                return {
+                    "ok": False,
+                    "error": f"ark_http_{r.status_code}",
+                    "detail": str(data)[:500],
+                }
+            text = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+            return {
+                "ok": True,
+                "provider": "doubao",
+                "text": text.strip(),
+                "note": "是否含实时检索取决于方舟接入点是否启用联网内容插件",
+            }
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:300]}
+
+    if provider == "dashscope":
+        key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("BAILIAN_API_KEY")
+        model = os.environ.get("NEWS_WEB_INSIGHT_MODEL", "qwen-turbo")
+        if not key:
+            return {"ok": False, "error": "missing_DASHSCOPE_API_KEY"}
+        try:
+            r = requests.post(
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                timeout=120,
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": sys_msg},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "max_tokens": 4096,
+                },
+            )
+            data = r.json()
+            if r.status_code != 200:
+                return {
+                    "ok": False,
+                    "error": f"dashscope_{r.status_code}",
+                    "detail": str(data)[:500],
+                }
+            text = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+            return {
+                "ok": True,
+                "provider": "dashscope",
+                "model": model,
+                "text": text.strip(),
+                "note": "通义侧若应用开启联网/搜索能力则时效更强，见百炼控制台",
+            }
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:300]}
+
+    raise HTTPException(status_code=400, detail='provider 仅支持 "doubao" 或 "dashscope"')
+
+
+def _fetch_news_for_research(symbol: Optional[str], limit: int) -> tuple[List[dict], Optional[str]]:
+    """与 GET /news 一致的新闻拉取，供投研摘要复用。"""
+    items: List[dict] = []
+    source: Optional[str] = None
+    try:
+        from data_engine import get_astock_duckdb_available, get_news_from_astock_duckdb
+
+        if get_astock_duckdb_available():
+            items = get_news_from_astock_duckdb(symbol=symbol, limit=limit)
+            if items:
+                source = "duckdb"
+    except Exception:
+        pass
+    if not items:
+        items = _news_fallback_akshare(symbol=symbol, limit=min(limit, 50))
+        if items:
+            source = "akshare"
+    return items, source
+
+
+def _llm_news_summary(blob: str, symbol_label: str, focus: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    调用大模型生成投研向新闻摘要。返回 (summary_text, model_used, error)。
+    优先 DashScope（BAILIAN/DASHSCOPE_API_KEY），其次 OPENAI_API_KEY。
+    """
+    import os
+
+    sys_prompt = (
+        "你是 A 股投研助手。根据用户提供的新闻列表，用中文输出：\n"
+        "1) 【核心摘要】300 字以内；\n"
+        "2) 【利好要点】条列；\n"
+        "3) 【风险要点】条列；\n"
+        "4) 文末必须写「不构成投资建议」。\n"
+        "仅基于给定新闻，勿编造未出现的事实。"
+    )
+    user_prompt = f"标的/范围：{symbol_label}\n"
+    if focus:
+        user_prompt += f"用户关注点：{focus}\n"
+    user_prompt += "新闻列表：\n" + blob[:12000]
+
+    key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("BAILIAN_API_KEY")
+    model_ds = os.environ.get("RESEARCH_LLM_MODEL", "qwen-turbo")
+    if key:
+        try:
+            import requests
+
+            r = requests.post(
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                timeout=90,
+                json={
+                    "model": model_ds,
+                    "messages": [
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "max_tokens": 2000,
+                },
+            )
+            data = r.json()
+            if r.status_code != 200:
+                err = data.get("message") or data.get("error", {}).get("message") or r.text[:200]
+                return None, None, f"dashscope_http_{r.status_code}: {err}"
+            choices = data.get("choices") or []
+            if not choices:
+                return None, None, "dashscope_empty_choices"
+            text = (choices[0].get("message") or {}).get("content") or ""
+            return text.strip() or None, model_ds, None
+        except Exception as e:
+            return None, None, f"dashscope:{e!s}"[:300]
+
+    key_oai = os.environ.get("OPENAI_API_KEY")
+    model_oai = os.environ.get("RESEARCH_OPENAI_MODEL", "gpt-4o-mini")
+    if key_oai:
+        try:
+            import requests
+
+            r = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key_oai}", "Content-Type": "application/json"},
+                timeout=90,
+                json={
+                    "model": model_oai,
+                    "messages": [
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "max_tokens": 2000,
+                },
+            )
+            data = r.json()
+            if r.status_code != 200:
+                return None, None, f"openai_{r.status_code}:{str(data)[:200]}"
+            text = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+            return text.strip() or None, model_oai, None
+        except Exception as e:
+            return None, None, f"openai:{e!s}"[:300]
+
+    return None, None, "no_llm_key"
+
+
+@router.post("/research/news-summary")
+def post_research_news_summary(payload: dict = Body(default_factory=dict)) -> dict:
+    """
+    投研：拉取个股/市场新闻后由大模型生成摘要（需配置 DASHSCOPE 或 OPENAI）。
+    Body: { "symbol": "000001" 可选, "limit": 25, "focus": "用户关注点" 可选 }
+    """
+    sym_raw = (payload.get("symbol") or "").strip()
+    symbol = sym_raw.split(".", maxsplit=1)[0] if sym_raw else None
+    if symbol and (len(symbol) < 5 or not symbol.isdigit()):
+        symbol = None
+    limit = int(payload.get("limit") or 25)
+    limit = min(max(limit, 5), 40)
+    focus = str(payload.get("focus") or "")[:500]
+
+    items, source = _fetch_news_for_research(symbol, limit)
+    if not items:
+        return {
+            "ok": False,
+            "error": "no_news",
+            "summary": "",
+            "news_count": 0,
+            "source": source,
+        }
+
+    label = symbol or "全市场（数据库/默认源）"
+    lines = []
+    for it in items[:limit]:
+        t = str(it.get("title") or "")[:200]
+        c = str(it.get("content") or "")[:180]
+        pt = str(it.get("publish_time") or "")
+        lines.append(f"- [{pt}] {t} | {c}")
+    blob = "\n".join(lines)
+
+    summary, model_used, err = _llm_news_summary(blob, label, focus)
+    if err and not summary:
+        return {
+            "ok": False,
+            "error": err,
+            "summary": "",
+            "news_count": len(items),
+            "source": source,
+        }
+
+    return {
+        "ok": True,
+        "summary": summary or "",
+        "model": model_used,
+        "news_count": len(items),
+        "source": source,
+        "symbol": symbol,
+    }
 
 
 def _news_sentiment_summary(items: List[dict]) -> Optional[dict]:

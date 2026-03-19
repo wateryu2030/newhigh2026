@@ -4,6 +4,7 @@
 """
 
 import asyncio
+import json
 import logging
 from typing import Dict, List, Any
 from datetime import datetime
@@ -200,7 +201,8 @@ class NotificationSender:
             <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
                 .header {{ background-color: #f0f0f0; padding: 20px; border-radius: 5px; }}
-                .recommendation {{ border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }}
+                .recommendation {{ border: 1px solid #ddd; }}
+                .recommendation {{ padding: 15px; margin: 10px 0; border-radius: 5px; }}
                 .buy {{ border-left: 5px solid #4CAF50; }}
                 .hold {{ border-left: 5px solid #FFC107; }}
                 .sell {{ border-left: 5px solid #F44336; }}
@@ -311,8 +313,6 @@ class NotificationSender:
 
     async def _send_to_file(self, content: Dict[str, Any]) -> Dict[str, Any]:
         """保存到文件"""
-        import json
-
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"daily_stock_analysis_{timestamp}.json"
 

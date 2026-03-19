@@ -1,0 +1,32 @@
+---
+description: 通过飞书 newhigh 控制本机开发时，发给用户的链接必须用公网 URL，保证点击可打开
+globs: ["**/*.py", "**/*.ts", "**/*.tsx", "**/pusher*.py", "**/FEISHU*.md", "**/NOTIFICATION*.md", "**/.env.example"]
+alwaysApply: true
+---
+
+# 飞书 / 通知中的可点击链接规范
+
+当用户**通过飞书 newhigh**（或其它远程渠道）控制本机开发、或会收到带链接的通知时，**所有发给用户的可点击链接必须使用公网 URL**，否则在手机或其它设备上点击会失败。
+
+## 公网基准 URL
+
+- **前端站点**：`https://htma.newhigh.com.cn`
+- **禁止**在发给飞书/用户的消息中使用：`http://localhost:*`、`http://127.0.0.1:*`、或缺少协议的 `htma.newhigh.com.cn/...`
+
+## 常用链接（直接可用）
+
+| 页面/用途     | 正确链接 |
+|---------------|----------|
+| 新闻页        | `https://htma.newhigh.com.cn/news` |
+| 投研页        | `https://htma.newhigh.com.cn/research` |
+| 数据/系统概览 | `https://htma.newhigh.com.cn/api/system/data-overview` 或前端数据页 |
+| 策略市场      | `https://htma.newhigh.com.cn/strategies` |
+| 首页          | `https://htma.newhigh.com.cn` |
+
+## 你在回复/代码/文案中需要做的
+
+1. **生成「修改完成」「已执行」「请查看」等提示时**：若附带链接，一律使用上表中的 `https://htma.newhigh.com.cn/...`。
+2. **编写推送文案（飞书/微信/邮件）时**：前端或「查看详情」类链接使用 `https://htma.newhigh.com.cn/路径`，且必须带 `https://`。
+3. **可选**：在 `.env` 中配置 `FRONTEND_BASE_URL=https://htma.newhigh.com.cn`，代码中用 `os.getenv("FRONTEND_BASE_URL", "https://htma.newhigh.com.cn")` 拼链接。
+
+详见：`docs/NOTIFICATION_LINKS.md`、`personal_assistant/FEISHU_SETUP.md`。

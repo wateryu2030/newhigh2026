@@ -70,9 +70,22 @@ python3 src/pusher.py
 
 ---
 
-## 三、小结
+## 三、通过飞书 newhigh 控制本机开发（链接可点击）
+
+若你通过**飞书 newhigh**（或 OpenClaw + 飞书）触发本机开发任务，回复里的「查看」「修改完成」等链接**必须使用公网 URL**，否则在手机或其它设备上点击会失败：
+
+- **正确**：`https://htma.newhigh.com.cn/news`、`https://htma.newhigh.com.cn/research`
+- **错误**：`http://localhost:3000/news`、`htma.newhigh.com.cn/news`（缺协议）
+
+项目内已通过 **Cursor 规则**（`.cursor/rules/feishu-links.mdc`）约束：AI 在生成发给用户的链接时一律使用 `https://htma.newhigh.com.cn/...`。更多页面与 API 链接见 `docs/NOTIFICATION_LINKS.md`。
+
+---
+
+## 四、小结
 
 | 场景           | 处理方式 |
 |----------------|----------|
 | 个人助手推送到飞书群 | 配置 `.env` 的 `FEISHU_CHAT_ID`，并把机器人加入该群 |
 | OpenClaw 飞书机器人 | 在 `~/.openclaw/` 中开启 feishu 插件并配置 |
+| 飞书 newhigh 下发的链接可点击 | 使用公网 URL `https://htma.newhigh.com.cn/...`，见 `.cursor/rules/feishu-links.mdc` 与 `docs/NOTIFICATION_LINKS.md` |
+| 重启飞书 newhigh 机器人后端 | 本机执行：`./scripts/restart_newhigh_bot.sh`（重启 LaunchAgent `ai.openclaw.gateway`，端口 18789） |

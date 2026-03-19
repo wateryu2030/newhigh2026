@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api, type DashboardResponse, type DataStatusResponse } from '@/api/client';
 import { StatCard } from '@/components/StatCard';
 import { EquityCurve } from '@/components/EquityCurve';
+import { SystemDataOverview } from '@/components/SystemDataOverview';
 import { useLang } from '@/context/LangContext';
 
 export default function DashboardPage() {
@@ -42,6 +43,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-white sm:text-3xl">{t('dashboard.title')}</h1>
+
+      {/* 系统数据概览 */}
+      <SystemDataOverview />
 
       {dataStatus && !dataStatus.ok && (
         <div className="card border-amber-500/30 bg-slate-800/80">

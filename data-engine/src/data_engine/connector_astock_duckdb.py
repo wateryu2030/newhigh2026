@@ -207,29 +207,60 @@ def get_duckdb_data_status() -> Dict[str, Any]:
     return {"stocks": 0, "daily_bars": 0, "date_min": None, "date_max": None}
 
 
+def _is_garbage_content(content: Any) -> bool:
+    """内容若为纯数字/小数点/空格（如误写入的资金流数据），视为无效。"""
+    if content is None or not isinstance(content, str):
+        return True
+    s = content.strip()
+    if not s or len(s) > 2000:
+        return True
+    # 几乎全是数字、点、空格、负号 → 疑似错误数据
+    num_like = sum(1 for c in s if c in "0123456789. \t\n-")
+    return num_like >= 0.9 * len(s)
+
+
 def get_news_from_astock_duckdb(
     symbol: str | None = None,
     limit: int = 200,
 ) -> List[Dict[str, Any]]:
-    """从 newhigh 本地 news_items 表读取新闻。symbol 可选（6 位或 600519.SH）；为空则全部。"""
+    """从 newhigh 本地 news_items 表读取新闻。按 (title, publish_time) 去重，避免同一条重复展示。"""
     conn = _get_conn()
     if conn is None:
         return []
     try:
+        # 多取一些以便去重后仍能接近 limit
+        fetch_limit = min(limit * 3, 500) if limit else 500
         if symbol:
             code = (symbol or "").strip().split(".", maxsplit=1)[0]
             if len(code) == 6:
                 sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items WHERE symbol = ? OR symbol LIKE ? ORDER BY publish_time DESC LIMIT ?"
-                params = [code, f"{code}.%", limit]
+                params = [code, f"{code}.%", fetch_limit]
             else:
                 sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items ORDER BY publish_time DESC LIMIT ?"
-                params = [limit]
+                params = [fetch_limit]
         else:
             sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items ORDER BY publish_time DESC LIMIT ?"
-            params = [limit]
+            params = [fetch_limit]
         df = conn.execute(sql, params).fetchdf()
     except Exception:
         return []
     if df is None or df.empty:
         return []
-    return df.to_dict("records")
+    records = df.to_dict("records")
+    # 按 (title, publish_time) 去重，保留首次出现（已按时间倒序）
+    seen: set[tuple[str, str]] = set()
+    out: List[Dict[str, Any]] = []
+    for row in records:
+        title = (row.get("title") or "").strip()
+        pub = (row.get("publish_time") or "").strip()
+        key = (title, pub)
+        if key in seen or not title:
+            continue
+        seen.add(key)
+        # 误写入的纯数字内容（如资金流）不展示
+        if _is_garbage_content(row.get("content")):
+            row = {**row, "content": None}
+        out.append(row)
+        if len(out) >= limit:
+            break
+    return out
