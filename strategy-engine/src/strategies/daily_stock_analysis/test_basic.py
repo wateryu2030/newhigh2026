@@ -6,15 +6,14 @@ daily_stock_analysis 基础功能测试
 import asyncio
 import sys
 import os
+import importlib.util
+import traceback
 
 # 添加项目根路径
 project_root = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 sys.path.insert(0, project_root)
-
-# 直接导入模块
-import importlib.util
 
 # 导入DailyStockAnalyzer
 module_path = os.path.join(os.path.dirname(__file__), "main.py")
@@ -58,7 +57,7 @@ async def test_basic_functionality():
             markets=["A", "HK", "US"], symbols=test_symbols
         )
 
-        print(f"   ✅ 数据获取成功")
+        print("   ✅ 数据获取成功")
         print(f"   状态: {market_data.get('status')}")
         print(f"   获取的市场数: {len(market_data.get('markets', {}))}")
 
@@ -96,7 +95,7 @@ async def test_basic_functionality():
             results = await analyzer.analyze_market(
                 markets=["A", "US"], symbols={"A": ["000001"], "US": ["AAPL"]}
             )
-            print(f"   ✅ 完整流程测试成功")
+            print("   ✅ 完整流程测试成功")
             print(f"   分析完成时间: {results.get('timestamp')}")
         except Exception as e:
             print(f"   ⚠ 完整流程测试遇到问题: {e}")
@@ -116,8 +115,6 @@ async def test_basic_functionality():
 
     except Exception as e:
         print(f"\n❌ 测试失败: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
 
