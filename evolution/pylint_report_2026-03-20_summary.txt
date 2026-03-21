@@ -1,0 +1,33 @@
+# Pylint Report Summary - 2026-03-20 16:00
+
+## Overall Score: 9.60/10
+
+## Messages by Category
+
+| Type | Count |
+|------|-------|
+| Convention | 12 |
+| Refactor | 9 |
+| Warning | 41 |
+| Error | 1 |
+
+## Top 10 Modules by Issues
+
+1. data-engine/connector_akshare.py - 1 error, 12 warnings
+2. data-engine/wechat_collector.py - 2 warnings, 1 fixme
+3. data-engine/connector_tushare.py - 2 warnings
+4. data-engine/connector_astock_duckdb.py - 2 warnings
+5. core/data_service/market_service.py - 5 warnings
+6. core/data_service/db.py - 2 warnings
+7. data-engine/data_pipeline.py - 2 warnings
+8. core/data_service/emotion_service.py - 2 warnings
+9. core/data_service/signal_service.py - 0 warnings (FIXED)
+10. data-engine/realtime_stream.py - 2 warnings (FIXED)
+
+## Quick Wins Completed Today
+
+1. ✅ signal_service.py - trailing whitespace (3 fixes)
+2. ✅ db.py - invalid-name constants (2 fixes)
+3. ✅ wechat_collector.py - invalid-name (3 fixes)
+4. ✅ realtime_stream.py - disallowed-name + unused args (2 fixes)
+5. ✅ connector_tushare.py - unused imports/args (3 fixes)

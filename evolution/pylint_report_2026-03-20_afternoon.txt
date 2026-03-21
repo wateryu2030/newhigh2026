@@ -1,0 +1,235 @@
+************* Module core.data_service.base
+core/src/core/data_service/base.py:78:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.db
+core/src/core/data_service/db.py:48:4: C0103: Variable name "LIB_DIR" doesn't conform to snake_case naming style (invalid-name)
+core/src/core/data_service/db.py:49:4: C0103: Variable name "PROJECT_ROOT" doesn't conform to snake_case naming style (invalid-name)
+core/src/core/data_service/db.py:72:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/db.py:91:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.emotion_service
+core/src/core/data_service/emotion_service.py:55:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+core/src/core/data_service/emotion_service.py:87:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.market_service
+core/src/core/data_service/market_service.py:45:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:50:15: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:89:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:74:19: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:100:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.news_service
+core/src/core/data_service/news_service.py:92:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.signal_service
+core/src/core/data_service/signal_service.py:54:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.stock_service
+core/src/core/data_service/stock_service.py:70:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.clickhouse_storage
+data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:48:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:41:19: E1101: Module 'akshare' has no 'stock_zh_a_hist_em' member (no-member)
+data-engine/src/data_engine/connector_akshare.py:58:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_akshare.py:132:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:168:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:198:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:236:0: C0301: Line too long (226/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:239:0: C0301: Line too long (192/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:242:0: C0301: Line too long (188/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_astock_duckdb.py:108:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:158:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:169:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:205:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:245:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:76:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:94:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:142:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:153:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:291:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+data-engine/src/data_engine/connector_tushare.py:530:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_yahoo
+data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.data_pipeline
+data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:133:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.wechat_collector
+data-engine/src/data_engine/wechat_collector.py:306:17: W0511: TODO: 实现降级模式 (fixme)
+data-engine/src/data_engine/wechat_collector.py:55:4: C0103: Variable name "WESPY_AVAILABLE" doesn't conform to snake_case naming style (invalid-name)
+data-engine/src/data_engine/wechat_collector.py:185:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:229:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:270:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:309:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:358:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:369:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:464:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:454:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:512:19: W0718: Catching too general exception Exception (broad-exception-caught)
+
+
+Report
+======
+1249 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |20     |1          |+19.00     |95.00       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |7      |2          |+5.00      |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |39     |15         |+24.00     |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |65     |1          |+64.00     |100.00      |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    akshare (data_engine.connector_akshare)
+    bs4 (data_engine.wechat_collector)
+    clickhouse_driver 
+      \-Client (data_engine.clickhouse_storage)
+    core (data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream)
+      \-data_service 
+        \-base (core.data_service.emotion_service,core.data_service.news_service,core.data_service.signal_service,core.data_service.stock_service)
+        \-db (core.data_service.market_service,data_engine.connector_astock_duckdb)
+    data_engine 
+      \-clickhouse_storage (data_engine.data_pipeline)
+      \-connector_akshare (data_engine.data_pipeline)
+      \-connector_binance (data_engine.data_pipeline)
+      \-connector_tushare (data_engine.data_pipeline)
+    duckdb (core.data_service.base,core.data_service.db,data_engine.wechat_collector)
+    pandas (data_engine.connector_tushare)
+    requests (data_engine.connector_binance,data_engine.wechat_collector)
+    tushare (data_engine.connector_tushare)
+    websocket (data_engine.realtime_stream)
+    wespy (data_engine.wechat_collector)
+      \-main (data_engine.wechat_collector)
+    yfinance (data_engine.connector_yahoo)
+
+
+
+2840 lines have been analyzed
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |1836   |64.65 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|docstring |554    |19.51 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|comment   |76     |2.68  |NC       |NC         |
++----------+-------+------+---------+-----------+
+|empty     |374    |13.17 |NC       |NC         |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |0     |0        |0          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.000 |0.000    |=          |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |6      |0        |0          |
++-----------+-------+---------+-----------+
+|refactor   |9      |0        |0          |
++-----------+-------+---------+-----------+
+|warning    |38     |1        |1          |
++-----------+-------+---------+-----------+
+|error      |1      |0        |0          |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++------------------------------------+-------+--------+---------+-----------+
+|module                              |error  |warning |refactor |convention |
++====================================+=======+========+=========+===========+
+|data_engine.connector_akshare       |100.00 |13.16   |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.wechat_collector        |0.00   |26.32   |0.00     |16.67      |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.connector_astock_duckdb |0.00   |13.16   |11.11    |50.00      |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.connector_tushare       |0.00   |13.16   |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.market_service    |0.00   |13.16   |0.00     |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.db                |0.00   |5.26    |0.00     |33.33      |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.data_pipeline           |0.00   |2.63    |22.22    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.emotion_service   |0.00   |2.63    |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.stock_service     |0.00   |2.63    |0.00     |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.signal_service    |0.00   |2.63    |0.00     |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.news_service      |0.00   |2.63    |0.00     |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|core.data_service.base              |0.00   |2.63    |0.00     |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.connector_yahoo         |0.00   |0.00    |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.connector_binance       |0.00   |0.00    |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+|data_engine.clickhouse_storage      |0.00   |0.00    |11.11    |0.00       |
++------------------------------------+-------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++------------------------------+------------+
+|message id                    |occurrences |
++==============================+============+
+|broad-exception-caught        |89          |
++------------------------------+------------+
+|too-many-positional-arguments |12          |
++------------------------------+------------+
+|invalid-name                  |7           |
++------------------------------+------------+
+|line-too-long                 |3           |
++------------------------------+------------+
+|no-member                     |1           |
++------------------------------+------------+
+|no-else-return                |1           |
++------------------------------+------------+
+|fixme                         |1           |
++------------------------------+------------+
+
+
+
+
+------------------------------------------------------------------
+Your code has been rated at 9.54/10 (previous run: 9.96/10, -0.42)
+
