@@ -1,0 +1,391 @@
+************* Module ai_models.emotion_cycle_model
+ai-models/src/ai_models/emotion_cycle_model.py:49:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:49:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:117:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:117:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:146:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:146:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:175:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:175:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/emotion_cycle_model.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/emotion_cycle_model.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:114:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+ai-models/src/ai_models/emotion_cycle_model.py:114:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:166:4: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:170:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+ai-models/src/ai_models/emotion_cycle_model.py:170:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+************* Module ai_models.sector_rotation_ai
+ai-models/src/ai_models/sector_rotation_ai.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/sector_rotation_ai.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:39:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/sector_rotation_ai.py:64:8: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:84:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/sector_rotation_ai.py:81:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+ai-models/src/ai_models/sector_rotation_ai.py:81:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:105:4: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
+************* Module ai_models.lstm_price_predictor
+ai-models/src/ai_models/lstm_price_predictor.py:105:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/lstm_price_predictor.py:159:12: W0612: Unused variable 'i' (unused-variable)
+ai-models/src/ai_models/lstm_price_predictor.py:281:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/lstm_price_predictor.py:263:16: C0415: Import outside toplevel (json) (import-outside-toplevel)
+ai-models/src/ai_models/lstm_price_predictor.py:288:4: C0415: Import outside toplevel (argparse) (import-outside-toplevel)
+ai-models/src/ai_models/lstm_price_predictor.py:316:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+ai-models/src/ai_models/lstm_price_predictor.py:331:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+ai-models/src/ai_models/lstm_price_predictor.py:14:0: C0411: standard import "typing.List" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:15:0: C0411: standard import "pathlib.Path" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:16:0: C0411: standard import "dataclasses.dataclass" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:14:0: W0611: Unused Dict imported from typing (unused-import)
+ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_squared_error imported from sklearn.metrics (unused-import)
+ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_absolute_error imported from sklearn.metrics (unused-import)
+************* Module ai_models._storage
+ai-models/src/ai_models/_storage.py:5:0: E0401: Unable to import 'lib.database' (import-error)
+************* Module ai_models.hotmoney_detector
+ai-models/src/ai_models/hotmoney_detector.py:40:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:40:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:62:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:62:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:88:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:88:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:94:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:94:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:129:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:129:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:164:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:164:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
+ai-models/src/ai_models/hotmoney_detector.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/hotmoney_detector.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:59:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+ai-models/src/ai_models/hotmoney_detector.py:59:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:126:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+ai-models/src/ai_models/hotmoney_detector.py:126:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:154:8: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:167:4: C0415: Import outside toplevel (_storage.write_hotmoney_signals) (import-outside-toplevel)
+************* Module data_engine.clickhouse_storage
+data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_yahoo
+data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.data_pipeline
+data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:133:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:48:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:41:19: E1101: Module 'akshare' has no 'stock_zh_a_hist_em' member (no-member)
+data-engine/src/data_engine/connector_akshare.py:58:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_akshare.py:132:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:168:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:198:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'false' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'positive' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'already' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'fixed' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:76:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:94:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:142:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:153:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:530:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:236:0: C0301: Line too long (226/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:239:0: C0301: Line too long (192/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:242:0: C0301: Line too long (188/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_astock_duckdb.py:108:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:158:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:169:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:205:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:245:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.wechat_collector
+data-engine/src/data_engine/wechat_collector.py:306:17: W0511: TODO: 实现降级模式 (fixme)
+data-engine/src/data_engine/wechat_collector.py:185:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:229:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:270:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:309:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:358:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:369:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:464:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:454:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:512:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.stock_service
+core/src/core/data_service/stock_service.py:70:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.db
+core/src/core/data_service/db.py:73:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/db.py:92:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.news_service
+core/src/core/data_service/news_service.py:92:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.market_service
+core/src/core/data_service/market_service.py:45:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:50:15: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:89:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:74:19: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:100:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.signal_service
+core/src/core/data_service/signal_service.py:54:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.emotion_service
+core/src/core/data_service/emotion_service.py:55:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+core/src/core/data_service/emotion_service.py:87:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.base
+core/src/core/data_service/base.py:78:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module daily_stock_analysis.test_basic
+strategy/src/strategies/daily_stock_analysis/test_basic.py:97:11: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/test_basic.py:81:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/test_basic.py:129:11: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/test_basic.py:174:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module daily_stock_analysis.config
+strategy/src/strategies/daily_stock_analysis/config.py:121:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/config.py:210:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/config.py:221:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/config.py:228:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/config.py:252:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module daily_stock_analysis.notification
+strategy/src/strategies/daily_stock_analysis/notification.py:86:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/notification.py:60:27: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/notification.py:332:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module daily_stock_analysis.ai_decision
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:38:4: R0402: Use 'from google import genai' instead (consider-using-from-import)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:159:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:215:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:288:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:238:16: C0415: Import outside toplevel (google.genai.Client) (import-outside-toplevel)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:263:16: C0415: Import outside toplevel (google.generativeai) (import-outside-toplevel)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:362:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:564:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:574:27: W0613: Unused argument 'market_data' (unused-argument)
+************* Module daily_stock_analysis.data_fetcher
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:68:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:101:23: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:218:53: W0613: Unused argument 'symbols' (unused-argument)
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:233:51: W0613: Unused argument 'symbols' (unused-argument)
+************* Module daily_stock_analysis.main
+strategy/src/strategies/daily_stock_analysis/main.py:123:0: C0301: Line too long (123/120) (line-too-long)
+strategy/src/strategies/daily_stock_analysis/main.py:80:8: W0621: Redefining name 'results' from outer scope (line 248) (redefined-outer-name)
+strategy/src/strategies/daily_stock_analysis/main.py:138:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/main.py:167:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/main.py:172:14: W0621: Redefining name 'results' from outer scope (line 248) (redefined-outer-name)
+strategy/src/strategies/daily_stock_analysis/main.py:192:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module daily_stock_analysis.news_analyzer
+strategy/src/strategies/daily_stock_analysis/news_analyzer.py:74:15: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/news_analyzer.py:60:27: W0718: Catching too general exception Exception (broad-exception-caught)
+strategy/src/strategies/daily_stock_analysis/news_analyzer.py:128:43: W0613: Unused argument 'markets' (unused-argument)
+
+
+Report
+======
+2763 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |38     |38         |=          |92.11       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |22     |15         |+7.00      |86.36       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |128    |80         |+48.00     |99.22       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |85     |88         |-3.00      |96.47       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    ai_models 
+      \-_storage (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.sector_rotation_ai)
+    akshare (data_engine.connector_akshare)
+    bs4 (data_engine.wechat_collector)
+    clickhouse_driver 
+      \-Client (data_engine.clickhouse_storage)
+    core (data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream)
+      \-data_service 
+        \-base (core.data_service.emotion_service,core.data_service.news_service,core.data_service.signal_service,core.data_service.stock_service)
+        \-db (core.data_service.market_service,data_engine.connector_astock_duckdb)
+    daily_stock_analysis 
+      \-ai_decision (daily_stock_analysis.main)
+      \-config (daily_stock_analysis.ai_decision,daily_stock_analysis.data_fetcher,daily_stock_analysis.main,daily_stock_analysis.news_analyzer,daily_stock_analysis.notification,daily_stock_analysis.test_basic)
+      \-data_fetcher (daily_stock_analysis.main)
+      \-main (daily_stock_analysis.test_basic)
+      \-news_analyzer (daily_stock_analysis.main)
+      \-notification (daily_stock_analysis.main)
+    dashscope (daily_stock_analysis.ai_decision)
+    data_engine 
+      \-clickhouse_storage (data_engine.data_pipeline)
+      \-connector_akshare (data_engine.data_pipeline)
+      \-connector_binance (data_engine.data_pipeline)
+      \-connector_tushare (data_engine.data_pipeline)
+    duckdb (ai_models.lstm_price_predictor,core.data_service.base,core.data_service.db,data_engine.wechat_collector)
+    google 
+      \-genai (daily_stock_analysis.ai_decision)
+      | \-Client (daily_stock_analysis.ai_decision)
+      \-generativeai (daily_stock_analysis.ai_decision)
+    numpy (ai_models.lstm_price_predictor)
+    openai (daily_stock_analysis.ai_decision)
+    pandas (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.lstm_price_predictor,ai_models.sector_rotation_ai,data_engine.connector_tushare)
+    requests (data_engine.connector_binance,data_engine.wechat_collector)
+    tushare (data_engine.connector_tushare)
+    websocket (data_engine.realtime_stream)
+
+
+
+6287 lines have been analyzed
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |3835   |61.00 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|docstring |1262   |20.07 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|comment   |267    |4.25  |NC       |NC         |
++----------+-------+------+---------+-----------+
+|empty     |923    |14.68 |NC       |NC         |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |0     |0        |0          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.000 |0.000    |=          |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |24     |368      |368        |
++-----------+-------+---------+-----------+
+|refactor   |9      |13       |13         |
++-----------+-------+---------+-----------+
+|warning    |102    |129      |129        |
++-----------+-------+---------+-----------+
+|error      |10     |12       |12         |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++------------------------------------+------+--------+---------+-----------+
+|module                              |error |warning |refactor |convention |
++====================================+======+========+=========+===========+
+|ai_models.hotmoney_detector         |30.00 |11.76   |0.00     |20.83      |
++------------------------------------+------+--------+---------+-----------+
+|ai_models.emotion_cycle_model       |30.00 |7.84    |0.00     |16.67      |
++------------------------------------+------+--------+---------+-----------+
+|ai_models.sector_rotation_ai        |20.00 |1.96    |0.00     |16.67      |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_akshare       |10.00 |4.90    |11.11    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|ai_models._storage                  |10.00 |0.00    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.wechat_collector        |0.00  |9.80    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_tushare       |0.00  |8.82    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|ai_models.lstm_price_predictor      |0.00  |7.84    |0.00     |20.83      |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.ai_decision    |0.00  |5.88    |11.11    |8.33       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_astock_duckdb |0.00  |4.90    |11.11    |12.50      |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.main           |0.00  |4.90    |0.00     |4.17       |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.config         |0.00  |4.90    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.market_service    |0.00  |4.90    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.test_basic     |0.00  |3.92    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.data_fetcher   |0.00  |3.92    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.notification   |0.00  |2.94    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|daily_stock_analysis.news_analyzer  |0.00  |2.94    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.db                |0.00  |1.96    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.data_pipeline           |0.00  |0.98    |22.22    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.emotion_service   |0.00  |0.98    |11.11    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.stock_service     |0.00  |0.98    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.signal_service    |0.00  |0.98    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.news_service      |0.00  |0.98    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|core.data_service.base              |0.00  |0.98    |0.00     |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_yahoo         |0.00  |0.00    |11.11    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_binance       |0.00  |0.00    |11.11    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+|data_engine.clickhouse_storage      |0.00  |0.00    |11.11    |0.00       |
++------------------------------------+------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++-------------------------------+------------+
+|message id                     |occurrences |
++===============================+============+
+|broad-exception-caught         |256         |
++-------------------------------+------------+
+|unknown-option-value           |136         |
++-------------------------------+------------+
+|import-outside-toplevel        |128         |
++-------------------------------+------------+
+|import-error                   |67          |
++-------------------------------+------------+
+|too-many-positional-arguments  |52          |
++-------------------------------+------------+
+|wrong-import-order             |36          |
++-------------------------------+------------+
+|unused-import                  |36          |
++-------------------------------+------------+
+|f-string-without-interpolation |24          |
++-------------------------------+------------+
+|line-too-long                  |13          |
++-------------------------------+------------+
+|unused-variable                |12          |
++-------------------------------+------------+
+|no-member                      |8           |
++-------------------------------+------------+
+|unused-argument                |6           |
++-------------------------------+------------+
+|fixme                          |3           |
++-------------------------------+------------+
+|redefined-outer-name           |2           |
++-------------------------------+------------+
+|consider-using-from-import     |1           |
++-------------------------------+------------+
+
+
+
+
+------------------------------------------------------------------
+Your code has been rated at 9.33/10 (previous run: 8.03/10, +1.30)
+

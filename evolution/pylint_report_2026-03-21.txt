@@ -1,0 +1,944 @@
+************* Module portfolio_engine.risk_parity
+portfolio-engine/src/portfolio_engine/risk_parity.py:3:0: W0611: Unused List imported from typing (unused-import)
+************* Module portfolio_engine.rebalance
+portfolio-engine/src/portfolio_engine/rebalance.py:10:4: W0613: Unused argument 'current_positions' (unused-argument)
+portfolio-engine/src/portfolio_engine/rebalance.py:36:0: C0206: Consider iterating with .items() (consider-using-dict-items)
+************* Module portfolio_engine.kelly_allocation
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:45:15: E0602: Undefined variable 'equal_weight_weights' (undefined-variable)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:49:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:58:4: C0415: Import outside toplevel (equal_weight.equal_weight_weights) (import-outside-toplevel)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:3:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module execution_engine.brokers.registry
+execution-engine/src/execution_engine/brokers/registry.py:17:4: W0602: Using global for '_MODE' but no assignment is done (global-variable-not-assigned)
+execution-engine/src/execution_engine/brokers/registry.py:24:4: W0603: Using the global statement (global-statement)
+************* Module execution_engine.brokers.simulated_broker
+execution-engine/src/execution_engine/brokers/simulated_broker.py:13:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:30:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:23:12: C0415: Import outside toplevel (execution_engine.simulated.step_simulated, execution_engine.simulated.get_orders) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:52:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:38:12: C0415: Import outside toplevel (execution_engine.simulated.get_positions) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:62:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:59:12: C0415: Import outside toplevel (execution_engine.simulated.get_orders) (import-outside-toplevel)
+************* Module execution_engine.brokers.base
+execution-engine/src/execution_engine/brokers/base.py:31:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/base.py:41:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:46:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:51:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:54:14: W0613: Unused argument 'symbol' (unused-argument)
+execution-engine/src/execution_engine/brokers/base.py:54:44: W0613: Unused argument 'limit' (unused-argument)
+execution-engine/src/execution_engine/brokers/base.py:54:0: W0613: Unused argument 'kwargs' (unused-argument)
+************* Module execution_engine.brokers.live_broker
+execution-engine/src/execution_engine/brokers/live_broker.py:19:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:25:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/live_broker.py:58:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:35:12: C0415: Import outside toplevel (execution_engine.order_manager.place_market_buy, execution_engine.order_manager.place_market_sell) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:73:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:63:12: C0415: Import outside toplevel (execution_engine.order_manager.cancel_order) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:94:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:78:12: C0415: Import outside toplevel (execution_engine.order_manager.fetch_positions) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:79:12: C0415: Import outside toplevel (core.Position) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:5:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module execution_engine.simulated.engine
+execution-engine/src/execution_engine/simulated/engine.py:309:0: C0301: Line too long (123/120) (line-too-long)
+execution-engine/src/execution_engine/simulated/engine.py:17:4: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:18:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:35:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:49:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:69:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:80:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:85:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/simulated/engine.py:99:4: C0415: Import outside toplevel (execution_engine.signal_executor.get_actionable_signals) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:241:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:132:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:108:16: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:109:16: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:118:16: C0415: Import outside toplevel (risk_engine.evaluate) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:244:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:88:4: W0613: Unused argument 'initial_cash' (unused-argument)
+execution-engine/src/execution_engine/simulated/engine.py:263:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:266:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:295:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:298:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:317:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:320:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module execution_engine.binance_orders
+execution-engine/src/execution_engine/binance_orders.py:12:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/binance_orders.py:36:0: R0917: Too many positional arguments (8/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/binance_orders.py:9:0: W0611: Unused Position imported from core (unused-import)
+************* Module execution_engine.signal_executor
+execution-engine/src/execution_engine/signal_executor.py:54:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/signal_executor.py:19:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+execution-engine/src/execution_engine/signal_executor.py:20:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+************* Module execution_engine.order_lifecycle
+execution-engine/src/execution_engine/order_lifecycle.py:30:4: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:31:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:79:16: C0415: Import outside toplevel (datetime.datetime, datetime.timezone) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:113:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/order_lifecycle.py:132:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/order_lifecycle.py:9:0: W0611: Unused List imported from typing (unused-import)
+************* Module execution_engine.order_manager
+execution-engine/src/execution_engine/order_manager.py:19:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_manager.py:30:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module ai_lab.strategy_generator
+ai-lab/src/ai_lab/strategy_generator.py:7:4: W0613: Unused argument 'description' (unused-argument)
+ai-lab/src/ai_lab/strategy_generator.py:9:4: W0613: Unused argument 'constraints' (unused-argument)
+************* Module ai_lab.rl_trader
+ai-lab/src/ai_lab/rl_trader.py:10:4: W0613: Unused argument 'df_prices' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:11:4: W0613: Unused argument 'reward_type' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:10:0: W0613: Unused argument 'kwargs' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:29:8: C0415: Import outside toplevel (stable_baselines3.PPO) (import-outside-toplevel)
+ai-lab/src/ai_lab/rl_trader.py:50:8: C0415: Import outside toplevel (stable_baselines3.SAC) (import-outside-toplevel)
+ai-lab/src/ai_lab/rl_trader.py:66:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module ai_lab.optuna_optimizer
+ai-lab/src/ai_lab/optuna_optimizer.py:32:0: C0301: Line too long (121/120) (line-too-long)
+ai-lab/src/ai_lab/optuna_optimizer.py:5:0: E0401: Unable to import 'optuna' (import-error)
+************* Module data_engine.clickhouse_storage
+data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_yahoo
+data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.data_pipeline
+data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/data_pipeline.py:133:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:48:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:41:19: E1101: Module 'akshare' has no 'stock_zh_a_hist_em' member (no-member)
+data-engine/src/data_engine/connector_akshare.py:58:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_akshare.py:132:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:168:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_akshare.py:198:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+************* Module data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'false' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'positive' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'already' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:315:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'fixed' (unknown-option-value)
+data-engine/src/data_engine/connector_tushare.py:76:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:94:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:142:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:153:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_tushare.py:530:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:236:0: C0301: Line too long (226/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:239:0: C0301: Line too long (192/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:242:0: C0301: Line too long (188/120) (line-too-long)
+data-engine/src/data_engine/connector_astock_duckdb.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+data-engine/src/data_engine/connector_astock_duckdb.py:108:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:158:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:169:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:205:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/connector_astock_duckdb.py:245:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module data_engine.wechat_collector
+data-engine/src/data_engine/wechat_collector.py:306:17: W0511: TODO: 实现降级模式 (fixme)
+data-engine/src/data_engine/wechat_collector.py:185:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:229:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:270:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:309:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:358:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:369:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:464:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:454:23: W0718: Catching too general exception Exception (broad-exception-caught)
+data-engine/src/data_engine/wechat_collector.py:512:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module financial_analyzer
+core/src/core/analysis/financial_analyzer.py:440:0: C0301: Line too long (128/120) (line-too-long)
+core/src/core/analysis/financial_analyzer.py:32:0: E0401: Unable to import 'lib.database' (import-error)
+core/src/core/analysis/financial_analyzer.py:40:8: W0107: Unnecessary pass statement (unnecessary-pass)
+core/src/core/analysis/financial_analyzer.py:113:19: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/analysis/financial_analyzer.py:122:8: W0613: Unused argument 'report_date' (unused-argument)
+************* Module core.data_service.stock_service
+core/src/core/data_service/stock_service.py:70:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.db
+core/src/core/data_service/db.py:72:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/db.py:91:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.news_service
+core/src/core/data_service/news_service.py:92:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.market_service
+core/src/core/data_service/market_service.py:45:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:50:15: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:89:11: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:74:19: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/data_service/market_service.py:100:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.signal_service
+core/src/core/data_service/signal_service.py:54:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.emotion_service
+core/src/core/data_service/emotion_service.py:55:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+core/src/core/data_service/emotion_service.py:87:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module core.data_service.base
+core/src/core/data_service/base.py:78:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module backtest_engine.metrics
+backtest-engine/src/backtest_engine/metrics.py:6:0: E0401: Unable to import 'vectorbt' (import-error)
+backtest-engine/src/backtest_engine/metrics.py:17:15: R1735: Consider using '{"freq": freq}' instead of a call to 'dict'. (use-dict-literal)
+backtest-engine/src/backtest_engine/metrics.py:20:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/metrics.py:52:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/metrics.py:58:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/metrics.py:64:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/metrics.py:82:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module backtest_engine.strategy_allocator
+backtest-engine/src/backtest_engine/strategy_allocator.py:44:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/strategy_allocator.py:40:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn) (import-outside-toplevel)
+backtest-engine/src/backtest_engine/strategy_allocator.py:65:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/strategy_allocator.py:55:23: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/strategy_allocator.py:62:19: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/strategy_allocator.py:69:19: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/strategy_allocator.py:8:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module backtest_engine.runner
+backtest-engine/src/backtest_engine/runner.py:7:0: E0401: Unable to import 'vectorbt' (import-error)
+backtest-engine/src/backtest_engine/runner.py:12:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/runner.py:35:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/runner.py:5:0: W0611: Unused numpy imported as np (unused-import)
+************* Module backtest_engine.portfolio_backtest
+backtest-engine/src/backtest_engine/portfolio_backtest.py:13:0: R0917: Too many positional arguments (9/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/portfolio_backtest.py:59:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/portfolio_backtest.py:56:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn) (import-outside-toplevel)
+backtest-engine/src/backtest_engine/portfolio_backtest.py:109:23: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/portfolio_backtest.py:143:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module backtest_engine.data_loader
+backtest-engine/src/backtest_engine/data_loader.py:141:0: C0301: Line too long (122/120) (line-too-long)
+backtest-engine/src/backtest_engine/data_loader.py:42:8: C0415: Import outside toplevel (core.OHLCV) (import-outside-toplevel)
+backtest-engine/src/backtest_engine/data_loader.py:67:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/data_loader.py:90:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/data_loader.py:87:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn) (import-outside-toplevel)
+backtest-engine/src/backtest_engine/data_loader.py:115:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/data_loader.py:141:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/data_loader.py:168:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/data_loader.py:191:15: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/data_loader.py:188:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn) (import-outside-toplevel)
+backtest-engine/src/backtest_engine/data_loader.py:215:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module backtest_engine.run_with_db
+backtest-engine/src/backtest_engine/run_with_db.py:39:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/run_with_db.py:51:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/run_with_db.py:55:0: R0917: Too many positional arguments (9/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/run_with_db.py:137:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/run_with_db.py:162:11: W0718: Catching too general exception Exception (broad-exception-caught)
+backtest-engine/src/backtest_engine/run_with_db.py:167:0: R0917: Too many positional arguments (9/5) (too-many-positional-arguments)
+backtest-engine/src/backtest_engine/run_with_db.py:11:0: W0611: Unused run_backtest_from_ohlcv imported from runner (unused-import)
+************* Module evolution_engine.alpha_scoring
+evolution-engine/src/evolution_engine/alpha_scoring.py:9:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+evolution-engine/src/evolution_engine/alpha_scoring.py:15:4: W0613: Unused argument 'total_return' (unused-argument)
+************* Module evolution_engine.darwin_engine
+evolution-engine/src/evolution_engine/darwin_engine.py:26:7: R1714: Consider merging these comparisons with 'in' by using 'record.status not in (StrategyStatus.LIVE, StrategyStatus.SUSPENDED)'. Use a set instead if elements are hashable. (consider-using-in)
+evolution-engine/src/evolution_engine/darwin_engine.py:18:4: W0613: Unused argument 'min_live_days' (unused-argument)
+evolution-engine/src/evolution_engine/darwin_engine.py:6:0: W0611: Unused datetime imported from datetime (unused-import)
+evolution-engine/src/evolution_engine/darwin_engine.py:6:0: W0611: Unused timedelta imported from datetime (unused-import)
+************* Module ai_models.emotion_cycle_model
+ai-models/src/ai_models/emotion_cycle_model.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/emotion_cycle_model.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:49:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/emotion_cycle_model.py:90:12: W0612: Unused variable 'height' (unused-variable)
+ai-models/src/ai_models/emotion_cycle_model.py:117:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/emotion_cycle_model.py:114:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:146:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/emotion_cycle_model.py:166:4: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
+ai-models/src/ai_models/emotion_cycle_model.py:166:4: E0611: No name '_get_conn' in module 'ai_models._storage' (no-name-in-module)
+ai-models/src/ai_models/emotion_cycle_model.py:175:11: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/emotion_cycle_model.py:170:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+************* Module ai_models.sector_rotation_ai
+ai-models/src/ai_models/sector_rotation_ai.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/sector_rotation_ai.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:39:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/sector_rotation_ai.py:64:8: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:84:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/sector_rotation_ai.py:81:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/sector_rotation_ai.py:105:4: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
+************* Module ai_models.lstm_price_predictor
+ai-models/src/ai_models/lstm_price_predictor.py:52:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:64:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:81:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:85:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:87:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:95:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:97:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:100:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:104:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:112:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:122:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:129:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:132:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:146:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:148:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:151:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:154:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:158:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:166:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:170:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:172:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:184:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:187:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:190:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:193:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:200:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:204:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:211:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:221:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:231:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:234:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:236:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:241:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:246:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:260:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:277:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:280:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:289:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:294:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:296:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:298:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:303:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:306:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:310:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:315:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:320:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:325:0: C0303: Trailing whitespace (trailing-whitespace)
+ai-models/src/ai_models/lstm_price_predictor.py:105:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/lstm_price_predictor.py:159:12: W0612: Unused variable 'i' (unused-variable)
+ai-models/src/ai_models/lstm_price_predictor.py:281:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/lstm_price_predictor.py:263:16: C0415: Import outside toplevel (json) (import-outside-toplevel)
+ai-models/src/ai_models/lstm_price_predictor.py:288:4: C0415: Import outside toplevel (argparse) (import-outside-toplevel)
+ai-models/src/ai_models/lstm_price_predictor.py:316:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+ai-models/src/ai_models/lstm_price_predictor.py:331:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+ai-models/src/ai_models/lstm_price_predictor.py:14:0: C0411: standard import "typing.List" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:15:0: C0411: standard import "pathlib.Path" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:16:0: C0411: standard import "dataclasses.dataclass" should be placed before third party import "numpy" (wrong-import-order)
+ai-models/src/ai_models/lstm_price_predictor.py:14:0: W0611: Unused Dict imported from typing (unused-import)
+ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_squared_error imported from sklearn.metrics (unused-import)
+ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_absolute_error imported from sklearn.metrics (unused-import)
+************* Module ai_models._storage
+ai-models/src/ai_models/_storage.py:5:0: E0401: Unable to import 'lib.database' (import-error)
+************* Module ai_models.hotmoney_detector
+ai-models/src/ai_models/hotmoney_detector.py:18:8: E0401: Unable to import 'lib.database' (import-error)
+ai-models/src/ai_models/hotmoney_detector.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:40:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:62:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:59:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:88:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:94:19: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:129:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:126:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:154:8: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:154:8: E0611: No name '_get_conn' in module 'ai_models._storage' (no-name-in-module)
+ai-models/src/ai_models/hotmoney_detector.py:164:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-models/src/ai_models/hotmoney_detector.py:167:4: C0415: Import outside toplevel (_storage.write_hotmoney_signals) (import-outside-toplevel)
+ai-models/src/ai_models/hotmoney_detector.py:145:4: W0612: Unused variable 'n_seats' (unused-variable)
+************* Module openclaw_integration.code_review
+openclaw_integration/src/openclaw_integration/code_review.py:38:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:42:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:77:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:89:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:93:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:95:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:98:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:101:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:104:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:114:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:116:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:130:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:134:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:138:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:140:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:145:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:152:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:162:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:164:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:182:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:184:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:188:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:191:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:193:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:208:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:218:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:223:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:233:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:235:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:251:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:257:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/code_review.py:105:15: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_integration/src/openclaw_integration/code_review.py:144:8: W0612: Unused variable 'lines' (unused-variable)
+openclaw_integration/src/openclaw_integration/code_review.py:185:29: W0613: Unused argument 'tree' (unused-argument)
+openclaw_integration/src/openclaw_integration/code_review.py:185:44: W0613: Unused argument 'file_path' (unused-argument)
+openclaw_integration/src/openclaw_integration/code_review.py:185:60: W0613: Unused argument 'source' (unused-argument)
+openclaw_integration/src/openclaw_integration/code_review.py:10:0: W0611: Unused import os (unused-import)
+openclaw_integration/src/openclaw_integration/code_review.py:12:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module openclaw_integration.evolution_api
+openclaw_integration/src/openclaw_integration/evolution_api.py:19:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:24:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:33:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:37:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:51:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:57:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:63:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:65:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:73:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:85:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:92:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:100:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:103:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:106:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:114:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:128:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:133:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:144:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:154:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:157:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:160:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:162:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/evolution_api.py:32:8: E0401: Unable to import 'lib.database' (import-error)
+openclaw_integration/src/openclaw_integration/evolution_api.py:32:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.get_table_counts) (import-outside-toplevel)
+openclaw_integration/src/openclaw_integration/evolution_api.py:60:16: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+openclaw_integration/src/openclaw_integration/evolution_api.py:70:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+openclaw_integration/src/openclaw_integration/evolution_api.py:112:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+openclaw_integration/src/openclaw_integration/evolution_api.py:130:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+openclaw_integration/src/openclaw_integration/evolution_api.py:9:0: W0611: Unused import os (unused-import)
+openclaw_integration/src/openclaw_integration/evolution_api.py:13:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module openclaw_integration.refactoring_suggester
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:41:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:44:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:56:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:60:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:62:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:67:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:70:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:72:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:79:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:85:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:97:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:99:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:105:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:121:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:134:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:136:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:142:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:157:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:159:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:163:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:170:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:186:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:194:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:202:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:207:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:214:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:229:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:231:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:236:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:240:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:248:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:251:0: C0303: Trailing whitespace (trailing-whitespace)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:68:15: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:68:8: W0612: Unused variable 'e' (unused-variable)
+openclaw_integration/src/openclaw_integration/refactoring_suggester.py:138:45: W0613: Unused argument 'source' (unused-argument)
+************* Module meta_fund_manager.brain
+meta-fund-manager/src/meta_fund_manager/brain.py:44:4: W0613: Unused argument 'strategy_id' (unused-argument)
+meta-fund-manager/src/meta_fund_manager/brain.py:47:4: W0613: Unused argument 'min_score' (unused-argument)
+************* Module scheduler.task_scheduler
+scheduler/src/scheduler/task_scheduler.py:44:15: W0718: Catching too general exception Exception (broad-exception-caught)
+scheduler/src/scheduler/task_scheduler.py:96:16: W0212: Access to a protected member _order of a client class (protected-access)
+scheduler/src/scheduler/task_scheduler.py:97:25: C3002: Lambda expression called directly. Execute the expression inline instead. (unnecessary-direct-lambda-call)
+scheduler/src/scheduler/task_scheduler.py:4:0: W0611: Unused datetime imported from datetime (unused-import)
+************* Module scheduler.cluster_detector
+scheduler/src/scheduler/cluster_detector.py:65:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:69:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:84:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:91:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:96:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:102:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:113:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:120:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:127:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:132:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:142:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:147:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:158:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:163:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:170:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:175:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:179:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:183:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:199:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:215:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:218:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:221:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:226:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:232:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:237:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:249:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:251:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:264:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:268:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:287:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:297:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:302:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:304:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:324:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:329:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:332:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:337:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:341:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:350:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:357:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:359:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:378:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:387:0: C0303: Trailing whitespace (trailing-whitespace)
+scheduler/src/scheduler/cluster_detector.py:331:9: W0511: TODO: 实现更复杂的调度算法 (fixme)
+scheduler/src/scheduler/cluster_detector.py:82:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:88:15: W0718: Catching too general exception Exception (broad-exception-caught)
+scheduler/src/scheduler/cluster_detector.py:89:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:118:15: W0718: Catching too general exception Exception (broad-exception-caught)
+scheduler/src/scheduler/cluster_detector.py:99:12: C0415: Import outside toplevel (yaml) (import-outside-toplevel)
+scheduler/src/scheduler/cluster_detector.py:119:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:164:24: R1724: Unnecessary "elif" after "continue", remove the leading "el" from "elif" (no-else-continue)
+scheduler/src/scheduler/cluster_detector.py:247:15: W0718: Catching too general exception Exception (broad-exception-caught)
+scheduler/src/scheduler/cluster_detector.py:243:16: C0415: Import outside toplevel (re) (import-outside-toplevel)
+scheduler/src/scheduler/cluster_detector.py:248:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:266:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:284:15: W0718: Catching too general exception Exception (broad-exception-caught)
+scheduler/src/scheduler/cluster_detector.py:272:22: C0209: Formatting a regular string which could be an f-string (consider-using-f-string)
+scheduler/src/scheduler/cluster_detector.py:279:21: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+scheduler/src/scheduler/cluster_detector.py:282:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:285:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:301:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:335:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:339:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:308:8: W0613: Unused argument 'priority' (unused-argument)
+scheduler/src/scheduler/cluster_detector.py:388:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+scheduler/src/scheduler/cluster_detector.py:389:15: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+************* Module scheduler.pipeline
+scheduler/src/scheduler/pipeline.py:11:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+scheduler/src/scheduler/pipeline.py:25:4: W0621: Redefining name 'TaskScheduler' from outer scope (line 6) (redefined-outer-name)
+scheduler/src/scheduler/pipeline.py:25:4: C0415: Import outside toplevel (task_scheduler.TaskScheduler, task_scheduler.get_default_scheduler) (import-outside-toplevel)
+scheduler/src/scheduler/pipeline.py:75:12: C0415: Import outside toplevel (alpha_factory.generate_population) (import-outside-toplevel)
+scheduler/src/scheduler/pipeline.py:87:12: C0415: Import outside toplevel (alpha_scoring.alpha_score) (import-outside-toplevel)
+scheduler/src/scheduler/pipeline.py:87:12: W0611: Unused alpha_score imported from alpha_scoring (unused-import)
+scheduler/src/scheduler/pipeline.py:95:12: C0415: Import outside toplevel (strategy_evolution.evolve_population) (import-outside-toplevel)
+scheduler/src/scheduler/pipeline.py:95:12: W0611: Unused evolve_population imported from strategy_evolution (unused-import)
+scheduler/src/scheduler/pipeline.py:103:12: C0415: Import outside toplevel (meta_fund_manager.select_strategies) (import-outside-toplevel)
+scheduler/src/scheduler/pipeline.py:103:12: W0611: Unused select_strategies imported from meta_fund_manager (unused-import)
+scheduler/src/scheduler/pipeline.py:25:4: W0611: Unused TaskScheduler imported from task_scheduler (unused-import)
+************* Module ai_fund_manager.capital_allocator
+ai-fund-manager/src/ai_fund_manager/capital_allocator.py:8:0: W0611: Unused StrategyStatus imported from evolution_engine (unused-import)
+************* Module ai_fund_manager.risk_controller
+ai-fund-manager/src/ai_fund_manager/risk_controller.py:10:4: W0613: Unused argument 'strategy_id' (unused-argument)
+ai-fund-manager/src/ai_fund_manager/risk_controller.py:6:0: W0611: Unused Callable imported from typing (unused-import)
+ai-fund-manager/src/ai_fund_manager/risk_controller.py:6:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module ai_fund_manager.strategy_selector
+ai-fund-manager/src/ai_fund_manager/strategy_selector.py:15:4: W0613: Unused argument 'min_alpha_score' (unused-argument)
+ai-fund-manager/src/ai_fund_manager/strategy_selector.py:27:4: W0613: Unused argument 'pool' (unused-argument)
+ai-fund-manager/src/ai_fund_manager/strategy_selector.py:35:4: W0613: Unused argument 'pool' (unused-argument)
+ai-fund-manager/src/ai_fund_manager/strategy_selector.py:6:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module feature_engine.pipeline
+feature-engine/src/feature_engine/pipeline.py:49:0: C0301: Line too long (123/120) (line-too-long)
+feature-engine/src/feature_engine/pipeline.py:37:0: R0917: Too many positional arguments (8/5) (too-many-positional-arguments)
+feature-engine/src/feature_engine/pipeline.py:54:4: W0612: Unused variable 'n' (unused-variable)
+feature-engine/src/feature_engine/pipeline.py:3:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module feature_engine.implement_vwap
+feature-engine/src/feature_engine/implement_vwap.py:6:0: W0611: Unused pandas imported as pd (unused-import)
+************* Module risk_engine.risk_monitor
+risk-engine/src/risk_engine/risk_monitor.py:18:11: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/risk_monitor.py:12:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+risk-engine/src/risk_engine/risk_monitor.py:13:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+risk-engine/src/risk_engine/risk_monitor.py:35:4: C0415: Import outside toplevel (rules.evaluate) (import-outside-toplevel)
+risk-engine/src/risk_engine/risk_monitor.py:62:15: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/risk_monitor.py:85:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module risk_engine.rules
+risk-engine/src/risk_engine/rules.py:130:0: C0301: Line too long (124/120) (line-too-long)
+risk-engine/src/risk_engine/rules.py:22:11: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/rules.py:16:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+risk-engine/src/risk_engine/rules.py:17:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+risk-engine/src/risk_engine/rules.py:35:11: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/rules.py:65:19: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/rules.py:135:11: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/rules.py:117:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+risk-engine/src/risk_engine/rules.py:11:0: W0611: Unused total_exposure_notional imported from exposure_limit (unused-import)
+************* Module risk_engine.risk_actions
+risk-engine/src/risk_engine/risk_actions.py:76:11: W0718: Catching too general exception Exception (broad-exception-caught)
+risk-engine/src/risk_engine/risk_actions.py:62:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+risk-engine/src/risk_engine/risk_actions.py:63:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+************* Module risk_engine.drawdown_control
+risk-engine/src/risk_engine/drawdown_control.py:3:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module ai_optimizer.self_evolution_engine
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:38:15: W0718: Catching too general exception Exception (broad-exception-caught)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:30:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:31:12: C0415: Import outside toplevel (os) (import-outside-toplevel)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:27:34: W0613: Unused argument 'lookback_days' (unused-argument)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:42:32: W0613: Unused argument 'lookback_days' (unused-argument)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:55:12: E1128: Assigning result of a function call, where the function returns None (assignment-from-none)
+ai-optimizer/src/ai_optimizer/self_evolution_engine.py:57:12: E1128: Assigning result of a function call, where the function returns None (assignment-from-none)
+************* Module data_pipeline.collectors.stock_list
+data-pipeline/src/data_pipeline/collectors/stock_list.py:10:8: C0415: Import outside toplevel (akshare) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:11:8: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:14:4: C0415: Import outside toplevel (storage.duckdb_manager.get_conn, storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:19:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:30:15: W0718: Catching too general exception Exception (broad-exception-caught)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:24:20: E1101: Module 'akshare' has no 'stock_info_sh_app' member (no-member)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:25:20: E1101: Module 'akshare' has no 'stock_info_sz_a' member (no-member)
+data-pipeline/src/data_pipeline/collectors/stock_list.py:5:0: W0611: Unused import time (unused-import)
+************* Module data_pipeline.collectors.longhubang
+data-pipeline/src/data_pipeline/collectors/longhubang.py:10:8: C0415: Import outside toplevel (akshare) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/longhubang.py:11:8: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/longhubang.py:14:4: C0415: Import outside toplevel (storage.duckdb_manager.get_conn, storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+data-pipeline/src/data_pipeline/collectors/longhubang.py:19:11: W0718: Catching too general exception Exception (broad-exception-caught)
+data-pipeline/src/data_pipeline/collectors/longhubang.py:18:13: E1123: Unexpected keyword argument 'symbol' in function call (unexpected-keyword-arg)
+data-pipeline/src/data_pipeline/collectors/longhubang.py:22:15: W0718: Catching too general exception Exception (broad-exception-caught)
+
+
+Report
+======
+4460 statements analysed.
+
+Statistics by type
+------------------
+
++---------+-------+-----------+-----------+------------+---------+
+|type     |number |old number |difference |%documented |%badname |
++=========+=======+===========+===========+============+=========+
+|module   |100    |1          |+99.00     |85.00       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|class    |39     |NC         |NC         |76.92       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|method   |152    |NC         |NC         |90.13       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+|function |233    |1          |+232.00    |97.42       |0.00     |
++---------+-------+-----------+-----------+------------+---------+
+
+
+
+External dependencies
+---------------------
+::
+
+    ai_models 
+      \-_storage (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.sector_rotation_ai)
+    akshare (data_engine.connector_akshare,data_pipeline.collectors.longhubang,data_pipeline.collectors.stock_list)
+    backtest_engine 
+      \-data_loader (backtest_engine.run_with_db)
+      \-metrics (backtest_engine.run_with_db)
+      \-run_with_db (backtest_engine.portfolio_backtest)
+      \-runner (backtest_engine.run_with_db)
+      \-strategy_allocator (backtest_engine.portfolio_backtest)
+    bs4 (data_engine.wechat_collector)
+    clickhouse_driver 
+      \-Client (data_engine.clickhouse_storage)
+    core (backtest_engine.data_loader,backtest_engine.runner,data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream,execution_engine.binance_orders,execution_engine.brokers.live_broker,execution_engine.order_manager,feature_engine.atr,feature_engine.implement_atr,feature_engine.implement_macd,feature_engine.implement_rsi,feature_engine.implement_vwap,feature_engine.macd,feature_engine.pipeline,feature_engine.rsi,feature_engine.vwap)
+      \-data_service 
+        \-base (core.data_service.emotion_service,core.data_service.news_service,core.data_service.signal_service,core.data_service.stock_service)
+        \-db (core.data_service.market_service,data_engine.connector_astock_duckdb)
+    data_engine 
+      \-clickhouse_storage (data_engine.data_pipeline)
+      \-connector_akshare (data_engine.data_pipeline)
+      \-connector_binance (data_engine.data_pipeline)
+      \-connector_tushare (data_engine.data_pipeline)
+    data_pipeline 
+      \-storage 
+        \-duckdb_manager (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.sector_rotation_ai,ai_optimizer.self_evolution_engine,backtest_engine.data_loader,backtest_engine.portfolio_backtest,backtest_engine.strategy_allocator,data_pipeline.collectors.longhubang,data_pipeline.collectors.stock_list,execution_engine.order_lifecycle,execution_engine.signal_executor,execution_engine.simulated.engine,risk_engine.risk_actions,risk_engine.risk_monitor,risk_engine.rules)
+    duckdb (ai_models.lstm_price_predictor,core.data_service.base,core.data_service.db,data_engine.wechat_collector)
+    evolution_engine (ai_fund_manager.capital_allocator,ai_fund_manager.strategy_selector)
+      \-alpha_scoring (evolution_engine.darwin_engine)
+      \-strategy_pool (evolution_engine.darwin_engine)
+    execution_engine 
+      \-binance_orders (execution_engine.order_manager)
+      \-brokers 
+      | \-base (execution_engine.brokers.live_broker,execution_engine.brokers.registry,execution_engine.brokers.simulated_broker)
+      | \-live_broker (execution_engine.brokers.registry)
+      | \-simulated_broker (execution_engine.brokers.registry)
+      \-order_manager (execution_engine.brokers.live_broker)
+      \-signal_executor (execution_engine.simulated.engine)
+      \-simulated (execution_engine.brokers.simulated_broker)
+    feature_engine 
+      \-atr (feature_engine.pipeline)
+      \-macd (feature_engine.pipeline)
+      \-rsi (feature_engine.pipeline)
+      \-vwap (feature_engine.pipeline)
+    meta_fund_manager (scheduler.pipeline)
+    numpy (ai_models.lstm_price_predictor,backtest_engine.runner,feature_engine.atr,feature_engine.implement_atr,feature_engine.implement_macd,feature_engine.implement_rsi,feature_engine.implement_vwap,feature_engine.macd,feature_engine.pipeline,feature_engine.rsi,feature_engine.vwap,portfolio_engine.risk_parity,risk_engine.drawdown_control,risk_engine.volatility_filter,simulation_world.env)
+    pandas (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.lstm_price_predictor,ai_models.sector_rotation_ai,backtest_engine.data_loader,backtest_engine.metrics,backtest_engine.run_with_db,backtest_engine.runner,data_engine.connector_tushare,data_pipeline.collectors.longhubang,data_pipeline.collectors.stock_list,feature_engine.implement_atr,feature_engine.implement_macd,feature_engine.implement_rsi,feature_engine.implement_vwap,feature_engine.pipeline)
+    portfolio_engine 
+      \-equal_weight (portfolio_engine.kelly_allocation)
+    requests (data_engine.connector_binance,data_engine.wechat_collector,execution_engine.binance_orders)
+    risk_engine (execution_engine.simulated.engine)
+      \-drawdown_control (risk_engine.rules)
+      \-exposure_limit (risk_engine.rules)
+      \-rules (risk_engine.risk_monitor)
+    scheduler 
+      \-task_scheduler (scheduler.pipeline)
+    tushare (data_engine.connector_tushare)
+    websocket (data_engine.realtime_stream)
+
+
+
+10018 lines have been analyzed
+
+Raw metrics
+-----------
+
++----------+-------+------+---------+-----------+
+|type      |number |%     |previous |difference |
++==========+=======+======+=========+===========+
+|code      |6462   |64.50 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|docstring |1916   |19.13 |NC       |NC         |
++----------+-------+------+---------+-----------+
+|comment   |250    |2.50  |NC       |NC         |
++----------+-------+------+---------+-----------+
+|empty     |1390   |13.88 |NC       |NC         |
++----------+-------+------+---------+-----------+
+
+
+
+Duplication
+-----------
+
++-------------------------+------+---------+-----------+
+|                         |now   |previous |difference |
++=========================+======+=========+===========+
+|nb duplicated lines      |0     |0        |0          |
++-------------------------+------+---------+-----------+
+|percent duplicated lines |0.000 |0.000    |=          |
++-------------------------+------+---------+-----------+
+
+
+
+Messages by category
+--------------------
+
++-----------+-------+---------+-----------+
+|type       |number |previous |difference |
++===========+=======+=========+===========+
+|convention |270    |3        |3          |
++-----------+-------+---------+-----------+
+|refactor   |29     |0        |0          |
++-----------+-------+---------+-----------+
+|warning    |213    |2        |2          |
++-----------+-------+---------+-----------+
+|error      |18     |0        |0          |
++-----------+-------+---------+-----------+
+
+
+
+% errors / warnings by module
+-----------------------------
+
++-------------------------------------------+------+--------+---------+-----------+
+|module                                     |error |warning |refactor |convention |
++===========================================+======+========+=========+===========+
+|ai_models.hotmoney_detector                |11.11 |3.29    |0.00     |1.85       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_models.emotion_cycle_model              |11.11 |2.35    |0.00     |1.48       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_pipeline.collectors.stock_list        |11.11 |1.41    |0.00     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_optimizer.self_evolution_engine         |11.11 |1.41    |0.00     |0.74       |
++-------------------------------------------+------+--------+---------+-----------+
+|openclaw_integration.evolution_api         |5.56  |2.35    |3.45     |9.26       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_akshare              |5.56  |2.35    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.metrics                    |5.56  |2.35    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|financial_analyzer                         |5.56  |1.41    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_models.sector_rotation_ai               |5.56  |0.94    |0.00     |1.48       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_pipeline.collectors.longhubang        |5.56  |0.94    |0.00     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.runner                     |5.56  |0.47    |6.90     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.kelly_allocation          |5.56  |0.47    |3.45     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_lab.optuna_optimizer                    |5.56  |0.00    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_models._storage                         |5.56  |0.00    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|scheduler.cluster_detector                 |0.00  |8.92    |3.45     |18.15      |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.simulated.engine          |0.00  |6.57    |3.45     |2.59       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.wechat_collector               |0.00  |4.69    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_tushare              |0.00  |4.23    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_models.lstm_price_predictor             |0.00  |3.76    |0.00     |21.11      |
++-------------------------------------------+------+--------+---------+-----------+
+|openclaw_integration.code_review           |0.00  |3.29    |0.00     |12.22      |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.base              |0.00  |2.82    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.strategy_allocator         |0.00  |2.82    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.data_loader                |0.00  |2.35    |6.90     |1.48       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.run_with_db                |0.00  |2.35    |6.90     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|scheduler.pipeline                         |0.00  |2.35    |3.45     |1.85       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_astock_duckdb        |0.00  |2.35    |3.45     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|risk_engine.rules                          |0.00  |2.35    |0.00     |1.48       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.market_service           |0.00  |2.35    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.live_broker       |0.00  |1.88    |3.45     |1.85       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_lab.rl_trader                           |0.00  |1.88    |0.00     |0.74       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_fund_manager.strategy_selector          |0.00  |1.88    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.simulated_broker  |0.00  |1.41    |3.45     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|backtest_engine.portfolio_backtest         |0.00  |1.41    |3.45     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|evolution_engine.darwin_engine             |0.00  |1.41    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|openclaw_integration.refactoring_suggester |0.00  |1.41    |0.00     |12.22      |
++-------------------------------------------+------+--------+---------+-----------+
+|risk_engine.risk_monitor                   |0.00  |1.41    |0.00     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.order_lifecycle           |0.00  |1.41    |0.00     |1.11       |
++-------------------------------------------+------+--------+---------+-----------+
+|scheduler.task_scheduler                   |0.00  |1.41    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_fund_manager.risk_controller            |0.00  |1.41    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|feature_engine.pipeline                    |0.00  |0.94    |3.45     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|meta_fund_manager.brain                    |0.00  |0.94    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.registry          |0.00  |0.94    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.db                       |0.00  |0.94    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_lab.strategy_generator                  |0.00  |0.94    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.binance_orders            |0.00  |0.47    |6.90     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.data_pipeline                  |0.00  |0.47    |6.90     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|evolution_engine.alpha_scoring             |0.00  |0.47    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.emotion_service          |0.00  |0.47    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|risk_engine.risk_actions                   |0.00  |0.47    |0.00     |0.74       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.signal_executor           |0.00  |0.47    |0.00     |0.74       |
++-------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.rebalance                 |0.00  |0.47    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|execution_engine.order_manager             |0.00  |0.47    |0.00     |0.37       |
++-------------------------------------------+------+--------+---------+-----------+
+|risk_engine.drawdown_control               |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.risk_parity               |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|feature_engine.implement_vwap              |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.stock_service            |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.signal_service           |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.news_service             |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|core.data_service.base                     |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|ai_fund_manager.capital_allocator          |0.00  |0.47    |0.00     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_yahoo                |0.00  |0.00    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_binance              |0.00  |0.00    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+|data_engine.clickhouse_storage             |0.00  |0.00    |3.45     |0.00       |
++-------------------------------------------+------+--------+---------+-----------+
+
+
+
+Messages
+--------
+
++-------------------------------+------------+
+|message id                     |occurrences |
++===============================+============+
+|trailing-whitespace            |911         |
++-------------------------------+------------+
+|broad-exception-caught         |712         |
++-------------------------------+------------+
+|import-outside-toplevel        |406         |
++-------------------------------+------------+
+|unused-argument                |260         |
++-------------------------------+------------+
+|too-many-positional-arguments  |197         |
++-------------------------------+------------+
+|unused-import                  |190         |
++-------------------------------+------------+
+|unnecessary-ellipsis           |54          |
++-------------------------------+------------+
+|line-too-long                  |53          |
++-------------------------------+------------+
+|logging-fstring-interpolation  |44          |
++-------------------------------+------------+
+|import-error                   |38          |
++-------------------------------+------------+
+|unused-variable                |24          |
++-------------------------------+------------+
+|unknown-option-value           |24          |
++-------------------------------+------------+
+|no-member                      |16          |
++-------------------------------+------------+
+|unnecessary-direct-lambda-call |10          |
++-------------------------------+------------+
+|undefined-variable             |10          |
++-------------------------------+------------+
+|protected-access               |10          |
++-------------------------------+------------+
+|redefined-outer-name           |9           |
++-------------------------------+------------+
+|global-variable-not-assigned   |9           |
++-------------------------------+------------+
+|global-statement               |9           |
++-------------------------------+------------+
+|consider-using-dict-items      |9           |
++-------------------------------+------------+
+|subprocess-run-check           |8           |
++-------------------------------+------------+
+|fixme                          |8           |
++-------------------------------+------------+
+|unspecified-encoding           |6           |
++-------------------------------+------------+
+|use-dict-literal               |4           |
++-------------------------------+------------+
+|unnecessary-pass               |4           |
++-------------------------------+------------+
+|no-else-continue               |4           |
++-------------------------------+------------+
+|consider-using-f-string        |4           |
++-------------------------------+------------+
+|assignment-from-none           |4           |
++-------------------------------+------------+
+|wrong-import-order             |3           |
++-------------------------------+------------+
+|no-name-in-module              |3           |
++-------------------------------+------------+
+|consider-using-in              |3           |
++-------------------------------+------------+
+|f-string-without-interpolation |2           |
++-------------------------------+------------+
+|consider-using-with            |2           |
++-------------------------------+------------+
+|unexpected-keyword-arg         |1           |
++-------------------------------+------------+
+
+
+
+
+------------------------------------------------------------------
+Your code has been rated at 8.65/10 (previous run: 8.72/10, -0.07)
+
