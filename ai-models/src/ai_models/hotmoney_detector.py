@@ -15,19 +15,18 @@ class HotMoneyAnalyzer:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from ._storage import _get_conn
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists, pylint path issue)
 
-        return _get_conn()
+        conn = get_connection(read_only=False)
+        if conn:
+            ensure_core_tables(conn)
+        return conn
 
     def seat_statistics(self) -> pd.DataFrame:
         """按席位（或 code 当无席位时）统计：交易次数、总买入金额。"""
         conn = self._get_connection()
-        try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables
-
-            ensure_tables(conn)
-        except Exception:
-            pass
+        if not conn:
+            return pd.DataFrame(columns=["seat", "trade_count", "total_buy"])
         # 若有 seat_name 则按席位，否则按 code 作为“席位”维度
         try:
             df = conn.execute("""
@@ -38,7 +37,7 @@ class HotMoneyAnalyzer:
                 FROM a_stock_longhubang
                 GROUP BY COALESCE(seat_name, code)
             """).fetchdf()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
             df = conn.execute("""
                 SELECT
                     code AS seat,
@@ -57,10 +56,9 @@ class HotMoneyAnalyzer:
         """结合后续涨幅算席位胜率与平均收益。买价用龙虎榜当日收盘价近似。"""
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables
-
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
             ensure_tables(conn)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught (optional dependency)
             pass
         # 用 SQL：daily 上 LEAD(close, N) 得 N 日后收盘，再与龙虎榜 join 算收益
         try:
@@ -86,13 +84,13 @@ class HotMoneyAnalyzer:
                 FROM combined
                 GROUP BY seat
             """).fetchdf()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
             try:
                 result = conn.execute("""
                     SELECT code AS seat, 0.5 AS win_rate, 0.0 AS avg_return
                     FROM a_stock_longhubang LIMIT 0
                 """).fetchdf()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
                 result = None
         if result is None or result.empty:
             return pd.DataFrame(columns=["seat", "win_rate", "avg_return"])
@@ -124,10 +122,9 @@ class HotMoneyAnalyzer:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables
-
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
             ensure_tables(conn)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught (optional dependency)
             pass
         conn.execute("DELETE FROM top_hotmoney_seats")
         conn.register("tmp", df)
@@ -143,10 +140,10 @@ def run_hotmoney_detector() -> int:
     """兼容入口：计算顶级席位并写入表，同时写 hotmoney_signals。"""
     analyzer = HotMoneyAnalyzer()
     top = analyzer.detect_top_hotmoney()
-    n_seats = 0
+    _n_seats = 0  # Reserved for future use
     if top is not None and not top.empty:
         analyzer.save_top_seats(top)
-        n_seats = len(top)
+        _n_seats = len(top)
     signals = []
     if top is not None and not top.empty:
         for _, row in top.iterrows():
@@ -162,7 +159,7 @@ def run_hotmoney_detector() -> int:
             if df is not None and not df.empty:
                 for _, row in df.iterrows():
                     signals.append((str(row.get("code", "")), "游资", 0.55))
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
             pass
         conn.close()
     from ._storage import write_hotmoney_signals

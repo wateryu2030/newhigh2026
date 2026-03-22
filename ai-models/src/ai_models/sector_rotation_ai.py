@@ -15,19 +15,17 @@ class SectorRotationAI:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from ._storage import _get_conn
-
-        return _get_conn()
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists)
+        conn = get_connection(read_only=False)
+        if conn:
+            ensure_core_tables(conn)
+        return conn
 
     def sector_strength(self) -> pd.DataFrame:
         """按板块（sector）汇总成交额并排名。sector 来自 a_stock_basic.sector。"""
         conn = self._get_connection()
-        try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables
-
-            ensure_tables(conn)
-        except Exception:
-            pass
+        if not conn:
+            return pd.DataFrame(columns=["sector", "total_volume", "rank"])
         try:
             df = conn.execute("""
                 SELECT
@@ -79,8 +77,7 @@ class SectorRotationAI:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables
-
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
             ensure_tables(conn)
         except Exception:
             pass
