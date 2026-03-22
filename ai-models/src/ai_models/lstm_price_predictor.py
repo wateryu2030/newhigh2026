@@ -10,10 +10,12 @@ LSTM 价格预测模型
 import os
 import sys
 import datetime
-import numpy as np
 from typing import List, Tuple, Optional  # Dict removed (unused)
 from pathlib import Path
 from dataclasses import dataclass
+
+# Third party imports (after stdlib)
+import numpy as np
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -156,7 +158,7 @@ class LSTMPricePredictor:
         last_price = closes[-1]
         predicted = []
 
-        for _ in range(self.forecast_days):  # pylint: disable=unused-variable (i intentionally unused, replaced with _)
+        for _ in range(self.forecast_days):  # pylint: disable=unused-variable
             # 趋势 + 随机波动
             daily_change = recent_trend / 20  # 日均变化
             noise = np.random.normal(0, volatility * 0.5)
