@@ -1,0 +1,12 @@
+# 红山量化平台前端 - OpenClaw 协作配置
+# 监听源码变更，自动构建/开发，支持热重载
+
+watch:
+  - src/**
+
+hooks:
+  - npm run build
+  - npm run dev
+
+# 说明：生成代码后 OpenClaw 将自动检测 src 目录变更，
+# 执行 build 或 dev，并触发浏览器刷新。

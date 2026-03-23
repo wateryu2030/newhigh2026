@@ -34,6 +34,18 @@
 - **无需干预**：全自动运行
 - **日志记录**：随时查看运行状态
 
+### 5. 深度段落独立文件（行业地位与前景 / soul.md）
+- 运行 `deep_analyzer` 批量分析后，自动将「机会发现引擎」固定段落写入 **`reports/deep_industry_YYYY-MM-DD.md`**
+- 一键脚本（仓库内）：
+  ```bash
+  cd personal_assistant
+  python3 run_deep_industry.py              # 默认示例股票
+  python3 run_deep_industry.py --config     # 使用 config.json 的 fixed_stocks
+  python3 run_deep_industry.py 600519.XSHG  # 指定代码
+  python3 run_deep_industry.py --no-write   # 只分析不写文件
+  ```
+- 代码调用：`ReportGenerator.write_deep_industry_markdown(results)` 或 `analyze_target_stocks(..., write_industry_md=True)`
+
 ---
 
 ## 🚀 快速开始

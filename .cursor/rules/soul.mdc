@@ -1,0 +1,14 @@
+---
+description: soul.md 为项目永久操作规则，机会发现与行业分析必须遵循
+globs: ["**/ai_analyzer*.py", "**/deep_analyzer*.py", "**/report_generator*.py", "**/soul_framework.py", "**/ai_decision*.py", "**/docs/soul.md"]
+alwaysApply: false
+---
+
+# Soul — 永久操作规则
+
+- **docs/soul.md** 为本项目的永久操作规则文档，**视其为永久操作规则**，不得随意删改。
+- 所有涉及**机会发现、行业分析、股票前景判断**的代码与提示（如 AI 分析、深度报告、策略建议、报告生成）**必须遵循** soul.md 中的「机会发现引擎」框架。
+- 在实现或修改以下模块时，请先阅读 docs/soul.md，并将框架融入系统提示、报告模板或决策逻辑：
+  - 个人助手的 AI 分析（ai_analyzer）、深度分析（deep_analyzer）、报告生成（report_generator）
+  - 策略/决策中的行业或机会排序（如 ai_decision、策略引擎）
+- 对**股票所在行业地位和前景**的分析，应勇于使用该框架（低效、不对称性、新兴趋势、变现路径、竞争格局、机会排序、创意思考）。

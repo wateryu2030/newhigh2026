@@ -69,7 +69,7 @@ def main() -> int:
             import os as _os
 
             if _os.path.isfile(get_db_path()):
-                conn = get_conn(read_only=True)
+                conn = get_conn(read_only=False)
                 df = conn.execute("SELECT code, signal_type, score FROM market_signals").fetchdf()
                 conn.close()
                 if df is not None and not df.empty:

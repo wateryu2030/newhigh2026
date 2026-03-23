@@ -154,7 +154,7 @@ def compute_sentiment_7d_from_duckdb() -> Optional[Dict[str, Any]]:
 
         if not os.path.isfile(get_db_path()):
             return None
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         row = conn.execute(
             "SELECT MAX(snapshot_time) FROM a_stock_realtime"
         ).fetchone()

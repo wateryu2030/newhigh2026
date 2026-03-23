@@ -37,12 +37,12 @@ def stream_klines(
     stream_name = f"{symbol.lower().replace('/', '')}@kline_{interval}"
     url = f"{ws_url}/{stream_name}"
 
-    def on_message(ws, message):
+    def on_message(_ws, message):  # pylint: disable=unused-argument
         data = json.loads(message)
         if "k" in data:
-            bar = _parse_ws_kline(data)
+            ohlcv_bar = _parse_ws_kline(data)  # "bar" is standard finance term for OHLCV
             if on_bar:
-                on_bar(bar)
+                on_bar(ohlcv_bar)
 
     ws = websocket.WebSocketApp(
         url,

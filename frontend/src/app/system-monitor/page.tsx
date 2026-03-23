@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { api, type SystemStatusResponse, type EvolutionTaskItem } from '@/api/client';
+import {
+  api,
+  type DataQualityLatest,
+  type SystemStatusResponse,
+  type EvolutionTaskItem,
+} from '@/api/client';
 import { useLang } from '@/context/LangContext';
 
 function statusLabel(s: 'running' | 'error' | 'idle', t: (k: string) => string) {
@@ -32,6 +37,7 @@ export default function SystemMonitorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
+  const [dataQuality, setDataQuality] = useState<DataQualityLatest | null | undefined>(undefined);
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -40,11 +46,13 @@ export default function SystemMonitorPage() {
       api.systemStatus(20),
       api.getEvolutionTasks(5).then((r) => r.tasks || []),
       api.getSkillStats().catch(() => ({ call_count: 0, last_call_time: null })),
+      api.dataQuality().catch(() => null),
     ])
-      .then(([s, tasks, stats]) => {
+      .then(([s, tasks, stats, dq]) => {
         setStatus(s);
         setEvolutionTasks(tasks);
         setSkillStats(stats);
+        setDataQuality(dq);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'API error'))
       .finally(() => setLoading(false));
@@ -66,7 +74,6 @@ export default function SystemMonitorPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-white">{t('systemMonitor.title')}</h1>
         <p className="text-slate-500">{t('common.loading')}</p>
       </div>
     );
@@ -74,33 +81,36 @@ export default function SystemMonitorPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{t('systemMonitor.title')}</h1>
-          <p className="text-slate-400 text-sm mt-1">{t('systemMonitor.hint')}</p>
-        </div>
-        <button
-          type="button"
-          onClick={refresh}
-          disabled={loading}
-          className="px-3 py-1.5 rounded bg-slate-600 hover:bg-slate-500 disabled:opacity-50 text-white text-sm"
-        >
-          刷新
-        </button>
-      </div>
-
       {error && (
-        <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm p-4">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
           <p className="font-medium">{t('common.error')}: {error}</p>
           <p className="mt-2 text-slate-400">{t('systemMonitor.runHint')}</p>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            className="mt-3 rounded bg-slate-600 px-3 py-1.5 text-sm text-white hover:bg-slate-500 disabled:opacity-50"
+          >
+            刷新
+          </button>
         </div>
       )}
 
       {status && (
         <>
           <section className="card">
-            <h2 className="text-lg font-semibold text-white mb-4">当前状态</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-white">当前状态</h2>
+              <button
+                type="button"
+                onClick={refresh}
+                disabled={loading}
+                className="rounded bg-slate-600 px-3 py-1.5 text-sm text-white hover:bg-slate-500 disabled:opacity-50"
+              >
+                刷新
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
                 <p className="text-slate-500 text-sm">{t('systemMonitor.dataPipeline')}</p>
                 <p className={`font-medium ${statusColor(status.data_pipeline)}`}>
@@ -163,6 +173,73 @@ export default function SystemMonitorPage() {
               </div>
             </section>
           )}
+
+          <section
+            className={`card ${
+              (() => {
+                const sh = dataQuality?.report?.checks?.find((c) => c.name === 'shareholder_top10')
+                  ?.result as { coverage_rate_pct?: number } | undefined;
+                const cov = sh?.coverage_rate_pct;
+                return typeof cov === 'number' && cov < 90
+                  ? 'border border-red-500/40 bg-red-950/20'
+                  : 'bg-slate-800/80';
+              })()
+            }`}
+          >
+            <h3 className="text-lg font-semibold text-white mb-4">数据质量</h3>
+            {dataQuality === undefined ? (
+              <p className="text-slate-500 text-sm">加载中…</p>
+            ) : dataQuality === null ? (
+              <p className="text-slate-500 text-sm">暂无巡检记录。可运行 scripts/run_data_quality_checks.py 或等待定时任务。</p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">最近检查时间</span>
+                  <span className="text-slate-200 font-mono text-xs">
+                    {dataQuality.run_at ?? dataQuality.report?.timestamp ?? '—'}
+                  </span>
+                </div>
+                {(() => {
+                  const sh = dataQuality.report?.checks?.find((c) => c.name === 'shareholder_top10')
+                    ?.result as
+                    | {
+                        coverage_rate_pct?: number;
+                        missing_stocks_count?: number;
+                        a_stock_basic_count?: number;
+                        ok?: boolean;
+                      }
+                    | undefined;
+                  if (!sh) {
+                    return <p className="text-slate-500">报告中无股东覆盖项</p>;
+                  }
+                  const low = typeof sh.coverage_rate_pct === 'number' && sh.coverage_rate_pct < 90;
+                  return (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">股东数据覆盖率</span>
+                        <span
+                          className={
+                            low ? 'font-semibold text-red-400' : 'font-medium text-emerald-400'
+                          }
+                        >
+                          {sh.coverage_rate_pct != null ? `${sh.coverage_rate_pct}%` : '—'}
+                          {low ? ' ⚠' : ''}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">股票表标的数</span>
+                        <span className="text-white">{sh.a_stock_basic_count ?? '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">缺失股东记录数</span>
+                        <span className="text-white">{sh.missing_stocks_count ?? '—'}</span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <section className="card bg-slate-800/80">

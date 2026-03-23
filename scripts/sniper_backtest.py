@@ -24,7 +24,7 @@ def load_sniper_signals(limit: int = 200) -> list:
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT code, theme, sniper_score, confidence FROM sniper_candidates ORDER BY sniper_score DESC LIMIT ?",
             [limit],
@@ -59,7 +59,7 @@ def sniper_backtest(holding_days: int = 3) -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"win_rate": None, "avg_return": None, "max_drawdown": None, "trades": 0}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         signals = load_sniper_signals()
         if not signals:
             conn.close()

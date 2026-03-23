@@ -5,13 +5,11 @@
 支持真实API调用和网页抓取
 """
 
-import os
 import sys
 import datetime
 import json
-import time
 import hashlib
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pathlib import Path
 
 # 添加项目路径

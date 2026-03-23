@@ -8,11 +8,21 @@ import os
 import sys
 import duckdb
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # 添加项目路径
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "data-pipeline/src"))
+
+try:
+    from soul_framework import build_industry_opportunity_section
+except ImportError:
+    build_industry_opportunity_section = None  # type: ignore
+
+try:
+    from report_generator import ReportGenerator
+except ImportError:
+    ReportGenerator = None  # type: ignore
 
 class DeepStockAnalyzer:
     """深度股票分析器"""
@@ -97,6 +107,22 @@ class DeepStockAnalyzer:
             print(f"  热度排名：{hot_analysis['hot_rank']}")
             print(f"  讨论量：{hot_analysis['mention_count']}")
             
+            # 5.5 行业地位与前景（机会发现引擎，docs/soul.md）
+            print("\n🎯 Step 5.5: 行业地位与前景（机会发现引擎 / docs/soul.md）...")
+            if build_industry_opportunity_section:
+                industry_opportunity_section = build_industry_opportunity_section(
+                    basic_info.get("name", "未知"),
+                    stock_code,
+                    basic_info.get("industry", "未知"),
+                )
+                # 终端只展示标题与首段，避免刷屏；全文写入结果供报告使用
+                preview = industry_opportunity_section.split("\n", 5)
+                head = "\n".join(preview[:5]) if len(preview) > 5 else industry_opportunity_section[:400]
+                print(f"  已生成固定分析框架段落（写入结果 industry_opportunity_section）\n  预览：\n{head}\n  …")
+            else:
+                industry_opportunity_section = ""
+                print("  ⚠️ soul_framework 未加载，跳过固定段落")
+            
             # 6. 综合判断
             print("\n💡 Step 6: 生成投资建议...")
             recommendation = self._generate_recommendation(
@@ -124,7 +150,8 @@ class DeepStockAnalyzer:
                 "news": news_sentiment,
                 "hot": hot_analysis,
                 "recommendation": recommendation,
-                "risks": risks
+                "risks": risks,
+                "industry_opportunity_section": industry_opportunity_section,
             }
             
             return result
@@ -382,31 +409,53 @@ class DeepStockAnalyzer:
         return risks[:3]  # 最多 3 条
 
 
-def analyze_target_stocks():
-    """分析目标股票"""
+def analyze_target_stocks(
+    target_stocks: Optional[List[str]] = None,
+    *,
+    write_industry_md: bool = True,
+    industry_md_path: Optional[str] = None,
+) -> List[Dict]:
+    """
+    分析目标股票；可选将「行业地位与前景」深度段落写入独立 Markdown。
+
+    Args:
+        target_stocks: 股票代码列表，默认内置三只示例
+        write_industry_md: 是否写入 personal_assistant/reports/deep_industry_YYYY-MM-DD.md
+        industry_md_path: 指定完整输出路径时覆盖默认文件名
+    """
     print("="*60)
     print("重点股票深度分析")
     print("="*60)
-    
-    # 目标股票
-    target_stocks = [
-        "002701.XSHE",  # 奥瑞金
-        "300212.XSHE",  # 易华录
-        "600881.XSHG"   # 亚泰集团
-    ]
-    
+
+    if target_stocks is None:
+        target_stocks = [
+            "002701.XSHE",  # 奥瑞金
+            "300212.XSHE",  # 易华录
+            "600881.XSHG",  # 亚泰集团
+        ]
+
     analyzer = DeepStockAnalyzer()
-    
-    results = []
+
+    results: List[Dict] = []
     for stock_code in target_stocks:
         result = analyzer.analyze_stock(stock_code)
         if result:
             results.append(result)
-    
+
     print(f"\n{'='*60}")
     print(f"分析完成：{len(results)} 只股票")
     print(f"{'='*60}")
-    
+
+    if write_industry_md and ReportGenerator:
+        try:
+            out = ReportGenerator.write_deep_industry_markdown(
+                results,
+                output_path=industry_md_path,
+            )
+            print(f"\n📄 深度段落（机会发现引擎）已写入：{out}")
+        except Exception as e:
+            print(f"\n⚠️ 写入深度 Markdown 失败：{e}")
+
     return results
 
 

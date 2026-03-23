@@ -40,8 +40,8 @@ def _symbol_to_order_book_id(symbol: str) -> str:
 
 
 # 使用 core.data_service.db 中的统一函数
-def _get_conn(read_only: bool = True):
-    """获取 newhigh 本地 DuckDB 连接（代理到 core.data_service.db.get_conn）。"""
+def _get_conn(read_only: bool = False):
+    """获取 newhigh 本地 DuckDB 连接；默认读写模式，与同进程 Gateway 审计写入一致。"""
     return get_db_conn(read_only=read_only)
 
 

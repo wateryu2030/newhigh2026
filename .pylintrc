@@ -1,42 +1,87 @@
-[MASTER]
+[MAIN]
+# Analyse import fallback blocks
+analyse-fallback-blocks=no
+
+# Files or directories to be skipped
+ignore=CVS,.venv,build,dist
+
+# List of plugins (as comma separated values)
+load-plugins=
+
+# Use multiple processes to speed up Pylint
 jobs=0
-persistent=yes
+
+# Minimum score to pass
+score=yes
+
+# Python version to use
+py-version=3.14
 
 [MESSAGES CONTROL]
+# Disable some messages by default
 disable=
-    C0103,  # invalid-name (变量名规范)
-    C0114,  # missing-module-docstring (模块文档字符串)
-    C0115,  # missing-class-docstring (类文档字符串)
-    C0116,  # missing-function-docstring (函数文档字符串)
-    R0902,  # too-many-instance-attributes (太多实例属性)
-    R0903,  # too-few-public-methods (太少公共方法)
-    R0913,  # too-many-arguments (太多参数)
-    R0914,  # too-many-locals (太多局部变量)
-    W0613,  # unused-argument (未使用的参数)
-    W0718,  # broad-exception-caught (捕获太宽泛的异常)
+    missing-docstring,
+    too-few-public-methods,
+    too-many-instance-attributes,
+    too-many-arguments,
+    too-many-locals,
+    too-many-statements,
+    too-many-branches,
+    too-many-return-statements,
+    duplicate-code,
+
+[REPORTS]
+# Set the output format
+output-format=text
+
+# Tells whether to display a full report or only the messages
+reports=yes
+
+# Python expression which should return a score
+evaluation=max(0, 0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10))
 
 [FORMAT]
-max-line-length=100
-indent-after-paren=4
-single-line-if-stmt=no
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Regexp for a line that is allowed to be longer than the limit
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+
+# String used as indentation unit
+indent-string='    '
 
 [BASIC]
-good-names=i,j,k,ex,Run,_
-bad-names=foo,bar,baz,toto,tutu,tata
+# Good variable names
+good-names=i,j,k,v,df,conn,_,id
+
+# Bad variable names
+bad-names=foo,bar,baz
 
 [DESIGN]
-max-args=7
-max-locals=20
-max-returns=6
-max-branches=15
-max-statements=60
-max-parents=7
-max-attributes=12
+# Maximum number of arguments for function / method
+max-args=10
 
-[IMPORTS]
-deprecated-modules=
-preferred-modules=pandas:pd,numpy:np
+# Maximum number of locals for function / method
+max-locals=20
+
+# Maximum number of return / yield for function / method
+max-returns=10
+
+# Maximum number of branch for function / method
+max-branches=20
+
+# Maximum number of statements in function / method
+max-statements=60
+
+# Maximum number of parents for a class
+max-parents=7
+
+# Maximum number of attributes for a class
+max-attributes=20
 
 [TYPECHECK]
-ignored-modules=
+# List of members which are set dynamically
+generated-members=
+
+# List of classes names for which member attributes should not be checked
 ignored-classes=optparse.Values,thread._local,_thread._local

@@ -108,7 +108,7 @@ def data_health_check() -> dict:
         if not os.path.isfile(get_db_path()):
             health["market_db"] = "missing"
             return health
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         for table in [
             "a_stock_basic",
             "a_stock_daily",

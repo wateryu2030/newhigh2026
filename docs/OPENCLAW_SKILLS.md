@@ -71,3 +71,7 @@ curl "http://127.0.0.1:8000/api/skill/ashare/daily?ts_code=600519.SH"
 
 - 涨停/跌停判断、行业涨幅排行等可在此 Skill 内新增方法并暴露到 `/api/skill/ashare/*`。
 - 可增加简单缓存（如按 `ts_code+date` 缓存日线）以减少 Tushare 调用频次。
+
+## 七、延伸阅读
+
+- 通用 OpenClaw 量化场景、ClawHub 技能示例与安全铁律：[`OPENCLAW_QUANT_ECOSYSTEM_AND_SAFETY.md`](./OPENCLAW_QUANT_ECOSYSTEM_AND_SAFETY.md)

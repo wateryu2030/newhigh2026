@@ -2,40 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Kinetic Terminal Design System - 参考 stitch */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0&display=swap');
+
 :root {
-  --fund-dark: #0F172A;
-  --fund-emerald: #10B981;
-  --fund-indigo: #6366F1;
+  --kt-bg: #0B0E14;
+  --kt-surface-low: #10131A;
+  --kt-surface-high: #1C2028;
+  --kt-primary: #FF3B30;
+  --kt-primary-soft: #FF6B6B;
+  --kt-tertiary: #FF7439;
+  --kt-on-surface: #ECEDF6;
+  --kt-on-variant: #A9ABB3;
 }
 
 body {
-  @apply bg-slate-900 text-slate-100 antialiased;
-  background-color: var(--fund-dark);
+  background-color: #0B0E14 !important;
+  color: #ECEDF6 !important;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Responsive grid helpers */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Dashboard 统计卡片网格 */
 .grid-dashboard {
-  @apply grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4;
+  @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4;
 }
 
+/* Kinetic Card - 无边框，背景分层 */
 .card {
-  @apply rounded-xl border border-slate-700/50 bg-slate-800/50 p-4 shadow-lg backdrop-blur sm:p-6;
+  background-color: #1C2028;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  box-shadow: none;
 }
 
+/* Glass Card - 毛玻璃效果 */
+.glass-card {
+  background: rgba(28, 32, 40, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* 导航链接 */
 .link-nav {
-  @apply rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white;
+  @apply rounded-lg px-3 py-2 text-sm font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-primary;
 }
 
 .link-nav.active {
-  @apply bg-slate-700 text-white;
+  @apply bg-surface-container-high text-primary-fixed border-b-2 border-primary-fixed;
 }
 
-/* 移动端底部安全区（避免被设备底部遮挡） */
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0E14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1C2028;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #22262F;
+}
+
+/* 全局侧边栏 / 侧滑菜单：4px，与 card-bg、card-border 一致 */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2e36 #14171c;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: #14171c;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #2a2e36;
+  border-radius: 2px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #3d424d;
+}
+
+/* 选中高亮 - 红色主题 */
+::selection {
+  background-color: rgba(255, 59, 48, 0.3);
+  color: #ECEDF6;
+}
+
+/* 移动端底部安全区（底部导航栏） */
 .safe-area-pb {
-  padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-/* 顶部热点滚动（无缝循环） */
+/* 热点滚动 */
 @keyframes hot-ticker-scroll {
   from {
     transform: translateX(0);
@@ -51,4 +130,22 @@ body {
 
 .hot-ticker-track {
   animation: hot-ticker-scroll 90s linear infinite;
+}
+
+/* 抽屉滑入动画 */
+@keyframes drawer-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-drawer-in {
+  animation: drawer-in 0.25s ease-out forwards;
+}
+
+/* 卡片淡入动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.35s ease-out forwards;
 }

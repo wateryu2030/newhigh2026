@@ -89,7 +89,7 @@ def check_tushare():
             print("✅ Tushare Token设置成功")
             
             # 创建pro接口（不实际调用，避免网络请求）
-            pro = ts.pro_api()
+            _ = ts.pro_api()  # pylint: disable=invalid-name
             print("✅ Tushare Pro接口创建成功")
             
             return True

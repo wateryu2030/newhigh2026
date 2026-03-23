@@ -77,7 +77,7 @@ def migrate_remaining_tables():
                 create_sql = create_sql.rstrip(", ") + ")"
                 
                 target_conn.execute(create_sql)
-                print(f"  创建表结构完成")
+                print("  创建表结构完成")
                 
                 # 迁移数据
                 source_count = source_conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
@@ -106,7 +106,7 @@ def migrate_remaining_tables():
                     
                     print(f"  ✅ 完成: {migrated:,} 行已迁移")
                 else:
-                    print(f"  ⚠️ 空表，跳过数据迁移")
+                    print("  ⚠️ 空表，跳过数据迁移")
                     
             except Exception as e:
                 print(f"  ❌ 迁移失败: {e}")
@@ -208,7 +208,7 @@ def main():
     print("3. 更新相关文档和配置")
     print("4. 监控系统运行情况，确保稳定性")
     print()
-    print(f"✅ 数据库迁移完成!")
+    print("✅ 数据库迁移完成!")
     print(f"⏰ 完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":

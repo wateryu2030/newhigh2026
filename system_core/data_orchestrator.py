@@ -63,7 +63,7 @@ def update(
                 result["errors"].append(f"daily_kline incremental: {e}")
         elif daily_kline_codes_limit > 0:
             try:
-                conn = get_conn(read_only=True)
+                conn = get_conn(read_only=False)
                 df = conn.execute(
                     "SELECT code FROM a_stock_basic LIMIT ?", [daily_kline_codes_limit]
                 ).fetchdf()

@@ -225,7 +225,6 @@ class StockAIAnalyzer:
     
     def _extract_recommendation(self, text: str) -> str:
         """提取投资建议"""
-        text_lower = text.lower()
         
         if '买入' in text or '建议买入' in text or '推荐买入' in text:
             return "买入"

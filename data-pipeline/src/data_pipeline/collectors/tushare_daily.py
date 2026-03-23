@@ -81,8 +81,8 @@ def update_tushare_daily(
 
     total_rows = 0
 
-    # 分批处理，避免内存过大
-    batch_size = 50
+    # 分批处理：Tushare pro.daily 单次约 6000 行上限，一年≈244 交易日 → 每批不宜超过 ~24 只
+    batch_size = 22
     for i in range(0, len(codes_to_update), batch_size):
         batch_codes = codes_to_update[i : i + batch_size]
         batch_ts_codes = []

@@ -4,8 +4,28 @@
  * Cloudflare Tunnel 只暴露 :3000 时外网才能通，勿再请求 127.0.0.1:8000。
  */
 export const API_BASE_STORAGE_KEY = 'newhigh_api_base';
+/** JWT 存储键（与登录页一致） */
+export const AUTH_TOKEN_STORAGE_KEY = 'newhigh_jwt_token';
 
 const SERVER_API_BASE = process.env.NEXT_PUBLIC_API_TARGET || 'http://127.0.0.1:8000';
+
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)?.trim();
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+function redirectToLogin(): void {
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname.startsWith('/login')) return;
+  const next = encodeURIComponent(window.location.pathname + window.location.search);
+  window.location.href = `/login?next=${next}`;
+}
 
 export function getApiBase(): string {
   if (typeof window === 'undefined') {
@@ -27,16 +47,53 @@ export function getApiBase(): string {
   return '';
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export type ApiGetOptions = { unwrapEnvelope?: boolean };
+
+export async function apiGet<T>(path: string, options?: ApiGetOptions): Promise<T> {
   const base = getApiBase();
   const url = path.startsWith('http')
     ? path
     : base
       ? `${base}/api${path}`
       : `/api${path}`;
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: { ...getAuthHeaders() },
+  });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
   if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
-  return res.json();
+  const json: unknown = await res.json();
+  if (options?.unwrapEnvelope && json && typeof json === 'object' && 'ok' in json) {
+    const o = json as { ok?: boolean; data?: unknown; error?: string };
+    if (o.ok === false) throw new Error(o.error || 'API error');
+    return o.data as T;
+  }
+  return json as T;
+}
+
+/** POST JSON，自动带 Bearer；401 跳转登录 */
+export async function apiPostJson<T>(path: string, body?: unknown): Promise<T> {
+  const base = getApiBase();
+  const url = path.startsWith('http')
+    ? path
+    : base
+      ? `${base}/api${path}`
+      : `/api${path}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: body !== undefined ? JSON.stringify(body) : '{}',
+  });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+  return res.json() as Promise<T>;
 }
 
 export interface StockItem {
@@ -60,7 +117,18 @@ export const api = {
   },
   dashboard: () => apiGet<DashboardResponse>('/dashboard'),
   dataStatus: () => apiGet<DataStatusResponse>('/data/status'),
+  /** a_stock_daily 覆盖：总行数、有 K 线的标的数、按 bar 数 TopN（解释「池大线少」） */
+  dataDailyCoverage: (limitCodes?: number) =>
+    apiGet<DailyCoverageResponse>(
+      `/data/daily-coverage${limitCodes != null ? `?limit_codes=${limitCodes}` : ''}`
+    ),
   marketSummary: () => apiGet<MarketSummaryResponse>('/market/summary'),
+  marketLimitup: (limit?: number) =>
+    apiGet<LimitupDrillItem[]>(`/market/limitup${limit != null ? `?limit=${limit}` : ''}`),
+  marketFundflow: (limit?: number) =>
+    apiGet<FundflowDrillItem[]>(`/market/fundflow${limit != null ? `?limit=${limit}` : ''}`),
+  marketLonghubangRows: (limit?: number) =>
+    apiGet<LonghubangDrillItem[]>(`/market/longhubang${limit != null ? `?limit=${limit}` : ''}`),
   stocks: (limit?: number) => apiGet<StockItem[]>(`/stocks${limit != null ? `?limit=${limit}` : ''}`),
   strategies: () => apiGet<StrategiesResponse>('/strategies'),
   strategiesMarket: (limit?: number) =>
@@ -68,7 +136,13 @@ export const api = {
   portfolio: () => apiGet<PortfolioResponse>('/portfolio/weights'),
   risk: () => apiGet<RiskResponse>('/risk/status'),
   market: (symbol?: string, interval?: string) =>
-    apiGet<MarketResponse>(`/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}`),
+    apiGet<MarketResponse>(
+      `/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}`,
+      { unwrapEnvelope: true }
+    ),
+  /** 最近一条数据质量巡检（信封 unwrap） */
+  dataQuality: () =>
+    apiGet<DataQualityLatest | null>('/data/quality', { unwrapEnvelope: true }),
   ashareStocks: () => apiGet<AshareStocksResponse>('/market/ashare/stocks'),
   news: (symbol?: string, limit?: number) =>
     apiGet<NewsResponse>(`/news?limit=${limit ?? 100}${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`),
@@ -102,8 +176,21 @@ export const api = {
       `/execution/equity_curve${limit != null ? `?limit=${limit}` : ''}`
     ),
   executionMode: () => apiGet<{ mode: string; error?: string }>('/execution/mode'),
-  ensureStocks: () =>
-    fetch(`${getApiBase()}/api/data/ensure-stocks`, { method: 'POST', cache: 'no-store' }).then((r) => r.json() as Promise<{ ok: boolean; rows: number; error?: string }>),
+  ensureStocks: () => {
+    const base = getApiBase();
+    const url = base ? `${base}/api/data/ensure-stocks` : '/api/data/ensure-stocks';
+    return fetch(url, {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { ...getAuthHeaders() },
+    }).then((r) => {
+      if (r.status === 401) {
+        redirectToLogin();
+        throw new Error('Unauthorized');
+      }
+      return r.json() as Promise<{ ok: boolean; rows: number; error?: string }>;
+    });
+  },
   simulatedOrders: (limit?: number, status?: string) => {
     const q = new URLSearchParams();
     if (limit != null) q.set('limit', String(limit));
@@ -118,9 +205,19 @@ export const api = {
     const params = new URLSearchParams({ task_type: taskType });
     if (populationLimit != null) params.set('population_limit', String(populationLimit));
     if (symbol) params.set('symbol', symbol);
-    return fetch(`${getApiBase()}/api/evolution/trigger?${params}`, { method: 'POST', cache: 'no-store' }).then(
-      (r) => r.json() as Promise<{ task_id: string; status: string }>
-    );
+    const base = getApiBase();
+    const url = `${base ? `${base}/api` : '/api'}/evolution/trigger?${params}`;
+    return fetch(url, {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { ...getAuthHeaders() },
+    }).then((r) => {
+      if (r.status === 401) {
+        redirectToLogin();
+        throw new Error('Unauthorized');
+      }
+      return r.json() as Promise<{ task_id: string; status: string }>;
+    });
   },
   getEvolutionStatus: (taskId: string) =>
     apiGet<{ task_id: string; status: string; result: unknown }>(`/evolution/status/${encodeURIComponent(taskId)}`),
@@ -128,7 +225,161 @@ export const api = {
     apiGet<{ tasks: EvolutionTaskItem[] }>(`/evolution/tasks${limit != null ? `?limit=${limit}` : ''}`),
   getSkillStats: () =>
     apiGet<{ call_count: number; last_call_time: string | null }>('/skill/stats'),
+  // 大佬策略 · 股东策略画像
+  collectedStocksRank3: (limit?: number, reportDate?: string) => {
+    const q = new URLSearchParams();
+    if (limit != null) q.set('limit', String(limit));
+    if (reportDate) q.set('report_date', reportDate);
+    const query = q.toString();
+    return apiGet<CollectedStocksRank3Response>(`/financial/collected-stocks-rank3${query ? `?${query}` : ''}`);
+  },
+  collectedStocksAllRanks: (limit?: number, reportDate?: string) => {
+    const q = new URLSearchParams();
+    if (limit != null) q.set('limit', String(limit));
+    if (reportDate) q.set('report_date', reportDate);
+    const query = q.toString();
+    return apiGet<CollectedStocksAllRanksResponse>(`/financial/collected-stocks-all-ranks${query ? `?${query}` : ''}`);
+  },
+  shareholderByName: (name: string, limit?: number) => {
+    const q = new URLSearchParams({ name: name.trim() });
+    if (limit != null) q.set('limit', String(limit));
+    return apiGet<ShareholderByNameResponse>(`/financial/shareholder-by-name?${q}`);
+  },
+  shareholderStrategy: (name: string) =>
+    apiGet<ShareholderStrategyResponse>(`/financial/shareholder-strategy?name=${encodeURIComponent(name.trim())}`),
+  antiQuantPool: (limit?: number, minTop10Ratio?: number) => {
+    const q = new URLSearchParams();
+    if (limit != null) q.set('limit', String(limit));
+    if (minTop10Ratio != null) q.set('min_top10_ratio', String(minTop10Ratio));
+    const query = q.toString();
+    return apiGet<AntiQuantPoolResponse>(`/financial/anti-quant-pool${query ? `?${query}` : ''}`);
+  },
+  antiQuantStock: (stockCode: string) =>
+    apiGet<AntiQuantStockResponse>(`/financial/anti-quant-stock/${stockCode}`),
 };
+
+export interface CollectedStocksRank3Item {
+  stock_code: string;
+  stock_name: string;
+  report_date: string;
+  rank?: number;
+  shareholder_name: string;
+  shareholder_type: string;
+  share_count: number;
+  share_ratio: number;
+}
+
+export interface CollectedStocksRank3Response {
+  ok: boolean;
+  count: number;
+  report_date: string | null;
+  data: CollectedStocksRank3Item[];
+  error?: string;
+}
+
+export interface CollectedStocksAllRanksItem extends CollectedStocksRank3Item {
+  rank: number;
+}
+
+export interface CollectedStocksAllRanksResponse {
+  ok: boolean;
+  count: number;
+  report_date: string | null;
+  data: CollectedStocksAllRanksItem[];
+  error?: string;
+}
+
+export interface ShareholderByNameItem {
+  name: string;
+  shareholder_type: string;
+  stock_count: number;
+}
+
+export interface ShareholderByNameResponse {
+  ok: boolean;
+  count: number;
+  data: ShareholderByNameItem[];
+  error?: string;
+}
+
+export interface ShareholderStrategyResponse {
+  ok: boolean;
+  shareholder_name?: string;
+  latest_quarter?: string | null;
+  info?: {
+    name: string;
+    identity: string;
+    tags: string[];
+    stats: { totalMarketCap: number; stockCount: number; avgHoldPeriod: number; winRate: number };
+  };
+  holdings: Array<{
+    stockCode: string;
+    stockName: string;
+    industry: string;
+    marketCap: number;
+    pe: number;
+    holdShares: number;
+    holdValue: number;
+    ratio: number;
+    firstEntry: string;
+    status: 'current' | 'exited';
+    exitQuarter?: string;
+  }>;
+  changes: Array<{
+    quarter: string;
+    stockCode: string;
+    stockName: string;
+    action: '新进' | '增持' | '减持' | '退出';
+    changeShares: number;
+    changeRatio?: number;
+  }>;
+  error?: string;
+}
+
+export interface AntiQuantPoolItem {
+  stock_code: string;
+  stock_name: string;
+  top10_ratio: number;
+  top10_ratio_std: number | null;
+  institution_count_current: number;
+  long_term_institution_count: number;
+  turnover_avg: number | null;
+  report_count: number;
+  latest_report_date: string | null;
+  filter_mode: string;
+}
+
+export interface AntiQuantPoolResponse {
+  ok: boolean;
+  count: number;
+  filter_mode: string;
+  summary: {
+    total_stocks_analyzed?: number;
+    candidate_count?: number;
+    avg_top10_ratio?: number;
+    avg_institution_count?: number;
+  };
+  data: AntiQuantPoolItem[];
+  note?: string;
+  error?: string;
+}
+
+export interface AntiQuantStockResponse {
+  ok: boolean;
+  stock_code: string;
+  in_pool: boolean;
+  factors: {
+    top10_ratio: number;
+    top10_ratio_std: number | null;
+    institution_count_current: number;
+    long_term_institution_count: number;
+    turnover_avg: number | null;
+    report_count: number;
+    data_sufficient: boolean;
+  };
+  latest_report_date?: string | null;
+  error?: string;
+}
 
 export interface EvolutionTaskItem {
   id: string;
@@ -199,10 +450,45 @@ export interface SystemStatusResponse {
 
 export interface SniperCandidateItem {
   code: string;
+  stock_name?: string;
   theme: string;
   sniper_score: number;
   confidence: number;
-  snapshot_time?: string;
+  last_price?: number | null;
+  change_pct?: number | null;
+  updated_at?: string;
+}
+
+/** 涨停池下钻行 */
+export interface LimitupDrillItem {
+  code: string;
+  stock_name?: string;
+  last_price?: number | null;
+  change_pct?: number | null;
+  limit_up_times?: number | null;
+  updated_at?: string;
+}
+
+/** 龙虎榜下钻行 */
+export interface LonghubangDrillItem {
+  code: string;
+  stock_name?: string;
+  lhb_date?: string | null;
+  net_buy?: number | null;
+  last_price?: number | null;
+  change_pct?: number | null;
+  updated_at?: string;
+}
+
+/** 资金流下钻行 */
+export interface FundflowDrillItem {
+  code: string;
+  stock_name?: string;
+  main_net_inflow?: number | null;
+  snapshot_date?: string | null;
+  last_price?: number | null;
+  change_pct?: number | null;
+  updated_at?: string;
 }
 
 export interface MarketEmotionResponse {
@@ -233,25 +519,33 @@ export interface HotmoneySeatItem {
   trade_count: number;
   win_rate: number;
   avg_return: number;
-  snapshot_time?: string;
+  updated_at?: string;
 }
 
 export interface MainThemeItem {
   sector: string;
   total_volume: number;
   rank: number;
-  snapshot_time?: string;
+  updated_at?: string;
 }
 
 export interface TradeSignalItem {
   code: string;
+  /** 股票简称（来自 a_stock_basic） */
+  stock_name?: string;
   signal: string;
-  confidence: number;
-  target_price: number;
-  stop_loss: number;
+  confidence?: number;
+  /** 无有效数值时为 null，前端显示 — */
+  target_price?: number | null;
+  stop_loss?: number | null;
   strategy_id?: string;
   signal_score?: number;
-  snapshot_time?: string;
+  /** 现价：实时或最近日线 close */
+  last_price?: number | null;
+  /** 涨跌幅 %（来自实时表，可能为空） */
+  change_pct?: number | null;
+  /** 展示用短时间 MM-DD HH:mm，无微秒 */
+  updated_at?: string;
 }
 
 export interface DashboardResponse {
@@ -301,6 +595,17 @@ export interface MarketResponse {
   data: { t: string; o: number; h: number; l: number; c: number; close?: number; v: number }[];
 }
 
+/** GET /data/quality unwrap 后的 data 字段 */
+export interface DataQualityLatest {
+  id?: number;
+  run_at?: string | null;
+  report?: {
+    timestamp?: string;
+    checks?: Array<{ name?: string; result?: Record<string, unknown> }>;
+    [key: string]: unknown;
+  };
+}
+
 export interface AshareStocksResponse {
   stocks: { symbol: string; name: string }[];
   source: string | null;
@@ -338,13 +643,45 @@ export interface HotTickerResponse {
   updated_at: string;
 }
 
+/** /data/status 中单套 schema 的统计切片 */
+export interface DataStatusBreakdownSlice {
+  stocks: number;
+  daily_bars: number;
+  date_min: string | null;
+  date_max: string | null;
+}
+
 export interface DataStatusResponse {
   ok: boolean;
+  /** duckdb_pipeline | duckdb_astock | 历史值 duckdb */
   source: string | null;
   stocks: number;
   daily_bars: number;
   date_min: string | null;
   date_max: string | null;
+  /** 并列展示：stocks/daily_bars 表 vs a_stock_basic/a_stock_daily 表 */
+  breakdown?: {
+    astock_schema: DataStatusBreakdownSlice | null;
+    pipeline_schema: DataStatusBreakdownSlice | null;
+  };
+}
+
+/** GET /data/daily-coverage */
+export interface DailyCoverageResponse {
+  ok: boolean;
+  error?: string;
+  total_rows?: number;
+  distinct_codes?: number;
+  stock_pool_codes?: number;
+  avg_bars_per_code?: number;
+  date_min?: string | null;
+  date_max?: string | null;
+  top_codes?: Array<{
+    code: string;
+    bar_count: number;
+    date_min: string | null;
+    date_max: string | null;
+  }>;
 }
 
 export interface TradesResponse {

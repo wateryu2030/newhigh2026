@@ -63,8 +63,9 @@ class AShareLonghubangSource(BaseDataSource):
             if c not in df.columns:
                 df[c] = "" if c in ("code", "name") else None
         df["lhb_date"] = pd.to_datetime(df["lhb_date"], errors="coerce").dt.date
-        out = df[["code", "name", "lhb_date", "net_buy", "snapshot_time"]].dropna(subset=["code"])
-        out = out.fillna(0)
+        out = df[["code", "name", "lhb_date", "net_buy", "snapshot_time"]].dropna(subset=["code", "lhb_date"])
+        if "net_buy" in out.columns:
+            out["net_buy"] = pd.to_numeric(out["net_buy"], errors="coerce").fillna(0)
         if start_key:
             try:
                 from datetime import datetime as dt

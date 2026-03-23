@@ -31,8 +31,7 @@ export default function PortfolioPage() {
   const formatMoney = (n: number) => (n >= 1e6 ? `¥${(n / 1e6).toFixed(1)}M` : `¥${n.toLocaleString()}`);
 
   return (
-    <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-white">{t('portfolio.title')}</h1>
+    <div className="min-h-screen space-y-6 pb-24 md:pb-6">
       <div className="card">
         <p className="text-sm text-slate-400">{t('portfolio.totalAum')}</p>
         <p className="text-3xl font-bold text-white">{formatMoney(capital)}</p>

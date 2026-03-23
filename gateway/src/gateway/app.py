@@ -26,21 +26,34 @@ try:
 except Exception:
     pass
 
-from fastapi import FastAPI
+import logging
+import os
+
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, Response
 
 from .endpoints import router
+from .endpoints_health import build_health_payload
 from .ws import router as ws_router
+
+_log = logging.getLogger(__name__)
 
 app = FastAPI(
     title="newhigh Gateway",
     description="AI Hedge Fund API",
     version="0.1.0",
 )
+
+_cors_raw = os.environ.get("CORS_ORIGINS", "http://localhost:3000").strip()
+_cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+if not _cors_origins:
+    _cors_origins = ["http://localhost:3000"]
+_log.info("CORS allowed origins: %s", _cors_origins)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,6 +68,16 @@ except Exception:
 
 app.include_router(router, prefix="/api", tags=["api"])
 app.include_router(ws_router, prefix="/ws", tags=["websocket"])
+
+_health_api = APIRouter()
+
+@_health_api.get("/health")
+def api_health():
+    """与根 /health 一致，便于统一走 /api/health（监控与 JWT 白名单）。"""
+    return build_health_payload()
+
+
+app.include_router(_health_api, prefix="/api", tags=["health"])
 
 
 @app.middleware("http")
@@ -119,33 +142,8 @@ def _ensure_repo_paths():
 
 @app.get("/health")
 def health():
-    """健康检查：status=ok 表示可用，degraded 表示部分依赖不可用。"""
-    checks = {}
-    db_ok = False
-    try:
-        _ensure_repo_paths()
-        import os
-        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
-
-        path = get_db_path()
-        if path and os.path.isfile(path):
-            conn = get_conn(read_only=True)
-            if conn:
-                try:
-                    conn.execute("SELECT 1").fetchone()
-                    db_ok = True
-                except Exception:
-                    pass
-                try:
-                    conn.close()
-                except Exception:
-                    pass
-        checks["db"] = "available" if db_ok else "unavailable"
-    except Exception as e:
-        checks["db"] = "error"
-        checks["db_error"] = str(e)[:200]
-    status = "ok" if db_ok else "degraded"
-    return {"status": status, "checks": checks}
+    """健康检查（根路径）：与 /api/health 相同负载，兼容旧探活。"""
+    return build_health_payload()
 
 
 @app.get("/metrics", include_in_schema=False)

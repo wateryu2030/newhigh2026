@@ -6,7 +6,23 @@
 
 import os
 from datetime import datetime
-from typing import List, Dict
+from pathlib import Path
+from typing import List, Dict, Optional
+
+# personal_assistant/src -> personal_assistant
+_PA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from soul_framework import (
+        daily_report_methodology_footer_html,
+        daily_report_methodology_footer_text,
+    )
+except ImportError:
+    def daily_report_methodology_footer_text() -> str:  # type: ignore
+        return ""
+
+    def daily_report_methodology_footer_html() -> str:  # type: ignore
+        return ""
 
 
 class ReportGenerator:
@@ -43,12 +59,18 @@ class ReportGenerator:
         if buy_stocks:
             for i, stock in enumerate(buy_stocks[:5], 1):
                 stars = "⭐" * stock.get("stars", 3)
+                soul_note = ""
+                if stock.get("industry_opportunity_section"):
+                    soul_note = (
+                        "\n   📌 行业地位与前景：已生成「机会发现引擎」固定段落"
+                        "（见 deep 结果字段 industry_opportunity_section / docs/soul.md）"
+                    )
                 report += f"""
 {i}. {stock.get('name')} ({stock.get('code')[:6]})
    评级：{stock.get('rating')} {stars}
    策略：{stock.get('strategy', '暂无')}
    理由：{stock.get('reasons', ['暂无'])[0] if stock.get('reasons') else '暂无'}
-   ⚠️ 风险：{stock.get('risks', ['暂无'])[0] if stock.get('risks') else '暂无'}
+   ⚠️ 风险：{stock.get('risks', ['暂无'])[0] if stock.get('risks') else '暂无'}{soul_note}
 """
         else:
             report += "\n暂无买入评级股票\n"
@@ -75,6 +97,7 @@ class ReportGenerator:
                 report += f"{i}. {stock.get('name')} ({stock.get('code')[:6]}) - {stock.get('strategy', '谨慎')}\n"
         
         # 总结
+        methodology = daily_report_methodology_footer_text()
         report += f"""
 ━━━━━━━━━━━━━━━━━━
 💡 今日策略建议
@@ -89,6 +112,7 @@ class ReportGenerator:
 📌 提醒：投资有风险，决策需谨慎
    本分析仅供参考，不构成投资建议
 
+{methodology}
 ━━━━━━━━━━━━━━━━━━
 生成时间：{datetime.now().strftime("%Y-%m-%d %H:%M")}
 """
@@ -146,6 +170,13 @@ class ReportGenerator:
         if buy_stocks:
             for stock in buy_stocks[:5]:
                 stars = "⭐" * stock.get("stars", 3)
+                soul_html = ""
+                if stock.get("industry_opportunity_section"):
+                    soul_html = (
+                        '<p style="font-size:13px;color:#495057;"><strong>📌 行业地位与前景：</strong>'
+                        "已生成「机会发现引擎」固定段落（见 deep 结果 "
+                        "<code>industry_opportunity_section</code> / <code>docs/soul.md</code>）</p>"
+                    )
                 html_content += f"""
         <div class="stock">
             <div class="stock-name">{stock.get('name')} ({stock.get('code')[:6]})</div>
@@ -156,6 +187,7 @@ class ReportGenerator:
             <p><strong>策略：</strong>{stock.get('strategy', '暂无')}</p>
             <p><strong>理由：</strong>{stock.get('reasons', ['暂无'])[0] if stock.get('reasons') else '暂无'}</p>
             <p class="risk"><strong>⚠️ 风险：</strong>{stock.get('risks', ['暂无'])[0] if stock.get('risks') else '暂无'}</p>
+            {soul_html}
         </div>
 """
         else:
@@ -182,6 +214,8 @@ class ReportGenerator:
         html_content += f"""
     </div>
     
+    {daily_report_methodology_footer_html()}
+    
     <div class="footer">
         <p><strong>统计：</strong>重点关注 {len(buy_stocks)} 只 | 保持关注 {len(hold_stocks)} 只 | 注意风险 {len(sell_stocks)} 只</p>
         <p><strong>提醒：</strong>投资有风险，决策需谨慎。本分析仅供参考，不构成投资建议。</p>
@@ -199,6 +233,74 @@ class ReportGenerator:
             "html": html_content,
             "text": text_content
         }
+
+    @staticmethod
+    def format_deep_industry_sections(deep_results: List[Dict]) -> str:
+        """
+        将 deep_analyzer 多条结果中的 industry_opportunity_section 拼成 Markdown，
+        便于写入 deep_analysis_*.md 等独立深度报告。
+        """
+        parts = []
+        for r in deep_results:
+            sec = (r.get("industry_opportunity_section") or "").strip()
+            if sec:
+                parts.append(sec)
+        return "\n\n---\n\n".join(parts)
+
+    @staticmethod
+    def write_deep_industry_markdown(
+        deep_results: List[Dict],
+        *,
+        output_path: Optional[str] = None,
+        reports_dir: Optional[str] = None,
+    ) -> str:
+        """
+        将深度分析中的 industry_opportunity_section 写入独立 Markdown 文件。
+
+        默认目录：personal_assistant/reports/
+        默认文件名：deep_industry_YYYY-MM-DD.md
+
+        Args:
+            deep_results: DeepStockAnalyzer.analyze_stock 返回的字典列表
+            output_path: 完整输出路径（若指定则忽略 reports_dir 下的默认名）
+            reports_dir: 报告目录，默认 personal_assistant/reports
+
+        Returns:
+            写入文件的绝对路径
+        """
+        rdir = reports_dir or os.path.join(_PA_ROOT, "reports")
+        Path(rdir).mkdir(parents=True, exist_ok=True)
+
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date_slug = datetime.now().strftime("%Y-%m-%d")
+
+        if output_path:
+            out = os.path.abspath(output_path)
+        else:
+            out = os.path.join(rdir, f"deep_industry_{date_slug}.md")
+
+        body = ReportGenerator.format_deep_industry_sections(deep_results)
+        n_ok = sum(1 for r in deep_results if (r.get("industry_opportunity_section") or "").strip())
+
+        if not body.strip():
+            body = (
+                "> （本次未生成有效段落：请确认 `soul_framework` 已加载，且 "
+                "`deep_analyzer` 已写入 `industry_opportunity_section`。）\n"
+            )
+
+        header = f"""# 深度分析 — 行业地位与前景（机会发现引擎）
+
+> 生成时间：{ts}
+> 标的数量：{len(deep_results)}（含有效深度段落：{n_ok}）
+> 规则来源：`docs/soul.md`
+
+---
+
+"""
+        with open(out, "w", encoding="utf-8") as f:
+            f.write(header + body + "\n")
+
+        return out
 
 
 def test_report():

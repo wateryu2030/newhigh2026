@@ -1,65 +1,1148 @@
-************* Module ai_models.emotion_cycle_model
-ai-models/src/ai_models/emotion_cycle_model.py:49:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:49:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:117:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:117:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:146:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:146:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:175:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:175:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/emotion_cycle_model.py:18:8: E0401: Unable to import 'lib.database' (import-error)
-ai-models/src/ai_models/emotion_cycle_model.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
-ai-models/src/ai_models/emotion_cycle_model.py:114:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-ai-models/src/ai_models/emotion_cycle_model.py:114:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
-ai-models/src/ai_models/emotion_cycle_model.py:166:4: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
-ai-models/src/ai_models/emotion_cycle_model.py:170:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-ai-models/src/ai_models/emotion_cycle_model.py:170:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
-************* Module ai_models.sector_rotation_ai
-ai-models/src/ai_models/sector_rotation_ai.py:18:8: E0401: Unable to import 'lib.database' (import-error)
-ai-models/src/ai_models/sector_rotation_ai.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
-ai-models/src/ai_models/sector_rotation_ai.py:39:15: W0718: Catching too general exception Exception (broad-exception-caught)
-ai-models/src/ai_models/sector_rotation_ai.py:64:8: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
-ai-models/src/ai_models/sector_rotation_ai.py:84:15: W0718: Catching too general exception Exception (broad-exception-caught)
-ai-models/src/ai_models/sector_rotation_ai.py:81:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-ai-models/src/ai_models/sector_rotation_ai.py:81:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
-ai-models/src/ai_models/sector_rotation_ai.py:105:4: C0415: Import outside toplevel (_storage.write_sector_strength) (import-outside-toplevel)
-************* Module ai_models.lstm_price_predictor
-ai-models/src/ai_models/lstm_price_predictor.py:105:15: W0718: Catching too general exception Exception (broad-exception-caught)
-ai-models/src/ai_models/lstm_price_predictor.py:159:12: W0612: Unused variable 'i' (unused-variable)
-ai-models/src/ai_models/lstm_price_predictor.py:281:15: W0718: Catching too general exception Exception (broad-exception-caught)
-ai-models/src/ai_models/lstm_price_predictor.py:263:16: C0415: Import outside toplevel (json) (import-outside-toplevel)
-ai-models/src/ai_models/lstm_price_predictor.py:288:4: C0415: Import outside toplevel (argparse) (import-outside-toplevel)
-ai-models/src/ai_models/lstm_price_predictor.py:316:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
-ai-models/src/ai_models/lstm_price_predictor.py:331:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
-ai-models/src/ai_models/lstm_price_predictor.py:14:0: C0411: standard import "typing.List" should be placed before third party import "numpy" (wrong-import-order)
-ai-models/src/ai_models/lstm_price_predictor.py:15:0: C0411: standard import "pathlib.Path" should be placed before third party import "numpy" (wrong-import-order)
-ai-models/src/ai_models/lstm_price_predictor.py:16:0: C0411: standard import "dataclasses.dataclass" should be placed before third party import "numpy" (wrong-import-order)
-ai-models/src/ai_models/lstm_price_predictor.py:14:0: W0611: Unused Dict imported from typing (unused-import)
-ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_squared_error imported from sklearn.metrics (unused-import)
-ai-models/src/ai_models/lstm_price_predictor.py:26:4: W0611: Unused mean_absolute_error imported from sklearn.metrics (unused-import)
-************* Module ai_models._storage
-ai-models/src/ai_models/_storage.py:5:0: E0401: Unable to import 'lib.database' (import-error)
-************* Module ai_models.hotmoney_detector
-ai-models/src/ai_models/hotmoney_detector.py:40:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:40:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:62:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:62:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:88:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:88:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:94:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:94:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:129:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'optional' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:129:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'dependency' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:164:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'graceful' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:164:0: W0012: Unknown option value for 'disable', expected a valid pylint message and got 'degradation' (unknown-option-value)
-ai-models/src/ai_models/hotmoney_detector.py:18:8: E0401: Unable to import 'lib.database' (import-error)
-ai-models/src/ai_models/hotmoney_detector.py:18:8: C0415: Import outside toplevel (lib.database.get_connection, lib.database.ensure_core_tables) (import-outside-toplevel)
-ai-models/src/ai_models/hotmoney_detector.py:59:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-ai-models/src/ai_models/hotmoney_detector.py:59:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
-ai-models/src/ai_models/hotmoney_detector.py:126:12: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-ai-models/src/ai_models/hotmoney_detector.py:126:12: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
-ai-models/src/ai_models/hotmoney_detector.py:154:8: C0415: Import outside toplevel (_storage._get_conn) (import-outside-toplevel)
-ai-models/src/ai_models/hotmoney_detector.py:167:4: C0415: Import outside toplevel (_storage.write_hotmoney_signals) (import-outside-toplevel)
+************* Module openclaw_engine.evaluation
+openclaw_engine/evaluation.py:12:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+openclaw_engine/evaluation.py:66:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/evaluation.py:25:8: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+openclaw_engine/evaluation.py:26:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+openclaw_engine/evaluation.py:33:8: E0401: Unable to import 'backtest_engine' (import-error)
+openclaw_engine/evaluation.py:33:8: C0415: Import outside toplevel (backtest_engine.run_backtest_from_db) (import-outside-toplevel)
+openclaw_engine/evaluation.py:34:8: C0415: Import outside toplevel (datetime.datetime, datetime.timedelta) (import-outside-toplevel)
+openclaw_engine/evaluation.py:48:12: C0415: Import outside toplevel (multi_objective.fitness_from_backtest_result) (import-outside-toplevel)
+openclaw_engine/evaluation.py:13:4: W0613: Unused argument 'gene' (unused-argument)
+************* Module openclaw_engine.tests.test_gene
+openclaw_engine/tests/test_gene.py:3:0: E0401: Unable to import 'pytest' (import-error)
+openclaw_engine/tests/test_gene.py:3:0: W0611: Unused import pytest (unused-import)
+************* Module openclaw_engine.evolution_orchestrator
+openclaw_engine/evolution_orchestrator.py:77:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module openclaw_engine.population_manager
+openclaw_engine/population_manager.py:15:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:9:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+openclaw_engine/population_manager.py:9:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+openclaw_engine/population_manager.py:10:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+openclaw_engine/population_manager.py:40:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:46:19: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:50:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+openclaw_engine/population_manager.py:77:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:59:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+openclaw_engine/population_manager.py:59:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+************* Module openclaw_engine.rl.agent
+openclaw_engine/rl/agent.py:13:8: C0415: Import outside toplevel (stable_baselines3) (import-outside-toplevel)
+openclaw_engine/rl/agent.py:13:8: W0611: Unused import stable_baselines3 (unused-import)
+openclaw_engine/rl/agent.py:44:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/rl/agent.py:33:8: E0401: Unable to import 'stable_baselines3' (import-error)
+openclaw_engine/rl/agent.py:33:8: C0415: Import outside toplevel (stable_baselines3.PPO) (import-outside-toplevel)
+openclaw_engine/rl/agent.py:34:8: E0401: Unable to import 'stable_baselines3.common.env_checker' (import-error)
+openclaw_engine/rl/agent.py:34:8: C0415: Import outside toplevel (stable_baselines3.common.env_checker.check_env) (import-outside-toplevel)
+openclaw_engine/rl/agent.py:21:4: W0613: Unused argument 'env_id' (unused-argument)
+openclaw_engine/rl/agent.py:21:0: W0613: Unused argument 'kwargs' (unused-argument)
+openclaw_engine/rl/agent.py:33:8: W0611: Unused PPO imported from stable_baselines3 (unused-import)
+openclaw_engine/rl/agent.py:34:8: W0611: Unused check_env imported from stable_baselines3.common.env_checker (unused-import)
+openclaw_engine/rl/agent.py:8:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module test_tushare_quick
+test_tushare_quick.py:15:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:22:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:25:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:29:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:32:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:45:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:57:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:71:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:79:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:81:0: C0303: Trailing whitespace (trailing-whitespace)
+test_tushare_quick.py:90:0: C0304: Final newline missing (missing-final-newline)
+test_tushare_quick.py:82:11: W0718: Catching too general exception Exception (broad-exception-caught)
+test_tushare_quick.py:43:15: W0718: Catching too general exception Exception (broad-exception-caught)
+test_tushare_quick.py:55:15: W0718: Catching too general exception Exception (broad-exception-caught)
+test_tushare_quick.py:69:15: W0718: Catching too general exception Exception (broad-exception-caught)
+test_tushare_quick.py:84:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+test_tushare_quick.py:89:4: C0103: Constant name "success" doesn't conform to UPPER_CASE naming style (invalid-name)
+test_tushare_quick.py:90:4: R1722: Consider using 'sys.exit' instead (consider-using-sys-exit)
+test_tushare_quick.py:8:0: C0411: standard import "datetime.datetime" should be placed before third party import "tushare" (wrong-import-order)
+************* Module stock_analysis_002701
+stock_analysis_002701.py:35:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:41:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:65:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:71:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:74:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:78:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:83:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:85:0: C0301: Line too long (135/120) (line-too-long)
+stock_analysis_002701.py:86:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:92:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:95:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:100:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:106:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:109:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:134:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:177:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:181:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:188:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:194:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:199:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:206:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:209:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:241:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:247:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:249:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:253:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:260:0: C0301: Line too long (250/120) (line-too-long)
+stock_analysis_002701.py:300:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:304:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:307:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:310:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:316:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:332:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:334:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:341:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:345:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:347:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:351:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:353:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:358:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:360:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:362:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:375:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:378:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:381:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:390:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:393:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:398:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:403:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:406:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:411:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:414:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_analysis_002701.py:419:0: C0304: Final newline missing (missing-final-newline)
+stock_analysis_002701.py:138:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_analysis_002701.py:250:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_analysis_002701.py:363:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_analysis_002701.py:371:10: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+stock_analysis_002701.py:372:10: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+stock_analysis_002701.py:401:8: W0612: Unused variable 'i' (unused-variable)
+stock_analysis_002701.py:18:4: W0611: Unused pandas imported as pd (unused-import)
+************* Module check_deepseek_now
+check_deepseek_now.py:15:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:22:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:24:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:27:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:34:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:38:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:47:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:50:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:60:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:72:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:79:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:81:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:86:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:90:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:94:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:96:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:101:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:109:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:112:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:115:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:119:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:122:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:128:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:133:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:147:0: C0303: Trailing whitespace (trailing-whitespace)
+check_deepseek_now.py:152:0: C0304: Final newline missing (missing-final-newline)
+check_deepseek_now.py:61:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_deepseek_now.py:26:8: C0415: Import outside toplevel (openai.OpenAI) (import-outside-toplevel)
+check_deepseek_now.py:51:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+check_deepseek_now.py:53:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+check_deepseek_now.py:58:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+check_deepseek_now.py:63:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+check_deepseek_now.py:102:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_deepseek_now.py:84:12: C0415: Import outside toplevel (tushare) (import-outside-toplevel)
+check_deepseek_now.py:92:12: W0612: Unused variable 'pro' (unused-variable)
+check_deepseek_now.py:151:4: C0103: Constant name "success" doesn't conform to UPPER_CASE naming style (invalid-name)
+************* Module query_mx
+.cursor/skills/mx-data/scripts/query_mx.py:34:4: C0415: Import outside toplevel (urllib.request) (import-outside-toplevel)
+.cursor/skills/mx-data/scripts/query_mx.py:50:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module stock_news_monitor
+stock_news_monitor.py:47:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:51:0: C0301: Line too long (146/120) (line-too-long)
+stock_news_monitor.py:55:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:60:0: C0301: Line too long (125/120) (line-too-long)
+stock_news_monitor.py:74:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:80:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:85:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:93:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:101:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:105:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:112:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:115:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:125:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:130:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:134:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:151:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:153:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:156:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:158:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:161:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:163:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:167:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:170:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:173:0: C0301: Line too long (172/120) (line-too-long)
+stock_news_monitor.py:174:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:177:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:182:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:184:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:191:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:205:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:207:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:210:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:215:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:217:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:222:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:228:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:237:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:240:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:258:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:261:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:264:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:268:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:273:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:276:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:288:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:290:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:299:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:301:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:303:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:310:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:317:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:325:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:327:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:331:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:333:0: C0301: Line too long (127/120) (line-too-long)
+stock_news_monitor.py:334:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:337:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:343:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:352:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:364:0: C0303: Trailing whitespace (trailing-whitespace)
+stock_news_monitor.py:159:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:154:27: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:154:20: W0612: Unused variable 'e' (unused-variable)
+stock_news_monitor.py:213:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:208:27: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:208:20: W0612: Unused variable 'e' (unused-variable)
+stock_news_monitor.py:265:15: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:224:12: C0415: Import outside toplevel (duckdb) (import-outside-toplevel)
+stock_news_monitor.py:259:23: W0718: Catching too general exception Exception (broad-exception-caught)
+stock_news_monitor.py:259:16: W0612: Unused variable 'e' (unused-variable)
+stock_news_monitor.py:348:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+stock_news_monitor.py:363:4: W0612: Unused variable 'result' (unused-variable)
+stock_news_monitor.py:8:0: W0611: Unused import os (unused-import)
+stock_news_monitor.py:14:0: W0611: Unused import re (unused-import)
+stock_news_monitor.py:24:4: W0611: Unused BeautifulSoup imported from bs4 (unused-import)
+************* Module tests.test_env
+simulation-world/tests/test_env.py:9:23: W0212: Access to a protected member _step of a client class (protected-access)
+simulation-world/tests/test_env.py:6:9: W0612: Unused variable 'info' (unused-variable)
+simulation-world/tests/test_env.py:8:9: W0612: Unused variable 'reward' (unused-variable)
+simulation-world/tests/test_env.py:8:23: W0612: Unused variable 'trunc' (unused-variable)
+simulation-world/tests/test_env.py:1:0: W0611: Unused make_env imported from simulation_world (unused-import)
+************* Module list_gemini_models
+list_gemini_models.py:21:0: C0304: Final newline missing (missing-final-newline)
+************* Module full_demo_ai_stock_analysis
+full_demo_ai_stock_analysis.py:18:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:24:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:29:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:33:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:38:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:44:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:48:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:52:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:60:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:63:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:69:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:81:0: C0301: Line too long (133/120) (line-too-long)
+full_demo_ai_stock_analysis.py:84:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:97:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:102:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:104:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:109:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:113:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:119:0: C0301: Line too long (143/120) (line-too-long)
+full_demo_ai_stock_analysis.py:120:0: C0301: Line too long (143/120) (line-too-long)
+full_demo_ai_stock_analysis.py:121:0: C0301: Line too long (143/120) (line-too-long)
+full_demo_ai_stock_analysis.py:131:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:139:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:142:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:153:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:156:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:158:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:160:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:163:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:165:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:170:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:200:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:218:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:223:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:229:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:238:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:278:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:282:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:310:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:313:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:323:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:325:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:331:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:334:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:343:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:347:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:350:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:353:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:356:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:359:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:362:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:368:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:370:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:380:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:389:0: C0303: Trailing whitespace (trailing-whitespace)
+full_demo_ai_stock_analysis.py:390:0: C0304: Final newline missing (missing-final-newline)
+full_demo_ai_stock_analysis.py:105:15: W0718: Catching too general exception Exception (broad-exception-caught)
+full_demo_ai_stock_analysis.py:166:15: W0718: Catching too general exception Exception (broad-exception-caught)
+full_demo_ai_stock_analysis.py:230:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+full_demo_ai_stock_analysis.py:228:8: W0612: Unused variable 'text_lower' (unused-variable)
+full_demo_ai_stock_analysis.py:281:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+full_demo_ai_stock_analysis.py:371:11: W0718: Catching too general exception Exception (broad-exception-caught)
+full_demo_ai_stock_analysis.py:363:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+full_demo_ai_stock_analysis.py:373:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+************* Module portfolio_engine.risk_parity
+portfolio-engine/src/portfolio_engine/risk_parity.py:3:0: W0611: Unused List imported from typing (unused-import)
+************* Module portfolio_engine.rebalance
+portfolio-engine/src/portfolio_engine/rebalance.py:10:4: W0613: Unused argument 'current_positions' (unused-argument)
+portfolio-engine/src/portfolio_engine/rebalance.py:36:0: C0206: Consider iterating with .items() (consider-using-dict-items)
+************* Module portfolio_engine.kelly_allocation
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:45:15: E0602: Undefined variable 'equal_weight_weights' (undefined-variable)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:49:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:58:4: C0415: Import outside toplevel (equal_weight.equal_weight_weights) (import-outside-toplevel)
+portfolio-engine/src/portfolio_engine/kelly_allocation.py:3:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module tests.test_execution_smoke
+execution-engine/tests/test_execution_smoke.py:6:4: C0415: Import outside toplevel (execution_engine) (import-outside-toplevel)
+************* Module execution_engine.brokers.registry
+execution-engine/src/execution_engine/brokers/registry.py:17:4: W0602: Using global for '_MODE' but no assignment is done (global-variable-not-assigned)
+execution-engine/src/execution_engine/brokers/registry.py:24:4: W0603: Using the global statement (global-statement)
+************* Module execution_engine.brokers.simulated_broker
+execution-engine/src/execution_engine/brokers/simulated_broker.py:13:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:30:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:23:12: C0415: Import outside toplevel (execution_engine.simulated.step_simulated, execution_engine.simulated.get_orders) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:52:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:38:12: C0415: Import outside toplevel (execution_engine.simulated.get_positions) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:62:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/simulated_broker.py:59:12: C0415: Import outside toplevel (execution_engine.simulated.get_orders) (import-outside-toplevel)
+************* Module execution_engine.brokers.base
+execution-engine/src/execution_engine/brokers/base.py:31:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/base.py:41:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:46:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:51:8: W2301: Unnecessary ellipsis constant (unnecessary-ellipsis)
+execution-engine/src/execution_engine/brokers/base.py:54:14: W0613: Unused argument 'symbol' (unused-argument)
+execution-engine/src/execution_engine/brokers/base.py:54:44: W0613: Unused argument 'limit' (unused-argument)
+execution-engine/src/execution_engine/brokers/base.py:54:0: W0613: Unused argument 'kwargs' (unused-argument)
+************* Module execution_engine.brokers.live_broker
+execution-engine/src/execution_engine/brokers/live_broker.py:19:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:25:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/brokers/live_broker.py:58:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:35:12: C0415: Import outside toplevel (execution_engine.order_manager.place_market_buy, execution_engine.order_manager.place_market_sell) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:73:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:63:12: C0415: Import outside toplevel (execution_engine.order_manager.cancel_order) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:94:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/brokers/live_broker.py:78:12: C0415: Import outside toplevel (execution_engine.order_manager.fetch_positions) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:79:12: C0415: Import outside toplevel (core.Position) (import-outside-toplevel)
+execution-engine/src/execution_engine/brokers/live_broker.py:5:0: W0611: Unused Dict imported from typing (unused-import)
+************* Module execution_engine.simulated.engine
+execution-engine/src/execution_engine/simulated/engine.py:309:0: C0301: Line too long (123/120) (line-too-long)
+execution-engine/src/execution_engine/simulated/engine.py:17:4: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+execution-engine/src/execution_engine/simulated/engine.py:17:4: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:18:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:35:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:49:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:69:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:80:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:85:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/simulated/engine.py:99:4: C0415: Import outside toplevel (execution_engine.signal_executor.get_actionable_signals) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:241:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:132:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:108:16: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:109:16: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:118:16: E0401: Unable to import 'risk_engine' (import-error)
+execution-engine/src/execution_engine/simulated/engine.py:118:16: C0415: Import outside toplevel (risk_engine.evaluate) (import-outside-toplevel)
+execution-engine/src/execution_engine/simulated/engine.py:244:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:88:4: W0613: Unused argument 'initial_cash' (unused-argument)
+execution-engine/src/execution_engine/simulated/engine.py:263:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:266:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:295:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:298:15: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:317:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/simulated/engine.py:320:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module execution_engine.binance_orders
+execution-engine/src/execution_engine/binance_orders.py:12:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/binance_orders.py:36:0: R0917: Too many positional arguments (8/5) (too-many-positional-arguments)
+execution-engine/src/execution_engine/binance_orders.py:9:0: W0611: Unused Position imported from core (unused-import)
+************* Module execution_engine.signal_executor
+execution-engine/src/execution_engine/signal_executor.py:54:11: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/signal_executor.py:19:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+execution-engine/src/execution_engine/signal_executor.py:19:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+execution-engine/src/execution_engine/signal_executor.py:20:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+************* Module execution_engine.order_lifecycle
+execution-engine/src/execution_engine/order_lifecycle.py:30:4: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+execution-engine/src/execution_engine/order_lifecycle.py:30:4: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:31:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:79:16: C0415: Import outside toplevel (datetime.datetime, datetime.timezone) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_lifecycle.py:113:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/order_lifecycle.py:132:19: W0718: Catching too general exception Exception (broad-exception-caught)
+execution-engine/src/execution_engine/order_lifecycle.py:9:0: W0611: Unused List imported from typing (unused-import)
+************* Module execution_engine.order_manager
+execution-engine/src/execution_engine/order_manager.py:19:4: C0415: Import outside toplevel (os) (import-outside-toplevel)
+execution-engine/src/execution_engine/order_manager.py:30:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module simple_migrate
+simple_migrate.py:14:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:21:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:23:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:26:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:30:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:35:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:45:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:51:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:54:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:57:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:60:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:68:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:73:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:76:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:82:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:86:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:91:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:93:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:100:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:110:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:116:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:118:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:122:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:124:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:132:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:137:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:147:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:149:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:151:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:158:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:164:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+simple_migrate.py:173:0: C0304: Final newline missing (missing-final-newline)
+simple_migrate.py:61:11: W0718: Catching too general exception Exception (broad-exception-caught)
+simple_migrate.py:19:18: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+simple_migrate.py:58:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+simple_migrate.py:101:11: W0718: Catching too general exception Exception (broad-exception-caught)
+simple_migrate.py:166:11: W0718: Catching too general exception Exception (broad-exception-caught)
+simple_migrate.py:169:10: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+simple_migrate.py:9:0: C0411: standard import "datetime.datetime" should be placed before third party import "duckdb" (wrong-import-order)
+simple_migrate.py:7:0: W0611: Unused import sys (unused-import)
+************* Module scripts.camofox_client
+tools/x-tweet-fetcher/scripts/camofox_client.py:107:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:133:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:142:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:155:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:157:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:181:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:188:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:209:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:211:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/camofox_client.py:25:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/camofox_client.py:49:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/camofox_client.py:61:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/camofox_client.py:74:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/camofox_client.py:73:8: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/camofox_client.py:89:0: C0413: Import "import re" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/camofox_client.py:90:0: C0413: Import "import urllib.parse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/camofox_client.py:93:19: W0621: Redefining name 'query' from outer scope (line 235) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:93:67: W0621: Redefining name 'engine' from outer scope (line 226) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:108:4: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+tools/x-tweet-fetcher/scripts/camofox_client.py:124:4: W0621: Redefining name 'results' from outer scope (line 237) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:126:4: W0621: Redefining name 'i' from outer scope (line 238) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:166:4: W0621: Redefining name 'results' from outer scope (line 237) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:168:4: W0621: Redefining name 'i' from outer scope (line 238) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:224:4: W0404: Reimport 'sys' (imported line 11) (reimported)
+tools/x-tweet-fetcher/scripts/camofox_client.py:235:4: C0103: Constant name "query" doesn't conform to UPPER_CASE naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/camofox_client.py:90:0: C0412: Imports from package urllib are not grouped (ungrouped-imports)
+tools/x-tweet-fetcher/scripts/camofox_client.py:224:4: C0412: Imports from package sys are not grouped (ungrouped-imports)
+************* Module scripts.tweet_growth_cli
+tools/x-tweet-fetcher/scripts/tweet_growth_cli.py:26:0: E0401: Unable to import 'tweet_growth' (import-error)
+tools/x-tweet-fetcher/scripts/tweet_growth_cli.py:27:0: E0401: Unable to import 'growth_config' (import-error)
+tools/x-tweet-fetcher/scripts/tweet_growth_cli.py:77:14: W0212: Access to a protected member _acquire_lock of a client class (protected-access)
+************* Module scripts.fetch_china
+tools/x-tweet-fetcher/scripts/fetch_china.py:243:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:380:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:501:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:567:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:590:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:594:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:726:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:730:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:739:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:757:0: C0301: Line too long (130/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/fetch_china.py:762:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:766:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:774:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:816:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:820:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:906:0: C0301: Line too long (144/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1292:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1302:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1309:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1343:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1349:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1352:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1355:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1359:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1367:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1374:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1378:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1386:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1389:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1409:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1415:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1423:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1426:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1431:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1437:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1443:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1454:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1537:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1540:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1543:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1554:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1565:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1575:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1593:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1602:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1:0: C0302: Too many lines in module (1751/1000) (too-many-lines)
+tools/x-tweet-fetcher/scripts/fetch_china.py:22:0: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/fetch_china.py:80:0: C0103: Constant name "_lang" doesn't conform to UPPER_CASE naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/fetch_china.py:145:8: W0107: Unnecessary pass statement (unnecessary-pass)
+tools/x-tweet-fetcher/scripts/fetch_china.py:150:8: W0107: Unnecessary pass statement (unnecessary-pass)
+tools/x-tweet-fetcher/scripts/fetch_china.py:155:8: W0107: Unnecessary pass statement (unnecessary-pass)
+tools/x-tweet-fetcher/scripts/fetch_china.py:241:8: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_china.py:241:8: R1702: Too many nested blocks (8/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_china.py:349:20: W0702: No exception type(s) specified (bare-except)
+tools/x-tweet-fetcher/scripts/fetch_china.py:503:8: R1702: Too many nested blocks (7/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_china.py:735:8: R1702: Too many nested blocks (10/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_china.py:776:8: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_china.py:910:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1094:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1092:19: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1230:31: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1231:34: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1232:35: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1233:32: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1282:19: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1280:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1288:8: C0415: Import outside toplevel (subprocess) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1289:8: C0415: Import outside toplevel (shlex) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1321:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1305:12: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1305:12: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1307:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1315:25: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1288:8: W0611: Unused import subprocess (unused-import)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1493:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1511:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1519:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1529:19: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1522:21: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1622:31: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1623:35: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1624:34: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1625:32: C0321: More than one statement on a single line (multiple-statements)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1683:15: E1123: Unexpected keyword argument 'proxy' in method call (unexpected-keyword-arg)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1683:15: E1123: Unexpected keyword argument 'cookies' in method call (unexpected-keyword-arg)
+tools/x-tweet-fetcher/scripts/fetch_china.py:1692:4: W0603: Using the global statement (global-statement)
+tools/x-tweet-fetcher/scripts/fetch_china.py:18:0: W0611: Unused List imported from typing (unused-import)
+tools/x-tweet-fetcher/scripts/fetch_china.py:22:0: W0611: Unused camofox_open_tab imported from camofox_client (unused-import)
+tools/x-tweet-fetcher/scripts/fetch_china.py:22:0: W0611: Unused camofox_snapshot imported from camofox_client (unused-import)
+tools/x-tweet-fetcher/scripts/fetch_china.py:22:0: W0611: Unused camofox_close_tab imported from camofox_client (unused-import)
+************* Module scripts.paper_recommend
+tools/x-tweet-fetcher/scripts/paper_recommend.py:85:0: C0301: Line too long (132/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:162:0: C0301: Line too long (126/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:342:0: C0301: Line too long (124/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:509:0: C0301: Line too long (126/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:3:0: W0105: String statement has no effect (pointless-string-statement)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:23:0: C0413: Import "import argparse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:24:0: C0413: Import "import json" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:25:0: C0413: Import "import os" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:26:0: C0413: Import "import re" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:27:0: C0413: Import "import subprocess" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:28:0: C0413: Import "import sys" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:29:0: C0413: Import "import time" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:30:0: C0413: Import "import urllib.parse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:32:0: E0401: Unable to import 'common' (import-error)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:32:0: C0413: Import "from common import http_get, parse_arxiv_id, fetch_arxiv_metadata, strip_arxiv_version, scrape_github_profile, scrape_repo_contributors, extract_twitter_from_profile, normalize_name, match_name_parts, match_github_to_author, GITHUB_REPO_RE, ARXIV_URL_RE, ARXIV_ID_RE" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:38:0: C0413: Import "from config import OPENALEX_API, OPENALEX_EMAIL, OPENALEX_DELAY" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:38:0: E0611: No name 'OPENALEX_API' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:38:0: E0611: No name 'OPENALEX_EMAIL' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:38:0: E0611: No name 'OPENALEX_DELAY' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:39:0: E0401: Unable to import 'arxiv_author_finder' (import-error)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:39:0: C0413: Import "from arxiv_author_finder import ArxivAuthorFinder" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:208:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:199:21: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:222:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:695:19: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:713:23: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:682:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:39:0: C0411: third party import "arxiv_author_finder.ArxivAuthorFinder" should be placed before first party import "config.OPENALEX_API"  (wrong-import-order)
+tools/x-tweet-fetcher/scripts/paper_recommend.py:32:0: W0611: Unused ARXIV_ID_RE imported from common (unused-import)
+************* Module scripts.sogou_wechat
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:46:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:54:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:58:0: C0301: Line too long (130/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:59:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:62:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:64:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:82:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:190:0: C0301: Line too long (135/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:192:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:194:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:199:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:201:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:204:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:210:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:216:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:220:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:234:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:238:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:246:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:248:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:314:0: C0301: Line too long (130/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:315:0: C0301: Line too long (121/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:316:0: C0301: Line too long (123/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:37:4: C0415: Import outside toplevel (time) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:49:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:60:9: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:63:10: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:69:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:74:25: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:106:12: C0415: Import outside toplevel (datetime.datetime) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:180:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:159:8: C0415: Import outside toplevel (tempfile) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:164:8: C0415: Import outside toplevel (uuid) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:166:8: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:170:17: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:175:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:187:4: C0415: Import outside toplevel (requests) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:249:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:229:16: C0415: Import outside toplevel (datetime.datetime) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:267:12: W0621: Redefining name 're' from outer scope (line 21) (redefined-outer-name)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:276:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:257:8: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:257:8: C0415: Import outside toplevel (camofox_client.camofox_open_tab, camofox_client.camofox_snapshot, camofox_client.camofox_close_tab) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:258:8: C0415: Import outside toplevel (time) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:267:12: W0404: Reimport 're' (imported line 21) (reimported)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:267:12: C0415: Import outside toplevel (re) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:290:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:283:8: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:283:8: C0415: Import outside toplevel (camofox_client.camofox_search) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:304:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:294:8: E0401: Unable to import 'duckduckgo_search' (import-error)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:294:8: C0415: Import outside toplevel (duckduckgo_search.DDGS) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/sogou_wechat.py:295:8: C0415: Import outside toplevel (warnings) (import-outside-toplevel)
+************* Module scripts.x_discover
+tools/x-tweet-fetcher/scripts/x_discover.py:25:0: E0401: Unable to import 'common' (import-error)
+tools/x-tweet-fetcher/scripts/x_discover.py:40:4: C0415: Import outside toplevel (datetime.timedelta) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/x_discover.py:75:26: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/x_discover.py:82:8: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+************* Module scripts.tweet_growth
+tools/x-tweet-fetcher/scripts/tweet_growth.py:23:0: E0401: Unable to import 'growth_config' (import-error)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:46:9: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:55:16: W0707: Consider explicitly re-raising using 'except BlockingIOError as exc' and 'raise TimeoutError(f'Could not acquire lock on {LOCK_FILE} within {timeout}s') from exc' (raise-missing-from)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:46:9: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:64:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:73:9: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:107:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:133:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:138:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:169:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:274:8: W0612: Unused variable 'idx' (unused-variable)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:312:8: C0415: Import outside toplevel (x_discover.discover_tweets) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:328:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:347:4: C0415: Import outside toplevel (re) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:416:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/tweet_growth.py:23:0: W0611: Unused CROSS_TIME_WINDOW_H imported from growth_config (unused-import)
+************* Module scripts.arxiv_author_finder
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:175:0: C0301: Line too long (124/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:390:0: C0301: Line too long (122/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:398:0: C0301: Line too long (141/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:409:0: C0301: Line too long (145/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:419:0: C0301: Line too long (142/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:428:0: C0301: Line too long (138/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:438:0: C0301: Line too long (135/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:3:0: W0105: String statement has no effect (pointless-string-statement)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:25:0: C0413: Import "import argparse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:26:0: C0413: Import "import csv" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:27:0: C0413: Import "import json" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:28:0: C0413: Import "import os" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:29:0: C0413: Import "import re" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:30:0: C0413: Import "import sys" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:31:0: C0413: Import "import time" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:32:0: C0413: Import "import urllib.parse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:33:0: C0413: Import "from datetime import datetime, timezone" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:35:0: E0401: Unable to import 'common' (import-error)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:35:0: C0413: Import "from common import http_get, parse_arxiv_id, fetch_arxiv_metadata, scrape_github_profile, scrape_repo_contributors, is_github_org, extract_twitter_from_profile, normalize_name, match_name_parts, match_github_to_author, match_handle_to_author, search_web, GITHUB_REPO_RE, TWITTER_URL_RE, TWITTER_SKIP_HANDLES" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:42:0: C0413: Import "from config import REQUEST_DELAY" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:42:0: E0611: No name 'REQUEST_DELAY' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:68:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:61:12: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:61:12: C0415: Import outside toplevel (camofox_client.check_camofox, camofox_client.camofox_search) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:182:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/arxiv_author_finder.py:501:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module scripts.common
+tools/x-tweet-fetcher/scripts/common.py:394:0: C0301: Line too long (123/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/common.py:3:0: W0105: String statement has no effect (pointless-string-statement)
+tools/x-tweet-fetcher/scripts/common.py:9:0: C0413: Import "import json" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:10:0: C0413: Import "import re" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:11:0: C0413: Import "import sys" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:12:0: C0413: Import "import time" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:13:0: C0413: Import "import urllib.error" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:14:0: C0413: Import "import urllib.request" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:15:0: C0413: Import "import urllib.parse" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:16:0: C0413: Import "import xml.etree.ElementTree as ET" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:18:0: C0413: Import "from config import ARXIV_API, SEARXNG_URL, GITHUB_TOKEN, REQUEST_DELAY" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/common.py:18:0: E0611: No name 'ARXIV_API' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/common.py:18:0: E0611: No name 'SEARXNG_URL' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/common.py:18:0: E0611: No name 'GITHUB_TOKEN' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/common.py:18:0: E0611: No name 'REQUEST_DELAY' in module 'config' (no-name-in-module)
+tools/x-tweet-fetcher/scripts/common.py:62:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:52:19: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:325:0: C0103: Constant name "_brave_disabled" doesn't conform to UPPER_CASE naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/common.py:330:4: W0603: Using the global statement (global-statement)
+tools/x-tweet-fetcher/scripts/common.py:354:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:379:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:395:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:389:8: E0401: Unable to import 'duckduckgo_search' (import-error)
+tools/x-tweet-fetcher/scripts/common.py:389:8: C0415: Import outside toplevel (duckduckgo_search.DDGS) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/common.py:390:8: C0415: Import outside toplevel (warnings) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/common.py:405:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/common.py:400:8: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/common.py:400:8: C0415: Import outside toplevel (camofox_client.check_camofox, camofox_client.camofox_search) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/common.py:12:0: W0611: Unused import time (unused-import)
+tools/x-tweet-fetcher/scripts/common.py:18:0: W0611: Unused REQUEST_DELAY imported from config (unused-import)
+************* Module scripts.version_check
+tools/x-tweet-fetcher/scripts/version_check.py:25:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:39:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:42:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:45:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:48:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:53:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:66:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:70:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:73:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:75:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:79:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:82:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:93:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/version_check.py:83:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/version_check.py:43:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/version_check.py:57:21: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/version_check.py:77:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/version_check.py:89:4: C0103: Variable name "YELLOW" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/version_check.py:90:4: C0103: Variable name "GREEN" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/version_check.py:91:4: C0103: Variable name "RESET" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/version_check.py:92:4: C0103: Variable name "BOLD" doesn't conform to snake_case naming style (invalid-name)
+************* Module scripts.fetch_tweet
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:167:0: C0301: Line too long (136/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:566:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:576:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:581:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:596:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:627:0: C0325: Unnecessary parens after '=' keyword (superfluous-parens)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:628:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:927:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:930:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:934:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:940:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:953:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:957:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:966:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1719:0: C0301: Line too long (157/120) (line-too-long)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1:0: C0302: Too many lines in module (1985/1000) (too-many-lines)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:189:0: C0103: Constant name "_lang" doesn't conform to UPPER_CASE naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:209:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:230:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:242:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:254:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:253:8: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:438:15: E0701: Bad except clauses order (URLError is an ancestor class of HTTPError) (bad-except-order)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:441:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:432:12: R1724: Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it (no-else-continue)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:614:23: W0612: Unused variable 'rt' (unused-variable)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (7/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (7/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (9/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:798:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:872:35: W0612: Unused variable 'rt' (unused-variable)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1046:4: C0103: Variable name "MAX_PAGES" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1162:4: C0103: Variable name "MAX_PAGES" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1364:4: C0103: Variable name "_SKIP_TEXTS" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1553:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1581:8: W0404: Reimport 'sys' (imported line 27) (reimported)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1581:8: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1582:8: W0404: Reimport 'os' (imported line 25) (reimported)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1582:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1587:8: C0415: Import outside toplevel (camofox_client.camofox_search) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1590:8: C0415: Import outside toplevel (scripts.camofox_client.camofox_search) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1692:4: W0603: Using the global statement (global-statement)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1945:41: C2401: Argument name "max补充" contains a non-ASCII character, consider renaming it. (non-ascii-name)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1948:8: C0415: Import outside toplevel (requests) (import-outside-toplevel)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1974:15: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1952:8: W0612: Unused variable 'i' (unused-variable)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1974:8: W0612: Unused variable 'e' (unused-variable)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:1982:11: W0718: Catching too general exception Exception (broad-exception-caught)
+tools/x-tweet-fetcher/scripts/fetch_tweet.py:25:0: W0611: Unused import os (unused-import)
+************* Module scripts.x_mentions_nitter
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:32:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:36:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:41:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:46:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:52:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:62:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:82:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:87:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:90:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:105:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:109:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:120:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:122:0: C0303: Trailing whitespace (trailing-whitespace)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:18:0: E0401: Unable to import 'camofox_client' (import-error)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:18:0: C0413: Import "from camofox_client import camofox_fetch_page" should be placed at the top of the module (wrong-import-position)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:69:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:76:9: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:93:4: C0103: Variable name "RECENT_TIMES" doesn't conform to snake_case naming style (invalid-name)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:118:9: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:127:14: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+tools/x-tweet-fetcher/scripts/x_mentions_nitter.py:93:4: W0612: Unused variable 'RECENT_TIMES' (unused-variable)
+************* Module check_code_quality
+check_code_quality.py:66:19: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:43:25: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+check_code_quality.py:38:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+check_code_quality.py:113:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:93:17: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+check_code_quality.py:97:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+check_code_quality.py:163:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:136:17: W1510: 'subprocess.run' used without explicitly defining the value for 'check'. (subprocess-run-check)
+check_code_quality.py:140:8: R1705: Unnecessary "else" after "return", remove the "else" and de-indent the code inside it (no-else-return)
+check_code_quality.py:135:4: R1702: Too many nested blocks (7/5) (too-many-nested-blocks)
+check_code_quality.py:229:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:225:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+check_code_quality.py:251:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:247:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+check_code_quality.py:295:11: W0718: Catching too general exception Exception (broad-exception-caught)
+check_code_quality.py:256:13: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+check_code_quality.py:291:17: W1514: Using open without explicitly specifying an encoding (unspecified-encoding)
+************* Module ai_lab.strategy_generator
+ai-lab/src/ai_lab/strategy_generator.py:7:4: W0613: Unused argument 'description' (unused-argument)
+ai-lab/src/ai_lab/strategy_generator.py:9:4: W0613: Unused argument 'constraints' (unused-argument)
+************* Module ai_lab.rl_trader
+ai-lab/src/ai_lab/rl_trader.py:10:4: W0613: Unused argument 'df_prices' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:11:4: W0613: Unused argument 'reward_type' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:10:0: W0613: Unused argument 'kwargs' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:29:8: C0415: Import outside toplevel (stable_baselines3.PPO) (import-outside-toplevel)
+ai-lab/src/ai_lab/rl_trader.py:50:8: C0415: Import outside toplevel (stable_baselines3.SAC) (import-outside-toplevel)
+ai-lab/src/ai_lab/rl_trader.py:66:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module ai_lab.optuna_optimizer
+ai-lab/src/ai_lab/optuna_optimizer.py:32:0: C0301: Line too long (121/120) (line-too-long)
+ai-lab/src/ai_lab/optuna_optimizer.py:5:0: E0401: Unable to import 'optuna' (import-error)
+************* Module news_collector_optimized
+news_collector_optimized.py:58:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:66:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:72:0: C0301: Line too long (225/120) (line-too-long)
+news_collector_optimized.py:105:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:109:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:120:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:126:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:131:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:138:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:142:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:144:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:146:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:152:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:166:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:171:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:173:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:177:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:180:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:184:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:187:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:201:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:203:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:206:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:208:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:215:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:219:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:239:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:241:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:244:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:246:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:250:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:253:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:257:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:271:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:274:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:277:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:281:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:293:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:295:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:300:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:304:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:308:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:312:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:315:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:335:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:338:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:341:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:345:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:351:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:353:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:356:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:358:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:366:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:368:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:371:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:375:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:382:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:388:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:394:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:400:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:406:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:413:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:418:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:421:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:426:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:438:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:445:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:447:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:454:0: C0303: Trailing whitespace (trailing-whitespace)
+news_collector_optimized.py:169:15: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:148:12: C0415: Import outside toplevel (re) (import-outside-toplevel)
+news_collector_optimized.py:204:15: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:242:15: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:221:12: C0415: Import outside toplevel (re) (import-outside-toplevel)
+news_collector_optimized.py:272:19: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:291:23: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:342:15: W0718: Catching too general exception Exception (broad-exception-caught)
+news_collector_optimized.py:310:12: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+news_collector_optimized.py:437:4: C0415: Import outside toplevel (argparse) (import-outside-toplevel)
+news_collector_optimized.py:10:0: W0611: Unused import os (unused-import)
+news_collector_optimized.py:14:0: W0611: Unused import time (unused-import)
+************* Module test_spark_api
+test_spark_api.py:31:12: C0415: Import outside toplevel (spark_ai_python.SparkAI) (import-outside-toplevel)
+test_spark_api.py:31:12: W0611: Unused SparkAI imported from spark_ai_python (unused-import)
+test_spark_api.py:145:4: C0103: Constant name "success" doesn't conform to UPPER_CASE naming style (invalid-name)
+************* Module improved_official_news_collector
+improved_official_news_collector.py:41:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:45:0: C0301: Line too long (146/120) (line-too-long)
+improved_official_news_collector.py:50:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:75:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:81:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:86:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:90:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:93:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:96:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:99:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:106:0: C0301: Line too long (124/120) (line-too-long)
+improved_official_news_collector.py:113:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:115:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:118:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:120:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:124:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:127:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:130:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:134:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:136:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:139:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:145:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:148:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:154:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:156:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:159:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:162:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:165:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:173:0: C0301: Line too long (123/120) (line-too-long)
+improved_official_news_collector.py:174:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:180:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:186:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:189:0: C0301: Line too long (128/120) (line-too-long)
+improved_official_news_collector.py:190:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:194:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:206:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:208:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:212:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:214:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:219:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:221:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:225:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:231:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:237:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:241:0: C0301: Line too long (122/120) (line-too-long)
+improved_official_news_collector.py:252:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:255:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:261:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:266:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:268:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:273:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:276:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:279:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:288:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:320:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:322:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:325:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:329:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:333:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:338:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:343:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:348:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:358:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:362:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:365:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:369:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:386:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:389:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:391:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:395:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:399:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:403:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:406:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:410:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:415:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:418:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:425:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:431:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:437:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:440:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:442:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:451:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:454:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:462:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:465:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:469:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:472:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:480:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:485:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:487:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:493:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:496:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:503:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:511:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:513:0: C0303: Trailing whitespace (trailing-whitespace)
+improved_official_news_collector.py:116:15: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:137:15: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:215:15: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:209:23: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:218:12: W0107: Unnecessary pass statement (unnecessary-pass)
+improved_official_news_collector.py:330:15: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:323:23: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:366:15: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:354:36: R1718: Consider using a set comprehension (consider-using-set-comprehension)
+improved_official_news_collector.py:479:4: C0415: Import outside toplevel (argparse) (import-outside-toplevel)
+improved_official_news_collector.py:514:11: W0718: Catching too general exception Exception (broad-exception-caught)
+improved_official_news_collector.py:516:8: C0415: Import outside toplevel (traceback) (import-outside-toplevel)
+improved_official_news_collector.py:522:4: R1722: Consider using 'sys.exit' instead (consider-using-sys-exit)
+improved_official_news_collector.py:8:0: W0611: Unused import os (unused-import)
+improved_official_news_collector.py:14:0: W0611: Unused Optional imported from typing (unused-import)
+************* Module finalize_migration
+finalize_migration.py:23:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:26:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:30:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:34:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:39:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:43:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:48:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:60:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:62:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:66:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:70:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:78:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:81:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:86:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:90:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:95:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:101:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:104:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:106:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:110:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:113:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:119:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:127:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:129:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:133:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:135:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:138:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:144:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:152:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:155:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:157:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:160:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:162:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:172:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:175:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:181:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:191:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:193:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:198:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:203:0: C0303: Trailing whitespace (trailing-whitespace)
+finalize_migration.py:215:0: C0304: Final newline missing (missing-final-newline)
+finalize_migration.py:17:11: W0718: Catching too general exception Exception (broad-exception-caught)
+finalize_migration.py:120:11: W0718: Catching too general exception Exception (broad-exception-caught)
+finalize_migration.py:111:19: W0718: Catching too general exception Exception (broad-exception-caught)
+finalize_migration.py:80:22: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+finalize_migration.py:109:26: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+finalize_migration.py:35:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+finalize_migration.py:163:11: W0718: Catching too general exception Exception (broad-exception-caught)
+finalize_migration.py:153:19: W0718: Catching too general exception Exception (broad-exception-caught)
+finalize_migration.py:211:10: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
+finalize_migration.py:8:0: C0411: standard import "datetime.datetime" should be placed before third party import "duckdb" (wrong-import-order)
+************* Module tests.test_connector_astock_duckdb
+data-engine/tests/test_connector_astock_duckdb.py:6:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:10:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb._order_book_id_to_symbol) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:18:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb._symbol_to_order_book_id) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:28:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:29:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb.fetch_klines_from_astock_duckdb) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:55:8: C0415: Import outside toplevel (data_engine.connector_astock_duckdb.get_astock_duckdb_available) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:6:0: W0611: Unused import pytest (unused-import)
+************* Module tests.test_connector_akshare
+data-engine/tests/test_connector_akshare.py:6:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_akshare.py:24:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_akshare.py:3:0: W0611: Unused datetime imported from datetime (unused-import)
+data-engine/tests/test_connector_akshare.py:3:0: W0611: Unused timezone imported from datetime (unused-import)
+data-engine/tests/test_connector_akshare.py:8:0: W0611: Unused fetch_klines_akshare_minute imported from data_engine.connector_akshare (unused-import)
+************* Module tests.test_connector_yahoo
+data-engine/tests/test_connector_yahoo.py:5:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_yahoo.py:13:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_yahoo.py:14:4: C0415: Import outside toplevel (datetime.datetime, datetime.timezone) (import-outside-toplevel)
+data-engine/tests/test_connector_yahoo.py:33:4: C0415: Import outside toplevel (core.OHLCV) (import-outside-toplevel)
+************* Module tests.test_connector_binance
+data-engine/tests/test_connector_binance.py:3:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_binance.py:4:0: C0411: standard import "unittest.mock.patch" should be placed before third party import "pytest" (wrong-import-order)
+data-engine/tests/test_connector_binance.py:3:0: W0611: Unused import pytest (unused-import)
 ************* Module data_engine.clickhouse_storage
 data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
 ************* Module data_engine.connector_yahoo
@@ -109,6 +1192,69 @@ data-engine/src/data_engine/wechat_collector.py:369:15: W0718: Catching too gene
 data-engine/src/data_engine/wechat_collector.py:464:15: W0718: Catching too general exception Exception (broad-exception-caught)
 data-engine/src/data_engine/wechat_collector.py:454:23: W0718: Catching too general exception Exception (broad-exception-caught)
 data-engine/src/data_engine/wechat_collector.py:512:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module tests.test_data_service
+core/tests/test_data_service.py:13:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:20:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:23:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:30:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:35:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:40:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:50:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:56:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:59:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:65:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:72:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:78:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:85:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:90:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:95:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:114:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:117:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:123:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:130:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:136:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:141:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:153:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:159:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:162:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:175:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:181:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:186:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:195:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:201:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:204:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:210:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:217:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:223:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:229:0: C0303: Trailing whitespace (trailing-whitespace)
+core/tests/test_data_service.py:21:8: C0415: Import outside toplevel (core.data_service.base.BaseService) (import-outside-toplevel)
+core/tests/test_data_service.py:17:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+core/tests/test_data_service.py:39:26: W0212: Access to a protected member _connection of a client class (protected-access)
+core/tests/test_data_service.py:45:26: W0212: Access to a protected member _connection of a client class (protected-access)
+core/tests/test_data_service.py:57:8: C0415: Import outside toplevel (core.data_service.stock_service.StockService) (import-outside-toplevel)
+core/tests/test_data_service.py:53:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+core/tests/test_data_service.py:115:8: C0415: Import outside toplevel (core.data_service.news_service.NewsService) (import-outside-toplevel)
+core/tests/test_data_service.py:111:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+core/tests/test_data_service.py:160:8: C0415: Import outside toplevel (core.data_service.signal_service.SignalService) (import-outside-toplevel)
+core/tests/test_data_service.py:156:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+core/tests/test_data_service.py:178:18: E1101: Instance of 'SignalService' has no 'get_trade_signals' member (no-member)
+core/tests/test_data_service.py:184:16: E1101: Instance of 'SignalService' has no 'get_signal_count' member (no-member)
+core/tests/test_data_service.py:189:17: E1101: Instance of 'SignalService' has no 'insert_trade_signal' member (no-member)
+core/tests/test_data_service.py:202:8: C0415: Import outside toplevel (core.data_service.emotion_service.EmotionService) (import-outside-toplevel)
+core/tests/test_data_service.py:198:23: R1732: Consider using 'with' for resource-allocating operations (consider-using-with)
+core/tests/test_data_service.py:8:0: W0611: Unused patch imported from unittest.mock (unused-import)
+core/tests/test_data_service.py:8:0: W0611: Unused MagicMock imported from unittest.mock (unused-import)
+************* Module tests.test_types
+core/tests/test_types.py:5:0: E0401: Unable to import 'pytest' (import-error)
+core/tests/test_types.py:18:4: C0104: Disallowed name "bar" (disallowed-name)
+core/tests/test_types.py:5:0: W0611: Unused import pytest (unused-import)
+************* Module financial_analyzer
+core/src/core/analysis/financial_analyzer.py:441:0: C0301: Line too long (128/120) (line-too-long)
+core/src/core/analysis/financial_analyzer.py:40:8: W0107: Unnecessary pass statement (unnecessary-pass)
+core/src/core/analysis/financial_analyzer.py:114:19: W0718: Catching too general exception Exception (broad-exception-caught)
+core/src/core/analysis/financial_analyzer.py:123:8: W0613: Unused argument 'report_date' (unused-argument)
 ************* Module core.data_service.stock_service
 core/src/core/data_service/stock_service.py:70:19: W0718: Catching too general exception Exception (broad-exception-caught)
 ************* Module core.data_service.db
@@ -124,57 +1270,11 @@ core/src/core/data_service/market_service.py:74:19: W0718: Catching too general 
 core/src/core/data_service/market_service.py:100:15: W0718: Catching too general exception Exception (broad-exception-caught)
 ************* Module core.data_service.signal_service
 core/src/core/data_service/signal_service.py:54:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module core.data_service.emotion_service
-core/src/core/data_service/emotion_service.py:55:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-core/src/core/data_service/emotion_service.py:87:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module core.data_service.base
-core/src/core/data_service/base.py:78:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module daily_stock_analysis.test_basic
-strategy/src/strategies/daily_stock_analysis/test_basic.py:97:11: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/test_basic.py:81:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/test_basic.py:129:11: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/test_basic.py:174:11: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module daily_stock_analysis.config
-strategy/src/strategies/daily_stock_analysis/config.py:121:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/config.py:210:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/config.py:221:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/config.py:228:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/config.py:252:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module daily_stock_analysis.notification
-strategy/src/strategies/daily_stock_analysis/notification.py:86:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/notification.py:60:27: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/notification.py:332:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module daily_stock_analysis.ai_decision
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:38:4: R0402: Use 'from google import genai' instead (consider-using-from-import)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:159:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:215:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:288:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:238:16: C0415: Import outside toplevel (google.genai.Client) (import-outside-toplevel)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:263:16: C0415: Import outside toplevel (google.generativeai) (import-outside-toplevel)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:362:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:564:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/ai_decision.py:574:27: W0613: Unused argument 'market_data' (unused-argument)
-************* Module daily_stock_analysis.data_fetcher
-strategy/src/strategies/daily_stock_analysis/data_fetcher.py:68:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/data_fetcher.py:101:23: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/data_fetcher.py:218:53: W0613: Unused argument 'symbols' (unused-argument)
-strategy/src/strategies/daily_stock_analysis/data_fetcher.py:233:51: W0613: Unused argument 'symbols' (unused-argument)
-************* Module daily_stock_analysis.main
-strategy/src/strategies/daily_stock_analysis/main.py:123:0: C0301: Line too long (123/120) (line-too-long)
-strategy/src/strategies/daily_stock_analysis/main.py:80:8: W0621: Redefining name 'results' from outer scope (line 248) (redefined-outer-name)
-strategy/src/strategies/daily_stock_analysis/main.py:138:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/main.py:167:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/main.py:172:14: W0621: Redefining name 'results' from outer scope (line 248) (redefined-outer-name)
-strategy/src/strategies/daily_stock_analysis/main.py:192:15: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module daily_stock_analysis.news_analyzer
-strategy/src/strategies/daily_stock_analysis/news_analyzer.py:74:15: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/news_analyzer.py:60:27: W0718: Catching too general exception Exception (broad-exception-caught)
-strategy/src/strategies/daily_stock_analysis/news_analyzer.py:128:43: W0613: Unused argument 'markets' (unused-argument)
 
 
 Report
 ======
-2763 statements analysed.
+8321 statements analysed.
 
 Statistics by type
 ------------------
@@ -182,13 +1282,13 @@ Statistics by type
 +---------+-------+-----------+-----------+------------+---------+
 |type     |number |old number |difference |%documented |%badname |
 +=========+=======+===========+===========+============+=========+
-|module   |38     |38         |=          |92.11       |0.00     |
+|module   |100    |NC         |NC         |85.00       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|class    |22     |15         |+7.00      |86.36       |0.00     |
+|class    |37     |NC         |NC         |89.19       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|method   |128    |80         |+48.00     |99.22       |0.00     |
+|method   |179    |NC         |NC         |96.65       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|function |85     |88         |-3.00      |96.47       |0.00     |
+|function |312    |NC         |NC         |81.73       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
 
 
@@ -197,44 +1297,63 @@ External dependencies
 ---------------------
 ::
 
-    ai_models 
-      \-_storage (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.sector_rotation_ai)
-    akshare (data_engine.connector_akshare)
-    bs4 (data_engine.wechat_collector)
+    akshare (data_engine.connector_akshare,stock_analysis_002701)
+    bs4 (data_engine.wechat_collector,improved_official_news_collector,stock_news_monitor)
     clickhouse_driver 
       \-Client (data_engine.clickhouse_storage)
-    core (data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream)
+    config (scripts.arxiv_author_finder,scripts.common,scripts.paper_recommend)
+    core (data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream,execution_engine.binance_orders,execution_engine.brokers.live_broker,execution_engine.order_manager,tests.test_connector_yahoo,tests.test_types)
       \-data_service 
-        \-base (core.data_service.emotion_service,core.data_service.news_service,core.data_service.signal_service,core.data_service.stock_service)
+        \-base (core.data_service.news_service,core.data_service.signal_service,core.data_service.stock_service,tests.test_data_service)
         \-db (core.data_service.market_service,data_engine.connector_astock_duckdb)
-    daily_stock_analysis 
-      \-ai_decision (daily_stock_analysis.main)
-      \-config (daily_stock_analysis.ai_decision,daily_stock_analysis.data_fetcher,daily_stock_analysis.main,daily_stock_analysis.news_analyzer,daily_stock_analysis.notification,daily_stock_analysis.test_basic)
-      \-data_fetcher (daily_stock_analysis.main)
-      \-main (daily_stock_analysis.test_basic)
-      \-news_analyzer (daily_stock_analysis.main)
-      \-notification (daily_stock_analysis.main)
-    dashscope (daily_stock_analysis.ai_decision)
+        \-emotion_service (tests.test_data_service)
+        \-news_service (tests.test_data_service)
+        \-signal_service (tests.test_data_service)
+        \-stock_service (tests.test_data_service)
     data_engine 
       \-clickhouse_storage (data_engine.data_pipeline)
-      \-connector_akshare (data_engine.data_pipeline)
-      \-connector_binance (data_engine.data_pipeline)
+      \-connector_akshare (data_engine.data_pipeline,tests.test_connector_akshare)
+      \-connector_astock_duckdb (tests.test_connector_astock_duckdb)
+      \-connector_binance (data_engine.data_pipeline,tests.test_connector_binance)
       \-connector_tushare (data_engine.data_pipeline)
-    duckdb (ai_models.lstm_price_predictor,core.data_service.base,core.data_service.db,data_engine.wechat_collector)
+      \-connector_yahoo (tests.test_connector_yahoo)
+    duckdb (core.data_service.db,data_engine.wechat_collector,finalize_migration,simple_migrate,stock_news_monitor)
+    execution_engine (tests.test_execution_smoke)
+      \-binance_orders (execution_engine.order_manager)
+      \-brokers 
+      | \-base (execution_engine.brokers.live_broker,execution_engine.brokers.registry,execution_engine.brokers.simulated_broker)
+      | \-live_broker (execution_engine.brokers.registry)
+      | \-simulated_broker (execution_engine.brokers.registry)
+      \-order_manager (execution_engine.brokers.live_broker)
+      \-signal_executor (execution_engine.simulated.engine)
+      \-simulated (execution_engine.brokers.simulated_broker)
     google 
-      \-genai (daily_stock_analysis.ai_decision)
-      | \-Client (daily_stock_analysis.ai_decision)
-      \-generativeai (daily_stock_analysis.ai_decision)
-    numpy (ai_models.lstm_price_predictor)
-    openai (daily_stock_analysis.ai_decision)
-    pandas (ai_models.emotion_cycle_model,ai_models.hotmoney_detector,ai_models.lstm_price_predictor,ai_models.sector_rotation_ai,data_engine.connector_tushare)
-    requests (data_engine.connector_binance,data_engine.wechat_collector)
-    tushare (data_engine.connector_tushare)
+      \-genai 
+        \-Client (list_gemini_models,stock_analysis_002701)
+    lib 
+      \-database (core.data_service.db,financial_analyzer)
+    numpy (portfolio_engine.risk_parity,simulation_world.env,stock_analysis_002701)
+    openai (check_deepseek_now,full_demo_ai_stock_analysis)
+    openclaw_engine 
+      \-evaluation (openclaw_engine.evolution_orchestrator)
+      \-gene (openclaw_engine.evaluation,openclaw_engine.evolution_orchestrator,openclaw_engine.genetic,openclaw_engine.population_manager,openclaw_engine.tests.test_gene)
+      \-genetic (openclaw_engine.evolution_orchestrator)
+      \-multi_objective (openclaw_engine.evaluation,openclaw_engine.tests.test_gene)
+      \-population_manager (openclaw_engine.evolution_orchestrator)
+    pandas (data_engine.connector_tushare,news_collector_optimized,stock_analysis_002701,tests.test_connector_akshare,tests.test_connector_astock_duckdb,tests.test_connector_yahoo)
+    portfolio_engine (tests.test_equal_weight)
+      \-equal_weight (portfolio_engine.kelly_allocation)
+    requests (data_engine.connector_binance,data_engine.wechat_collector,execution_engine.binance_orders,improved_official_news_collector,news_collector_optimized,scripts.fetch_tweet,scripts.sogou_wechat,stock_news_monitor)
+    scripts 
+      \-camofox_client (scripts.fetch_tweet)
+      \-version_check (scripts.fetch_tweet)
+    simulation_world (tests.test_env)
+    tushare (check_deepseek_now,data_engine.connector_tushare,full_demo_ai_stock_analysis,test_tushare_quick)
     websocket (data_engine.realtime_stream)
 
 
 
-6287 lines have been analyzed
+16872 lines have been analyzed
 
 Raw metrics
 -----------
@@ -242,13 +1361,13 @@ Raw metrics
 +----------+-------+------+---------+-----------+
 |type      |number |%     |previous |difference |
 +==========+=======+======+=========+===========+
-|code      |3835   |61.00 |NC       |NC         |
+|code      |10804  |64.04 |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|docstring |1262   |20.07 |NC       |NC         |
+|docstring |2663   |15.78 |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|comment   |267    |4.25  |NC       |NC         |
+|comment   |901    |5.34  |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|empty     |923    |14.68 |NC       |NC         |
+|empty     |2504   |14.84 |NC       |NC         |
 +----------+-------+------+---------+-----------+
 
 
@@ -259,9 +1378,9 @@ Duplication
 +-------------------------+------+---------+-----------+
 |                         |now   |previous |difference |
 +=========================+======+=========+===========+
-|nb duplicated lines      |0     |0        |0          |
+|nb duplicated lines      |0     |NC       |NC         |
 +-------------------------+------+---------+-----------+
-|percent duplicated lines |0.000 |0.000    |=          |
+|percent duplicated lines |0.000 |NC       |NC         |
 +-------------------------+------+---------+-----------+
 
 
@@ -272,13 +1391,13 @@ Messages by category
 +-----------+-------+---------+-----------+
 |type       |number |previous |difference |
 +===========+=======+=========+===========+
-|convention |24     |368      |368        |
+|convention |795    |NC       |NC         |
 +-----------+-------+---------+-----------+
-|refactor   |9      |13       |13         |
+|refactor   |54     |NC       |NC         |
 +-----------+-------+---------+-----------+
-|warning    |102    |129      |129        |
+|warning    |309    |NC       |NC         |
 +-----------+-------+---------+-----------+
-|error      |10     |12       |12         |
+|error      |47     |NC       |NC         |
 +-----------+-------+---------+-----------+
 
 
@@ -286,106 +1405,248 @@ Messages by category
 % errors / warnings by module
 -----------------------------
 
-+------------------------------------+------+--------+---------+-----------+
-|module                              |error |warning |refactor |convention |
-+====================================+======+========+=========+===========+
-|ai_models.hotmoney_detector         |30.00 |11.76   |0.00     |20.83      |
-+------------------------------------+------+--------+---------+-----------+
-|ai_models.emotion_cycle_model       |30.00 |7.84    |0.00     |16.67      |
-+------------------------------------+------+--------+---------+-----------+
-|ai_models.sector_rotation_ai        |20.00 |1.96    |0.00     |16.67      |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_akshare       |10.00 |4.90    |11.11    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|ai_models._storage                  |10.00 |0.00    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.wechat_collector        |0.00  |9.80    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_tushare       |0.00  |8.82    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|ai_models.lstm_price_predictor      |0.00  |7.84    |0.00     |20.83      |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.ai_decision    |0.00  |5.88    |11.11    |8.33       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_astock_duckdb |0.00  |4.90    |11.11    |12.50      |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.main           |0.00  |4.90    |0.00     |4.17       |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.config         |0.00  |4.90    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.market_service    |0.00  |4.90    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.test_basic     |0.00  |3.92    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.data_fetcher   |0.00  |3.92    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.notification   |0.00  |2.94    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|daily_stock_analysis.news_analyzer  |0.00  |2.94    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.db                |0.00  |1.96    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.data_pipeline           |0.00  |0.98    |22.22    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.emotion_service   |0.00  |0.98    |11.11    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.stock_service     |0.00  |0.98    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.signal_service    |0.00  |0.98    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.news_service      |0.00  |0.98    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|core.data_service.base              |0.00  |0.98    |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_yahoo         |0.00  |0.00    |11.11    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_binance       |0.00  |0.00    |11.11    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.clickhouse_storage      |0.00  |0.00    |11.11    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
++------------------------------------------+------+--------+---------+-----------+
+|module                                    |error |warning |refactor |convention |
++==========================================+======+========+=========+===========+
+|scripts.common                            |12.77 |3.24    |0.00     |1.76       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.paper_recommend                   |10.64 |2.27    |1.85     |2.01       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.fetch_china                       |6.38  |6.80    |14.81    |7.30       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.sogou_wechat                      |6.38  |4.53    |1.85     |4.53       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_data_service                   |6.38  |1.29    |9.26     |5.16       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.arxiv_author_finder               |6.38  |1.29    |0.00     |2.39       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.simulated.engine         |4.26  |4.53    |1.85     |0.88       |
++------------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.rl.agent                  |4.26  |2.27    |0.00     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.population_manager        |4.26  |1.29    |1.85     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.tweet_growth_cli                  |4.26  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.fetch_tweet                       |2.13  |5.18    |18.52    |3.27       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.tweet_growth                      |2.13  |3.88    |1.85     |0.25       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_akshare             |2.13  |1.62    |1.85     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.x_mentions_nitter                 |2.13  |1.62    |0.00     |2.01       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.order_lifecycle          |2.13  |0.97    |0.00     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_akshare              |2.13  |0.97    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.evaluation                |2.13  |0.65    |1.85     |0.63       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.x_discover                        |2.13  |0.65    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.kelly_allocation         |2.13  |0.32    |1.85     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_astock_duckdb        |2.13  |0.32    |0.00     |0.63       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.signal_executor          |2.13  |0.32    |0.00     |0.25       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_types                          |2.13  |0.32    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_binance              |2.13  |0.32    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.tests.test_gene           |2.13  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_yahoo                |2.13  |0.00    |0.00     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|ai_lab.optuna_optimizer                   |2.13  |0.00    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|stock_news_monitor                        |0.00  |4.53    |0.00     |8.30       |
++------------------------------------------+------+--------+---------+-----------+
+|check_code_quality                        |0.00  |4.21    |7.41     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|improved_official_news_collector          |0.00  |3.56    |3.70     |12.33      |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.camofox_client                    |0.00  |3.56    |3.70     |1.76       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.wechat_collector              |0.00  |3.24    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_tushare             |0.00  |2.91    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|finalize_migration                        |0.00  |2.59    |1.85     |5.41       |
++------------------------------------------+------+--------+---------+-----------+
+|news_collector_optimized                  |0.00  |2.59    |0.00     |9.69       |
++------------------------------------------+------+--------+---------+-----------+
+|stock_analysis_002701                     |0.00  |2.27    |0.00     |6.92       |
++------------------------------------------+------+--------+---------+-----------+
+|simple_migrate                            |0.00  |2.27    |0.00     |4.40       |
++------------------------------------------+------+--------+---------+-----------+
+|full_demo_ai_stock_analysis               |0.00  |1.94    |1.85     |7.55       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.base             |0.00  |1.94    |1.85     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|check_deepseek_now                        |0.00  |1.62    |1.85     |3.77       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_astock_duckdb       |0.00  |1.62    |1.85     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_env                            |0.00  |1.62    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|core.data_service.market_service          |0.00  |1.62    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|test_tushare_quick                        |0.00  |1.29    |1.85     |1.76       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.live_broker      |0.00  |1.29    |1.85     |0.63       |
++------------------------------------------+------+--------+---------+-----------+
+|scripts.version_check                     |0.00  |1.29    |0.00     |2.14       |
++------------------------------------------+------+--------+---------+-----------+
+|ai_lab.rl_trader                          |0.00  |1.29    |0.00     |0.25       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.simulated_broker |0.00  |0.97    |1.85     |0.38       |
++------------------------------------------+------+--------+---------+-----------+
+|financial_analyzer                        |0.00  |0.97    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.brokers.registry         |0.00  |0.65    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|core.data_service.db                      |0.00  |0.65    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|ai_lab.strategy_generator                 |0.00  |0.65    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.binance_orders           |0.00  |0.32    |3.70     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.data_pipeline                 |0.00  |0.32    |3.70     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|test_spark_api                            |0.00  |0.32    |0.00     |0.25       |
++------------------------------------------+------+--------+---------+-----------+
+|query_mx                                  |0.00  |0.32    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.rebalance                |0.00  |0.32    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|execution_engine.order_manager            |0.00  |0.32    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|portfolio_engine.risk_parity              |0.00  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.evolution_orchestrator    |0.00  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|core.data_service.stock_service           |0.00  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|core.data_service.signal_service          |0.00  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|core.data_service.news_service            |0.00  |0.32    |0.00     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_yahoo               |0.00  |0.00    |1.85     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.connector_binance             |0.00  |0.00    |1.85     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|data_engine.clickhouse_storage            |0.00  |0.00    |1.85     |0.00       |
++------------------------------------------+------+--------+---------+-----------+
+|tests.test_execution_smoke                |0.00  |0.00    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
+|list_gemini_models                        |0.00  |0.00    |0.00     |0.13       |
++------------------------------------------+------+--------+---------+-----------+
 
 
 
 Messages
 --------
 
-+-------------------------------+------------+
-|message id                     |occurrences |
-+===============================+============+
-|broad-exception-caught         |256         |
-+-------------------------------+------------+
-|unknown-option-value           |136         |
-+-------------------------------+------------+
-|import-outside-toplevel        |128         |
-+-------------------------------+------------+
-|import-error                   |67          |
-+-------------------------------+------------+
-|too-many-positional-arguments  |52          |
-+-------------------------------+------------+
-|wrong-import-order             |36          |
-+-------------------------------+------------+
-|unused-import                  |36          |
-+-------------------------------+------------+
-|f-string-without-interpolation |24          |
-+-------------------------------+------------+
-|line-too-long                  |13          |
-+-------------------------------+------------+
-|unused-variable                |12          |
-+-------------------------------+------------+
-|no-member                      |8           |
-+-------------------------------+------------+
-|unused-argument                |6           |
-+-------------------------------+------------+
-|fixme                          |3           |
-+-------------------------------+------------+
-|redefined-outer-name           |2           |
-+-------------------------------+------------+
-|consider-using-from-import     |1           |
-+-------------------------------+------------+
++---------------------------------+------------+
+|message id                       |occurrences |
++=================================+============+
+|trailing-whitespace              |3544        |
++---------------------------------+------------+
+|broad-exception-caught           |992         |
++---------------------------------+------------+
+|import-outside-toplevel          |550         |
++---------------------------------+------------+
+|line-too-long                    |272         |
++---------------------------------+------------+
+|unused-import                    |246         |
++---------------------------------+------------+
+|import-error                     |218         |
++---------------------------------+------------+
+|unspecified-encoding             |164         |
++---------------------------------+------------+
+|unused-variable                  |121         |
++---------------------------------+------------+
+|wrong-import-position            |117         |
++---------------------------------+------------+
+|too-many-positional-arguments    |112         |
++---------------------------------+------------+
+|unused-argument                  |107         |
++---------------------------------+------------+
+|invalid-name                     |93          |
++---------------------------------+------------+
+|f-string-without-interpolation   |93          |
++---------------------------------+------------+
+|redefined-outer-name             |69          |
++---------------------------------+------------+
+|too-many-nested-blocks           |60          |
++---------------------------------+------------+
+|missing-final-newline            |42          |
++---------------------------------+------------+
+|wrong-import-order               |39          |
++---------------------------------+------------+
+|consider-using-with              |34          |
++---------------------------------+------------+
+|no-else-return                   |31          |
++---------------------------------+------------+
+|reimported                       |29          |
++---------------------------------+------------+
+|subprocess-run-check             |27          |
++---------------------------------+------------+
+|unnecessary-pass                 |25          |
++---------------------------------+------------+
+|unnecessary-ellipsis             |24          |
++---------------------------------+------------+
+|global-statement                 |24          |
++---------------------------------+------------+
+|consider-using-sys-exit          |23          |
++---------------------------------+------------+
+|protected-access                 |21          |
++---------------------------------+------------+
+|ungrouped-imports                |20          |
++---------------------------------+------------+
+|no-name-in-module                |20          |
++---------------------------------+------------+
+|consider-using-dict-items        |18          |
++---------------------------------+------------+
+|undefined-variable               |17          |
++---------------------------------+------------+
+|multiple-statements              |16          |
++---------------------------------+------------+
+|global-variable-not-assigned     |15          |
++---------------------------------+------------+
+|consider-using-set-comprehension |12          |
++---------------------------------+------------+
+|raise-missing-from               |8           |
++---------------------------------+------------+
+|pointless-string-statement       |8           |
++---------------------------------+------------+
+|fixme                            |8           |
++---------------------------------+------------+
+|too-many-lines                   |7           |
++---------------------------------+------------+
+|disallowed-name                  |7           |
++---------------------------------+------------+
+|superfluous-parens               |5           |
++---------------------------------+------------+
+|non-ascii-name                   |5           |
++---------------------------------+------------+
+|no-else-continue                 |5           |
++---------------------------------+------------+
+|bad-except-order                 |5           |
++---------------------------------+------------+
+|unknown-option-value             |4           |
++---------------------------------+------------+
+|unexpected-keyword-arg           |4           |
++---------------------------------+------------+
+|no-member                        |4           |
++---------------------------------+------------+
+|bare-except                      |2           |
++---------------------------------+------------+
 
 
 
 
-------------------------------------------------------------------
-Your code has been rated at 9.33/10 (previous run: 8.03/10, +1.30)
+-----------------------------------
+Your code has been rated at 8.33/10
 

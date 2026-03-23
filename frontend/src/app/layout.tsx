@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { Nav } from '@/components/Nav';
+import { Layout } from '@/components/Layout';
+import { MainContent } from '@/components/MainContent';
 import { ClientProviders } from '@/components/ClientProviders';
-import { HotTickerBanner } from '@/components/HotTickerBanner';
 
 export const metadata: Metadata = {
   title: 'AI 对冲基金 控制台',
@@ -10,13 +10,15 @@ export const metadata: Metadata = {
   icons: { icon: '/icon' },
   manifest: '/manifest.json',
   appleWebApp: { capable: true, title: 'AI Fund' },
+  /** 与 manifest 一致；Chrome 建议使用 mobile-web-app-capable（apple-mobile-web-app-capable 已弃用提示） */
+  other: { 'mobile-web-app-capable': 'yes' },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#0F172A',
+  themeColor: '#FF3B30',
 };
 
 export default function RootLayout({
@@ -26,13 +28,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh" className="dark">
-      <body className="min-h-screen">
+      <body className="min-h-screen" style={{ backgroundColor: '#0B0E14', color: '#ECEDF6' }}>
         <ClientProviders>
-          <HotTickerBanner />
-          <Nav />
-          <main className="mx-auto min-h-screen max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pb-6 sm:pt-6 lg:px-8 md:pb-6">
+          <Layout>
+          {/* Main Content - 新闻滚动已并入 TopBar，节约垂直空间 */}
+          <MainContent>
             {children}
-          </main>
+          </MainContent>
+          </Layout>
         </ClientProviders>
       </body>
     </html>

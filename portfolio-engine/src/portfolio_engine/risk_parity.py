@@ -1,7 +1,5 @@
 """Risk parity allocation: weight inversely proportional to volatility."""
 
-from typing import List
-
 import numpy as np
 
 

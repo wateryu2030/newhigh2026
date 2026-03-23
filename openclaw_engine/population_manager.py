@@ -11,7 +11,7 @@ def _get_conn():
 
         if not os.path.isfile(get_db_path()):
             return None
-        return get_conn(read_only=True)
+        return get_conn(read_only=False)
     except Exception:
         return None
 

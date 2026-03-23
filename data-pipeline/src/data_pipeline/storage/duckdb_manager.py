@@ -21,6 +21,14 @@ def get_db_path() -> str:
 
 
 def get_conn(read_only: bool = False):
+    """
+    连接统一 DuckDB 文件。
+
+    注意：DuckDB 在同一进程内对**同一数据库文件**不能混用 read_only=True 与 False。
+    FastAPI Gateway 因审计中间件会 read_only=False 写入 audit_log，故 Gateway 内其它路由
+    也应使用 read_only=False（只读 SQL 仍可执行），否则会触发
+    \"Can't open a connection to same database file with a different configuration...\".
+    """
     path = get_db_path()
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     import duckdb
@@ -321,5 +329,13 @@ def ensure_tables(conn) -> None:
             cash DOUBLE NOT NULL,
             equity DOUBLE NOT NULL,
             total_assets DOUBLE NOT NULL
+        )
+    """)
+    # 数据质量巡检报告（scripts/run_data_quality_checks.py 写入）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS data_quality_reports (
+            id INTEGER PRIMARY KEY,
+            run_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            report_json VARCHAR NOT NULL
         )
     """)

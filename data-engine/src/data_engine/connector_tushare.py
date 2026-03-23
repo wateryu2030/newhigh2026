@@ -9,7 +9,7 @@ import time
 import os
 
 import datetime as dt
-from typing import Callable, Any, Dict, List
+from typing import Callable, Any, List
 
 from core import OHLCV
 
@@ -247,7 +247,7 @@ def cached(func: Callable) -> Callable:
 
 @retry_on_failure()
 @cached
-def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str = ""):
+def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str = ""):  # pylint: disable=unused-argument
     """拉取日/周/月 K 线 DataFrame，使用Tushare接口"""
     if ts is None or pd is None:
         raise ImportError("Tushare或pandas未安装")
@@ -288,7 +288,7 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
 
             return df
 
-        elif period == "weekly":
+        if period == "weekly":
             # 周线数据
             df = pro.weekly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:
@@ -312,7 +312,7 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
 
             return df
 
-        elif period == "monthly":
+        if period == "monthly":  # pylint: disable=no-else-return (false positive - already fixed)
             # 月线数据
             df = pro.monthly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:
@@ -381,7 +381,12 @@ def fetch_ohlcv(
     # 转换为 OHLCV 对象列表
     ohlcv_list = []
     for _, row in df.iterrows():
-        ts_utc = _to_utc(row["date"].to_pydatetime())
+        # 兼容 pandas Timestamp 和 plain datetime
+        date_val = row["date"]
+        if hasattr(date_val, "to_pydatetime"):
+            ts_utc = _to_utc(date_val.to_pydatetime())
+        else:
+            ts_utc = _to_utc(date_val)
         ohlcv = OHLCV(
             symbol=_normalize_symbol(code),
             timestamp=ts_utc,

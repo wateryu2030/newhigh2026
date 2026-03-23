@@ -15,7 +15,6 @@ sys.path.insert(0, str(project_root))
 
 try:
     import akshare as ak
-    import pandas as pd
     import numpy as np
     AKSHARE_AVAILABLE = True
 except ImportError:
@@ -368,8 +367,8 @@ class StockAnalyzer002701:
 def main():
     """主函数"""
     print("=" * 60)
-    print(f"股票研究报告生成器")
-    print(f"标的：002701 奥瑞金")
+    print("股票研究报告生成器")
+    print("标的：002701 奥瑞金")
     print(f"时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
@@ -398,7 +397,7 @@ def main():
     
     # 只显示报告的前几行
     report_lines = report["full_report"].split('\n')
-    for i, line in enumerate(report_lines[:20]):
+    for line in report_lines[:20]:
         print(line)
     
     if len(report_lines) > 20:

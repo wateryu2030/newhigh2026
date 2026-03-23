@@ -48,11 +48,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # 尝试导入 WeSpy（可选依赖）
-WESPY_AVAILABLE = False
+WESPY_AVAILABLE = False  # pylint: disable=invalid-name
 try:
     from wespy import ArticleFetcher
     from wespy.main import WeChatAlbumFetcher
-    WESPY_AVAILABLE = True
+    WESPY_AVAILABLE = True  # pylint: disable=invalid-name
     logger.info("WeSpy 已安装，启用完整功能")
 except ImportError:
     logger.warning("WeSpy 未安装，使用基础 HTTP 抓取模式")
@@ -561,9 +561,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # 示例：抓取单篇文章
-    test_url = "https://mp.weixin.qq.com/s/example"
+    TEST_URL = "https://mp.weixin.qq.com/s/example"  # pylint: disable=invalid-name
     test_collector = WeChatCollector()
-    test_article = test_collector.fetch_article(test_url)
+    test_article = test_collector.fetch_article(TEST_URL)
 
     if test_article:
         print(f"标题：{test_article.title}")

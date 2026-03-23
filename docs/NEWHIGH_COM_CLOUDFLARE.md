@@ -161,6 +161,16 @@ bash scripts/install_tunnel_stack_launchagent.sh
 - [ ] （可选）已安装 `com.newhigh.tunnel-stack` 开机自启  
 - [ ] 浏览器访问 `https://你的域名` 可打开且接口正常（同源 `/api`）  
 - [ ] 未将 `.env`、数据库端口暴露到公网  
+- [ ] **子域控制台**：若使用 `https://htma.newhigh.com.cn`，在 Tunnel 的 **Public Hostname**（或 `config.yml` 的 `ingress`）里**单独增加一条** `htma.newhigh.com.cn` → `http://127.0.0.1:3000`；仅配置 `newhigh.com.cn` 时，子域不会自动继承，常表现为 **404** 或 Cloudflare 默认错误页。  
+- [ ] **DNS**：`htma` 子域为 **CNAME** 指向隧道（与主域一致），并保持**橙色云**代理。  
+
+### 子域 `htma.newhigh.com.cn` 英文「This page could not be found」
+
+1. **Tunnel 路由**：在 Zero Trust → 隧道 → **Public Hostname** 中确认存在 **`htma.newhigh.com.cn`**，服务 URL 与当前本机 Next 一致（开发多为 **`http://127.0.0.1:3000`**，构建预览可为 **4173**）。  
+2. **本地监听**：前端已使用 `next dev -H 0.0.0.0 -p 3000`（见 `frontend/package.json`），避免仅绑定 localhost 时部分环境下访问异常。  
+3. **YAML ingress**：若用 `config/cloudflare/config.yml`，须为 `htma.newhigh.com.cn` 增加 `hostname` 规则；否则请求会落到示例文件末尾的 `http_status:404`（见 `config.example.yml` 注释）。  
+4. **与 inpa 域名区分**：对外控制台应为 **`htma.newhigh.com.cn`**；`htma.inpa.com.cn` 为另一主机名，需在 **该域名** 的 DNS/Tunnel 中同样单独配置，否则会指向错误源站或 502/404。  
+5. 仍异常时：本机执行 `curl -sI -H 'Host: htma.newhigh.com.cn' http://127.0.0.1:3000/`，应返回 **200**；若为 200 而公网仍 404，问题在 **Tunnel/DNS**；若本机也非 200，先 **`bash scripts/restart_gateway_frontend.sh`** 再起 Tunnel。  
 
 ---
 

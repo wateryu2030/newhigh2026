@@ -3,8 +3,6 @@
 简单数据库迁移脚本 - 直接复制数据
 """
 
-import os
-import sys
 import duckdb
 from datetime import datetime
 
@@ -16,7 +14,7 @@ def migrate_table_simple(source_conn, target_conn, table_name):
         # 检查源表数据
         source_count = source_conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
         if source_count == 0:
-            print(f" ⚠️ 空表，跳过")
+            print(" ⚠️ 空表，跳过")
             return {"status": "skipped", "rows": 0}
         
         print(f" ({source_count} 行)...", end="")
@@ -55,7 +53,7 @@ def migrate_table_simple(source_conn, target_conn, table_name):
         # 验证
         target_count = target_conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
         
-        print(f" ✅ 完成")
+        print(" ✅ 完成")
         return {"status": "success", "rows": target_count}
         
     except Exception as e:
@@ -166,7 +164,7 @@ def main():
     except Exception as e:
         print(f"❌ 验证失败: {e}")
     
-    print(f"\n✅ 迁移完成!")
+    print("\n✅ 迁移完成!")
     print(f"⏰ 完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ class SelfEvolutionEngine:
 
             if not os.path.isfile(get_db_path()):
                 return None
-            conn = get_conn(read_only=True)
+            conn = get_conn(read_only=False)
             # 占位：无实盘收益表时返回 None
             conn.close()
         except Exception:

@@ -1,7 +1,5 @@
 """Kelly criterion allocation: fraction = (win_rate * payoff - (1 - win_rate)) / payoff."""
 
-from typing import List, Optional
-
 
 def kelly_fraction(
     win_rate: float,

@@ -21,7 +21,7 @@ def get_actionable_signals(
 
         if not os.path.isfile(get_db_path()):
             return buys, sells
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             """
             SELECT code, signal, confidence, target_price, stop_loss, signal_score, snapshot_time

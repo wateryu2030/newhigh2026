@@ -1,0 +1,36 @@
+# X-Twitter 监控账号列表
+# 财经/政策/科技类账号
+# 每行一个账号，@ 符号可选，# 开头的行为注释
+
+# 科技领袖
+@elonmusk
+@SamAltman
+@darioamodei
+
+# 金融机构
+@FinancialTimes
+@BloombergNews
+@Reuters
+@WSJ
+@CNBC
+@business
+
+# 政策/监管
+@SecPress
+@federalreserve
+@IMFNews
+@WorldBank
+
+# AI/量化相关
+@OpenAI
+@AnthropicAI
+@StabilityAI
+@huggingface
+
+# 加密货币
+@VitalikButerin
+@cz_binance
+
+# 宏观经济
+@RayDalio
+@BillAckman

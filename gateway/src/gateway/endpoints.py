@@ -1,10 +1,16 @@
 """API endpoints: market, strategy, backtest, portfolio, risk, trade, ai-lab."""
 
+import json
+import logging
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from .response_utils import json_fail, json_ok
 
 router = APIRouter()
+_log = logging.getLogger(__name__)
 
 # 导入系统数据概览端点
 try:
@@ -12,6 +18,13 @@ try:
     router.get("/system/data-overview")(get_system_data_overview)
 except Exception:
     pass
+
+# 导入财报分析端点（endpoints_api 避免与 endpoints.py 命名冲突）
+try:
+    from .endpoints_api.financial import router as financial_router
+    router.include_router(financial_router)
+except Exception as e:
+    print(f"警告：财报分析端点加载失败：{e}")
 
 
 def _is_ashare_symbol(symbol: str) -> bool:
@@ -26,8 +39,9 @@ def get_klines(
     limit: int = 100,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-) -> dict:
-    """K 线：A 股优先从 astock DuckDB 读，否则 stub/akshare。"""
+) -> Any:
+    """K 线：A 股优先从 astock DuckDB 读；统一信封 { ok, data, source }。"""
+    empty_payload = {"symbol": symbol, "interval": interval, "limit": 0, "data": []}
     # A 股日线：从 newhigh 本地 DuckDB 读（与 astock 独立）
     if _is_ashare_symbol(symbol) and (interval in ("1d", "daily") or not interval):
         try:
@@ -51,28 +65,117 @@ def get_klines(
                         }
                         for r in rows
                     ]
-                    return {
+                    payload = {
                         "symbol": rows[0].symbol,
                         "interval": "1d",
                         "limit": len(data),
                         "data": data,
                     }
-        except Exception:
-            pass
-    return {"symbol": symbol, "interval": interval, "limit": limit, "data": []}
+                    return json_ok(payload, source="duckdb")
+                return json_ok(
+                    {**empty_payload, "limit": limit},
+                    source="duckdb",
+                )
+            return json_ok({**empty_payload, "limit": limit}, source="none")
+        except Exception as e:
+            _log.exception("get_klines duckdb failed: %s", symbol)
+            return json_fail("Database or data_engine error", status_code=503, source="error")
+    return json_ok({**empty_payload, "limit": limit}, source="stub")
+
+
+def _pipeline_quant_data_status() -> Optional[dict]:
+    """
+    使用 data_pipeline 表 a_stock_basic / a_stock_daily 统计（与 /api/system/data-overview 同源口径）。
+    与 astock 命名表 stocks / daily_bars 可能并存于 quant_system.duckdb，数值常不一致，需并列展示。
+    """
+    try:
+        import os
+
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        path = get_db_path()
+        if not path or not os.path.isfile(path):
+            return None
+        conn = get_conn(read_only=False)
+        try:
+            r1 = conn.execute(
+                """
+                SELECT COUNT(DISTINCT code) FROM a_stock_basic
+                WHERE code IS NOT NULL AND TRIM(CAST(code AS VARCHAR)) <> ''
+                """
+            ).fetchone()
+            stocks_n = int(r1[0]) if r1 and r1[0] is not None else 0
+            r2 = conn.execute(
+                "SELECT COUNT(*) AS n, MIN(date) AS dmin, MAX(date) AS dmax FROM a_stock_daily"
+            ).fetchone()
+            if not r2:
+                return {
+                    "stocks": stocks_n,
+                    "daily_bars": 0,
+                    "date_min": None,
+                    "date_max": None,
+                }
+            return {
+                "stocks": stocks_n,
+                "daily_bars": int(r2[0]) if r2[0] is not None else 0,
+                "date_min": str(r2[1])[:10] if r2[1] is not None else None,
+                "date_max": str(r2[2])[:10] if r2[2] is not None else None,
+            }
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Exception:
+        return None
 
 
 @router.get("/data/status")
 def get_data_status() -> dict:
-    """数据状态：标的数、日线条数、日期范围，供前端「数据」页与 Dashboard 展示。"""
+    """数据状态：合并 astock 表与 pipeline 表口径，供「数据」页与 Dashboard；主数字优先与概览一致。"""
+    astock_st: Optional[dict] = None
     try:
         from data_engine import get_astock_duckdb_available, get_duckdb_data_status
 
         if get_astock_duckdb_available():
-            st = get_duckdb_data_status()
-            return {"ok": True, "source": "duckdb", **st}
+            astock_st = get_duckdb_data_status()
     except Exception:
         pass
+
+    pipeline_st = _pipeline_quant_data_status()
+
+    def _has_data(d: Optional[dict]) -> bool:
+        if not d:
+            return False
+        return (d.get("daily_bars") or 0) > 0 or (d.get("stocks") or 0) > 0
+
+    primary: Optional[dict] = None
+    source_label: Optional[str] = None
+    # 主展示：pipeline 有日线则优先（与 system/data-overview 一致）；否则 astock；再否则谁有标的使用谁
+    if _has_data(pipeline_st):
+        primary = pipeline_st
+        source_label = "duckdb_pipeline"
+    elif _has_data(astock_st):
+        primary = astock_st
+        source_label = "duckdb_astock"
+    elif pipeline_st:
+        primary = pipeline_st
+        source_label = "duckdb_pipeline"
+    elif astock_st:
+        primary = astock_st
+        source_label = "duckdb_astock"
+
+    if primary:
+        return {
+            "ok": True,
+            "source": source_label,
+            **primary,
+            "breakdown": {
+                "astock_schema": astock_st,
+                "pipeline_schema": pipeline_st,
+            },
+        }
+
     return {
         "ok": False,
         "source": None,
@@ -80,7 +183,75 @@ def get_data_status() -> dict:
         "daily_bars": 0,
         "date_min": None,
         "date_max": None,
+        "breakdown": {"astock_schema": astock_st, "pipeline_schema": pipeline_st},
     }
+
+
+@router.get("/data/daily-coverage")
+def get_daily_coverage(limit_codes: int = 200) -> dict:
+    """
+    a_stock_daily 覆盖明细：总行数、有 K 线的标的数、每只有多少根 K 线 TopN。
+    用于解释「股票池很大但日线总行数很少」——多为仅部分标的/短区间写入。
+    """
+    try:
+        import os
+
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        if not os.path.isfile(get_db_path()):
+            return {"ok": False, "error": "database_not_found", "top_codes": []}
+        conn = get_conn(read_only=False)
+        try:
+            lim = max(10, min(int(limit_codes or 200), 500))
+            agg = conn.execute(
+                """
+                SELECT COUNT(*), COUNT(DISTINCT code), MIN(date), MAX(date)
+                FROM a_stock_daily
+                """
+            ).fetchone()
+            total_rows = int(agg[0] or 0) if agg else 0
+            distinct_codes = int(agg[1] or 0) if agg else 0
+            date_min = str(agg[2])[:10] if agg and agg[2] is not None else None
+            date_max = str(agg[3])[:10] if agg and agg[3] is not None else None
+            pool_row = conn.execute("SELECT COUNT(*) FROM a_stock_basic").fetchone()
+            stock_pool = int(pool_row[0] or 0) if pool_row else 0
+            top_rows = conn.execute(
+                """
+                SELECT code, COUNT(*) AS n, MIN(date), MAX(date)
+                FROM a_stock_daily
+                GROUP BY code
+                ORDER BY n DESC
+                LIMIT ?
+                """,
+                [lim],
+            ).fetchall()
+            top_codes = [
+                {
+                    "code": str(r[0]),
+                    "bar_count": int(r[1] or 0),
+                    "date_min": str(r[2])[:10] if r[2] is not None else None,
+                    "date_max": str(r[3])[:10] if r[3] is not None else None,
+                }
+                for r in top_rows
+            ]
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        avg = (total_rows / distinct_codes) if distinct_codes else 0.0
+        return {
+            "ok": True,
+            "total_rows": total_rows,
+            "distinct_codes": distinct_codes,
+            "stock_pool_codes": stock_pool,
+            "avg_bars_per_code": round(avg, 4),
+            "date_min": date_min,
+            "date_max": date_max,
+            "top_codes": top_codes,
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e), "top_codes": []}
 
 
 @router.get("/market/ashare/stocks")
@@ -116,7 +287,7 @@ def get_stocks(limit: int = 200) -> list:
         import os
 
         if os.path.isfile(get_db_path()):
-            conn = get_conn(read_only=True)
+            conn = get_conn(read_only=False)
             try:
                 df = conn.execute(
                     "SELECT code, name FROM a_stock_basic ORDER BY code LIMIT ?",
@@ -283,7 +454,7 @@ def get_skill_stats() -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"call_count": 0, "last_call_time": None}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         row = conn.execute("SELECT call_count, last_call_time FROM skill_stats LIMIT 1").fetchone()
         conn.close()
         if not row:
@@ -299,19 +470,81 @@ def get_skill_stats() -> dict:
 
 
 @router.post("/data/incremental")
-def run_data_incremental(source_id: str = "ashare_daily_kline", force_full: bool = False) -> dict:
-    """执行指定数据源增量更新。source_id 见 GET /api/data/sources。"""
+def run_data_incremental(
+    source_id: str = Query(
+        "ashare_daily_kline",
+        description="数据源 ID：ashare_daily_kline（东财/akshare）或 tushare_daily（需 TUSHARE_TOKEN）；见 GET /api/data/sources",
+    ),
+    force_full: bool = Query(False, description="为 True 时对 ashare_daily_kline 全员重拉约一年"),
+    codes_limit: Optional[int] = Query(
+        None,
+        ge=1,
+        le=8000,
+        description="仅 ashare_daily_kline：最多处理 a_stock_basic 前 N 只，分批防超时；不传则最多 8000",
+    ),
+    verbose: bool = Query(
+        False,
+        description="为 True 时 ashare_daily_kline 将分批进度打到服务 stderr",
+    ),
+    no_proxy: bool = Query(
+        False,
+        description="为 True 时 ashare_daily_kline 临时清除环境变量中所有 *proxy* 项再请求（修坏代理）",
+    ),
+) -> dict:
+    """执行指定数据源增量更新。ashare_daily_kline 已从 a_stock_basic 扩量，并区分「无 K 线」回填与增量。"""
     try:
         from data_pipeline import run_incremental, list_sources
 
         if source_id not in list_sources():
             raise HTTPException(status_code=400, detail=f"unknown source_id: {source_id}")
-        n = run_incremental(source_id, force_full=force_full)
-        return {"ok": True, "source_id": source_id, "rows_written": n}
+        kw = {}
+        if codes_limit is not None:
+            kw["codes_limit"] = codes_limit
+        if verbose and source_id in ("ashare_daily_kline", "tushare_daily"):
+            kw["verbose"] = True
+        if no_proxy and source_id in ("ashare_daily_kline", "tushare_daily"):
+            kw["strip_proxy_env"] = True
+        n = run_incremental(source_id, force_full=force_full, **kw)
+        return {"ok": True, "source_id": source_id, "rows_written": n, "codes_limit": codes_limit}
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _short_ts_for_signal(val: Any) -> str:
+    if val is None:
+        return "—"
+    if hasattr(val, "strftime"):
+        try:
+            return val.strftime("%m-%d %H:%M")
+        except Exception:
+            pass
+    s = str(val).replace("T", " ")
+    if len(s) >= 16 and s[4] == "-":
+        return s[5:16]
+    return s[:16] if len(s) > 16 else s
+
+
+def _optional_price(v: Any) -> Any:
+    if v is None:
+        return None
+    try:
+        x = float(v)
+        if abs(x) < 1e-9:
+            return None
+        return round(x, 3)
+    except Exception:
+        return None
+
+
+def _optional_pct(v: Any) -> Any:
+    if v is None:
+        return None
+    try:
+        return round(float(v), 2)
+    except Exception:
+        return None
 
 
 def _market_db_query(table: str, order_by: str, limit: int = 100) -> list:
@@ -322,7 +555,7 @@ def _market_db_query(table: str, order_by: str, limit: int = 100) -> list:
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(f"SELECT * FROM {table} ORDER BY {order_by} LIMIT ?", [limit]).fetchdf()
         conn.close()
         if df is None or df.empty:
@@ -341,7 +574,7 @@ def get_market_realtime(limit: int = 100) -> list:
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT code, name, latest_price, change_pct, volume, amount, snapshot_time FROM a_stock_realtime ORDER BY amount DESC NULLS LAST LIMIT ?",
             [limit],
@@ -356,14 +589,248 @@ def get_market_realtime(limit: int = 100) -> list:
 
 @router.get("/market/limitup")
 def get_market_limitup(limit: int = 100) -> list:
-    """涨停池（数据管道 a_stock_limitup），情绪/连板分析。"""
-    return _market_db_query("a_stock_limitup", "limit_up_times DESC NULLS LAST", limit)
+    """涨停池：按 code 去重、补名称/现价/涨跌、缩略时间（无原始微秒 timestamp）。"""
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return []
+        conn = get_conn(read_only=False)
+        lim = max(1, min(int(limit or 100), 500))
+        df = conn.execute(
+            """
+            WITH ranked AS (
+                SELECT u.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY u.code
+                        ORDER BY u.snapshot_time DESC NULLS LAST, u.limit_up_times DESC NULLS LAST
+                    ) AS rn
+                FROM a_stock_limitup u
+            )
+            SELECT
+                r.code,
+                COALESCE(NULLIF(TRIM(CAST(r.name AS VARCHAR)), ''), b.name, '') AS stock_name,
+                COALESCE(rt.latest_price, r.price, ld.c) AS last_price,
+                COALESCE(rt.change_pct, r.change_pct) AS change_pct,
+                r.limit_up_times,
+                r.snapshot_time
+            FROM ranked r
+            LEFT JOIN a_stock_basic b ON b.code = r.code
+            LEFT JOIN a_stock_realtime rt ON rt.code = r.code
+            LEFT JOIN (
+                SELECT code, close AS c,
+                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                FROM a_stock_daily
+            ) ld ON ld.code = r.code AND ld.rn = 1
+            WHERE r.rn = 1
+            ORDER BY r.limit_up_times DESC NULLS LAST, r.code
+            LIMIT ?
+            """,
+            [lim],
+        ).fetchdf()
+        conn.close()
+        if df is None or df.empty:
+            return []
+        out = []
+        for _, row in df.iterrows():
+            out.append(
+                {
+                    "code": str(row.get("code") or ""),
+                    "stock_name": str(row.get("stock_name") or "").strip(),
+                    "last_price": _optional_price(row.get("last_price")),
+                    "change_pct": _optional_pct(row.get("change_pct")),
+                    "limit_up_times": int(row["limit_up_times"])
+                    if row.get("limit_up_times") is not None
+                    else None,
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
+    except Exception:
+        return []
+
+
+def _safe_lhb_date_str(val: Any) -> Optional[str]:
+    """避免 pandas NaT / 脏数据以 'NaT' 字符串返回前端。"""
+    if val is None:
+        return None
+    try:
+        import pandas as pd
+
+        if pd.isna(val):
+            return None
+    except Exception:
+        pass
+    s = str(val).strip()
+    if not s or s.lower() in ("nat", "none"):
+        return None
+    if len(s) >= 10 and s[4] == "-":
+        return s[:10]
+    return s[:10] if len(s) >= 10 else None
+
+
+def _safe_net_buy(val: Any) -> Any:
+    if val is None:
+        return None
+    try:
+        import pandas as pd
+
+        if pd.isna(val):
+            return None
+    except Exception:
+        pass
+    try:
+        x = float(val)
+        if x != x:  # NaN
+            return None
+        return round(x, 4)
+    except Exception:
+        return None
+
+
+@router.get("/market/longhubang")
+def get_market_longhubang(limit: int = 100) -> list:
+    """
+    龙虎榜明细：过滤无交易日、按 (code,lhb_date) 去重，补名称/现价/涨跌。
+    历史任务曾写入 lhb_date 为空的重复行，会在 SQL 层剔除，避免「同代码刷屏 + NaT」的演示感。
+    """
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return []
+        conn = get_conn(read_only=False)
+        lim = max(1, min(int(limit or 100), 500))
+        df = conn.execute(
+            """
+            WITH cleaned AS (
+                SELECT l.*
+                FROM a_stock_longhubang l
+                WHERE l.code IS NOT NULL
+                  AND LENGTH(TRIM(CAST(l.code AS VARCHAR))) >= 4
+                  AND l.lhb_date IS NOT NULL
+            ),
+            ranked AS (
+                SELECT c.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY c.code, c.lhb_date
+                        ORDER BY c.snapshot_time DESC NULLS LAST
+                    ) AS rn
+                FROM cleaned c
+            )
+            SELECT
+                r.code,
+                COALESCE(NULLIF(TRIM(CAST(r.name AS VARCHAR)), ''), b.name, '') AS stock_name,
+                r.lhb_date,
+                r.net_buy,
+                COALESCE(rt.latest_price, ld.c) AS last_price,
+                rt.change_pct AS change_pct,
+                r.snapshot_time
+            FROM ranked r
+            LEFT JOIN a_stock_basic b ON b.code = r.code
+            LEFT JOIN a_stock_realtime rt ON rt.code = r.code
+            LEFT JOIN (
+                SELECT code, close AS c,
+                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                FROM a_stock_daily
+            ) ld ON ld.code = r.code AND ld.rn = 1
+            WHERE r.rn = 1
+            ORDER BY r.lhb_date DESC NULLS LAST, r.net_buy DESC NULLS LAST, r.code
+            LIMIT ?
+            """,
+            [lim],
+        ).fetchdf()
+        conn.close()
+        if df is None or df.empty:
+            return []
+        out = []
+        for _, row in df.iterrows():
+            lhb = _safe_lhb_date_str(row.get("lhb_date"))
+            if not lhb:
+                continue
+            nb = _safe_net_buy(row.get("net_buy"))
+            out.append(
+                {
+                    "code": str(row.get("code") or ""),
+                    "stock_name": str(row.get("stock_name") or "").strip(),
+                    "lhb_date": lhb,
+                    "net_buy": nb,
+                    "last_price": _optional_price(row.get("last_price")),
+                    "change_pct": _optional_pct(row.get("change_pct")),
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
+    except Exception:
+        return []
 
 
 @router.get("/market/fundflow")
 def get_market_fundflow(limit: int = 100) -> list:
-    """个股资金流排名（数据管道 a_stock_fundflow）。"""
-    return _market_db_query("a_stock_fundflow", "main_net_inflow DESC NULLS LAST", limit)
+    """资金流：按 code 取最新一条，补名称/现价/涨跌、缩略时间。"""
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return []
+        conn = get_conn(read_only=False)
+        lim = max(1, min(int(limit or 100), 500))
+        df = conn.execute(
+            """
+            WITH ranked AS (
+                SELECT f.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY f.code
+                        ORDER BY f.snapshot_time DESC NULLS LAST, f.snapshot_date DESC NULLS LAST
+                    ) AS rn
+                FROM a_stock_fundflow f
+            )
+            SELECT
+                r.code,
+                COALESCE(NULLIF(TRIM(CAST(r.name AS VARCHAR)), ''), b.name, '') AS stock_name,
+                r.main_net_inflow,
+                r.snapshot_date,
+                r.snapshot_time,
+                COALESCE(rt.latest_price, ld.c) AS last_price,
+                rt.change_pct AS change_pct
+            FROM ranked r
+            LEFT JOIN a_stock_basic b ON b.code = r.code
+            LEFT JOIN a_stock_realtime rt ON rt.code = r.code
+            LEFT JOIN (
+                SELECT code, close AS c,
+                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                FROM a_stock_daily
+            ) ld ON ld.code = r.code AND ld.rn = 1
+            WHERE r.rn = 1
+            ORDER BY r.main_net_inflow DESC NULLS LAST
+            LIMIT ?
+            """,
+            [lim],
+        ).fetchdf()
+        conn.close()
+        if df is None or df.empty:
+            return []
+        out = []
+        for _, row in df.iterrows():
+            sd = row.get("snapshot_date")
+            m = row.get("main_net_inflow")
+            out.append(
+                {
+                    "code": str(row.get("code") or ""),
+                    "stock_name": str(row.get("stock_name") or "").strip(),
+                    "main_net_inflow": round(float(m), 4) if m is not None else None,
+                    "snapshot_date": str(sd)[:10] if sd is not None else None,
+                    "last_price": _optional_price(row.get("last_price")),
+                    "change_pct": _optional_pct(row.get("change_pct")),
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
+    except Exception:
+        return []
 
 
 @router.get("/market/emotion")
@@ -383,7 +850,7 @@ def get_market_emotion() -> dict:
                 "max_height": 0,
                 "market_volume": 0,
             }
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         row = conn.execute(
             "SELECT trade_date, limitup_count, max_height, market_volume, emotion_state FROM market_emotion ORDER BY trade_date DESC LIMIT 1"
         ).fetchone()
@@ -441,36 +908,84 @@ def get_market_sentiment_7d() -> dict:
 
 @router.get("/strategy/signals")
 def get_strategy_signals(limit: int = 50) -> list:
-    """交易信号（trade_signals 表，含 signal_score），供终端与自动交易。"""
+    """
+    交易信号：联接股票名称、现价/涨跌幅（实时或最近日线），时间缩略到分。
+    返回字段供传统行情表展示，不含原始微秒级 snapshot_time。
+    """
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
+        lim = max(1, min(int(limit or 50), 500))
         df = conn.execute(
-            "SELECT code, signal, confidence, target_price, stop_loss, strategy_id, signal_score, snapshot_time FROM trade_signals ORDER BY snapshot_time DESC LIMIT ?",
-            [limit],
+            """
+            SELECT
+                t.code,
+                COALESCE(b.name, '') AS stock_name,
+                t.signal,
+                t.confidence,
+                t.target_price,
+                t.stop_loss,
+                t.strategy_id,
+                t.signal_score,
+                COALESCE(rt.latest_price, ld.c) AS last_price,
+                rt.change_pct AS change_pct,
+                t.snapshot_time
+            FROM trade_signals t
+            LEFT JOIN a_stock_basic b ON b.code = t.code
+            LEFT JOIN a_stock_realtime rt ON rt.code = t.code
+            LEFT JOIN (
+                SELECT code, close AS c,
+                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                FROM a_stock_daily
+            ) ld ON ld.code = t.code AND ld.rn = 1
+            ORDER BY t.snapshot_time DESC
+            LIMIT ?
+            """,
+            [lim],
         ).fetchdf()
         conn.close()
         if df is None or df.empty:
             return []
-        return df.to_dict(orient="records")
+        out = []
+        for _, row in df.iterrows():
+            out.append(
+                {
+                    "code": str(row.get("code") or ""),
+                    "stock_name": str(row.get("stock_name") or "").strip(),
+                    "signal": str(row.get("signal") or ""),
+                    "confidence": float(row["confidence"])
+                    if row.get("confidence") is not None
+                    else None,
+                    "signal_score": float(row["signal_score"])
+                    if row.get("signal_score") is not None
+                    else None,
+                    "target_price": _optional_price(row.get("target_price")),
+                    "stop_loss": _optional_price(row.get("stop_loss")),
+                    "strategy_id": str(row.get("strategy_id") or ""),
+                    "last_price": _optional_price(row.get("last_price")),
+                    "change_pct": _optional_pct(row.get("change_pct")),
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
     except Exception:
         return []
 
 
 @router.get("/market/hotmoney")
 def get_market_hotmoney(limit: int = 50) -> list:
-    """龙虎榜游资席位胜率（top_hotmoney_seats），供终端「跟谁」。"""
+    """游资席位胜率：缩略时间，不含原始微秒 timestamp。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT seat_name, trade_count, win_rate, avg_return, snapshot_time FROM top_hotmoney_seats ORDER BY win_rate DESC NULLS LAST LIMIT ?",
             [limit],
@@ -478,21 +993,34 @@ def get_market_hotmoney(limit: int = 50) -> list:
         conn.close()
         if df is None or df.empty:
             return []
-        return df.to_dict(orient="records")
+        out = []
+        for _, row in df.iterrows():
+            out.append(
+                {
+                    "seat_name": str(row.get("seat_name") or ""),
+                    "trade_count": int(row["trade_count"] or 0)
+                    if row.get("trade_count") is not None
+                    else 0,
+                    "win_rate": float(row["win_rate"]) if row.get("win_rate") is not None else 0.0,
+                    "avg_return": float(row["avg_return"]) if row.get("avg_return") is not None else 0.0,
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
     except Exception:
         return []
 
 
 @router.get("/market/main-themes")
 def get_market_main_themes(limit: int = 10) -> list:
-    """主线题材（main_themes），供终端「买什么」。"""
+    """主线题材：缩略时间。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT sector, total_volume, rank, snapshot_time FROM main_themes ORDER BY rank LIMIT ?",
             [limit],
@@ -500,29 +1028,87 @@ def get_market_main_themes(limit: int = 10) -> list:
         conn.close()
         if df is None or df.empty:
             return []
-        return df.to_dict(orient="records")
+        out = []
+        for _, row in df.iterrows():
+            out.append(
+                {
+                    "sector": str(row.get("sector") or ""),
+                    "total_volume": float(row["total_volume"])
+                    if row.get("total_volume") is not None
+                    else 0.0,
+                    "rank": int(row["rank"] or 0) if row.get("rank") is not None else 0,
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
     except Exception:
         return []
 
 
 @router.get("/market/sniper-candidates")
 def get_sniper_candidates(limit: int = 50) -> list:
-    """游资狙击候选池（sniper_candidates），Sniper Score > 0.7 的潜在连板龙头。"""
+    """狙击候选：按 code 去重保留最高分、补名称/现价/涨跌、缩略时间。"""
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
+        lim = max(1, min(int(limit or 50), 500))
         df = conn.execute(
-            "SELECT code, theme, sniper_score, confidence, snapshot_time FROM sniper_candidates ORDER BY sniper_score DESC LIMIT ?",
-            [limit],
+            """
+            WITH ranked AS (
+                SELECT s.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY s.code
+                        ORDER BY s.sniper_score DESC NULLS LAST, s.snapshot_time DESC NULLS LAST
+                    ) AS rn
+                FROM sniper_candidates s
+            )
+            SELECT
+                r.code,
+                COALESCE(b.name, '') AS stock_name,
+                r.theme,
+                r.sniper_score,
+                r.confidence,
+                COALESCE(rt.latest_price, ld.c) AS last_price,
+                rt.change_pct AS change_pct,
+                r.snapshot_time
+            FROM ranked r
+            LEFT JOIN a_stock_basic b ON b.code = r.code
+            LEFT JOIN a_stock_realtime rt ON rt.code = r.code
+            LEFT JOIN (
+                SELECT code, close AS c,
+                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                FROM a_stock_daily
+            ) ld ON ld.code = r.code AND ld.rn = 1
+            WHERE r.rn = 1
+            ORDER BY r.sniper_score DESC NULLS LAST, r.code
+            LIMIT ?
+            """,
+            [lim],
         ).fetchdf()
         conn.close()
         if df is None or df.empty:
             return []
-        return df.to_dict(orient="records")
+        out = []
+        for _, row in df.iterrows():
+            ss = row.get("sniper_score")
+            cf = row.get("confidence")
+            out.append(
+                {
+                    "code": str(row.get("code") or ""),
+                    "stock_name": str(row.get("stock_name") or "").strip(),
+                    "theme": str(row.get("theme") or "").strip() or "—",
+                    "sniper_score": float(ss) if ss is not None else None,
+                    "confidence": float(cf) if cf is not None else None,
+                    "last_price": _optional_price(row.get("last_price")),
+                    "change_pct": _optional_pct(row.get("change_pct")),
+                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
+                }
+            )
+        return out
     except Exception:
         return []
 
@@ -551,7 +1137,7 @@ def get_ai_decision() -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"signal": signal, "reason": "暂无数据", "factors": []}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         try:
             row = conn.execute(
                 "SELECT emotion_state, limitup_count FROM market_emotion ORDER BY trade_date DESC LIMIT 1"
@@ -614,7 +1200,7 @@ def get_system_status(limit: int = 10):
                 "last_update": None,
                 "history": [],
             }
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         try:
             df = conn.execute(
                 """SELECT data_status, scanner_status, ai_status, strategy_status, snapshot_time,
@@ -1155,7 +1741,7 @@ def get_strategies_market(limit: int = 50) -> dict:
         import os
 
         if os.path.isfile(get_db_path()):
-            conn = get_conn(read_only=True)
+            conn = get_conn(read_only=False)
             try:
                 df = conn.execute(
                     """SELECT strategy_id, name, return_pct, sharpe_ratio, max_drawdown, status
@@ -1493,7 +2079,7 @@ def get_risk_rules() -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"rules": []}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         load_rules, _, _ = _risk_engine_module()
         rules = load_rules(conn)
         conn.close()
@@ -1536,19 +2122,74 @@ def post_risk_check(body: dict = Body(default={})) -> dict:
 # --- 认证与审计 ---
 
 
+class LoginRequest(BaseModel):
+    """JSON 登录体（密码可先占位，后续接用户表）。"""
+
+    username: str = Field(default="", max_length=256)
+    password: str = Field(default="", max_length=512)
+
+
 @router.post("/auth/login")
-def post_auth_login(username: str = "", password: str = "") -> dict:
-    """登录：校验通过后签发 JWT（可选；无 users 表时接受任意用户名返回 token）。"""
+def post_auth_login(body: LoginRequest) -> dict:
+    """登录：校验通过后签发 JWT（可选；无 users 表时接受任意非空用户名）。"""
+    username = (body.username or "").strip() or "demo"
     try:
         from .auth.jwt_auth import create_access_token
 
-        token = create_access_token(subject=username or "demo")
-        return {"token": token, "user": username or "demo"}
+        token = create_access_token(subject=username)
+        return {"token": token, "user": username}
     except Exception:
         return {
             "token": "stub_token_placeholder",
-            "user": username or "demo",
+            "user": username,
         }
+
+
+@router.get("/data/quality")
+def get_data_quality() -> Any:
+    """最近一条数据质量巡检报告（DuckDB data_quality_reports）。"""
+    try:
+        from .endpoints_health import _ensure_repo_paths_for_health
+
+        _ensure_repo_paths_for_health()
+        import os
+
+        from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn, get_db_path
+
+        path = get_db_path()
+        if not path or not os.path.isfile(path):
+            return json_ok(None, source="none")
+        # ensure_tables 含 DDL，需可写连接（仅服务端执行）
+        conn = get_conn(read_only=False)
+        try:
+            ensure_tables(conn)
+            row = conn.execute(
+                """
+                SELECT id, report_json, run_at
+                FROM data_quality_reports
+                ORDER BY id DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        if not row:
+            return json_ok(None, source="duckdb")
+        raw = row[1]
+        try:
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            parsed = {"raw": raw}
+        return json_ok(
+            {"id": row[0], "run_at": str(row[2]) if row[2] is not None else None, "report": parsed},
+            source="duckdb",
+        )
+    except Exception as e:
+        _log.exception("get_data_quality failed")
+        return json_fail(str(e)[:200], status_code=503, source="error")
 
 
 @router.get("/audit/logs")
@@ -1560,7 +2201,7 @@ def get_audit_logs(limit: int = 100) -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"logs": []}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT id, method, path, client_host, created_at FROM audit_log ORDER BY id DESC LIMIT ?",
             [limit],
@@ -1915,7 +2556,7 @@ def get_evolution_status(task_id: str) -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"task_id": task_id, "status": "PENDING", "result": None}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         row = conn.execute(
             "SELECT status, result FROM evolution_tasks WHERE task_id = ?",
             [task_id],
@@ -1944,7 +2585,7 @@ def get_evolution_tasks(limit: int = 5) -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"tasks": []}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         df = conn.execute(
             "SELECT task_id, status, result, created_at FROM evolution_tasks ORDER BY created_at DESC LIMIT ?",
             [limit],

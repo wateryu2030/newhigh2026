@@ -24,6 +24,12 @@ except ImportError:
     DEEPSEEK_AVAILABLE = False
     OpenAI = None
 
+try:
+    from soul_framework import soul_body_for_prompt
+except ImportError:
+    def soul_body_for_prompt() -> str:  # type: ignore
+        return ""
+
 
 class AIStockAnalyzer:
     """AI股票分析器"""
@@ -96,8 +102,8 @@ class AIStockAnalyzer:
             return self._mock_analysis(stock_data)
     
     def _get_system_prompt(self) -> str:
-        """获取系统提示词"""
-        return """你是一位专业的股票分析师，拥有10年A股市场经验。
+        """获取系统提示词（含 soul.md 机会发现引擎，用于行业地位与前景）。"""
+        base = """你是一位专业的股票分析师，拥有10年A股市场经验。
 你的任务是分析股票数据，给出清晰、实用的投资建议。
 
 请遵循以下原则：
@@ -107,11 +113,17 @@ class AIStockAnalyzer:
 4. 风险提示：必须指出潜在风险
 5. 语言简洁：用通俗易懂的中文，避免专业术语堆砌
 
-输出格式：
+你必须勇于对股票所在行业地位和前景做分析，并遵循下面的「机会发现引擎」框架（来自项目永久规则 docs/soul.md）：
+"""
+        soul = soul_body_for_prompt()
+        if soul:
+            base += "\n" + soul + "\n\n"
+        base += """输出格式：
 【评级】买入/持有/卖出（1-5星）
-【理由】3-5条核心理由
+【理由】3-5条核心理由（含行业地位/前景时按机会发现引擎的要点简要说明）
 【风险】1-3个主要风险点
 【策略】具体操作建议"""
+        return base
     
     def _build_analysis_prompt(self, stock_data: Dict) -> str:
         """构建分析提示词"""
@@ -162,11 +174,11 @@ class AIStockAnalyzer:
 最新收盘价：{close:.2f}元
 
 【分析要求】
-请从以下维度全面分析：
+请从以下维度全面分析（其中行业地位与前景必须按系统提示中的「机会发现引擎」框架分析）：
 1. 技术面：趋势、支撑位、压力位、成交量变化
 2. 资金面：资金流向、主力动向
 3. 情绪面：市场情绪、热度
-4. 基本面：行业地位、估值水平
+4. 基本面：行业地位、行业前景、估值水平（低效/不对称/趋势/竞争格局/机会排序）
 5. 消息面：近期重要新闻、政策影响
 6. 板块轮动：所属板块表现
 

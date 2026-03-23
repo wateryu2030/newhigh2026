@@ -35,7 +35,7 @@ class TestTushareIntegration(unittest.TestCase):
         try:
             # 尝试不同的导入路径
             try:
-                from data_engine.src.data_engine import connector_tushare
+                from data_engine import connector_tushare
             except ImportError:
                 # 尝试直接导入
                 import importlib.util
@@ -52,10 +52,10 @@ class TestTushareIntegration(unittest.TestCase):
         except ImportError as e:
             self.fail(f"导入Tushare连接器失败: {e}")
 
-    @patch("data_engine.src.data_engine.connector_tushare.ts")
+    @patch("data_engine.connector_tushare.ts")
     def test_tushare_initialization(self, mock_ts):
         """测试Tushare初始化"""
-        from data_engine.src.data_engine import connector_tushare as tushare
+        from data_engine import connector_tushare as tushare
 
         # 模拟tushare模块
         mock_ts.set_token = MagicMock()
@@ -70,7 +70,7 @@ class TestTushareIntegration(unittest.TestCase):
 
     def test_normalize_symbol(self):
         """测试股票代码标准化"""
-        from data_engine.src.data_engine import connector_tushare as tushare
+        from data_engine import connector_tushare as tushare
 
         test_cases = [
             ("000001", "000001.SZ"),
@@ -86,11 +86,11 @@ class TestTushareIntegration(unittest.TestCase):
 
         print("✓ 股票代码标准化测试通过")
 
-    @patch("data_engine.src.data_engine.connector_tushare.ts")
-    @patch("data_engine.src.data_engine.connector_tushare.pd")
+    @patch("data_engine.connector_tushare.ts")
+    @patch("data_engine.connector_tushare.pd")
     def test_fetch_ohlcv_mock(self, mock_pd, mock_ts):
         """模拟测试获取OHLCV数据"""
-        from data_engine.src.data_engine import connector_tushare as tushare
+        from data_engine import connector_tushare as tushare
 
         # 模拟数据
         mock_data = {
@@ -169,7 +169,7 @@ class TestTushareIntegration(unittest.TestCase):
 
     def test_error_handling(self):
         """测试错误处理"""
-        from data_engine.src.data_engine import connector_tushare as tushare
+        from data_engine import connector_tushare as tushare
 
         # 测试未设置token的情况
         if "TUSHARE_TOKEN" in os.environ:
@@ -196,13 +196,13 @@ class TestTushareIntegration(unittest.TestCase):
                 low=9.8,
                 close=10.2,
                 volume=1000000,
-                amount=10200000,
-                code="000001.SZ",
+                interval="1d",
+                symbol="000001.SZ",
             )
 
             self.assertIsNotNone(ohlcv)
             self.assertEqual(ohlcv.close, 10.2)
-            self.assertEqual(ohlcv.code, "000001.SZ")
+            self.assertEqual(ohlcv.symbol, "000001.SZ")
 
             print("✓ Core模块集成测试通过")
 
@@ -242,7 +242,7 @@ class TestTushareDemoScript(unittest.TestCase):
     def test_demo_script_exists(self):
         """测试演示脚本是否存在"""
         demo_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "scripts/tushare_demo.py"
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts/tushare_demo.py")
         )
 
         self.assertTrue(os.path.exists(demo_path), "演示脚本不存在")
@@ -251,7 +251,7 @@ class TestTushareDemoScript(unittest.TestCase):
     def test_demo_script_runnable(self):
         """测试演示脚本可运行"""
         demo_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "scripts/tushare_demo.py"
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts/tushare_demo.py")
         )
 
         try:

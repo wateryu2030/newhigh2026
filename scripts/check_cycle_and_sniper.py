@@ -39,7 +39,7 @@ def check() -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"db": "missing"}
-        conn = get_conn(read_only=True)
+        conn = get_conn(read_only=False)
         out = {}
         for table in [
             "market_emotion",

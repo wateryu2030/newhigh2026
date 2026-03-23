@@ -55,9 +55,9 @@ def run(
     if not path or not os.path.isfile(path):
         return {"written": 0, "symbols_processed": 0, "errors": 1}
 
-    # 使用单一只读连接完成所有读取，再单独开写连接写入，避免多连接锁冲突与读不到数据
+    # 先读后写、两阶段不重叠；统一 read_only=False 避免与可能同机的 Gateway 进程配置语义混用
     try:
-        conn_read = duckdb.connect(path, read_only=True)
+        conn_read = duckdb.connect(path, read_only=False)
     except Exception as e:
         if os.environ.get("DEBUG_FEATURES") == "1":
             sys.stderr.write(f"[DEBUG] DuckDB open failed (e.g. locked by another process): {e}\n")

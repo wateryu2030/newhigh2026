@@ -85,7 +85,7 @@ def load_ohlcv_from_db(
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
-            conn = get_conn(read_only=True)
+            conn = get_conn(read_only=False)
             close_conn = True
         except Exception:
             return pd.DataFrame(), []
@@ -186,7 +186,7 @@ def load_signals_from_db(
     if conn is None:
         try:
             from data_pipeline.storage.duckdb_manager import get_conn
-            conn = get_conn(read_only=True)
+            conn = get_conn(read_only=False)
             close_conn = True
         except Exception:
             return {}, {}

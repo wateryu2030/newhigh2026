@@ -45,7 +45,7 @@ def _update_daily_kline_batch(
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y%m%d")
 
-    conn = get_conn(read_only=True)
+    conn = get_conn(read_only=False)
     df = conn.execute(
         "SELECT code FROM a_stock_basic ORDER BY code LIMIT ?",
         [max_symbols],

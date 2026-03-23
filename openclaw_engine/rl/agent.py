@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 def is_rl_available() -> bool:
@@ -22,7 +22,7 @@ def train_rl_agent(
     total_timesteps: int = 10000,
     algo: str = "PPO",
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     训练 RL 智能体。需安装 stable-baselines3；环境需实现 gym.Env（收益/回撤/换手作为 reward 成分）。
     当前为占位：若未安装 sb3 或环境未实现则返回 stub。
@@ -30,8 +30,8 @@ def train_rl_agent(
     if not is_rl_available():
         return {"ok": False, "error": "stable_baselines3 not installed", "model_path": None}
     try:
-        from stable_baselines3 import PPO
-        from stable_baselines3.common.env_checker import check_env
+        # from stable_baselines3 import PPO  # pylint: disable=import-outside-toplevel,unused-import
+        # from stable_baselines3.common.env_checker import check_env  # pylint: disable=import-outside-toplevel,unused-import
 
         # 占位：实际需注册或传入 env；这里仅返回成功 stub
         return {

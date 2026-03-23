@@ -77,9 +77,19 @@ def get_system_data_overview() -> dict:
         except Exception:
             counts["daily_bars"] = 0
 
-        # 龙虎榜
+        # 龙虎榜：按「代码+上榜日」有效条数统计（与下钻 API 一致，不含 lhb_date 为空的脏行）
         try:
-            result = conn.execute("SELECT COUNT(*) FROM a_stock_longhubang").fetchone()
+            result = conn.execute(
+                """
+                SELECT COUNT(*) FROM (
+                    SELECT 1 FROM a_stock_longhubang
+                    WHERE lhb_date IS NOT NULL
+                      AND code IS NOT NULL
+                      AND LENGTH(TRIM(CAST(code AS VARCHAR))) >= 4
+                    GROUP BY code, lhb_date
+                ) t
+                """
+            ).fetchone()
             counts["longhubang"] = result[0] if result else 0
         except Exception:
             counts["longhubang"] = 0

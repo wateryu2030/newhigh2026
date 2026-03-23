@@ -15,7 +15,7 @@ export default function Icon() {
           justifyContent: 'center',
           borderRadius: 6,
           background: '#0F172A',
-          color: '#10B981',
+          color: '#FF3B30',
           fontSize: 18,
           fontWeight: 700,
           fontFamily: 'system-ui',

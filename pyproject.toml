@@ -24,6 +24,7 @@ testpaths = [
     "backtest-engine/tests",
     "execution-engine/tests",
     "market-scanner/tests",
+    "lib/tests",
 ]
 pythonpath = ["."]
 python_files = ["test_*.py"]

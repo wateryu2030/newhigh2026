@@ -37,8 +37,8 @@ def update_longhubang() -> int:
         if c not in df.columns:
             df[c] = "" if c in ("code", "name") else None
     df["lhb_date"] = pd.to_datetime(df["lhb_date"], errors="coerce").dt.date
-    out = df[["code", "name", "lhb_date", "net_buy", "snapshot_time"]].dropna(subset=["code"])
-    # 只填充数值列，日期列保留 None
+    out = df[["code", "name", "lhb_date", "net_buy", "snapshot_time"]].dropna(subset=["code", "lhb_date"])
+    # 只填充数值列，禁止把无效日期当 0 写入
     numeric_cols = ["net_buy"]
     for c in numeric_cols:
         if c in out.columns and out[c].dtype in ["int64", "float64"]:

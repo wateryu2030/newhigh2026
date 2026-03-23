@@ -8,7 +8,11 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-_SECRET = os.environ.get("JWT_SECRET_KEY", "newhigh-insecure-change-in-production")
+_SECRET = (
+    os.environ.get("JWT_SECRET_KEY", "").strip()
+    or os.environ.get("JWT_SECRET", "").strip()
+    or "newhigh-insecure-change-in-production"
+)
 _EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "60"))
 
 

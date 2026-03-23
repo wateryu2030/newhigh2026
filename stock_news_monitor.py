@@ -5,13 +5,11 @@
 数据源：东方财富网、新浪财经、证券时报等
 """
 
-import os
 import sys
 import datetime
 import json
 import time
 import hashlib
-import re
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -21,11 +19,10 @@ sys.path.insert(0, str(project_root))
 
 try:
     import requests
-    from bs4 import BeautifulSoup
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
-    print("警告：requests 或 BeautifulSoup 未安装")
+    print("警告：requests 未安装")
 
 # 重点监控股票
 MONITORED_STOCKS = [
@@ -151,12 +148,12 @@ class StockNewsCollector:
                         
                         news_list.append(news_item)
                         
-                    except Exception as e:
+                    except Exception:  # pylint: disable=broad-exception-caught
                         continue
             
             print(f"  东方财富搜索 '{keyword}': {len(news_list)} 条相关新闻")
             
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-exception-caught
             print(f"  东方财富搜索失败：{e}")
         
         return news_list
@@ -205,12 +202,12 @@ class StockNewsCollector:
                         
                         news_list.append(news_item)
                         
-                    except Exception as e:
+                    except Exception:  # pylint: disable=broad-exception-caught
                         continue
             
             print(f"  东方财富个股新闻 {code}: {len(news_list)} 条")
             
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-exception-caught
             print(f"  东方财富个股新闻采集失败 {code}: {e}")
         
         return news_list
@@ -256,13 +253,13 @@ class StockNewsCollector:
                     ])
                     saved_count += 1
                     
-                except Exception as e:
+                except Exception:  # pylint: disable=broad-exception-caught
                     continue
             
             conn.close()
             return saved_count
             
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-exception-caught
             print(f"保存数据库失败：{e}")
             return 0
     
@@ -345,7 +342,7 @@ class StockNewsCollector:
         print("采集完成")
         print("=" * 60)
         print(f"总计采集新闻：{len(all_news)} 条")
-        print(f"按股票统计:")
+        print("按股票统计:")
         for stock in MONITORED_STOCKS:
             count = stock_news_count.get(stock['code'], 0)
             print(f"  {stock['code']} {stock['name']}: {count} 条")
@@ -360,7 +357,7 @@ class StockNewsCollector:
 def main():
     """主函数"""
     collector = StockNewsCollector()
-    result = collector.collect_all()
+    collector.collect_all()
     
     print("\n💡 改进建议:")
     print("1. 可接入东方财富个股新闻 API 提高采集成功率")

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.newhigh.shareholder-collect</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/apple/Ahope/newhigh/.venv/bin/python</string>
+        <string>/Users/apple/Ahope/newhigh/scripts/run_shareholder_collect.py</string>
+        <string>--shareholders-only</string>
+        <string>--delay</string>
+        <string>0.6</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/apple/Ahope/newhigh</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/shareholder_collect.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/shareholder_collect.error.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>PYTHONPATH</key>
+        <string>/Users/apple/Ahope/newhigh</string>
+    </dict>
+</dict>
+</plist>
