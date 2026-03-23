@@ -50,16 +50,16 @@ def update(
     if run_stock_list:
         try:
             result["stock_list"] = update_stock_list()
-        except Exception as e:
+        except (ValueError, TypeError, OSError, AttributeError) as e:
             result["errors"].append(f"stock_list: {e}")
 
     if run_daily_kline:
         if use_incremental_daily_kline:
             try:
-                from data_pipeline import run_incremental
+                from data_pipeline import run_incremental  # pylint: disable=import-outside-toplevel
 
                 result["daily_kline"] = run_incremental("ashare_daily_kline", force_full=False)
-            except Exception as e:
+            except (ValueError, TypeError, OSError, AttributeError) as e:
                 result["errors"].append(f"daily_kline incremental: {e}")
         elif daily_kline_codes_limit > 0:
             try:
@@ -72,41 +72,41 @@ def update(
                     for code in df["code"].astype(str).tolist():
                         try:
                             result["daily_kline"] += update_daily_kline(code)
-                        except Exception as e:
+                        except (ValueError, TypeError, OSError, AttributeError) as e:
                             result["errors"].append(f"daily_kline {code}: {e}")
-            except Exception as e:
+            except (ValueError, TypeError, OSError, AttributeError) as e:
                 result["errors"].append(f"daily_kline batch: {e}")
 
     if run_realtime:
         try:
             result["realtime"] = update_realtime_quotes()
-        except Exception as e:
+        except (ValueError, TypeError, OSError, AttributeError) as e:
             result["errors"].append(f"realtime: {e}")
 
     if run_fundflow:
         try:
             result["fundflow"] = update_fundflow()
-        except Exception as e:
+        except (ValueError, TypeError, OSError, AttributeError) as e:
             result["errors"].append(f"fundflow: {e}")
 
     if run_limitup:
         try:
             result["limitup"] = update_limitup()
-        except Exception as e:
+        except (ValueError, TypeError, OSError, AttributeError) as e:
             result["errors"].append(f"limitup: {e}")
 
     if run_longhubang:
         if use_incremental_longhubang:
             try:
-                from data_pipeline import run_incremental
+                from data_pipeline import run_incremental  # pylint: disable=import-outside-toplevel
 
                 result["longhubang"] = run_incremental("ashare_longhubang", force_full=False)
-            except Exception as e:
+            except (ValueError, TypeError, OSError, AttributeError) as e:
                 result["errors"].append(f"longhubang incremental: {e}")
         else:
             try:
                 result["longhubang"] = update_longhubang()
-            except Exception as e:
+            except (ValueError, TypeError, OSError, AttributeError) as e:
                 result["errors"].append(f"longhubang: {e}")
 
     return result

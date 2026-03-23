@@ -1,18 +1,20 @@
 # Load/save strategy population from strategy_market
 from __future__ import annotations
+
+import os
 from typing import List
+
 from .gene import StrategyGene
 
 
 def _get_conn():
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
-        import os
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path  # pylint: disable=import-outside-toplevel
 
         if not os.path.isfile(get_db_path()):
             return None
         return get_conn(read_only=False)
-    except Exception:
+    except (ImportError, ModuleNotFoundError, OSError):
         return None
 
 
@@ -37,13 +39,13 @@ def load_population_from_market(limit: int = 20) -> List[StrategyGene]:
                     )
                 )
         return genes
-    except Exception:
+    except (ValueError, TypeError, AttributeError):
         return []
     finally:
         if conn:
             try:
                 conn.close()
-            except Exception:
+            except (ValueError, TypeError, OSError):
                 pass
 
 
@@ -56,7 +58,7 @@ def save_gene_to_market(
     status: str = "active",
 ) -> bool:
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables  # pylint: disable=import-outside-toplevel
 
         conn = get_conn(read_only=False)
         ensure_tables(conn)
@@ -74,5 +76,5 @@ def save_gene_to_market(
         )
         conn.close()
         return True
-    except Exception:
+    except (ImportError, ModuleNotFoundError, ValueError, TypeError, OSError):
         return False

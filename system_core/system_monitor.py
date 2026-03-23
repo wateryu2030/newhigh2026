@@ -4,7 +4,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any, Optional
+from typing import TYPE_CHECKING, Dict, Any, Optional
+
+if TYPE_CHECKING:
+    from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
 
 
 def collect_status(
@@ -50,7 +53,7 @@ def write_status(
 ) -> None:
     """写入 system_status 表；同步写入 OpenClaw 进化任务与 Skill 统计（若表有对应列）。"""
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables  # pylint: disable=import-outside-toplevel
 
         conn = get_conn(read_only=False)
         ensure_tables(conn)
@@ -63,7 +66,7 @@ def write_status(
             ).fetchone()
             if r:
                 ev_task_id, ev_status, ev_result = r[0], r[1], r[2]
-        except Exception:
+        except (ValueError, TypeError, IndexError):
             pass
         try:
             r = conn.execute(
@@ -71,7 +74,7 @@ def write_status(
             ).fetchone()
             if r:
                 skill_count, skill_time = int(r[0] or 0), r[1]
-        except Exception:
+        except (ValueError, TypeError, IndexError):
             pass
         try:
             conn.execute(
@@ -92,14 +95,14 @@ def write_status(
                     skill_time,
                 ],
             )
-        except Exception:
+        except (ValueError, TypeError, IndexError):
             conn.execute(
                 """INSERT INTO system_status (data_status, scanner_status, ai_status, strategy_status)
                    VALUES (?, ?, ?, ?)""",
                 [data_status, scanner_status, ai_status, strategy_status],
             )
         conn.close()
-    except Exception:
+    except (ImportError, ModuleNotFoundError, OSError):
         pass
 
 

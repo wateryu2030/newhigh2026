@@ -74,6 +74,6 @@ def run_evolution_cycle(
                 )
                 saved += 1
         result["saved"] = saved
-    except Exception as e:
+    except (ImportError, ModuleNotFoundError, ValueError, TypeError, AttributeError) as e:
         result["error"] = str(e)
     return result

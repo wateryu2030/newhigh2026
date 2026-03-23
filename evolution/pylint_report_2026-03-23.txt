@@ -1,92 +1,97 @@
+************* Module core/*.py
+core/*.py:1:0: F0001: No module named core/*.py (fatal)
+************* Module data-engine/src/*.py
+data-engine/src/*.py:1:0: F0001: No module named data-engine/src/*.py (fatal)
 ************* Module openclaw_engine.evaluation
+openclaw_engine/evaluation.py:12:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+openclaw_engine/evaluation.py:66:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/evaluation.py:25:8: C0415: Import outside toplevel (sys) (import-outside-toplevel)
+openclaw_engine/evaluation.py:26:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
 openclaw_engine/evaluation.py:33:8: E0401: Unable to import 'backtest_engine' (import-error)
+openclaw_engine/evaluation.py:33:8: C0415: Import outside toplevel (backtest_engine.run_backtest_from_db) (import-outside-toplevel)
+openclaw_engine/evaluation.py:34:8: C0415: Import outside toplevel (datetime.datetime, datetime.timedelta) (import-outside-toplevel)
+openclaw_engine/evaluation.py:48:12: C0415: Import outside toplevel (multi_objective.fitness_from_backtest_result) (import-outside-toplevel)
+openclaw_engine/evaluation.py:13:4: W0613: Unused argument 'gene' (unused-argument)
+************* Module openclaw_engine.evolution_orchestrator
+openclaw_engine/evolution_orchestrator.py:77:11: W0718: Catching too general exception Exception (broad-exception-caught)
 ************* Module openclaw_engine.population_manager
+openclaw_engine/population_manager.py:15:11: W0718: Catching too general exception Exception (broad-exception-caught)
 openclaw_engine/population_manager.py:9:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+openclaw_engine/population_manager.py:9:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+openclaw_engine/population_manager.py:10:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+openclaw_engine/population_manager.py:40:11: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:46:19: W0718: Catching too general exception Exception (broad-exception-caught)
+openclaw_engine/population_manager.py:50:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+openclaw_engine/population_manager.py:77:11: W0718: Catching too general exception Exception (broad-exception-caught)
 openclaw_engine/population_manager.py:59:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-************* Module openclaw_engine.rl.agent
-openclaw_engine/rl/agent.py:13:8: W0611: Unused import stable_baselines3 (unused-import)
-************* Module stock_analysis_002701
-stock_analysis_002701.py:18:4: W0611: Unused pandas imported as pd (unused-import)
-************* Module stock_news_monitor
-stock_news_monitor.py:360:4: W0612: Unused variable 'result' (unused-variable)
-************* Module tests.test_env
-simulation-world/tests/test_env.py:1:0: E0401: Unable to import 'simulation_world' (import-error)
-simulation-world/tests/test_env.py:6:9: W0612: Unused variable 'info' (unused-variable)
-simulation-world/tests/test_env.py:8:9: W0612: Unused variable 'reward' (unused-variable)
-simulation-world/tests/test_env.py:8:23: W0612: Unused variable 'trunc' (unused-variable)
-simulation-world/tests/test_env.py:1:0: W0611: Unused make_env imported from simulation_world (unused-import)
-************* Module full_demo_ai_stock_analysis
-full_demo_ai_stock_analysis.py:228:8: W0612: Unused variable 'text_lower' (unused-variable)
-************* Module tests.test_equal_weight
-portfolio-engine/tests/test_equal_weight.py:3:0: E0401: Unable to import 'portfolio_engine' (import-error)
-************* Module tests.test_execution_smoke
-execution-engine/tests/test_execution_smoke.py:6:4: E0401: Unable to import 'execution_engine' (import-error)
-************* Module simple_migrate
-simple_migrate.py:6:0: W0611: Unused import sys (unused-import)
-************* Module news_collector_optimized
-news_collector_optimized.py:10:0: W0611: Unused import os (unused-import)
-news_collector_optimized.py:14:0: W0611: Unused import time (unused-import)
-************* Module test_spark_api
-test_spark_api.py:31:12: W0611: Unused SparkAI imported from spark_ai_python (unused-import)
-************* Module improved_official_news_collector
-improved_official_news_collector.py:8:0: W0611: Unused import os (unused-import)
-improved_official_news_collector.py:14:0: W0611: Unused Optional imported from typing (unused-import)
-************* Module tests.test_connector_astock_duckdb
-data-engine/tests/test_connector_astock_duckdb.py:6:0: E0401: Unable to import 'pytest' (import-error)
-data-engine/tests/test_connector_astock_duckdb.py:10:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
-data-engine/tests/test_connector_astock_duckdb.py:18:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
-data-engine/tests/test_connector_astock_duckdb.py:29:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
-data-engine/tests/test_connector_astock_duckdb.py:55:8: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
-data-engine/tests/test_connector_astock_duckdb.py:6:0: W0611: Unused import pytest (unused-import)
-************* Module tests.test_connector_akshare
-data-engine/tests/test_connector_akshare.py:6:0: E0401: Unable to import 'pytest' (import-error)
-data-engine/tests/test_connector_akshare.py:8:0: E0401: Unable to import 'data_engine.connector_akshare' (import-error)
-data-engine/tests/test_connector_akshare.py:3:0: W0611: Unused datetime imported from datetime (unused-import)
-data-engine/tests/test_connector_akshare.py:3:0: W0611: Unused timezone imported from datetime (unused-import)
-data-engine/tests/test_connector_akshare.py:8:0: W0611: Unused fetch_klines_akshare_minute imported from data_engine.connector_akshare (unused-import)
-************* Module tests.test_connector_yahoo
-data-engine/tests/test_connector_yahoo.py:5:0: E0401: Unable to import 'pytest' (import-error)
-data-engine/tests/test_connector_yahoo.py:7:0: E0401: Unable to import 'data_engine' (import-error)
-data-engine/tests/test_connector_yahoo.py:8:0: E0401: Unable to import 'data_engine.connector_yahoo' (import-error)
-data-engine/tests/test_connector_yahoo.py:33:4: E0611: No name 'OHLCV' in module 'core' (no-name-in-module)
-************* Module tests.test_connector_binance
-data-engine/tests/test_connector_binance.py:3:0: E0401: Unable to import 'pytest' (import-error)
-data-engine/tests/test_connector_binance.py:6:0: E0401: Unable to import 'data_engine.connector_binance' (import-error)
-data-engine/tests/test_connector_binance.py:3:0: W0611: Unused import pytest (unused-import)
-************* Module tests.test_data_service
-core/tests/test_data_service.py:21:8: E0401: Unable to import 'core.data_service.base' (import-error)
-core/tests/test_data_service.py:21:8: E0611: No name 'data_service' in module 'core' (no-name-in-module)
-core/tests/test_data_service.py:57:8: E0401: Unable to import 'core.data_service.stock_service' (import-error)
-core/tests/test_data_service.py:57:8: E0611: No name 'data_service' in module 'core' (no-name-in-module)
-core/tests/test_data_service.py:115:8: E0401: Unable to import 'core.data_service.news_service' (import-error)
-core/tests/test_data_service.py:115:8: E0611: No name 'data_service' in module 'core' (no-name-in-module)
-core/tests/test_data_service.py:160:8: E0401: Unable to import 'core.data_service.signal_service' (import-error)
-core/tests/test_data_service.py:160:8: E0611: No name 'data_service' in module 'core' (no-name-in-module)
-core/tests/test_data_service.py:202:8: E0401: Unable to import 'core.data_service.emotion_service' (import-error)
-core/tests/test_data_service.py:202:8: E0611: No name 'data_service' in module 'core' (no-name-in-module)
-core/tests/test_data_service.py:8:0: W0611: Unused patch imported from unittest.mock (unused-import)
-core/tests/test_data_service.py:8:0: W0611: Unused MagicMock imported from unittest.mock (unused-import)
-************* Module tests.test_types
-core/tests/test_types.py:5:0: E0401: Unable to import 'pytest' (import-error)
-core/tests/test_types.py:7:0: E0611: No name 'OHLCV' in module 'core' (no-name-in-module)
-core/tests/test_types.py:7:0: E0611: No name 'Signal' in module 'core' (no-name-in-module)
-core/tests/test_types.py:5:0: W0611: Unused import pytest (unused-import)
-************* Module api_news_collector
-api_news_collector.py:27:0: E0401: Unable to import 'dotenv' (import-error)
-api_news_collector.py:19:0: W0611: Unused Optional imported from typing (unused-import)
-************* Module system_core.system_monitor
-system_core/system_monitor.py:54:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
-system_core/system_monitor.py:7:0: W0611: Unused import json (unused-import)
-************* Module system_core.tasks.pipeline_tasks
-system_core/tasks/pipeline_tasks.py:33:8: E0401: Unable to import 'celery' (import-error)
+openclaw_engine/population_manager.py:59:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+************* Module system_core.ai_orchestrator
+system_core/ai_orchestrator.py:19:8: C0415: Import outside toplevel (ai_models.run_emotion_cycle, ai_models.run_hotmoney_detector, ai_models.run_sector_rotation_ai) (import-outside-toplevel)
+system_core/ai_orchestrator.py:27:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/ai_orchestrator.py:31:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/ai_orchestrator.py:35:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module system_core.celery_app
+system_core/celery_app.py:12:0: C0413: Import "import sys" should be placed at the top of the module (wrong-import-position)
+system_core/celery_app.py:62:4: C0103: Constant name "app" doesn't conform to UPPER_CASE naming style (invalid-name)
 ************* Module system_core.data_orchestrator
+system_core/data_orchestrator.py:10:0: R0917: Too many positional arguments (9/5) (too-many-positional-arguments)
+system_core/data_orchestrator.py:37:8: C0415: Import outside toplevel (data_pipeline.collectors.update_stock_list, data_pipeline.collectors.update_daily_kline, data_pipeline.collectors.update_realtime_quotes, data_pipeline.collectors.update_fundflow, data_pipeline.collectors.update_limitup, data_pipeline.collectors.update_longhubang) (import-outside-toplevel)
+system_core/data_orchestrator.py:45:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn) (import-outside-toplevel)
+system_core/data_orchestrator.py:53:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:62:19: W0718: Catching too general exception Exception (broad-exception-caught)
 system_core/data_orchestrator.py:59:16: E0401: Unable to import 'data_pipeline' (import-error)
+system_core/data_orchestrator.py:59:16: C0415: Import outside toplevel (data_pipeline.run_incremental) (import-outside-toplevel)
+system_core/data_orchestrator.py:77:19: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:75:31: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:56:4: R1702: Too many nested blocks (6/5) (too-many-nested-blocks)
+system_core/data_orchestrator.py:83:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:89:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:95:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/data_orchestrator.py:104:19: W0718: Catching too general exception Exception (broad-exception-caught)
 system_core/data_orchestrator.py:101:16: E0401: Unable to import 'data_pipeline' (import-error)
+system_core/data_orchestrator.py:101:16: C0415: Import outside toplevel (data_pipeline.run_incremental) (import-outside-toplevel)
+system_core/data_orchestrator.py:109:19: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module system_core.scan_orchestrator
+system_core/scan_orchestrator.py:21:8: C0415: Import outside toplevel (market_scanner.run_limit_up_scanner, market_scanner.run_fund_flow_scanner, market_scanner.run_volume_spike_scanner, market_scanner.run_trend_scanner, market_scanner.run_sniper) (import-outside-toplevel)
+system_core/scan_orchestrator.py:34:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/scan_orchestrator.py:38:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/scan_orchestrator.py:42:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/scan_orchestrator.py:46:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/scan_orchestrator.py:50:11: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module system_core.strategy_orchestrator
+system_core/strategy_orchestrator.py:48:0: C0301: Line too long (144/120) (line-too-long)
+system_core/strategy_orchestrator.py:26:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/strategy_orchestrator.py:18:8: C0415: Import outside toplevel (strategy_engine.ai_fusion_strategy.run_ai_fusion) (import-outside-toplevel)
+system_core/strategy_orchestrator.py:53:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/strategy_orchestrator.py:30:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+system_core/strategy_orchestrator.py:30:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.get_db_path) (import-outside-toplevel)
+system_core/strategy_orchestrator.py:31:8: C0415: Import outside toplevel (os) (import-outside-toplevel)
+system_core/strategy_orchestrator.py:38:16: E0401: Unable to import 'strategy_engine.trade_signal_aggregator' (import-error)
+system_core/strategy_orchestrator.py:38:16: C0415: Import outside toplevel (strategy_engine.trade_signal_aggregator.aggregate_market_signals_to_trade_signals) (import-outside-toplevel)
+************* Module system_core.system_monitor
+system_core/system_monitor.py:102:11: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/system_monitor.py:53:8: E0401: Unable to import 'data_pipeline.storage.duckdb_manager' (import-error)
+system_core/system_monitor.py:53:8: C0415: Import outside toplevel (data_pipeline.storage.duckdb_manager.get_conn, data_pipeline.storage.duckdb_manager.ensure_tables) (import-outside-toplevel)
+system_core/system_monitor.py:66:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/system_monitor.py:74:15: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/system_monitor.py:95:15: W0718: Catching too general exception Exception (broad-exception-caught)
+************* Module system_core.system_runner
+system_core/system_runner.py:33:7: W0718: Catching too general exception Exception (broad-exception-caught)
+system_core/system_runner.py:30:4: E0401: Unable to import 'core.logging_config' (import-error)
+system_core/system_runner.py:30:4: E0611: No name 'logging_config' in module 'core' (no-name-in-module)
+system_core/system_runner.py:37:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+system_core/system_runner.py:49:4: C0415: Import outside toplevel (system_core.data_orchestrator.update) (import-outside-toplevel)
+system_core/system_runner.py:50:4: C0415: Import outside toplevel (system_core.scan_orchestrator.run) (import-outside-toplevel)
+system_core/system_runner.py:51:4: C0415: Import outside toplevel (system_core.ai_orchestrator.run) (import-outside-toplevel)
+system_core/system_runner.py:52:4: C0415: Import outside toplevel (system_core.strategy_orchestrator.run) (import-outside-toplevel)
+system_core/system_runner.py:53:4: C0415: Import outside toplevel (system_core.system_monitor.record) (import-outside-toplevel)
+system_core/system_runner.py:94:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+system_core/system_runner.py:116:15: W0718: Catching too general exception Exception (broad-exception-caught)
 
 
 Report
 ======
-2748 statements analysed.
+509 statements analysed.
 
 Statistics by type
 ------------------
@@ -94,13 +99,13 @@ Statistics by type
 +---------+-------+-----------+-----------+------------+---------+
 |type     |number |old number |difference |%documented |%badname |
 +=========+=======+===========+===========+============+=========+
-|module   |50     |1          |+49.00     |100.00      |0.00     |
+|module   |15     |1          |+14.00     |73.33       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|class    |14     |NC         |NC         |100.00      |0.00     |
+|class    |1      |NC         |NC         |100.00      |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|method   |0      |NC         |NC         |0           |0        |
+|method   |4      |NC         |NC         |25.00       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|function |0      |NC         |NC         |0           |0        |
+|function |21     |3          |+18.00     |71.43       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
 
 
@@ -109,41 +114,22 @@ External dependencies
 ---------------------
 ::
 
-    akshare (stock_analysis_002701)
-    bs4 (improved_official_news_collector)
-    core (tests.test_connector_yahoo,tests.test_types)
-    dashscope (test_ai_integration)
-    duckdb (api_news_collector,finalize_migration,simple_migrate,stock_news_monitor)
-    google 
-      \-genai 
-        \-Client (list_gemini_models,stock_analysis_002701)
-    numpy (stock_analysis_002701)
-    openai (check_deepseek_now,full_demo_ai_stock_analysis)
-    openclaw_engine (system_core.tasks.pipeline_tasks)
+    openclaw_engine 
       \-evaluation (openclaw_engine.evolution_orchestrator)
-      \-gene (openclaw_engine.evaluation,openclaw_engine.evolution_orchestrator,openclaw_engine.genetic,openclaw_engine.population_manager,openclaw_engine.tests.test_gene)
+      \-gene (openclaw_engine.evaluation,openclaw_engine.evolution_orchestrator,openclaw_engine.genetic,openclaw_engine.population_manager)
       \-genetic (openclaw_engine.evolution_orchestrator)
-      \-multi_objective (openclaw_engine.evaluation,openclaw_engine.tests.test_gene)
+      \-multi_objective (openclaw_engine.evaluation)
       \-population_manager (openclaw_engine.evolution_orchestrator)
-    pandas (news_collector_optimized,stock_analysis_002701,tests.test_connector_akshare,tests.test_connector_astock_duckdb,tests.test_connector_yahoo)
-    requests (api_news_collector,improved_official_news_collector,news_collector_optimized,stock_news_monitor)
     system_core 
-      \-ai_orchestrator (system_core.tasks.ai_tasks)
-      \-celery_app (system_core.tasks.ai_tasks,system_core.tasks.data_tasks,system_core.tasks.pipeline_tasks,system_core.tasks.scan_tasks,system_core.tasks.strategy_tasks)
-      \-data_orchestrator (system_core.tasks.data_tasks)
-      \-scan_orchestrator (system_core.tasks.scan_tasks)
-      \-strategy_orchestrator (system_core.tasks.strategy_tasks)
-      \-system_runner (system_core.tasks.pipeline_tasks)
-      \-tasks 
-        \-ai_tasks (system_core.tasks.pipeline_tasks)
-        \-data_tasks (system_core.tasks.pipeline_tasks)
-        \-scan_tasks (system_core.tasks.pipeline_tasks)
-        \-strategy_tasks (system_core.tasks.pipeline_tasks)
-    tushare (check_deepseek_now,full_demo_ai_stock_analysis,test_tushare_quick)
+      \-ai_orchestrator (system_core.system_runner)
+      \-data_orchestrator (system_core.system_runner)
+      \-scan_orchestrator (system_core.system_runner)
+      \-strategy_orchestrator (system_core.system_runner)
+      \-system_monitor (system_core.system_runner)
 
 
 
-5815 lines have been analyzed
+1062 lines have been analyzed
 
 Raw metrics
 -----------
@@ -151,13 +137,13 @@ Raw metrics
 +----------+-------+------+---------+-----------+
 |type      |number |%     |previous |difference |
 +==========+=======+======+=========+===========+
-|code      |3803   |65.40 |NC       |NC         |
+|code      |761    |71.66 |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|docstring |743    |12.78 |NC       |NC         |
+|docstring |177    |16.67 |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|comment   |280    |4.82  |NC       |NC         |
+|comment   |7      |0.66  |NC       |NC         |
 +----------+-------+------+---------+-----------+
-|empty     |989    |17.01 |NC       |NC         |
+|empty     |117    |11.02 |NC       |NC         |
 +----------+-------+------+---------+-----------+
 
 
@@ -181,13 +167,13 @@ Messages by category
 +-----------+-------+---------+-----------+
 |type       |number |previous |difference |
 +===========+=======+=========+===========+
-|convention |0      |1        |1          |
+|convention |27     |5        |5          |
 +-----------+-------+---------+-----------+
-|refactor   |0      |0        |0          |
+|refactor   |6      |2        |2          |
 +-----------+-------+---------+-----------+
-|warning    |24     |0        |0          |
+|warning    |32     |0        |0          |
 +-----------+-------+---------+-----------+
-|error      |37     |0        |0          |
+|error      |10     |2        |2          |
 +-----------+-------+---------+-----------+
 
 
@@ -195,76 +181,64 @@ Messages by category
 % errors / warnings by module
 -----------------------------
 
-+-----------------------------------+------+--------+---------+-----------+
-|module                             |error |warning |refactor |convention |
-+===================================+======+========+=========+===========+
-|tests.test_data_service            |27.03 |8.33    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_connector_astock_duckdb |13.51 |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_connector_yahoo         |10.81 |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_types                   |8.11  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_connector_akshare       |5.41  |12.50   |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_connector_binance       |5.41  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|system_core.data_orchestrator      |5.41  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|openclaw_engine.population_manager |5.41  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_env                     |2.70  |16.67   |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|system_core.system_monitor         |2.70  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|api_news_collector                 |2.70  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_execution_smoke         |2.70  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|tests.test_equal_weight            |2.70  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|system_core.tasks.pipeline_tasks   |2.70  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|openclaw_engine.evaluation         |2.70  |0.00    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|news_collector_optimized           |0.00  |8.33    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|improved_official_news_collector   |0.00  |8.33    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|test_spark_api                     |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|stock_news_monitor                 |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|stock_analysis_002701              |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|simple_migrate                     |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|openclaw_engine.rl.agent           |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
-|full_demo_ai_stock_analysis        |0.00  |4.17    |0.00     |0.00       |
-+-----------------------------------+------+--------+---------+-----------+
++---------------------------------------+------+--------+---------+-----------+
+|module                                 |error |warning |refactor |convention |
++=======================================+======+========+=========+===========+
+|system_core.data_orchestrator          |20.00 |28.12   |33.33    |14.81      |
++---------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.population_manager     |20.00 |12.50   |16.67    |11.11      |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.system_runner              |20.00 |6.25    |33.33    |18.52      |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.strategy_orchestrator      |20.00 |6.25    |0.00     |18.52      |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.system_monitor             |10.00 |12.50   |0.00     |3.70       |
++---------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.evaluation             |10.00 |6.25    |16.67    |18.52      |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.scan_orchestrator          |0.00  |15.62   |0.00     |3.70       |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.ai_orchestrator            |0.00  |9.38    |0.00     |3.70       |
++---------------------------------------+------+--------+---------+-----------+
+|openclaw_engine.evolution_orchestrator |0.00  |3.12    |0.00     |0.00       |
++---------------------------------------+------+--------+---------+-----------+
+|system_core.celery_app                 |0.00  |0.00    |0.00     |7.41       |
++---------------------------------------+------+--------+---------+-----------+
 
 
 
 Messages
 --------
 
-+------------------+------------+
-|message id        |occurrences |
-+==================+============+
-|import-error      |97          |
-+------------------+------------+
-|unused-import     |72          |
-+------------------+------------+
-|unused-variable   |40          |
-+------------------+------------+
-|no-name-in-module |11          |
-+------------------+------------+
++------------------------------+------------+
+|message id                    |occurrences |
++==============================+============+
+|import-outside-toplevel       |63          |
++------------------------------+------------+
+|broad-exception-caught        |56          |
++------------------------------+------------+
+|import-error                  |22          |
++------------------------------+------------+
+|too-many-positional-arguments |13          |
++------------------------------+------------+
+|unused-argument               |6           |
++------------------------------+------------+
+|wrong-import-position         |3           |
++------------------------------+------------+
+|invalid-name                  |3           |
++------------------------------+------------+
+|line-too-long                 |2           |
++------------------------------+------------+
+|fatal                         |2           |
++------------------------------+------------+
+|too-many-nested-blocks        |1           |
++------------------------------+------------+
+|no-name-in-module             |1           |
++------------------------------+------------+
 
 
 
 
 ------------------------------------------------------------------
-Your code has been rated at 9.24/10 (previous run: 9.50/10, -0.26)
+Your code has been rated at 0.00/10 (previous run: 7.46/10, -7.46)
 

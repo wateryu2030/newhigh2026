@@ -10,7 +10,7 @@ from .gene import StrategyGene
 
 
 def evaluate_gene(
-    gene: StrategyGene,
+    _gene: StrategyGene,  # pylint: disable=unused-argument
     symbol: str = "000001.SZ",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -22,8 +22,9 @@ def evaluate_gene(
     返回 { "fitness": float (sharpe 或 total_return), "sharpe_ratio", "total_return", "max_drawdown", "error" }。
     """
     try:
-        import sys
         import os
+        import sys
+        from datetime import datetime, timedelta
 
         _root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         for _d in ["backtest-engine/src", "data-pipeline/src", "core/src"]:
@@ -31,7 +32,6 @@ def evaluate_gene(
             if os.path.isdir(_p) and _p not in sys.path:
                 sys.path.insert(0, _p)
         from backtest_engine import run_backtest_from_db
-        from datetime import datetime, timedelta
 
         end = end_date or datetime.now().strftime("%Y-%m-%d")
         start = start_date or (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
@@ -63,5 +63,5 @@ def evaluate_gene(
             "max_drawdown": out.get("max_drawdown"),
             "error": None,
         }
-    except Exception as e:
+    except (ImportError, ModuleNotFoundError, KeyError, TypeError, ValueError) as e:
         return {"fitness": 0.0, "error": str(e)}
