@@ -4,7 +4,7 @@ from __future__ import annotations
 
 try:
     from system_core.celery_app import app
-except Exception:
+except (ImportError, RuntimeError, OSError):
     app = None
 
 if app is not None:

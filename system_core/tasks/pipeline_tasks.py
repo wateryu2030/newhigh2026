@@ -18,7 +18,7 @@ def _run_full_cycle_sync() -> dict:
 
 try:
     from system_core.celery_app import app
-except Exception:
+except (ImportError, RuntimeError, OSError):
     app = None
 
 if app is not None:
@@ -50,5 +50,5 @@ if app is not None:
             from openclaw_engine import run_evolution_cycle
 
             return run_evolution_cycle(population_limit=population_limit, symbol=symbol)
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError) as e:
             return {"error": str(e), "saved": 0}

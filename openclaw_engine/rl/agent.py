@@ -41,5 +41,5 @@ def train_rl_agent(
             "model_path": None,
             "message": "RL training stub; implement custom gym env and train in openclaw_engine/rl/env.py",
         }
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         return {"ok": False, "error": str(e), "model_path": None}

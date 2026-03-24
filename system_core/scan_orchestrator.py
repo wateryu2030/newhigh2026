@@ -31,23 +31,23 @@ def run() -> Dict[str, Any]:
 
     try:
         result["limit_up"] = run_limit_up_scanner()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"limit_up: {e}")
     try:
         result["fund_flow"] = run_fund_flow_scanner()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"fund_flow: {e}")
     try:
         result["volume_spike"] = run_volume_spike_scanner()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"volume_spike: {e}")
     try:
         result["trend"] = run_trend_scanner()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"trend: {e}")
     try:
         result["sniper"] = run_sniper(min_score=0.7, top_n=50)
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"sniper: {e}")
 
     return result

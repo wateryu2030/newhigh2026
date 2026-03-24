@@ -23,7 +23,7 @@ def run() -> Dict[str, Any]:
             return result
     except ImportError as e:
         result["errors"].append(str(e))
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"fusion: {e}")
 
     try:
@@ -50,7 +50,7 @@ def run() -> Dict[str, Any]:
                     )
                 conn.close()
                 result["fallback"] = len(trades)
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"fallback: {e}")
 
     return result

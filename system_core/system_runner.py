@@ -30,7 +30,7 @@ try:
     from core.logging_config import configure_logging
 
     configure_logging()
-except Exception:
+except (ImportError, RuntimeError, OSError):
     pass
 
 
@@ -113,7 +113,7 @@ def run_loop(
                 data_include_daily_kline=data_include_daily_kline,
                 data_daily_kline_limit=data_daily_kline_limit,
             )
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, OSError) as e:
             print(f"Loop error: {e}", flush=True)
         time.sleep(interval_seconds)
 

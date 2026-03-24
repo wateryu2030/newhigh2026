@@ -24,15 +24,15 @@ def run() -> Dict[str, Any]:
     try:
         stage = run_emotion_cycle()
         result["emotion"] = stage
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"emotion: {e}")
     try:
         result["hotmoney"] = run_hotmoney_detector()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"hotmoney: {e}")
     try:
         result["sector"] = run_sector_rotation_ai()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, OSError) as e:
         result["errors"].append(f"sector: {e}")
 
     return result
