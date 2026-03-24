@@ -75,7 +75,7 @@ class BaseService:
             if params:
                 return conn.execute(query, params)
             return conn.execute(query)
-        except Exception as e:
+        except (duckdb.Error, OSError, ValueError) as e:
             print(f"❌ SQL 执行失败：{e}")
             return None
 

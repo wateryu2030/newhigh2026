@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+import duckdb
+
 from .db import get_conn
 
 
@@ -42,12 +44,12 @@ def get_stock_list(limit: int = 100) -> List[Dict[str, Any]]:
             name = str(row.get("name") or row.get("symbol") or ts_code.split(".", maxsplit=1)[0])
             out.append({"ts_code": ts_code, "name": name, "industry": ""})
         return out
-    except Exception:
+    except (duckdb.Error, OSError):
         return []
     finally:
         try:
             conn.close()
-        except Exception:
+        except (duckdb.Error, OSError):
             pass
 
 
@@ -71,7 +73,7 @@ def get_market_summary() -> Dict[str, Any]:
                     "SELECT COUNT(DISTINCT order_book_id) FROM daily_bars"
                 ).fetchone()
                 total_stocks = int(distinct[0]) if distinct and distinct[0] is not None else 0
-            except Exception:
+            except (duckdb.Error, OSError, ValueError):
                 pass
         bars = conn.execute(
             "SELECT COUNT(*) AS n, MIN(trade_date) AS dmin, MAX(trade_date) AS dmax FROM daily_bars"
@@ -86,7 +88,7 @@ def get_market_summary() -> Dict[str, Any]:
             "date_min": date_min,
             "date_max": date_max,
         }
-    except Exception:
+    except (duckdb.Error, OSError, ValueError):
         return {
             "total_stocks": 0,
             "market": "A-share",
@@ -97,5 +99,5 @@ def get_market_summary() -> Dict[str, Any]:
     finally:
         try:
             conn.close()
-        except Exception:
+        except (duckdb.Error, OSError):
             pass

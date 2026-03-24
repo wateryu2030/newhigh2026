@@ -67,7 +67,7 @@ class StockService(BaseService):
                     stock.get("sector"),
                 ])
                 count += 1
-            except Exception as e:
+            except (ValueError, TypeError, OSError) as e:
                 print(f"⚠️  更新股票 {stock.get('code')} 失败：{e}")
 
         return count

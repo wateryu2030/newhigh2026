@@ -37,7 +37,6 @@ class FinancialAnalyzer:
 
     def __init__(self):
         """初始化分析器"""
-        pass
 
     def _get_connection(self):
         """获取数据库连接"""
@@ -111,7 +110,7 @@ class FinancialAnalyzer:
                             "change_ratio": change_ratio,
                         })
 
-            except Exception as e:
+            except (ValueError, TypeError, KeyError, OSError) as e:
                 print(f"计算 {stock_code} 的 {metric} 变化失败：{e}")
 
         conn.close()
@@ -437,8 +436,10 @@ class FinancialAnalyzer:
                 report_date,
                 {metric_name} as current_value,
                 LAG({metric_name}) OVER (PARTITION BY stock_code ORDER BY report_date) as previous_value,
-                (({metric_name} - LAG({metric_name}) OVER (PARTITION BY stock_code ORDER BY report_date))
-                 / NULLIF(ABS(LAG({metric_name}) OVER (PARTITION BY stock_code ORDER BY report_date)), 0) * 100) as change_ratio
+                (
+                    ({metric_name} - LAG({metric_name}) OVER (PARTITION BY stock_code ORDER BY report_date))
+                    / NULLIF(ABS(LAG({metric_name}) OVER (PARTITION BY stock_code ORDER BY report_date)), 0) * 100
+                ) as change_ratio
             FROM financial_report
             WHERE report_date <= ?
             ORDER BY change_ratio {order}

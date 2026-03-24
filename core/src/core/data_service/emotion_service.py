@@ -84,7 +84,7 @@ class EmotionService(BaseService):
                 VALUES (?, ?, ?, ?, ?)
             """, [trade_date, emotion_state, limit_up_count, max_height, total_volume])
             return True
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             print(f"⚠️  更新情绪状态失败：{e}")
             return False
 

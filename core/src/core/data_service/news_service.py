@@ -89,7 +89,7 @@ class NewsService(BaseService):
                     item.get("sentiment_label"),
                 ])
                 count += 1
-            except Exception as e:
+            except (ValueError, TypeError, OSError) as e:
                 print(f"⚠️  插入新闻失败：{e}")
 
         return count

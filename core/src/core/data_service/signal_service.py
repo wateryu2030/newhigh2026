@@ -51,6 +51,6 @@ class SignalService(BaseService):
                 [code, signal_type, signal_score, confidence],
             )
             return 1
-        except Exception as e:
+        except (ValueError, TypeError, OSError) as e:
             print(f"⚠️  添加信号失败：{e}")
             return 0

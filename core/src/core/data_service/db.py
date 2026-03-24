@@ -70,7 +70,7 @@ def get_conn(read_only: bool = False) -> Optional[duckdb.DuckDBPyConnection]:
         if not os.path.isfile(db_path):
             return None
         return duckdb.connect(db_path, read_only=read_only)
-    except Exception:
+    except (OSError, duckdb.Error):
         return None
 
 
@@ -89,7 +89,7 @@ def get_astock_duckdb_available() -> bool:
         conn.execute("SELECT 1")
         conn.close()
         return True
-    except Exception:
+    except (OSError, duckdb.Error):
         return False
 
 
