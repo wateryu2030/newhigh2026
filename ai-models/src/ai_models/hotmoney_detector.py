@@ -15,7 +15,7 @@ class HotMoneyAnalyzer:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists, pylint path issue)
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
 
         conn = get_connection(read_only=False)
         if conn:
@@ -37,7 +37,7 @@ class HotMoneyAnalyzer:
                 FROM a_stock_longhubang
                 GROUP BY COALESCE(seat_name, code)
             """).fetchdf()
-        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+        except Exception:  # pylint: disable=broad-exception-caught
             df = conn.execute("""
                 SELECT
                     code AS seat,
@@ -56,9 +56,9 @@ class HotMoneyAnalyzer:
         """结合后续涨幅算席位胜率与平均收益。买价用龙虎榜当日收盘价近似。"""
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
             ensure_tables(conn)
-        except Exception:  # pylint: disable=broad-exception-caught (optional dependency)
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         # 用 SQL：daily 上 LEAD(close, N) 得 N 日后收盘，再与龙虎榜 join 算收益
         try:
@@ -84,13 +84,13 @@ class HotMoneyAnalyzer:
                 FROM combined
                 GROUP BY seat
             """).fetchdf()
-        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+        except Exception:  # pylint: disable=broad-exception-caught
             try:
                 result = conn.execute("""
                     SELECT code AS seat, 0.5 AS win_rate, 0.0 AS avg_return
                     FROM a_stock_longhubang LIMIT 0
                 """).fetchdf()
-            except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+            except Exception:  # pylint: disable=broad-exception-caught
                 result = None
         if result is None or result.empty:
             return pd.DataFrame(columns=["seat", "win_rate", "avg_return"])
@@ -122,9 +122,9 @@ class HotMoneyAnalyzer:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
             ensure_tables(conn)
-        except Exception:  # pylint: disable=broad-exception-caught (optional dependency)
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         conn.execute("DELETE FROM top_hotmoney_seats")
         conn.register("tmp", df)
@@ -159,7 +159,7 @@ def run_hotmoney_detector() -> int:
             if df is not None and not df.empty:
                 for _, row in df.iterrows():
                     signals.append((str(row.get("code", "")), "游资", 0.55))
-        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         conn.close()
     from ._storage import write_hotmoney_signals

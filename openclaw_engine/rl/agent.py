@@ -10,7 +10,7 @@ from typing import Any
 
 def is_rl_available() -> bool:
     try:
-        import stable_baselines3  # noqa: F401
+        import stable_baselines3  # pylint: disable=import-outside-toplevel
 
         return True
     except ImportError:

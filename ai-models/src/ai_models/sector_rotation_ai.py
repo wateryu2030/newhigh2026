@@ -15,7 +15,7 @@ class SectorRotationAI:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists)
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
         conn = get_connection(read_only=False)
         if conn:
             ensure_core_tables(conn)
@@ -77,7 +77,7 @@ class SectorRotationAI:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
             ensure_tables(conn)
         except Exception:
             pass

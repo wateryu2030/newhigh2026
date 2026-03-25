@@ -15,7 +15,7 @@ class EmotionCycleModel:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists)
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
         conn = get_connection(read_only=False)
         if conn:
             ensure_core_tables(conn)
@@ -45,7 +45,7 @@ class EmotionCycleModel:
                 FROM a_stock_daily
                 GROUP BY date
             """).fetchdf()
-        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+        except Exception:  # pylint: disable=broad-exception-caught
             volume = pd.DataFrame(columns=["trade_date", "market_volume"])
         if volume is None or volume.empty:
             volume = pd.DataFrame(columns=["trade_date", "market_volume"])
@@ -110,9 +110,9 @@ class EmotionCycleModel:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
             ensure_tables(conn)
-        except Exception:  # pylint: disable=broad-exception-caught (optional dependency)
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         conn.register("tmp", df)
         conn.execute("DELETE FROM market_emotion WHERE trade_date IN (SELECT trade_date FROM tmp)")
@@ -141,7 +141,7 @@ class EmotionCycleModel:
                     "market_volume": float(row[3] or 0),
                     "emotion_state": row[4] or "—",
                 }
-        except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         return {
             "trade_date": None,
@@ -165,11 +165,11 @@ def run_emotion_cycle() -> str:
 
     conn = _get_conn()
     try:
-        from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error (module exists)
+        from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
         ensure_tables(conn)
         row = conn.execute("SELECT COUNT(*) FROM a_stock_limitup").fetchone()
         n = int(row[0]) if row and row[0] is not None else 0
-    except Exception:  # pylint: disable=broad-exception-caught (graceful degradation)
+    except Exception:  # pylint: disable=broad-exception-caught
         n = 0
     if n >= 80:
         state, stage = "高潮", "高潮期"

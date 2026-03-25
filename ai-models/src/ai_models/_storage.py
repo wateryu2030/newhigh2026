@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error (module exists)
+from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
 
 
 def _get_conn():
