@@ -369,7 +369,7 @@ newhigh/
 |------|------|
 | **docs/PROJECT_HANDOFF_FOR_AI.md** | **项目交接：当前实现/未完成/风险/建议维度，供其他 AI 提出改进建议** |
 | **docs/OPENCLAW_IMPROVEMENT_PLAN.md** | **Cursor 执行计划：阶段 0–3 架构升级与 OpenClaw 自我进化集成** |
-| **docs/OPENCLAW_WORKSPACE_DELIVERY.md** | **OpenClaw 工作区「hongshan」Vue+FastAPI 交付清单（路径 `/Users/apple/.openclaw/workspace`，与主仓 Next+Gateway 并存）** |
+| **docs/OPENCLAW_WORKSPACE_DELIVERY.md** | **OpenClaw「hongshan」交付说明索引；源码已迁入 `integrations/hongshan/`（Docker 见该目录 README）** |
 | docs/ARCHITECTURE.md | 整体架构 |
 | docs/vision.md, docs/roadmap.md | 愿景与阶段 |
 | docs/CURSOR_RELAY.md | Cursor 接续开发（vision → tasks → prompts） |

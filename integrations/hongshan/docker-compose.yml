@@ -1,0 +1,87 @@
+# Hongshan 栈：PostgreSQL + Redis + FastAPI + Vue(Nginx)
+# 与 newhigh 主 Gateway（本机 8000）端口隔离；仅作「对齐入库」后的可选副栈。
+#
+# 使用：cd integrations/hongshan && docker compose up -d --build
+#
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: newhigh-hongshan-postgres
+    environment:
+      POSTGRES_DB: hongshan_quant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${HONGSHAN_DB_PASSWORD:-hongshan_dev}
+    volumes:
+      - hongshan_pg_data:/var/lib/postgresql/data
+      - ./hongshan-backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - hongshan-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: newhigh-hongshan-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - hongshan-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./hongshan-backend
+      dockerfile: Dockerfile
+    container_name: newhigh-hongshan-backend
+    environment:
+      DEBUG: "True"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: hongshan_quant
+      DB_USER: postgres
+      DB_PASSWORD: ${HONGSHAN_DB_PASSWORD:-hongshan_dev}
+      AUTO_INIT_DB: "True"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:9080,http://127.0.0.1:9080,http://localhost:5174,https://htma.newhigh.com.cn"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8010:8000"
+    networks:
+      - hongshan-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./hongshan-quant-platform
+      dockerfile: Dockerfile
+    container_name: newhigh-hongshan-frontend
+    depends_on:
+      - backend
+    ports:
+      - "9080:80"
+    networks:
+      - hongshan-net
+    restart: unless-stopped
+
+volumes:
+  hongshan_pg_data:
+
+networks:
+  hongshan-net:
+    name: newhigh-hongshan-net
