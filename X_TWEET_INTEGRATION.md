@@ -4,6 +4,8 @@
 
 已将 [x-tweet-fetcher](https://github.com/ythx-101/x-tweet-fetcher) 集成到 newhigh 量化平台，增强新闻和舆情采集能力。
 
+**版本管理**：`tools/x-tweet-fetcher/` 为 **主仓库内的普通目录**（与 newhigh 同次提交维护），不再使用 Git 子模块；演进说明见该目录下 `VENDOR.md`。
+
 ### 文件结构
 
 ```
