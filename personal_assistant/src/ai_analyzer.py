@@ -33,17 +33,17 @@ except ImportError:
 
 class AIStockAnalyzer:
     """AI股票分析器"""
-    
+
     def __init__(self, api_key: str = None):
         """
         初始化分析器
-        
+
         Args:
             api_key: DeepSeek API Key
         """
         self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
         self.client = None
-        
+
         if DEEPSEEK_AVAILABLE and self.api_key:
             try:
                 self.client = OpenAI(
@@ -56,24 +56,24 @@ class AIStockAnalyzer:
         else:
             if not self.api_key:
                 print("⚠️ 未找到 DEEPSEEK_API_KEY，将使用模拟分析")
-    
+
     def analyze_stock(self, stock_data: Dict) -> Dict:
         """
         分析单只股票
-        
+
         Args:
             stock_data: 股票数据（包含基本信息、近期价格、技术指标等）
-            
+
         Returns:
             分析结果字典
         """
         if not self.client:
             return self._mock_analysis(stock_data)
-        
+
         try:
             # 构建分析提示词
             prompt = self._build_analysis_prompt(stock_data)
-            
+
             # 调用AI
             response = self.client.chat.completions.create(
                 model="deepseek-chat",
@@ -90,17 +90,17 @@ class AIStockAnalyzer:
                 temperature=0.3,
                 max_tokens=500
             )
-            
+
             # 解析AI响应
             ai_response = response.choices[0].message.content
             analysis_result = self._parse_ai_response(ai_response, stock_data)
-            
+
             return analysis_result
-            
+
         except Exception as e:
             print(f"⚠️ AI分析失败: {e}，使用模拟分析")
             return self._mock_analysis(stock_data)
-    
+
     def _get_system_prompt(self) -> str:
         """获取系统提示词（含 soul.md 机会发现引擎，用于行业地位与前景）。"""
         base = """你是一位专业的股票分析师，拥有10年A股市场经验。
@@ -124,7 +124,7 @@ class AIStockAnalyzer:
 【风险】1-3个主要风险点
 【策略】具体操作建议"""
         return base
-    
+
     def _build_analysis_prompt(self, stock_data: Dict) -> str:
         """构建分析提示词"""
         code = stock_data.get("code", "未知")
@@ -133,14 +133,14 @@ class AIStockAnalyzer:
         market_cap = stock_data.get("market_cap", 0)
         recent_data = stock_data.get("recent_data", [])
         stock_type = stock_data.get("type", "unknown")
-        
+
         # 计算技术指标
         if recent_data:
             latest = recent_data[0]
             close = latest[5]  # 收盘价
             volume = latest[4]  # 成交量
             amount = latest[5]  # 成交额
-            
+
             # 计算5日涨跌幅
             if len(recent_data) >= 2:
                 old_close = recent_data[-1][5]
@@ -150,7 +150,7 @@ class AIStockAnalyzer:
         else:
             close = 0
             change_5d = 0
-        
+
         prompt = f"""请分析以下股票：
 
 【股票信息】
@@ -163,11 +163,11 @@ class AIStockAnalyzer:
 【近期价格数据】（最新5个交易日）
 日期        开盘    最高    最低    收盘    成交量
 """
-        
+
         for row in recent_data[:5]:
             date = str(row[1])[:10] if row[1] else "N/A"
             prompt += f"{date}  {row[2]:.2f}  {row[3]:.2f}  {row[4]:.2f}  {row[5]:.2f}  {row[6]:,}\n"
-        
+
         prompt += f"""
 【技术指标】
 5日涨跌幅：{change_5d:.2f}%
@@ -183,9 +183,9 @@ class AIStockAnalyzer:
 6. 板块轮动：所属板块表现
 
 请给出明确的投资建议和风险提示。"""
-        
+
         return prompt
-    
+
     def _parse_ai_response(self, ai_response: str, stock_data: Dict) -> Dict:
         """解析AI响应"""
         # 简单解析，提取关键信息
@@ -199,7 +199,7 @@ class AIStockAnalyzer:
             "strategy": "观望",
             "raw_analysis": ai_response
         }
-        
+
         # 尝试提取评级
         if "买入" in ai_response:
             result["rating"] = "买入"
@@ -217,7 +217,7 @@ class AIStockAnalyzer:
                 result["stars"] = 4
             else:
                 result["stars"] = 3
-        
+
         # 提取理由（简单处理）
         lines = ai_response.split("\n")
         for line in lines:
@@ -227,21 +227,21 @@ class AIStockAnalyzer:
                 result["risks"].append(line.strip())
             if "策略" in line or "建议" in line:
                 result["strategy"] = line.strip()
-        
+
         return result
-    
+
     def _mock_analysis(self, stock_data: Dict) -> Dict:
         """模拟分析（当AI不可用时）"""
         code = stock_data.get("code", "未知")
         name = stock_data.get("name", "未知")
         recent_data = stock_data.get("recent_data", [])
-        
+
         # 基于简单规则的模拟分析
         if recent_data and len(recent_data) >= 2:
             latest_close = recent_data[0][5]
             old_close = recent_data[-1][5]
             change = (latest_close - old_close) / old_close * 100
-            
+
             if change > 5:
                 rating = "买入"
                 stars = 4
@@ -258,7 +258,7 @@ class AIStockAnalyzer:
             rating = "持有"
             stars = 3
             strategy = "数据不足，谨慎观望"
-        
+
         return {
             "code": code,
             "name": name,
@@ -281,9 +281,9 @@ class AIStockAnalyzer:
 def test_analyzer():
     """测试分析器"""
     print("=== 测试 AI 分析引擎 ===")
-    
+
     analyzer = AIStockAnalyzer()
-    
+
     # 测试数据
     test_stock = {
         "code": "600519.XSHG",
@@ -297,16 +297,16 @@ def test_analyzer():
             ("600519.XSHG", "2026-03-12", 1760, 1785, 1750, 1780, 850000, 1513000000),
         ]
     }
-    
+
     result = analyzer.analyze_stock(test_stock)
-    
+
     print(f"\n分析结果:")
     print(f"  股票：{result['name']} ({result['code']})")
     print(f"  评级：{result['rating']} {'⭐' * result['stars']}")
     print(f"  策略：{result['strategy']}")
     print(f"  理由：{len(result['reasons'])} 条")
     print(f"  风险：{len(result['risks'])} 条")
-    
+
     return result
 
 

@@ -9,6 +9,7 @@ type NewsItem = {
   content?: string;
   publish_time?: string;
   source?: string;
+  url?: string;
 };
 
 export default function ResearchPage() {
@@ -155,8 +156,21 @@ export default function ResearchPage() {
         ) : (
           <ul className="space-y-3 max-h-[480px] overflow-y-auto text-sm">
             {news.map((n, i) => (
-              <li key={i} className="border-b border-slate-700/50 pb-3">
-                <p className="text-white font-medium">{n.title || '—'}</p>
+              <li key={n.url || `${n.title ?? ''}-${n.publish_time ?? ''}-${i}`} className="border-b border-slate-700/50 pb-3">
+                <p className="text-white font-medium">
+                  {n.url && /^https?:\/\//i.test(n.url.trim()) ? (
+                    <a
+                      href={n.url.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline text-indigo-300"
+                    >
+                      {n.title || '—'}
+                    </a>
+                  ) : (
+                    n.title || '—'
+                  )}
+                </p>
                 <p className="text-slate-500 text-xs mt-1">
                   {n.publish_time} {n.source ? `· ${n.source}` : ''}
                 </p>

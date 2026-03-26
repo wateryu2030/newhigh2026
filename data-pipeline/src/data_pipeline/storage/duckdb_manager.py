@@ -211,6 +211,16 @@ def ensure_tables(conn) -> None:
             snapshot_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # 旧库由 lib.database 建过另一套 sniper_candidates（无 theme/confidence/snapshot_time），补列否则 Gateway 查询报错返回空
+    for _col_sql in (
+        "ALTER TABLE sniper_candidates ADD COLUMN theme VARCHAR",
+        "ALTER TABLE sniper_candidates ADD COLUMN confidence DOUBLE",
+        "ALTER TABLE sniper_candidates ADD COLUMN snapshot_time TIMESTAMP",
+    ):
+        try:
+            conn.execute(_col_sql)
+        except Exception:
+            pass
     # 统一运行核心：系统状态（system_core 写入）
     conn.execute("""
         CREATE TABLE IF NOT EXISTS system_status (

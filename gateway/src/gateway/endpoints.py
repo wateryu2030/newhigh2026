@@ -32,6 +32,206 @@ def _is_ashare_symbol(symbol: str) -> bool:
     return len(code) == 6 and code.isdigit()
 
 
+def _pipeline_code_variants(symbol: str) -> List[str]:
+    """a_stock_daily.code 可能是 000001.SZ / 000001 等，生成候选列表去重。"""
+    raw = (symbol or "").strip().upper()
+    if not raw:
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+
+    def add(x: str) -> None:
+        x = x.strip()
+        if x and x not in seen:
+            seen.add(x)
+            out.append(x)
+
+    add(raw)
+    base = raw.split(".", maxsplit=1)[0]
+    if len(base) >= 5 and base.isdigit():
+        add(base)
+        if base.startswith("6"):
+            add(f"{base}.SH")
+            add(f"{base}.XSHG")
+        elif base.startswith(("4", "8", "9")) or len(base) == 8:
+            add(f"{base}.BJ")
+            add(f"{base}.BSE")
+        else:
+            add(f"{base}.SZ")
+            add(f"{base}.XSHE")
+    return out
+
+
+def _row_date_to_utc_iso(td: Any) -> str:
+    """DuckDB / Python 日期 → ISO8601 UTC（与 daily_bars 路径一致）。"""
+    import datetime as dt
+
+    if hasattr(td, "to_pydatetime"):
+        ts = td.to_pydatetime()
+    elif isinstance(td, str):
+        ts = dt.datetime.strptime(td[:10], "%Y-%m-%d")
+    elif isinstance(td, dt.datetime):
+        ts = td
+    elif isinstance(td, dt.date):
+        ts = dt.datetime.combine(td, dt.time.min)
+    else:
+        ts = dt.datetime.now(dt.timezone.utc)
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=dt.timezone.utc)
+    return ts.isoformat()
+
+
+def _normalize_sym_show(code_used: str) -> str:
+    sym_show = (code_used or "").strip()
+    if "." in sym_show:
+        return sym_show
+    if len(sym_show) >= 8 and sym_show.isdigit():
+        return f"{sym_show[:8]}.BJ"
+    if len(sym_show) >= 6:
+        six = sym_show[:6]
+        if six.startswith("6"):
+            return f"{six}.SH"
+        if six.startswith(("4", "8", "9")):
+            return f"{six}.BJ"
+        return f"{six}.SZ"
+    return sym_show
+
+
+def _fetch_klines_from_a_stock_daily(symbol: str, limit: int = 120) -> Optional[dict]:
+    """
+    当 astock daily_bars 无数据时，从 a_stock_daily 读最近 N 根日线（纯 SQL + fetchall，不依赖 pandas）。
+    """
+    try:
+        import os
+
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        path = get_db_path()
+        if not path or not os.path.isfile(path):
+            return None
+        lim = max(10, min(int(limit or 120), 500))
+        conn = get_conn(read_only=False)
+        try:
+            for code_try in _pipeline_code_variants(symbol):
+                rows = conn.execute(
+                    """
+                    SELECT code, date, open, high, low, close, volume
+                    FROM (
+                        SELECT code, date, open, high, low, close, volume
+                        FROM a_stock_daily
+                        WHERE code = ?
+                        ORDER BY date DESC
+                        LIMIT ?
+                    ) AS sub
+                    ORDER BY date ASC
+                    """,
+                    [code_try, lim],
+                ).fetchall()
+                if not rows:
+                    continue
+                data: List[dict] = []
+                code_used = str(rows[-1][0])
+                for r in rows:
+                    _c, td, o, h, l, c, v = r[0], r[1], r[2], r[3], r[4], r[5], r[6]
+                    data.append(
+                        {
+                            "t": _row_date_to_utc_iso(td),
+                            "o": float(o or 0),
+                            "h": float(h or 0),
+                            "l": float(l or 0),
+                            "c": float(c or 0),
+                            "close": float(c or 0),
+                            "v": float(v or 0),
+                        }
+                    )
+                return {
+                    "symbol": _normalize_sym_show(code_used),
+                    "interval": "1d",
+                    "limit": len(data),
+                    "data": data,
+                }
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Exception:
+        _log.exception("a_stock_daily klines fallback failed: %s", symbol)
+    return None
+
+
+def _ashare_suffix_from_code6(code6: str) -> str:
+    if code6.startswith("6"):
+        return "SH"
+    if len(code6) == 8:
+        return "BJ"
+    if code6.startswith(("0", "3")):
+        return "SZ"
+    return "SZ"
+
+
+def _fetch_klines_akshare_daily(symbol: str, limit: int = 160) -> Optional[dict]:
+    """
+    本地库均无日线时的结构化兜底：akshare 东财历史 K 线（与 mx-data 自然语言 API 不同，可直接映射 OHLCV）。
+    默认开启；设置 KLINE_FALLBACK_AKSHARE=0 可关闭。
+    """
+    import os
+
+    flag = os.environ.get("KLINE_FALLBACK_AKSHARE", "1").strip().lower()
+    if flag in ("0", "false", "no", "off"):
+        return None
+    raw = (symbol or "").strip().split(".", maxsplit=1)[0].strip()
+    code6 = raw[:6] if len(raw) >= 6 and raw[:6].isdigit() else ""
+    if len(code6) != 6:
+        return None
+    lim = max(20, min(int(limit or 160), 800))
+    try:
+        import datetime as dt
+
+        import akshare as ak  # type: ignore
+    except ImportError:
+        return None
+    end = dt.datetime.now().strftime("%Y%m%d")
+    start = (dt.datetime.now() - dt.timedelta(days=lim * 3 + 200)).strftime("%Y%m%d")
+    try:
+        df = ak.stock_zh_a_hist(
+            symbol=code6[:6],
+            period="daily",
+            start_date=start,
+            end_date=end,
+            adjust="qfq",
+        )
+    except Exception:
+        _log.exception("akshare stock_zh_a_hist failed: %s", code6)
+        return None
+    if df is None or df.empty:
+        return None
+    tail = df.tail(lim)
+    sym_show = f"{code6}.{_ashare_suffix_from_code6(code6)}"
+    data: List[dict] = []
+    for _, row in tail.iterrows():
+        d_raw = row.get("日期")
+        if hasattr(d_raw, "strftime"):
+            day = d_raw.strftime("%Y-%m-%d")
+        else:
+            day = str(d_raw)[:10]
+        ts = f"{day}T00:00:00+00:00"
+        data.append(
+            {
+                "t": ts,
+                "o": float(row.get("开盘") or 0),
+                "h": float(row.get("最高") or 0),
+                "l": float(row.get("最低") or 0),
+                "c": float(row.get("收盘") or 0),
+                "close": float(row.get("收盘") or 0),
+                "v": float(row.get("成交量") or 0),
+            }
+        )
+    if not data:
+        return None
+    return {"symbol": sym_show, "interval": "1d", "limit": len(data), "data": data}
+
+
 @router.get("/market/klines")
 def get_klines(
     symbol: str = "BTCUSDT",
@@ -40,46 +240,69 @@ def get_klines(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> Any:
-    """K 线：A 股优先从 astock DuckDB 读；统一信封 { ok, data, source }。"""
+    """K 线：daily_bars → a_stock_daily → 可选 akshare；空数据仍 200，避免误报 503。"""
     empty_payload = {"symbol": symbol, "interval": interval, "limit": 0, "data": []}
-    # A 股日线：从 newhigh 本地 DuckDB 读（与 astock 独立）
-    if _is_ashare_symbol(symbol) and (interval in ("1d", "daily") or not interval):
+    if _is_ashare_symbol(symbol):
+        rows: List[Any] = []
         try:
             from data_engine import get_astock_duckdb_available, fetch_klines_from_astock_duckdb
 
             if get_astock_duckdb_available():
-                rows = fetch_klines_from_astock_duckdb(
-                    symbol, start_date=start_date, end_date=end_date, limit=limit
-                )
-                if rows:
-                    # 前端兼容：同时返回 c 与 close
-                    data = [
-                        {
-                            "t": r.timestamp.isoformat(),
-                            "o": r.open,
-                            "h": r.high,
-                            "l": r.low,
-                            "c": r.close,
-                            "close": r.close,
-                            "v": r.volume,
-                        }
-                        for r in rows
-                    ]
-                    payload = {
-                        "symbol": rows[0].symbol,
-                        "interval": "1d",
-                        "limit": len(data),
-                        "data": data,
-                    }
-                    return json_ok(payload, source="duckdb")
-                return json_ok(
-                    {**empty_payload, "limit": limit},
-                    source="duckdb",
-                )
-            return json_ok({**empty_payload, "limit": limit}, source="none")
-        except Exception as e:
-            _log.exception("get_klines duckdb failed: %s", symbol)
-            return json_fail("Database or data_engine error", status_code=503, source="error")
+                try:
+                    rows = fetch_klines_from_astock_duckdb(
+                        symbol,
+                        start_date=start_date,
+                        end_date=end_date,
+                        limit=limit,
+                        recent_first=True,
+                    )
+                except Exception:
+                    _log.exception("fetch_klines_from_astock_duckdb failed: %s", symbol)
+                    rows = []
+        except ImportError:
+            _log.warning("data_engine not importable; skip daily_bars klines for %s", symbol)
+
+        if rows:
+            data = [
+                {
+                    "t": r.timestamp.isoformat(),
+                    "o": r.open,
+                    "h": r.high,
+                    "l": r.low,
+                    "c": r.close,
+                    "close": r.close,
+                    "v": r.volume,
+                }
+                for r in rows
+            ]
+            return json_ok(
+                {
+                    "symbol": rows[0].symbol,
+                    "interval": "1d",
+                    "limit": len(data),
+                    "data": data,
+                },
+                source="duckdb",
+            )
+
+        try:
+            pipe = _fetch_klines_from_a_stock_daily(symbol, limit=limit)
+        except Exception:
+            _log.exception("pipeline daily klines failed: %s", symbol)
+            pipe = None
+        if pipe:
+            return json_ok(pipe, source="duckdb_pipeline")
+
+        try:
+            ak_payload = _fetch_klines_akshare_daily(symbol, limit=limit)
+        except Exception:
+            _log.exception("akshare klines failed: %s", symbol)
+            ak_payload = None
+        if ak_payload:
+            return json_ok(ak_payload, source="akshare")
+
+        return json_ok({**empty_payload, "limit": limit}, source="none")
+
     return json_ok({**empty_payload, "limit": limit}, source="stub")
 
 
@@ -1045,70 +1268,202 @@ def get_market_main_themes(limit: int = 10) -> list:
         return []
 
 
+def _sniper_candidates_minimal(conn: Any, lim: int) -> list:
+    """仅读 sniper_candidates（兼容列不全或 JOIN 失败），保证弹层有行。"""
+    res = conn.execute(
+        """
+        WITH ranked AS (
+            SELECT s.*,
+                ROW_NUMBER() OVER (
+                    PARTITION BY s.code
+                    ORDER BY s.sniper_score DESC NULLS LAST
+                ) AS rn
+            FROM sniper_candidates s
+        )
+        SELECT code, theme, sniper_score, confidence, snapshot_time
+        FROM ranked
+        WHERE rn = 1
+        ORDER BY sniper_score DESC NULLS LAST, code
+        LIMIT ?
+        """,
+        [lim],
+    )
+    rows = res.fetchall()
+    out = []
+    for t in rows:
+        code, theme, ss, cf, snap = (t + (None,) * 5)[:5]
+        out.append(
+            {
+                "code": str(code or ""),
+                "stock_name": "",
+                "theme": str(theme or "").strip() or "—",
+                "sniper_score": float(ss) if ss is not None else None,
+                "confidence": float(cf) if cf is not None else None,
+                "last_price": None,
+                "change_pct": None,
+                "updated_at": _short_ts_for_signal(snap),
+            }
+        )
+    return out
+
+
 @router.get("/market/sniper-candidates")
 def get_sniper_candidates(limit: int = 50) -> list:
-    """狙击候选：按 code 去重保留最高分、补名称/现价/涨跌、缩略时间。"""
+    """狙击候选：按 code 去重保留最高分；补名称/现价/涨跌（实时→涨停池→日K两日）；题材用 sector/industry 回填「未分类」。"""
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn, get_db_path
         import os
 
         if not os.path.isfile(get_db_path()):
             return []
         conn = get_conn(read_only=False)
+        try:
+            ensure_tables(conn)
+        except Exception:
+            _log.exception("ensure_tables before sniper_candidates")
         lim = max(1, min(int(limit or 50), 500))
-        df = conn.execute(
-            """
-            WITH ranked AS (
-                SELECT s.*,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY s.code
-                        ORDER BY s.sniper_score DESC NULLS LAST, s.snapshot_time DESC NULLS LAST
-                    ) AS rn
-                FROM sniper_candidates s
+        try:
+            res = conn.execute(
+                """
+                WITH ranked AS (
+                    SELECT s.*,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY s.code
+                            ORDER BY s.sniper_score DESC NULLS LAST, s.snapshot_time DESC NULLS LAST
+                        ) AS rn
+                    FROM sniper_candidates s
+                ),
+                daily_rn AS (
+                    SELECT
+                        split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                        date,
+                        CAST(close AS DOUBLE) AS close,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                            ORDER BY date DESC
+                        ) AS rn
+                    FROM a_stock_daily
+                ),
+                d1 AS (SELECT code6, close AS c1 FROM daily_rn WHERE rn = 1),
+                d2 AS (SELECT code6, close AS c2 FROM daily_rn WHERE rn = 2),
+                basic_rn AS (
+                    SELECT
+                        name,
+                        sector,
+                        industry,
+                        split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                            ORDER BY CAST(code AS VARCHAR) DESC
+                        ) AS rn
+                    FROM a_stock_basic
+                ),
+                limup_rn AS (
+                    SELECT
+                        split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                        change_pct,
+                        snapshot_time,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                            ORDER BY snapshot_time DESC NULLS LAST
+                        ) AS rn
+                    FROM a_stock_limitup
+                ),
+                rt_rn AS (
+                    SELECT
+                        split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                        latest_price,
+                        change_pct,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                            ORDER BY snapshot_time DESC NULLS LAST
+                        ) AS rn
+                    FROM a_stock_realtime
+                )
+                SELECT
+                    r.code,
+                    COALESCE(b.name, '') AS stock_name,
+                    CASE
+                        WHEN r.theme IS NULL OR TRIM(CAST(r.theme AS VARCHAR)) = ''
+                            OR TRIM(CAST(r.theme AS VARCHAR)) = '未分类'
+                        THEN COALESCE(
+                            NULLIF(TRIM(CAST(b.sector AS VARCHAR)), ''),
+                            NULLIF(TRIM(CAST(b.industry AS VARCHAR)), ''),
+                            '—'
+                        )
+                        ELSE TRIM(CAST(r.theme AS VARCHAR))
+                    END AS theme,
+                    r.sniper_score,
+                    r.confidence,
+                    COALESCE(rt.latest_price, d1.c1) AS last_price,
+                    COALESCE(
+                        rt.change_pct,
+                        lu.change_pct,
+                        CASE
+                            WHEN d2.c2 IS NOT NULL AND d2.c2 > 0
+                            THEN (d1.c1 - d2.c2) / d2.c2 * 100.0
+                            ELSE NULL
+                        END
+                    ) AS change_pct,
+                    CASE
+                        WHEN lu.snapshot_time IS NOT NULL
+                            AND (r.snapshot_time IS NULL OR lu.snapshot_time > r.snapshot_time)
+                        THEN lu.snapshot_time
+                        ELSE r.snapshot_time
+                    END AS snapshot_time
+                FROM ranked r
+                LEFT JOIN basic_rn b
+                    ON b.code6 = split_part(CAST(r.code AS VARCHAR), '.', 1) AND b.rn = 1
+                LEFT JOIN rt_rn rt
+                    ON rt.code6 = split_part(CAST(r.code AS VARCHAR), '.', 1) AND rt.rn = 1
+                LEFT JOIN d1 ON d1.code6 = split_part(CAST(r.code AS VARCHAR), '.', 1)
+                LEFT JOIN d2 ON d2.code6 = split_part(CAST(r.code AS VARCHAR), '.', 1)
+                LEFT JOIN limup_rn lu
+                    ON lu.code6 = split_part(CAST(r.code AS VARCHAR), '.', 1) AND lu.rn = 1
+                WHERE r.rn = 1
+                ORDER BY r.sniper_score DESC NULLS LAST, r.code
+                LIMIT ?
+                """,
+                [lim],
             )
-            SELECT
-                r.code,
-                COALESCE(b.name, '') AS stock_name,
-                r.theme,
-                r.sniper_score,
-                r.confidence,
-                COALESCE(rt.latest_price, ld.c) AS last_price,
-                rt.change_pct AS change_pct,
-                r.snapshot_time
-            FROM ranked r
-            LEFT JOIN a_stock_basic b ON b.code = r.code
-            LEFT JOIN a_stock_realtime rt ON rt.code = r.code
-            LEFT JOIN (
-                SELECT code, close AS c,
-                    ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
-                FROM a_stock_daily
-            ) ld ON ld.code = r.code AND ld.rn = 1
-            WHERE r.rn = 1
-            ORDER BY r.sniper_score DESC NULLS LAST, r.code
-            LIMIT ?
-            """,
-            [lim],
-        ).fetchdf()
-        conn.close()
-        if df is None or df.empty:
-            return []
-        out = []
-        for _, row in df.iterrows():
-            ss = row.get("sniper_score")
-            cf = row.get("confidence")
-            out.append(
-                {
-                    "code": str(row.get("code") or ""),
-                    "stock_name": str(row.get("stock_name") or "").strip(),
-                    "theme": str(row.get("theme") or "").strip() or "—",
-                    "sniper_score": float(ss) if ss is not None else None,
-                    "confidence": float(cf) if cf is not None else None,
-                    "last_price": _optional_price(row.get("last_price")),
-                    "change_pct": _optional_pct(row.get("change_pct")),
-                    "updated_at": _short_ts_for_signal(row.get("snapshot_time")),
-                }
-            )
-        return out
+            rows = res.fetchall() or []
+            out: list = []
+            for row in rows:
+                (
+                    code,
+                    stock_name,
+                    theme,
+                    ss,
+                    cf,
+                    last_price,
+                    change_pct,
+                    snap,
+                ) = (row + (None,) * 8)[:8]
+                out.append(
+                    {
+                        "code": str(code or ""),
+                        "stock_name": str(stock_name or "").strip(),
+                        "theme": str(theme or "").strip() or "—",
+                        "sniper_score": float(ss) if ss is not None else None,
+                        "confidence": float(cf) if cf is not None else None,
+                        "last_price": _optional_price(last_price),
+                        "change_pct": _optional_pct(change_pct),
+                        "updated_at": _short_ts_for_signal(snap),
+                    }
+                )
+            return out
+        except Exception:
+            _log.exception("get_sniper_candidates full query failed")
+            try:
+                return _sniper_candidates_minimal(conn, lim)
+            except Exception:
+                _log.exception("get_sniper_candidates minimal failed")
+                return []
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
     except Exception:
         return []
 
@@ -1269,6 +1624,20 @@ def get_system_status(limit: int = 10):
         }
 
 
+def _normalize_news_article_url(raw: object) -> str:
+    """东方财富等来源可能返回相对路径或 // 协议相对 URL，补全为可点击的 https 链接。"""
+    u = (raw or "").strip() if isinstance(raw, str) else str(raw or "").strip()
+    if not u or u.lower() in ("nan", "none"):
+        return ""
+    if u.startswith("http://") or u.startswith("https://"):
+        return u
+    if u.startswith("//"):
+        return "https:" + u
+    if u.startswith("/"):
+        return "https://finance.eastmoney.com" + u
+    return u
+
+
 def _news_fallback_akshare(symbol: Optional[str] = None, limit: int = 50) -> List[dict]:
     """当 DuckDB 无新闻时，从 akshare 东方财富拉取个股/财经新闻作为补充（需安装 akshare）。"""
     try:
@@ -1285,15 +1654,16 @@ def _news_fallback_akshare(symbol: Optional[str] = None, limit: int = 50) -> Lis
         title_col = next((c for c in ["新闻标题", "title"] if c in cols), cols[0] if cols else None)
         content_col = next((c for c in ["新闻内容", "content"] if c in cols), None)
         time_col = next((c for c in ["发布时间", "publish_time"] if c in cols), None)
-        url_col = next((c for c in ["新闻链接", "url"] if c in cols), None)
+        url_col = next((c for c in ["新闻链接", "链接", "url", "link"] if c in cols), None)
         source_col = next((c for c in ["文章来源", "source"] if c in cols), None)
         for _, row in df.head(limit).iterrows():
+            url_raw = str(row.get(url_col, "")) if url_col else ""
             item = {
                 "symbol": code,
                 "title": str(row.get(title_col, "")) if title_col else "",
                 "content": (str(row.get(content_col, ""))[:500]) if content_col else "",
                 "publish_time": str(row.get(time_col, "")) if time_col else "",
-                "url": str(row.get(url_col, "")) if url_col else "",
+                "url": _normalize_news_article_url(url_raw),
                 "source": str(row.get(source_col, "东方财富")) if source_col else "东方财富",
                 "source_site": "eastmoney",
                 "sentiment_score": None,
@@ -2369,6 +2739,76 @@ def generate_strategies(count: int = 5) -> dict:
 # --- Frontend API (Dashboard, Evolution, Trades) ---
 
 
+def _metrics_from_equity_curve(equity: List[float]) -> tuple[Optional[float], Optional[float]]:
+    """由权益曲线估算夏普（假设步长为交易日）与最大回撤百分比。"""
+    if len(equity) < 3:
+        return None, None
+    rets: List[float] = []
+    for i in range(1, len(equity)):
+        p, c = equity[i - 1], equity[i]
+        if p <= 0:
+            continue
+        rets.append((c - p) / p)
+    if len(rets) < 2:
+        return None, None
+    peak = float(equity[0])
+    mdd = 0.0
+    for x in equity:
+        xf = float(x)
+        peak = max(peak, xf)
+        if peak > 0:
+            mdd = max(mdd, (peak - xf) / peak)
+    try:
+        import statistics
+
+        mu = statistics.mean(rets)
+        sd = statistics.pstdev(rets)
+    except Exception:
+        return None, round(mdd * 100, 2)
+    sharpe = (mu / sd * (252**0.5)) if sd > 1e-12 else None
+    return (
+        round(float(sharpe), 2) if sharpe is not None else None,
+        round(mdd * 100, 2),
+    )
+
+
+def _dashboard_top_strategies_from_db(limit: int = 3) -> List[dict]:
+    """策略榜：仅展示 strategy_market 中真实回测写入的记录，无则空列表。"""
+    out: List[dict] = []
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return out
+        conn = get_conn(read_only=False)
+        try:
+            df = conn.execute(
+                """SELECT strategy_id, name, return_pct FROM strategy_market
+                   ORDER BY updated_at DESC LIMIT ?""",
+                [limit],
+            ).fetchdf()
+            if df is None or df.empty:
+                return out
+            for _, row in df.iterrows():
+                sid = str(row.get("strategy_id") or "").strip()
+                if not sid:
+                    continue
+                rpc = row.get("return_pct")
+                out.append(
+                    {
+                        "id": sid,
+                        "name": str(row.get("name") or sid.replace("_", " ").title()),
+                        "return_pct": float(rpc) if rpc is not None else None,
+                    }
+                )
+        finally:
+            conn.close()
+    except Exception:
+        pass
+    return out
+
+
 def _dashboard_from_duckdb() -> Optional[dict]:
     """当 newhigh 本地 DuckDB 可用时，用 A 股日线聚合出真实收益曲线与今日收益。"""
     try:
@@ -2402,20 +2842,22 @@ def _dashboard_from_duckdb() -> Optional[dict]:
         last_close, prev_close = closes[-1], closes[-2]
         daily_return_pct = ((last_close - prev_close) / prev_close * 100) if prev_close else 0.0
         total_equity = equity_curve[-1] if equity_curve else 10e6
+        sharpe, mdd = _metrics_from_equity_curve(equity_curve)
+        top_strategies = _dashboard_top_strategies_from_db(3)
         return {
             "total_equity": total_equity,
             "daily_return_pct": round(daily_return_pct, 2),
-            "sharpe_ratio": 2.1,
-            "max_drawdown_pct": 6.3,
+            "sharpe_ratio": sharpe,
+            "max_drawdown_pct": mdd,
             "equity_curve": equity_curve,
-            "top_strategies": [
-                {"id": "STR_001", "name": "Strategy A", "return_pct": 32},
-                {"id": "STR_002", "name": "Strategy B", "return_pct": 28},
-                {"id": "STR_003", "name": "Strategy C", "return_pct": 21},
+            "top_strategies": top_strategies,
+            "ai_generated_today": None,
+            "strategies_alive": None,
+            "strategies_live": None,
+            "equity_proxy_symbol": sym,
+            "dashboard_notes": [
+                "equity_curve_is_normalized_to_10M_from_first_symbol_with_bars_not_portfolio",
             ],
-            "ai_generated_today": 1243,
-            "strategies_alive": 63,
-            "strategies_live": 12,
         }
     except Exception:
         return None
@@ -2423,24 +2865,24 @@ def _dashboard_from_duckdb() -> Optional[dict]:
 
 @router.get("/dashboard")
 def get_dashboard() -> dict:
-    """Dashboard：有 DuckDB 时用 A 股日线算真实 equity_curve / daily_return_pct / total_equity，其余可 stub。"""
+    """Dashboard：有 DuckDB 时用日线推导权益曲线与日涨跌；夏普/回撤由曲线估算；策略榜仅 DB 真实记录。"""
     out = _dashboard_from_duckdb()
     if out is not None:
         return out
+    stub_equity = [10e6, 10.2e6, 10.5e6, 11e6, 11.8e6, 12.34e6]
+    sh, md = _metrics_from_equity_curve(stub_equity)
     return {
         "total_equity": 12_340_000,
         "daily_return_pct": 2.34,
-        "sharpe_ratio": 2.1,
-        "max_drawdown_pct": 6.3,
-        "equity_curve": [10e6, 10.2e6, 10.5e6, 11e6, 11.8e6, 12.34e6],
-        "top_strategies": [
-            {"id": "STR_001", "name": "Strategy A", "return_pct": 32},
-            {"id": "STR_002", "name": "Strategy B", "return_pct": 28},
-            {"id": "STR_003", "name": "Strategy C", "return_pct": 21},
-        ],
-        "ai_generated_today": 1243,
-        "strategies_alive": 63,
-        "strategies_live": 12,
+        "sharpe_ratio": sh if sh is not None else None,
+        "max_drawdown_pct": md if md is not None else None,
+        "equity_curve": stub_equity,
+        "top_strategies": [],
+        "ai_generated_today": None,
+        "strategies_alive": None,
+        "strategies_live": None,
+        "equity_proxy_symbol": None,
+        "dashboard_notes": ["no_duckdb_or_no_bars_using_static_demo_equity_curve"],
     }
 
 
@@ -2637,12 +3079,362 @@ def get_trades(limit: int = 50) -> dict:
     }
 
 
+def _alpha_lab_code6(expr: str) -> str:
+    """SQL：将 code 列规范为 6 位主干（大写、去后缀）。"""
+    return f"split_part(UPPER(TRIM(CAST({expr} AS VARCHAR))), '.', 1)"
+
+
+def _alpha_lab_binding_note() -> str:
+    return (
+        "漏斗由统一 DuckDB 内 market_signals / trade_signals / "
+        "sniper_candidates / sim_positions 等汇总，作为 Alpha 管线代理指标；"
+        "非 OpenClaw 逐笔血缘，待进化引擎写入专用阶段表后可切换。"
+    )
+
+
+def _alpha_lab_compute_counts(conn: Any) -> dict:
+    """Alpha 工坊漏斗数字：近窗内去重标的（与下钻同一口径）。"""
+    c6_ms = _alpha_lab_code6("ms.code")
+    c6_sn = _alpha_lab_code6("sn.code")
+    c6_hm = _alpha_lab_code6("hm.code")
+    c6_ts = _alpha_lab_code6("ts.code")
+    c6_sp = _alpha_lab_code6("sp.code")
+    win = "CURRENT_TIMESTAMP - INTERVAL 30 DAY"
+    # 生成池：扫描/游资/狙击/信号的并集
+    gen_sql = f"""
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT {c6_ms}
+            FROM market_signals ms
+            WHERE ms.code IS NOT NULL AND TRIM(CAST(ms.code AS VARCHAR)) <> ''
+              AND ms.snapshot_time >= {win}
+            UNION
+            SELECT DISTINCT {c6_sn}
+            FROM sniper_candidates sn
+            WHERE sn.code IS NOT NULL AND TRIM(CAST(sn.code AS VARCHAR)) <> ''
+              AND (sn.snapshot_time IS NULL OR sn.snapshot_time >= {win})
+            UNION
+            SELECT DISTINCT {c6_hm}
+            FROM hotmoney_signals hm
+            WHERE hm.code IS NOT NULL AND TRIM(CAST(hm.code AS VARCHAR)) <> ''
+              AND hm.snapshot_time >= {win}
+            UNION
+            SELECT DISTINCT {c6_ts}
+            FROM trade_signals ts
+            WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+              AND ts.snapshot_time >= {win}
+        ) g
+    """
+    # 回测代理：策略侧交易信号
+    bt_sql = f"""
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT {c6_ts}
+            FROM trade_signals ts
+            WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+              AND ts.snapshot_time >= {win}
+        ) b
+    """
+    # 风控代理：置信度阈上
+    risk_sql = f"""
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT {c6_ts}
+            FROM trade_signals ts
+            WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+              AND ts.snapshot_time >= {win}
+              AND ts.confidence IS NOT NULL AND ts.confidence >= 0.5
+        ) r
+    """
+    dep_sql = f"""
+        SELECT COUNT(*) FROM (
+            SELECT DISTINCT {c6_sp}
+            FROM sim_positions sp
+            WHERE sp.code IS NOT NULL AND TRIM(CAST(sp.code AS VARCHAR)) <> ''
+              AND sp.qty IS NOT NULL AND ABS(sp.qty) > 1e-9
+        ) d
+    """
+    g = int(conn.execute(gen_sql).fetchone()[0] or 0)
+    b = int(conn.execute(bt_sql).fetchone()[0] or 0)
+    r = int(conn.execute(risk_sql).fetchone()[0] or 0)
+    d = int(conn.execute(dep_sql).fetchone()[0] or 0)
+    return {
+        "generated_today": g,
+        "passed_backtest": b,
+        "passed_risk": r,
+        "deployed": d,
+    }
+
+
+def _alpha_lab_drill_rows(conn: Any, stage: str, limit: int) -> list:
+    c6_ms = _alpha_lab_code6("ms.code")
+    c6_sn = _alpha_lab_code6("sn.code")
+    c6_hm = _alpha_lab_code6("hm.code")
+    c6_ts = _alpha_lab_code6("ts.code")
+    c6_sp = _alpha_lab_code6("sp.code")
+    win = "CURRENT_TIMESTAMP - INTERVAL 30 DAY"
+    lim = max(1, min(int(limit or 100), 500))
+    st = (stage or "").strip().lower()
+
+    def _row(code6: str, name: Any, subtitle: str, score: Any, conf: Any, sid: Any, snap: Any) -> dict:
+        bc = str(code6 or "").strip()
+        return {
+            "code": bc,
+            "stock_name": str(name or "").strip(),
+            "subtitle": subtitle or None,
+            "score": float(score) if score is not None else None,
+            "confidence": float(conf) if conf is not None else None,
+            "strategy_id": str(sid).strip() if sid else None,
+            "snapshot_time": str(snap) if snap is not None else None,
+        }
+
+    if st == "generated":
+        sql = f"""
+            WITH all_gen AS (
+                SELECT {c6_ms} AS code6, ms.snapshot_time AS ts,
+                    CAST(ms.signal_type AS VARCHAR) AS stype,
+                    CAST(ms.score AS DOUBLE) AS sc
+                FROM market_signals ms
+                WHERE ms.code IS NOT NULL AND TRIM(CAST(ms.code AS VARCHAR)) <> ''
+                  AND ms.snapshot_time >= {win}
+                UNION ALL
+                SELECT {c6_sn}, sn.snapshot_time,
+                    'sniper', sn.sniper_score
+                FROM sniper_candidates sn
+                WHERE sn.code IS NOT NULL AND TRIM(CAST(sn.code AS VARCHAR)) <> ''
+                  AND (sn.snapshot_time IS NULL OR sn.snapshot_time >= {win})
+                UNION ALL
+                SELECT {c6_hm}, hm.snapshot_time,
+                    'hotmoney', hm.win_rate
+                FROM hotmoney_signals hm
+                WHERE hm.code IS NOT NULL AND TRIM(CAST(hm.code AS VARCHAR)) <> ''
+                  AND hm.snapshot_time >= {win}
+                UNION ALL
+                SELECT {c6_ts}, ts.snapshot_time,
+                    CAST(ts.signal AS VARCHAR), ts.signal_score
+                FROM trade_signals ts
+                WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+                  AND ts.snapshot_time >= {win}
+            ),
+            agg AS (
+                SELECT code6,
+                    MAX(ts) AS last_ts,
+                    arg_max(stype, ts) AS last_type,
+                    arg_max(sc, ts) AS last_score
+                FROM all_gen
+                GROUP BY 1
+            ),
+            basic_rn AS (
+                SELECT name,
+                    split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                        ORDER BY CAST(code AS VARCHAR) DESC
+                    ) AS rn
+                FROM a_stock_basic
+            )
+            SELECT a.code6, br.name, a.last_type, a.last_score, a.last_ts
+            FROM agg a
+            LEFT JOIN basic_rn br ON br.code6 = a.code6 AND br.rn = 1
+            ORDER BY a.last_ts DESC NULLS LAST, a.code6
+            LIMIT ?
+        """
+        rows = conn.execute(sql, [lim]).fetchall() or []
+        out = []
+        for t in rows:
+            code6, name, ltype, lsc, ts = (t + (None,) * 5)[:5]
+            lt = str(ltype or "").strip() or "signal"
+            sub = lt + (f" · {lsc:.4g}" if lsc is not None else "")
+            out.append(_row(code6, name, sub, lsc, None, None, ts))
+        return out
+
+    if st in ("backtest", "passed_backtest"):
+        sql = f"""
+            WITH ts_rn AS (
+                SELECT ts.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY {c6_ts}
+                        ORDER BY ts.snapshot_time DESC NULLS LAST
+                    ) AS rn
+                FROM trade_signals ts
+                WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+                  AND ts.snapshot_time >= {win}
+            ),
+            basic_rn AS (
+                SELECT name,
+                    split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                        ORDER BY CAST(code AS VARCHAR) DESC
+                    ) AS rn
+                FROM a_stock_basic
+            )
+            SELECT
+                split_part(UPPER(TRIM(CAST(t.code AS VARCHAR))), '.', 1),
+                br.name,
+                CAST(t.signal AS VARCHAR),
+                t.signal_score,
+                t.confidence,
+                t.strategy_id,
+                t.snapshot_time
+            FROM ts_rn t
+            LEFT JOIN basic_rn br
+                ON br.code6 = split_part(UPPER(TRIM(CAST(t.code AS VARCHAR))), '.', 1) AND br.rn = 1
+            WHERE t.rn = 1
+            ORDER BY t.snapshot_time DESC NULLS LAST, t.code
+            LIMIT ?
+        """
+        rows = conn.execute(sql, [lim]).fetchall() or []
+        out = []
+        for t in rows:
+            c6, name, sig, ss, cf, sid, ts = (t + (None,) * 7)[:7]
+            out.append(_row(c6, name, str(sig or "signal"), ss, cf, sid, ts))
+        return out
+
+    if st in ("risk", "passed_risk"):
+        sql = f"""
+            WITH ts_rn AS (
+                SELECT ts.*,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY {c6_ts}
+                        ORDER BY ts.snapshot_time DESC NULLS LAST
+                    ) AS rn
+                FROM trade_signals ts
+                WHERE ts.code IS NOT NULL AND TRIM(CAST(ts.code AS VARCHAR)) <> ''
+                  AND ts.snapshot_time >= {win}
+                  AND ts.confidence IS NOT NULL AND ts.confidence >= 0.5
+            ),
+            basic_rn AS (
+                SELECT name,
+                    split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                        ORDER BY CAST(code AS VARCHAR) DESC
+                    ) AS rn
+                FROM a_stock_basic
+            )
+            SELECT
+                split_part(UPPER(TRIM(CAST(t.code AS VARCHAR))), '.', 1),
+                br.name,
+                CAST(t.signal AS VARCHAR),
+                t.signal_score,
+                t.confidence,
+                t.strategy_id,
+                t.snapshot_time
+            FROM ts_rn t
+            LEFT JOIN basic_rn br
+                ON br.code6 = split_part(UPPER(TRIM(CAST(t.code AS VARCHAR))), '.', 1) AND br.rn = 1
+            WHERE t.rn = 1
+            ORDER BY t.confidence DESC NULLS LAST, t.snapshot_time DESC NULLS LAST
+            LIMIT ?
+        """
+        rows = conn.execute(sql, [lim]).fetchall() or []
+        out = []
+        for t in rows:
+            c6, name, sig, ss, cf, sid, ts = (t + (None,) * 7)[:7]
+            out.append(_row(c6, name, str(sig or "signal"), ss, cf, sid, ts))
+        return out
+
+    if st in ("deployed", "production"):
+        sql = f"""
+            WITH basic_rn AS (
+                SELECT name,
+                    split_part(CAST(code AS VARCHAR), '.', 1) AS code6,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY split_part(CAST(code AS VARCHAR), '.', 1)
+                        ORDER BY CAST(code AS VARCHAR) DESC
+                    ) AS rn
+                FROM a_stock_basic
+            )
+            SELECT
+                {c6_sp},
+                br.name,
+                sp.side,
+                sp.qty,
+                sp.avg_price,
+                sp.updated_at
+            FROM sim_positions sp
+            LEFT JOIN basic_rn br
+                ON br.code6 = {c6_sp} AND br.rn = 1
+            WHERE sp.qty IS NOT NULL AND ABS(sp.qty) > 1e-9
+            ORDER BY sp.updated_at DESC NULLS LAST
+            LIMIT ?
+        """
+        rows = conn.execute(sql, [lim]).fetchall() or []
+        out = []
+        for t in rows:
+            c6, name, side, qty, ap, ts = (t + (None,) * 6)[:6]
+            sub = f"{side or ''} · 数量 {qty}" + (f" · 成本 {ap:.4g}" if ap is not None else "")
+            out.append(_row(c6, name, sub, qty, None, None, ts))
+        return out
+
+    return []
+
+
+@router.get("/alpha-lab/drill")
+def get_alpha_lab_drill(stage: str = "generated", limit: int = 100) -> dict:
+    """Alpha 工坊下钻：按阶段返回标的列表（与 /alpha-lab 同一 DuckDB 口径）。"""
+    try:
+        from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn, get_db_path
+        import os
+
+        note = _alpha_lab_binding_note()
+        if not os.path.isfile(get_db_path()):
+            return {"stage": stage, "items": [], "total": 0, "source": "stub_no_db", "binding_note": note}
+        conn = get_conn(read_only=False)
+        try:
+            ensure_tables(conn)
+            items = _alpha_lab_drill_rows(conn, stage, limit)
+            return {
+                "stage": stage,
+                "items": items,
+                "total": len(items),
+                "source": "duckdb",
+                "binding_note": note,
+            }
+        finally:
+            conn.close()
+    except Exception:
+        _log.exception("get_alpha_lab_drill")
+        return {
+            "stage": stage,
+            "items": [],
+            "total": 0,
+            "source": "error",
+            "binding_note": _alpha_lab_binding_note(),
+        }
+
+
 @router.get("/alpha-lab")
 def get_alpha_lab() -> dict:
-    """Alpha Lab funnel (stub)."""
-    return {
-        "generated_today": 1243,
-        "passed_backtest": 217,
-        "passed_risk": 64,
-        "deployed": 12,
-    }
+    """Alpha 工坊漏斗：优先 DuckDB 代理指标；无库或失败时返回 0。"""
+    note = _alpha_lab_binding_note()
+    try:
+        from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return {
+                "generated_today": 0,
+                "passed_backtest": 0,
+                "passed_risk": 0,
+                "deployed": 0,
+                "source": "stub_no_db",
+                "binding_note": note,
+            }
+        conn = get_conn(read_only=False)
+        try:
+            ensure_tables(conn)
+            out = _alpha_lab_compute_counts(conn)
+            out["source"] = "duckdb"
+            out["binding_note"] = note
+            return out
+        finally:
+            conn.close()
+    except Exception:
+        _log.exception("get_alpha_lab")
+        return {
+            "generated_today": 0,
+            "passed_backtest": 0,
+            "passed_risk": 0,
+            "deployed": 0,
+            "source": "error",
+            "binding_note": note,
+        }

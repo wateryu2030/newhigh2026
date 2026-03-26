@@ -33,3 +33,4 @@
   - 运维：Gateway 启动时 init_app_env()；logging_config 增加 service、trace_id。
 - **本轮改进（按 IMPROVEMENT_PLAN_EXECUTABLE）**：① 数据源扩展：tushare_source.py、binance_source.py 已注册（TUSHARE_TOKEN / BINANCE_KLINES_SYMBOL）；② JWT 认证：gateway/auth/jwt_auth.py、auth_middleware.py，登录返回 JWT，JWT_AUTH_REQUIRED=1 时校验 /api/*；③ 前端移动三页：底部导航改为 Dashboard/Market/AI Trading/Strategies/Portfolio，trade/strategies/portfolio/ai-trading 增加 min-h-screen pb-24，Portfolio 页接入 executionEquityCurve；④ Grafana 指标：gateway/metrics.py 记录 pipeline_stage_latency_seconds、gateway_requests_total，Grafana 示例看板增加 latency 与 requests 面板；⑤ E2E：smoke 增加 portfolio、ai-trading 导航用例，tests 增加 test_data_pipeline、test_strategy_engine、test_execution_engine。
 - 后续可深化：RL 环境与训练、更多券商对接、策略市场仅真实数据（去 stub）。
+- **迭代与数据时效**：`Makefile`（`make dev-check` / `gateway-restart` / `pipeline-editable`）；每日采集策略见 `docs/ITERATION_AND_DATA_SLA.md`（Tushare 优先、可调 `TUSHARE_DAILY_DAYS_BACK`）。

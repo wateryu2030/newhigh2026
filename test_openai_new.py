@@ -11,27 +11,27 @@ def test_openai_new():
     print("=" * 60)
     print("测试OpenAI API (新版本接口)")
     print("=" * 60)
-    
+
     try:
         # 1. 检查API Key
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             print("❌ 未找到OPENAI_API_KEY环境变量")
             return False
-        
+
         print(f"✅ OpenAI API Key已配置: {api_key[:10]}...{api_key[-10:]}")
-        
+
         # 2. 导入openai (新版本)
         print("\n导入openai模块 (新版本)...")
         from openai import OpenAI
-        
+
         # 创建客户端
         client = OpenAI(api_key=api_key)
         print("✅ OpenAI客户端创建成功")
-        
+
         # 3. 测试调用
         print("\n测试OpenAI API调用...")
-        
+
         try:
             # 使用新版本的调用方式
             response = client.chat.completions.create(
@@ -41,7 +41,7 @@ def test_openai_new():
                 ],
                 max_tokens=50
             )
-            
+
             if response.choices and len(response.choices) > 0:
                 text = response.choices[0].message.content.strip()
                 print(f"✅ OpenAI API调用成功！")
@@ -50,10 +50,10 @@ def test_openai_new():
             else:
                 print(f"❌ OpenAI API调用失败: 无响应文本")
                 return False
-                
+
         except Exception as e:
             print(f"❌ OpenAI API调用异常: {e}")
-            
+
             # 尝试更简单的模型
             print("\n尝试使用更简单的模型...")
             try:
@@ -62,7 +62,7 @@ def test_openai_new():
                     prompt="请用一句话介绍你自己",
                     max_tokens=50
                 )
-                
+
                 if response.choices and len(response.choices) > 0:
                     text = response.choices[0].text.strip()
                     print(f"✅ OpenAI完成API调用成功！")
@@ -71,11 +71,11 @@ def test_openai_new():
                 else:
                     print(f"❌ OpenAI完成API调用失败: 无响应文本")
                     return False
-                    
+
             except Exception as e2:
                 print(f"❌ 完成调用也失败: {e2}")
                 return False
-                
+
     except ImportError as e:
         print(f"❌ 导入失败: {e}")
         return False
@@ -90,29 +90,29 @@ def test_deepseek_new():
     print("\n" + "=" * 60)
     print("测试DeepSeek API (新版本接口)")
     print("=" * 60)
-    
+
     try:
         # 检查API Key
         api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             print("❌ 未找到DEEPSEEK_API_KEY环境变量")
             return False
-        
+
         print(f"✅ DeepSeek API Key已配置: {api_key[:10]}...{api_key[-10:]}")
-        
+
         # 导入openai (新版本)
         from openai import OpenAI
-        
+
         # 创建DeepSeek客户端
         client = OpenAI(
             api_key=api_key,
             base_url="https://api.deepseek.com"
         )
         print("✅ DeepSeek客户端创建成功")
-        
+
         # 测试调用
         print("\n测试DeepSeek API调用...")
-        
+
         try:
             response = client.chat.completions.create(
                 model="deepseek-chat",
@@ -121,7 +121,7 @@ def test_deepseek_new():
                 ],
                 max_tokens=50
             )
-            
+
             if response.choices and len(response.choices) > 0:
                 text = response.choices[0].message.content.strip()
                 print(f"✅ DeepSeek API调用成功！")
@@ -130,11 +130,11 @@ def test_deepseek_new():
             else:
                 print(f"❌ DeepSeek API调用失败: 无响应文本")
                 return False
-                
+
         except Exception as e:
             print(f"❌ DeepSeek API调用异常: {e}")
             return False
-            
+
     except Exception as e:
         print(f"❌ DeepSeek测试失败: {e}")
         return False
@@ -142,22 +142,22 @@ def test_deepseek_new():
 def main():
     """主函数"""
     print("开始测试可用的AI API (新版本接口)...")
-    
+
     # 先测试OpenAI
     print("\n1. 测试OpenAI API...")
     openai_success = test_openai_new()
-    
+
     # 如果OpenAI失败，测试DeepSeek
     if not openai_success:
         print("\n2. 测试DeepSeek API (备用)...")
         deepseek_success = test_deepseek_new()
     else:
         deepseek_success = False
-    
+
     print("\n" + "=" * 60)
     print("测试总结")
     print("=" * 60)
-    
+
     if openai_success:
         print("🎉 OpenAI API测试成功！")
         print("   建议使用OpenAI继续开发")
@@ -187,10 +187,10 @@ def main():
 
 if __name__ == "__main__":
     result = main()
-    
+
     if result:
         print(f"\n✅ 推荐使用的AI服务: {result}")
     else:
         print("\n⚠ 没有可用的AI服务，将使用模拟数据继续开发")
-    
+
     sys.exit(0 if result else 0)  # 即使失败也返回0，不阻塞开发

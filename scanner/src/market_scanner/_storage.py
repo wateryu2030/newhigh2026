@@ -10,7 +10,7 @@ def write_signals(signals: list[tuple[str, str, float]], signal_type: str) -> in
     conn = get_connection(read_only=False)
     if not conn:
         return 0
-    
+
     ensure_core_tables(conn)
     conn.execute("DELETE FROM market_signals WHERE signal_type = ?", [signal_type])
     for code, st, score in signals:

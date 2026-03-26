@@ -2,6 +2,8 @@
 """
 将 a_stock_daily 从「少数测试股」扩到全市场（或前 N 只），写入 quant_system.duckdb。
 
+与每日调度分工：start_schedulers 里 `TUSHARE_DAILY_DAYS_BACK` 只做短窗口增量；**长历史、大面积缺口**应使用本脚本按需执行，而不是把每日窗口拉大。
+
 数据源（--source）：
 - ashare_daily_kline：akshare → 东方财富。若 VPN/系统代理导致 ProxyError，可试 --no-proxy 或换 Tushare。
 - tushare_daily：需 Tushare Token（项目根 `.env` 中 `TUSHARE_TOKEN`，或别名 `TUSHARE_API_KEY` / `TS_TOKEN`）。
@@ -96,7 +98,8 @@ def main() -> int:
         epilog=(
             "补全全市场（约 5k+ 只，耗时可数小时）：\n"
             "  python scripts/backfill_a_stock_daily.py --source tushare_daily --all-market\n"
-            "已有一部分日 K 的标的会自动走增量，不会重复拉满一年。"
+            "已有一部分日 K 的标的会自动走增量，不会重复拉满一年。\n"
+            "（每日调度请保持短窗口；深度回补用本脚本，勿仅靠调大 TUSHARE_DAILY_DAYS_BACK。）"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

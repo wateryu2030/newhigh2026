@@ -8,10 +8,10 @@ import datetime as dt
 def update_fundflow(max_retries: int = 3) -> int:
     """
     采集资金流数据
-    
+
     Args:
         max_retries: 最大重试次数（网络错误时）
-    
+
     Returns:
         采集条数，失败返回 0
     """
@@ -39,7 +39,7 @@ def update_fundflow(max_retries: int = 3) -> int:
             else:
                 print(f"  资金流采集失败，已达最大重试次数：{e}")
                 return 0
-    
+
     if df is None or df.empty:
         return 0
     now = dt.datetime.now()

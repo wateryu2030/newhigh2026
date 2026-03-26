@@ -134,7 +134,7 @@ report = f"""# {name}({symbol})研究报告
 
 **适合投资者类型**：
 - 价值投资者
-- 行业配置型投资者  
+- 行业配置型投资者
 - 中长期投资者（6个月以上）
 - 中等风险偏好投资者
 
@@ -150,16 +150,16 @@ def save_report():
         # 创建目录
         output_dir = Path(__file__).parent / "reports" / "stocks"
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 保存文本文件
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         txt_file = output_dir / f"{symbol}_report_{timestamp}.txt"
-        
+
         with open(txt_file, 'w', encoding='utf-8') as f:
             f.write(report)
-        
+
         print(f"✅ 报告已保存: {txt_file}")
-        
+
         # 保存JSON数据
         json_data = {
             "metadata": {
@@ -171,15 +171,15 @@ def save_report():
             "data": data,
             "news": news_items
         }
-        
+
         json_file = output_dir / f"{symbol}_data_{timestamp}.json"
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=2)
-        
+
         print(f"✅ 数据已保存: {json_file}")
-        
+
         return txt_file, json_file
-        
+
     except Exception as e:
         print(f"保存失败: {e}")
         return None, None
@@ -191,17 +191,17 @@ if __name__ == "__main__":
     print(f"标的：{symbol} {name}")
     print(f"时间：{current_time}")
     print("=" * 60)
-    
+
     # 显示报告
     print(report[:2000] + "..." if len(report) > 2000 else report)
-    
+
     # 保存文件
     txt_file, json_file = save_report()
-    
+
     if txt_file:
         print(f"\n📁 报告文件: {txt_file}")
         print(f"📊 数据文件: {json_file}")
-    
+
     print("\n" + "=" * 60)
     print("✅ 报告生成完成")
     print("=" * 60)

@@ -71,6 +71,7 @@ grep -q "def get_dashboard" "$EP" && ok "API: /api/dashboard" || fail "API: /api
 grep -q "def get_evolution"  "$EP" && ok "API: /api/evolution"  || fail "API: /api/evolution"
 grep -q "def get_trades"     "$EP" && ok "API: /api/trades"     || fail "API: /api/trades"
 grep -q "def get_alpha_lab"  "$EP" && ok "API: /api/alpha-lab"  || fail "API: /api/alpha-lab"
+grep -q "def get_alpha_lab_drill" "$EP" && ok "API: /api/alpha-lab/drill" || fail "API: /api/alpha-lab/drill"
 grep -q "list_strategies\|/strategies" "$EP" && ok "API: /api/strategies" || fail "API: /api/strategies"
 grep -q "get_portfolio_weights\|/portfolio" "$EP" && ok "API: /api/portfolio" || fail "API: /api/portfolio"
 grep -q "risk_status\|/risk" "$EP" && ok "API: /api/risk" || fail "API: /api/risk"

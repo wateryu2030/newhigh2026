@@ -12,24 +12,24 @@ def test_tushare():
     print("=" * 60)
     print(f"Tushare快速测试 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     try:
         # 设置token
         token = os.getenv("TUSHARE_TOKEN")
         if not token:
             print("❌ 未找到TUSHARE_TOKEN环境变量")
             return False
-        
+
         print(f"✅ Tushare Token: {token[:10]}...{token[-10:]}")
         ts.set_token(token)
-        
+
         # 创建pro接口
         pro = ts.pro_api()
         print("✅ Tushare Pro接口创建成功")
-        
+
         # 测试简单的数据获取（不涉及实际网络调用）
         print("\n测试Tushare基本功能...")
-        
+
         # 1. 测试交易日历（轻量级调用）
         try:
             print("获取交易日历信息...")
@@ -42,7 +42,7 @@ def test_tushare():
                 print("⚠ 交易日历数据为空")
         except Exception as e:
             print(f"⚠ 交易日历获取失败: {e}")
-        
+
         # 2. 测试股票列表（基础信息）
         try:
             print("\n获取股票基础信息...")
@@ -54,7 +54,7 @@ def test_tushare():
                 print("⚠ 股票列表数据为空")
         except Exception as e:
             print(f"⚠ 股票列表获取失败: {e}")
-        
+
         # 3. 测试日线数据（少量数据）
         try:
             print("\n测试日线数据获取...")
@@ -68,7 +68,7 @@ def test_tushare():
                 print("⚠ 日线数据为空")
         except Exception as e:
             print(f"⚠ 日线数据获取失败: {e}")
-        
+
         print("\n" + "=" * 60)
         print("Tushare测试总结")
         print("=" * 60)
@@ -76,9 +76,9 @@ def test_tushare():
         print("✅ API Token有效")
         print("✅ 可以正常获取股票数据")
         print("\n🚀 可以继续集成到data_fetcher.py")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Tushare测试失败: {e}")
         import traceback

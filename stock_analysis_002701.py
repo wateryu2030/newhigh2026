@@ -31,13 +31,13 @@ except ImportError:
 
 class StockAnalyzer002701:
     """002701股票分析器"""
-    
+
     def __init__(self):
         self.symbol = "002701"
         self.name = "奥瑞金"
         self.market = "SZ"
         self.full_symbol = f"{self.symbol}.{self.market}"
-        
+
         # 模拟数据（如果akshare不可用）
         self.mock_data = {
             "price_data": {
@@ -61,51 +61,51 @@ class StockAnalyzer002701:
                 "support_levels": [4.60, 4.45, 4.30],
             }
         }
-    
+
     def fetch_real_data(self):
         """获取真实数据"""
         if not AKSHARE_AVAILABLE:
             print("使用模拟数据（akshare不可用）")
             return self.mock_data
-        
+
         try:
             print(f"获取{self.name}({self.symbol})数据...")
-            
+
             # 获取实时行情
             stock_zh_a_spot_em_df = ak.stock_zh_a_spot_em()
             stock_data = stock_zh_a_spot_em_df[stock_zh_a_spot_em_df['代码'] == self.symbol]
-            
+
             if not stock_data.empty:
                 current_price = float(stock_data.iloc[0]['最新价'])
                 change_pct = float(stock_data.iloc[0]['涨跌幅'].replace('%', ''))
                 volume = float(stock_data.iloc[0]['成交量'].replace('手', '')) / 10000  # 万手
-                
+
                 # 获取历史数据计算涨跌
                 stock_zh_a_hist_df = ak.stock_zh_a_hist(symbol=self.symbol, period="daily", start_date="20250101", end_date="20250313")
-                
+
                 if len(stock_zh_a_hist_df) >= 30:
                     # 计算7天和30天涨跌
                     price_today = current_price
                     price_7d_ago = float(stock_zh_a_hist_df.iloc[-7]['收盘'])
                     price_30d_ago = float(stock_zh_a_hist_df.iloc[-30]['收盘'])
-                    
+
                     change_7d = ((price_today - price_7d_ago) / price_7d_ago) * 100
                     change_30d = ((price_today - price_30d_ago) / price_30d_ago) * 100
-                    
+
                     # 计算技术指标
                     closes = stock_zh_a_hist_df['收盘'].astype(float).values
                     ma_50 = np.mean(closes[-50:]) if len(closes) >= 50 else np.mean(closes)
                     ma_200 = np.mean(closes[-200:]) if len(closes) >= 200 else np.mean(closes)
-                    
+
                     # 计算RSI
                     deltas = np.diff(closes[-15:])
                     gains = deltas[deltas > 0].sum() / 14
                     losses = -deltas[deltas < 0].sum() / 14
                     rsi = 100 - (100 / (1 + gains/losses)) if losses != 0 else 100
-                    
+
                     # 获取基本面数据（模拟）
                     market_cap = current_price * 25.4  # 亿股 * 股价
-                    
+
                     return {
                         "price_data": {
                             "current_price": round(current_price, 2),
@@ -125,19 +125,19 @@ class StockAnalyzer002701:
                             "ma_50": round(ma_50, 2),
                             "ma_200": round(ma_200, 2),
                             "rsi": round(rsi, 1),
-                            "support_levels": [round(current_price * 0.95, 2), 
+                            "support_levels": [round(current_price * 0.95, 2),
                                             round(current_price * 0.90, 2),
                                             round(current_price * 0.85, 2)],
                         }
                     }
-            
+
             print("真实数据获取失败，使用模拟数据")
             return self.mock_data
-            
+
         except Exception as e:
             print(f"获取真实数据失败: {e}")
             return self.mock_data
-    
+
     def get_news_sentiment(self):
         """获取新闻情绪"""
         # 模拟新闻数据
@@ -173,39 +173,39 @@ class StockAnalyzer002701:
                 "sentiment": "neutral"
             }
         ]
-        
+
         # 分析情绪
         positive_count = sum(1 for n in news_items if n["sentiment"] == "positive")
         negative_count = sum(1 for n in news_items if n["sentiment"] == "negative")
-        
+
         if positive_count > negative_count + 1:
             market_sentiment = "看多"
         elif negative_count > positive_count + 1:
             market_sentiment = "看空"
         else:
             market_sentiment = "中性"
-        
+
         return {
             "recent_news": news_items[:5],
             "market_sentiment": market_sentiment,
             "sentiment_score": f"{positive_count}正/{len(news_items)-positive_count-negative_count}中/{negative_count}负"
         }
-    
+
     def generate_ai_analysis(self, data: dict) -> str:
         """使用Gemini AI生成分析报告"""
         if not GEMINI_AVAILABLE:
             return self.generate_mock_analysis(data)
-        
+
         try:
             # 获取API Key
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
                 print("未设置GEMINI_API_KEY，使用模拟分析")
                 return self.generate_mock_analysis(data)
-            
+
             # 创建客户端
             client = Client(api_key=api_key)
-            
+
             # 准备提示
             prompt = f"""作为资深金融分析师，请基于以下数据为{self.name}({self.symbol})生成一份专业研究报告：
 
@@ -237,19 +237,19 @@ class StockAnalyzer002701:
 5 最终结论
 
 要求：专业、客观、数据驱动，给出明确的投资建议。"""
-            
+
             # 调用Gemini
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt
             )
-            
+
             return response.text
-            
+
         except Exception as e:
             print(f"Gemini AI分析失败: {e}")
             return self.generate_mock_analysis(data)
-    
+
     def generate_mock_analysis(self, data: dict) -> str:
         """生成模拟分析报告"""
         return f"""# {self.name}({self.symbol})研究报告
@@ -296,23 +296,23 @@ class StockAnalyzer002701:
 4. 需密切关注原材料成本控制和客户拓展进展
 
 **适合投资者**：价值投资者、行业配置型投资者，投资期限6个月以上。"""
-    
+
     def generate_report(self, use_ai: bool = True) -> dict:
         """生成完整报告"""
         print(f"生成{self.name}({self.symbol})研究报告...")
-        
+
         # 获取数据
         data = self.fetch_real_data()
-        
+
         # 获取新闻情绪
         news_data = self.get_news_sentiment()
-        
+
         # 生成分析报告
         if use_ai and GEMINI_AVAILABLE:
             analysis = self.generate_ai_analysis(data)
         else:
             analysis = self.generate_mock_analysis(data)
-        
+
         # 构建完整报告
         report = {
             "metadata": {
@@ -328,37 +328,37 @@ class StockAnalyzer002701:
             "news_sentiment": news_data,
             "full_report": analysis
         }
-        
+
         return report
-    
+
     def save_report(self, report: dict, filename: str = None):
         """保存报告到文件"""
         try:
             # 确保目录存在
             output_dir = project_root / "reports" / "stocks"
             output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             if filename is None:
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"{self.symbol}_report_{timestamp}.json"
-            
+
             filepath = output_dir / filename
-            
+
             # 保存JSON
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
-            
+
             print(f"✅ 报告已保存: {filepath}")
-            
+
             # 同时保存文本版本
             txt_filepath = filepath.with_suffix('.txt')
             with open(txt_filepath, 'w', encoding='utf-8') as f:
                 f.write(report["full_report"])
-            
+
             print(f"✅ 文本报告已保存: {txt_filepath}")
-            
+
             return filepath
-            
+
         except Exception as e:
             print(f"保存报告失败: {e}")
             return None
@@ -371,13 +371,13 @@ def main():
     print("标的：002701 奥瑞金")
     print(f"时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     # 创建分析器
     analyzer = StockAnalyzer002701()
-    
+
     # 生成报告
     report = analyzer.generate_report(use_ai=True)
-    
+
     # 显示关键信息
     print("\n📊 关键数据摘要:")
     print(f"当前价格: ¥{report['price_data']['current_price']}")
@@ -386,31 +386,31 @@ def main():
     print(f"市盈率: {report['fundamentals']['pe_ratio']}倍")
     print(f"RSI: {report['technical']['rsi']}")
     print(f"市场情绪: {report['news_sentiment']['market_sentiment']}")
-    
+
     # 保存报告
     saved_file = analyzer.save_report(report)
-    
+
     # 显示报告摘要
     print("\n" + "=" * 60)
     print("报告摘要")
     print("=" * 60)
-    
+
     # 只显示报告的前几行
     report_lines = report["full_report"].split('\n')
     for line in report_lines[:20]:
         print(line)
-    
+
     if len(report_lines) > 20:
         print("...（完整报告已保存到文件）")
-    
+
     print("\n" + "=" * 60)
     print("✅ 报告生成完成")
     print(f"数据源: {report['metadata']['data_source']}")
     print(f"分析源: {report['metadata']['analysis_source']}")
-    
+
     if saved_file:
         print(f"报告文件: {saved_file}")
-    
+
     return report
 
 

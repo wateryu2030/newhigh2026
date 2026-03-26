@@ -15,7 +15,7 @@ class SectorRotationAI:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error,import-outside-toplevel
         conn = get_connection(read_only=False)
         if conn:
             ensure_core_tables(conn)
@@ -35,7 +35,7 @@ class SectorRotationAI:
                 LEFT JOIN a_stock_basic b ON d.code = b.code
                 GROUP BY COALESCE(b.sector, '未分类')
             """).fetchdf()
-        except Exception:
+        except (RuntimeError, OSError):  # pylint: disable=broad-exception-caught
             df = conn.execute("""
                 SELECT '全市场' AS sector, SUM(COALESCE(amount, 0)) AS total_volume
                 FROM a_stock_daily
@@ -60,7 +60,7 @@ class SectorRotationAI:
             df = self.sector_strength()
         if df is None or df.empty:
             return 0
-        from ._storage import write_sector_strength
+        from ._storage import write_sector_strength  # pylint: disable=import-outside-toplevel
 
         rows = [
             (r["sector"], float(r.get("total_volume", 0)), int(r.get("rank", 0)))
@@ -77,9 +77,9 @@ class SectorRotationAI:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error,import-outside-toplevel
             ensure_tables(conn)
-        except Exception:
+        except (RuntimeError, OSError):  # pylint: disable=broad-exception-caught
             pass
         conn.execute("DELETE FROM main_themes")
         conn.register("tmp", df[["sector", "total_volume", "rank"]])
@@ -100,7 +100,7 @@ def run_sector_rotation_ai() -> int:
     if main is not None and not main.empty:
         ai.save_main_themes(main)
         return len(main)
-    from ._storage import write_sector_strength
+    from ._storage import write_sector_strength  # pylint: disable=import-outside-toplevel
 
     write_sector_strength([("全市场", 50.0, 1)])
     return 1

@@ -50,24 +50,24 @@ def filter_existing_news() -> List[Dict[str, Any]]:
     """从现有新闻数据库中筛选监控股票相关新闻"""
     try:
         conn = duckdb.connect('data/quant_system.duckdb')
-        
+
         # 从 official_news 表中筛选
         result = conn.execute("""
-            SELECT id, title, source, content, url, keywords, collected_at 
-            FROM official_news 
+            SELECT id, title, source, content, url, keywords, collected_at
+            FROM official_news
             WHERE collected_at >= ?
             ORDER BY collected_at DESC
         """, [(datetime.datetime.now() - datetime.timedelta(days=1)).isoformat()]).fetchall()
-        
+
         filtered_news = []
         for row in result:
             news_id, title, source, content, url, keywords, collected_at = row
-            
+
             # 检查是否包含监控关键词
             text = f"{title} {content}"
             matched_keywords = extract_keywords(text)
             stocks = identify_stocks(text)
-            
+
             if matched_keywords or stocks:
                 filtered_news.append({
                     'id': news_id,
@@ -81,10 +81,10 @@ def filter_existing_news() -> List[Dict[str, Any]]:
                     'related_stocks': [s['code'] for s in stocks],
                     'collected_at': collected_at
                 })
-        
+
         conn.close()
         return filtered_news
-        
+
     except Exception as e:
         print(f"筛选新闻失败：{e}")
         return []
@@ -92,11 +92,11 @@ def filter_existing_news() -> List[Dict[str, Any]]:
 
 def generate_stock_news_report(news_list: List[Dict[str, Any]], output_path: str):
     """生成股票新闻监控报告"""
-    
+
     # 按股票分组
     stock_news = {code: [] for code in ['002701', '300212', '600881']}
     other_news = []
-    
+
     for news in news_list:
         related = news.get('related_stocks', [])
         if related:
@@ -105,18 +105,18 @@ def generate_stock_news_report(news_list: List[Dict[str, Any]], output_path: str
                     stock_news[code].append(news)
         else:
             other_news.append(news)
-    
+
     # 生成报告
     report = []
     report.append("# 重点股票新闻监控报告")
     report.append(f"**生成时间**: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}")
     report.append(f"**监控标的**: 002701 奥瑞金、300212 易华录、600881 亚泰集团")
     report.append("")
-    
+
     for code, stock_info in [('002701', '奥瑞金'), ('300212', '易华录'), ('600881', '亚泰集团')]:
         report.append(f"## {code} {stock_info}")
         report.append("")
-        
+
         news = stock_news[code]
         if news:
             report.append(f"相关新闻：{len(news)} 条")
@@ -131,11 +131,11 @@ def generate_stock_news_report(news_list: List[Dict[str, Any]], output_path: str
         else:
             report.append("今日无相关新闻")
             report.append("")
-    
+
     # 保存报告
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(report))
-    
+
     return output_path
 
 
@@ -147,19 +147,19 @@ def main():
     print(f"时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"监控标的：奥瑞金 (002701)、易华录 (300212)、亚泰集团 (600881)")
     print()
-    
+
     # 筛选现有新闻
     print("📰 筛选监控股票相关新闻...")
     news_list = filter_existing_news()
     print(f"  找到 {len(news_list)} 条相关新闻")
-    
+
     # 生成报告
     report_path = f"data-pipeline/data/news/stock_monitor_report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
     Path(report_path).parent.mkdir(parents=True, exist_ok=True)
-    
+
     generate_stock_news_report(news_list, report_path)
     print(f"✅ 生成监控报告：{report_path}")
-    
+
     # 保存 JSON
     json_path = f"data-pipeline/data/news/stock_monitor_news_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(json_path, 'w', encoding='utf-8') as f:
@@ -171,15 +171,15 @@ def main():
             },
             'news': news_list
         }, f, ensure_ascii=False, indent=2)
-    
+
     print(f"✅ 保存 JSON 文件：{json_path}")
-    
+
     # 统计
     print("\n" + "=" * 60)
     print("监控完成")
     print("=" * 60)
     print(f"总计相关新闻：{len(news_list)} 条")
-    
+
     return {'total': len(news_list), 'report_path': report_path, 'json_path': json_path}
 
 

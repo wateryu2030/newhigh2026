@@ -53,7 +53,7 @@ def get_financial_report(
 ):
     """
     获取财报数据
-    
+
     Args:
         stock_code: 股票代码
         report_type: 报告类型 (可选)
@@ -64,33 +64,33 @@ def get_financial_report(
         conn = get_connection(read_only=False)
         if conn is None:
             return {"ok": False, "error": "数据库连接失败，请检查 quant_system.duckdb 是否存在"}
-        
+
         query = """
             SELECT * FROM financial_report
             WHERE stock_code = ?
         """
         params = [stock_code]
-        
+
         if report_type:
             query += " AND report_type = ?"
             params.append(report_type)
-        
+
         query += " ORDER BY report_date DESC LIMIT ?"
         params.append(limit)
-        
+
         df = conn.execute(query, params).fetchdf()
         conn.close()
-        
+
         if df.empty:
             return {"ok": False, "error": "未找到财报数据", "stock_code": stock_code}
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "count": len(df),
             "data": df.to_dict("records"),
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -99,23 +99,23 @@ def get_financial_report(
 def get_key_metrics(stock_code: str):
     """
     获取关键指标
-    
+
     Args:
         stock_code: 股票代码
     """
     try:
         collector = FinancialReportCollector()
         metrics = collector.get_key_metrics(stock_code)
-        
+
         if not metrics:
             return {"ok": False, "error": "获取指标失败", "stock_code": stock_code}
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "data": metrics,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -128,7 +128,7 @@ def get_metric_changes(
 ):
     """
     获取指标变化
-    
+
     Args:
         stock_code: 股票代码
         metric_name: 指标名称 (可选)
@@ -136,20 +136,20 @@ def get_metric_changes(
     """
     try:
         analyzer = FinancialAnalyzer()
-        
+
         metric_names = None
         if metric_name:
             metric_names = [metric_name]
-        
+
         changes = analyzer.calculate_changes(stock_code, metric_names, periods)
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "count": len(changes),
             "data": changes,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -162,7 +162,7 @@ def get_top_changes(
 ):
     """
     获取十大变化
-    
+
     Args:
         stock_code: 股票代码
         report_date: 报告日期 (可选)
@@ -171,14 +171,14 @@ def get_top_changes(
     try:
         analyzer = FinancialAnalyzer()
         changes = analyzer.get_top_changes(stock_code, report_date, top_n)
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "count": len(changes),
             "data": changes,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -190,7 +190,7 @@ def get_top_10_shareholders(
 ):
     """
     获取 10 大股东信息
-    
+
     Args:
         stock_code: 股票代码
         report_date: 报告日期 (可选，默认最新)
@@ -200,7 +200,7 @@ def get_top_10_shareholders(
         conn = get_connection(read_only=False)
         if conn is None:
             return {"ok": False, "error": "数据库连接失败", "stock_code": stock_code}
-        
+
         # 获取最新报告日期
         if report_date is None:
             result = conn.execute("""
@@ -208,22 +208,22 @@ def get_top_10_shareholders(
                 WHERE stock_code = ?
             """, [stock_code]).fetchone()
             report_date = result[0] if result else None
-        
+
         if report_date is None:
             conn.close()
             return {"ok": False, "error": "无股东数据", "stock_code": stock_code}
-        
+
         df = conn.execute("""
             SELECT * FROM top_10_shareholders
             WHERE stock_code = ? AND report_date = ?
             ORDER BY rank
         """, [stock_code, report_date]).fetchdf()
-        
+
         conn.close()
-        
+
         if df.empty:
             return {"ok": False, "error": "无股东数据", "stock_code": stock_code}
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
@@ -231,7 +231,7 @@ def get_top_10_shareholders(
             "count": len(df),
             "data": df.to_dict("records"),
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -244,7 +244,7 @@ def get_shareholder_changes(
 ):
     """
     获取股东变化分析
-    
+
     Args:
         stock_code: 股票代码
         current_date: 当前报告期 (可选)
@@ -255,13 +255,13 @@ def get_shareholder_changes(
         analysis = analyzer.analyze_shareholder_changes(
             stock_code, current_date, previous_date
         )
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "data": analysis,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -284,7 +284,7 @@ def get_collected_stocks_all_ranks(
 ):
     """
     已采集完成股票列表及全部十大股东
-    
+
     返回：股票代码、名称、最新报告期、排名(1-10)、股东名称、类型、持股数、持股比例
     """
     return _get_collected_stocks_shareholders(report_date=report_date, rank_filter=None, limit=limit * 10)
@@ -360,7 +360,7 @@ def get_shareholder_by_name(
 ):
     """
     按股东名称模糊搜索，返回匹配的股东列表（供大佬策略页搜索下拉）
-    
+
     Args:
         name: 股东名称关键词
         limit: 返回数量
@@ -370,7 +370,7 @@ def get_shareholder_by_name(
         conn = get_connection(read_only=False)
         if conn is None:
             return {"ok": False, "error": "数据库连接失败", "count": 0, "data": []}
-        
+
         keyword = f"%{name.strip()}%"
         df = conn.execute("""
             SELECT shareholder_name, shareholder_type,
@@ -381,12 +381,12 @@ def get_shareholder_by_name(
             ORDER BY stock_count DESC
             LIMIT ?
         """, [keyword, limit]).fetchdf()
-        
+
         conn.close()
-        
+
         if df.empty:
             return {"ok": True, "count": 0, "data": []}
-        
+
         data = [
             {
                 "name": str(row["shareholder_name"] or ""),
@@ -396,7 +396,7 @@ def get_shareholder_by_name(
             for _, row in df.iterrows()
         ]
         return {"ok": True, "count": len(data), "data": data}
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -407,7 +407,7 @@ def get_shareholder_strategy(
 ):
     """
     获取股东策略画像：持仓列表、变动流水、行业偏好等（供大佬策略页主内容）
-    
+
     Args:
         name: 股东名称（需与 shareholder-by-name 返回的 name 一致）
     """
@@ -417,7 +417,7 @@ def get_shareholder_strategy(
         conn = get_connection(read_only=False)
         if conn is None:
             return {"ok": False, "error": "数据库连接失败", "holdings": [], "changes": []}
-        
+
         # 1. 获取该股东所有记录，按报告期排序
         df = conn.execute("""
             SELECT t.stock_code, t.report_date, t.rank, t.shareholder_name,
@@ -429,28 +429,28 @@ def get_shareholder_strategy(
             WHERE t.shareholder_name = ?
             ORDER BY t.report_date ASC, t.rank
         """, [name.strip()]).fetchdf()
-        
+
         if df.empty:
             conn.close()
             return {"ok": False, "error": "未找到该股东数据", "holdings": [], "changes": []}
-        
+
         # 2. 获取最新收盘价用于估算持仓市值（可选）
         latest_dates = df["report_date"].drop_duplicates().sort_values(ascending=False).head(1)
         latest_date = str(latest_dates.iloc[0]) if len(latest_dates) > 0 else None
-        
+
         # 3. 构建 holdings：按股票聚合，取最新报告期
         holdings_raw = df.sort_values("report_date", ascending=False).drop_duplicates(
             subset=["stock_code"], keep="first"
         )
-        
+
         # 获取每只股票首次出现的报告期
         first_entry = df.groupby("stock_code")["report_date"].min().to_dict()
-        
+
         # 获取每只股票最后出现的报告期（用于判断是否已退出）
         last_seen = df.groupby("stock_code")["report_date"].max().to_dict()
         all_dates = sorted(df["report_date"].unique())
         max_date = all_dates[-1] if all_dates else None
-        
+
         def _date_to_quarter(d):
             if d is None:
                 return "—"
@@ -467,7 +467,7 @@ def get_shareholder_strategy(
             if m <= 9:
                 return f"{y}Q3"
             return f"{y}Q4"
-        
+
         holdings = []
         for _, row in holdings_raw.iterrows():
             sc = str(row["stock_code"])
@@ -477,12 +477,12 @@ def get_shareholder_strategy(
             if max_date and str(last_seen.get(sc)) != str(max_date):
                 status = "exited"
                 exit_q = _date_to_quarter(last_seen.get(sc))
-            
+
             share_count = int(row.get("share_count") or 0)
             ratio = float(row.get("share_ratio") or 0)
             # 万股
             hold_shares = share_count / 10000.0
-            
+
             holdings.append({
                 "stockCode": sc,
                 "stockName": str(row.get("stock_name") or sc),
@@ -496,7 +496,7 @@ def get_shareholder_strategy(
                 "status": status,
                 "exitQuarter": exit_q,
             })
-        
+
         # 4. 构建 changes：按报告期对比相邻两期
         changes = []
         by_stock = df.groupby("stock_code")
@@ -510,7 +510,7 @@ def get_shareholder_strategy(
                 prev = rows[i - 1] if i > 0 else None
                 share_count = int(getattr(r, 'share_count', 0) or 0)
                 prev_count = int(getattr(prev, 'share_count', 0) or 0) if prev else 0
-                
+
                 if prev is None:
                     action = "新进"
                     change_shares = share_count / 10000.0
@@ -527,7 +527,7 @@ def get_shareholder_strategy(
                         change_ratio = (diff / prev_count * 100) if prev_count else -100
                     else:
                         continue
-                
+
                 changes.append({
                     "quarter": q,
                     "stockCode": str(stock_code),
@@ -536,7 +536,7 @@ def get_shareholder_strategy(
                     "changeShares": round(change_shares, 2),
                     "changeRatio": round(change_ratio, 2) if action != "新进" else 100,
                 })
-        
+
         # 退出：在最后出现的报告期标记
         for stock_code, g in by_stock:
             g = g.sort_values("report_date")
@@ -553,16 +553,16 @@ def get_shareholder_strategy(
                     "changeShares": -share_count / 10000.0,
                     "changeRatio": -100,
                 })
-        
+
         changes.sort(key=lambda x: (x["quarter"], x["stockCode"]), reverse=True)
-        
+
         # 5. 汇总统计 + 最新报告季度（供前端默认时间滑块）
         total_value = sum(h.get("holdValue") or 0 for h in holdings)
         stock_count = len(holdings)
         latest_quarter = _date_to_quarter(max_date) if max_date else None
-        
+
         conn.close()
-        
+
         return {
             "ok": True,
             "shareholder_name": name.strip(),
@@ -581,7 +581,7 @@ def get_shareholder_strategy(
             "holdings": holdings,
             "changes": changes[:50],
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e), "holdings": [], "changes": []}
 
@@ -610,7 +610,7 @@ def get_shareholder_tracking(
 ):
     """
     获取股东追踪报告 (5 年历史)
-    
+
     Args:
         stock_code: 股票代码
         years: 追踪年数
@@ -621,14 +621,14 @@ def get_shareholder_tracking(
         tracking = analyzer.get_shareholder_tracking(
             stock_code, years, shareholder_name
         )
-        
+
         return {
             "ok": True,
             "stock_code": stock_code,
             "years": years,
             "data": tracking,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -642,7 +642,7 @@ def get_market_top_changes(
 ):
     """
     获取全市场变化排名
-    
+
     Args:
         metric_name: 指标名称
         report_date: 报告日期 (可选)
@@ -654,7 +654,7 @@ def get_market_top_changes(
         changes = analyzer.get_market_top_changes(
             metric_name, report_date, top_n, change_type
         )
-        
+
         return {
             "ok": True,
             "metric": metric_name,
@@ -662,7 +662,7 @@ def get_market_top_changes(
             "count": len(changes),
             "data": changes,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -675,7 +675,7 @@ def trigger_collection(
 ):
     """
     触发财报采集任务
-    
+
     Args:
         stock_codes: 股票代码列表 (可选，None 则采集全部 A 股)
         report_type: 报告类型
@@ -683,31 +683,31 @@ def trigger_collection(
     """
     try:
         collector = FinancialReportCollector()
-        
+
         # 获取股票列表
         if stock_codes is None:
             stocks_df = collector.get_company_list()
             if stocks_df.empty:
                 return {"ok": False, "error": "获取股票列表失败"}
             stock_codes = stocks_df["code"].tolist()
-        
+
         # 限制数量
         if limit:
             stock_codes = stock_codes[:limit]
-        
+
         # 执行采集
         stats = collector.collect_all_stocks(
             stock_codes=stock_codes,
             report_type=report_type,
             delay_seconds=0.3
         )
-        
+
         return {
             "ok": True,
             "message": "采集完成",
             "stats": stats,
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -719,7 +719,7 @@ def get_anti_quant_pool(
 ):
     """
     反量化长线选股池：基于股东稳定性、机构纯度、换主频率筛选的候选股票
-    
+
     返回：候选股票列表、因子汇总、数据覆盖说明
     """
     try:
@@ -862,7 +862,7 @@ def get_anti_quant_stock_factors(stock_code: str):
 def get_financial_overview():
     """
     获取财报数据概览
-    
+
     返回：
     - 已采集股票数量
     - 财报记录总数
@@ -874,33 +874,33 @@ def get_financial_overview():
         conn = get_connection(read_only=False)
         if conn is None:
             return {"ok": False, "error": "数据库连接失败", "data": {}}
-        
+
         # 统计股票数量
         stock_count = conn.execute("""
             SELECT COUNT(DISTINCT stock_code) FROM financial_report
         """).fetchone()[0]
-        
+
         # 统计财报记录数
         report_count = conn.execute("""
             SELECT COUNT(*) FROM financial_report
         """).fetchone()[0]
-        
+
         # 统计股东记录数
         holder_count = conn.execute("""
             SELECT COUNT(*) FROM top_10_shareholders
         """).fetchone()[0]
-        
+
         # 最新报告日期
         latest_report = conn.execute("""
             SELECT MAX(report_date) FROM financial_report
         """).fetchone()[0]
-        
+
         latest_holder = conn.execute("""
             SELECT MAX(report_date) FROM top_10_shareholders
         """).fetchone()[0]
-        
+
         conn.close()
-        
+
         return {
             "ok": True,
             "data": {
@@ -911,6 +911,6 @@ def get_financial_overview():
                 "latest_holder_date": str(latest_holder) if latest_holder else None,
             },
         }
-        
+
     except Exception as e:
         return {"ok": False, "error": str(e)}

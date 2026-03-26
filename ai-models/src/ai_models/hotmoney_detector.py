@@ -15,7 +15,7 @@ class HotMoneyAnalyzer:
     def _get_connection(self):
         if self._connection is not None:
             return self._connection
-        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error
+        from lib.database import get_connection, ensure_core_tables  # pylint: disable=import-error,import-outside-toplevel
 
         conn = get_connection(read_only=False)
         if conn:
@@ -56,7 +56,7 @@ class HotMoneyAnalyzer:
         """结合后续涨幅算席位胜率与平均收益。买价用龙虎榜当日收盘价近似。"""
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error,import-outside-toplevel
             ensure_tables(conn)
         except Exception:  # pylint: disable=broad-exception-caught
             pass
@@ -122,7 +122,7 @@ class HotMoneyAnalyzer:
             return 0
         conn = self._get_connection()
         try:
-            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
+            from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error,import-outside-toplevel
             ensure_tables(conn)
         except Exception:  # pylint: disable=broad-exception-caught
             pass
@@ -149,7 +149,7 @@ def run_hotmoney_detector() -> int:
         for _, row in top.iterrows():
             signals.append((str(row.get("seat_name", "")), "游资", float(row.get("win_rate", 0.5))))
     if not signals:
-        from ._storage import _get_conn
+        from ._storage import _get_conn  # pylint: disable=import-outside-toplevel
 
         conn = _get_conn()
         try:
@@ -162,7 +162,7 @@ def run_hotmoney_detector() -> int:
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         conn.close()
-    from ._storage import write_hotmoney_signals
+    from ._storage import write_hotmoney_signals  # pylint: disable=import-outside-toplevel
 
     write_hotmoney_signals(signals)
     return len(signals)

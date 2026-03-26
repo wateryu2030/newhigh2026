@@ -152,7 +152,7 @@ def update_tushare_daily(
                 INSERT INTO a_stock_daily (code, date, open, high, low, close, volume, amount)
                 SELECT code, date, open, high, low, close, volume, amount FROM tmp_tushare_daily
                 ON CONFLICT (code, date) DO UPDATE SET
-                open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low, 
+                open=EXCLUDED.open, high=EXCLUDED.high, low=EXCLUDED.low,
                 close=EXCLUDED.close, volume=EXCLUDED.volume, amount=EXCLUDED.amount
             """)
 

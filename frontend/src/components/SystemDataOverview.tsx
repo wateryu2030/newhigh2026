@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   api,
   type DailyCoverageResponse,
@@ -17,6 +17,7 @@ import {
   LonghubangDrillTable,
 } from '@/components/MarketDrillTables';
 import { SniperCandidatesTable } from '@/components/SniperCandidatesTable';
+import { StockPenetrationPanel, type StockPenetrationRow } from '@/components/StockPenetrationPanel';
 import { TradeSignalsTable } from '@/components/TradeSignalsTable';
 import { useLang } from '@/context/LangContext';
 
@@ -46,7 +47,7 @@ type OverviewDrillKey =
   | 'emotion_state';
 
 type DrillPayload =
-  | { kind: 'rows'; rows: Record<string, unknown>[] }
+  | { kind: 'rows'; rows: Record<string, unknown>[]; titleLinksToUrl?: boolean }
   | { kind: 'trade_signals'; rows: TradeSignalItem[] }
   | { kind: 'sniper'; rows: SniperCandidateItem[] }
   | { kind: 'limitup'; rows: LimitupDrillItem[] }
@@ -61,11 +62,47 @@ function formatCell(v: unknown): string {
   return String(v);
 }
 
-function RowsTable({ rows, emptyMessage }: { rows: Record<string, unknown>[]; emptyMessage: string }) {
+function isHttpUrl(s: unknown): s is string {
+  return typeof s === 'string' && /^https?:\/\//i.test(s.trim());
+}
+
+function renderRowsCell(
+  k: string,
+  row: Record<string, unknown>,
+  titleLinksToUrl: boolean,
+): ReactNode {
+  if (titleLinksToUrl && k === 'title' && isHttpUrl(row.url)) {
+    const label = formatCell(row[k]);
+    if (label === '—') return label;
+    return (
+      <a
+        href={String(row.url).trim()}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="max-w-[min(28rem,55vw)] truncate text-indigo-400 hover:underline"
+        title={label}
+      >
+        {label}
+      </a>
+    );
+  }
+  return formatCell(row[k]);
+}
+
+function RowsTable({
+  rows,
+  emptyMessage,
+  titleLinksToUrl = false,
+}: {
+  rows: Record<string, unknown>[];
+  emptyMessage: string;
+  titleLinksToUrl?: boolean;
+}) {
   if (!rows.length) {
     return <p className="text-sm text-text-secondary">{emptyMessage}</p>;
   }
-  const keys = Object.keys(rows[0]).slice(0, 12);
+  const rawKeys = Object.keys(rows[0]).slice(0, 14);
+  const keys = titleLinksToUrl ? rawKeys.filter((k) => k !== 'url') : rawKeys;
   return (
     <div className="max-h-[50vh] overflow-x-auto overflow-y-auto rounded-lg border border-card-border">
       <table className="w-full min-w-[480px] text-left text-xs text-text-primary">
@@ -85,9 +122,9 @@ function RowsTable({ rows, emptyMessage }: { rows: Record<string, unknown>[]; em
                 <td
                   key={k}
                   className="max-w-[220px] truncate p-2 whitespace-nowrap"
-                  title={formatCell(row[k])}
+                  title={typeof row[k] === 'string' ? row[k] : formatCell(row[k])}
                 >
-                  {formatCell(row[k])}
+                  {renderRowsCell(k, row, titleLinksToUrl)}
                 </td>
               ))}
             </tr>
@@ -184,11 +221,20 @@ function DataCard({ label, value, icon = '📊', onClick, clickHint }: DataCardP
   );
 }
 
-export function SystemDataOverview() {
+export function SystemDataOverview({
+  prefetched,
+}: {
+  /** 由父组件与 Dashboard 一并请求时可传入，避免重复打 /system/data-overview */
+  prefetched?: SystemDataOverviewResponse | null;
+}) {
   const { t, lang } = useLang();
-  const [data, setData] = useState<SystemDataOverviewResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<SystemDataOverviewResponse | null>(
+    () => (prefetched?.ok ? prefetched : null),
+  );
+  const [loading, setLoading] = useState(!prefetched?.ok);
+  const [error, setError] = useState<string | null>(
+    () => (prefetched && !prefetched.ok ? prefetched.error || t('common.error') : null),
+  );
 
   const [drill, setDrill] = useState<{ key: OverviewDrillKey; title: string; emotion?: string } | null>(
     null
@@ -196,20 +242,34 @@ export function SystemDataOverview() {
   const [drillLoading, setDrillLoading] = useState(false);
   const [drillError, setDrillError] = useState<string | null>(null);
   const [drillPayload, setDrillPayload] = useState<DrillPayload | null>(null);
+  const [drillStockDetail, setDrillStockDetail] = useState<StockPenetrationRow | null>(null);
 
   useEffect(() => {
+    if (prefetched?.ok) {
+      setData(prefetched);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    if (prefetched && !prefetched.ok) {
+      setError(prefetched.error || t('common.error'));
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     api
       .systemDataOverview()
       .then((res) => {
         if (res.ok) {
           setData(res);
+          setError(null);
         } else {
           setError(res.error || t('common.error'));
         }
       })
       .catch((e) => setError(e instanceof Error ? e.message : t('common.error')))
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [prefetched, t]);
 
   useEffect(() => {
     if (!drill) return;
@@ -241,11 +301,13 @@ export function SystemDataOverview() {
             const news = r.news ?? [];
             payload = {
               kind: 'rows',
+              titleLinksToUrl: true,
               rows: news.map((n) => ({
                 symbol: n.symbol ?? '',
                 title: n.title ?? '',
                 time: shortNewsTime(n.publish_time),
                 source: n.source ?? n.source_site ?? '',
+                url: (n.url ?? '').trim(),
               })) as Record<string, unknown>[],
             };
             break;
@@ -298,6 +360,7 @@ export function SystemDataOverview() {
   }, [drill, t]);
 
   const openDrill = (key: OverviewDrillKey, title: string, emotion?: string) => {
+    setDrillStockDetail(null);
     setDrill({ key, title, emotion });
   };
 
@@ -305,6 +368,7 @@ export function SystemDataOverview() {
     setDrill(null);
     setDrillPayload(null);
     setDrillError(null);
+    setDrillStockDetail(null);
   };
 
   if (loading) {
@@ -510,22 +574,111 @@ export function SystemDataOverview() {
               {drillLoading && <p className="text-sm text-text-secondary">{t('common.loading')}</p>}
               {drillError && <p className="text-sm text-accent-red">{drillError}</p>}
               {!drillLoading && !drillError && drillPayload?.kind === 'trade_signals' && (
-                <TradeSignalsTable rows={drillPayload.rows} dense />
+                <>
+                  {drillStockDetail ? (
+                    <StockPenetrationPanel row={drillStockDetail} onBack={() => setDrillStockDetail(null)} />
+                  ) : (
+                    <TradeSignalsTable
+                      rows={drillPayload.rows}
+                      dense
+                      onRowClick={(r) =>
+                        setDrillStockDetail({
+                          code: r.code,
+                          stock_name: r.stock_name,
+                          last_price: r.last_price,
+                          change_pct: r.change_pct,
+                        })
+                      }
+                    />
+                  )}
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'sniper' && (
-                <SniperCandidatesTable rows={drillPayload.rows} dense />
+                <>
+                  {drillStockDetail ? (
+                    <StockPenetrationPanel row={drillStockDetail} onBack={() => setDrillStockDetail(null)} />
+                  ) : (
+                    <SniperCandidatesTable
+                      rows={drillPayload.rows}
+                      dense
+                      onRowClick={(r) =>
+                        setDrillStockDetail({
+                          code: r.code,
+                          stock_name: r.stock_name,
+                          last_price: r.last_price,
+                          change_pct: r.change_pct,
+                        })
+                      }
+                    />
+                  )}
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'limitup' && (
-                <LimitupDrillTable rows={drillPayload.rows} dense />
+                <>
+                  {drillStockDetail ? (
+                    <StockPenetrationPanel row={drillStockDetail} onBack={() => setDrillStockDetail(null)} />
+                  ) : (
+                    <LimitupDrillTable
+                      rows={drillPayload.rows}
+                      dense
+                      onRowClick={(r) =>
+                        setDrillStockDetail({
+                          code: r.code,
+                          stock_name: r.stock_name,
+                          last_price: r.last_price,
+                          change_pct: r.change_pct,
+                        })
+                      }
+                    />
+                  )}
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'longhubang' && (
-                <LonghubangDrillTable rows={drillPayload.rows} dense />
+                <>
+                  {drillStockDetail ? (
+                    <StockPenetrationPanel row={drillStockDetail} onBack={() => setDrillStockDetail(null)} />
+                  ) : (
+                    <LonghubangDrillTable
+                      rows={drillPayload.rows}
+                      dense
+                      onRowClick={(r) =>
+                        setDrillStockDetail({
+                          code: r.code,
+                          stock_name: r.stock_name,
+                          last_price: r.last_price,
+                          change_pct: r.change_pct,
+                        })
+                      }
+                    />
+                  )}
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'fundflow' && (
-                <FundflowDrillTable rows={drillPayload.rows} dense />
+                <>
+                  {drillStockDetail ? (
+                    <StockPenetrationPanel row={drillStockDetail} onBack={() => setDrillStockDetail(null)} />
+                  ) : (
+                    <FundflowDrillTable
+                      rows={drillPayload.rows}
+                      dense
+                      onRowClick={(r) =>
+                        setDrillStockDetail({
+                          code: r.code,
+                          stock_name: r.stock_name,
+                          last_price: r.last_price,
+                          change_pct: r.change_pct,
+                        })
+                      }
+                    />
+                  )}
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'rows' && (
-                <RowsTable rows={drillPayload.rows} emptyMessage={t('systemData.drill.tableEmpty')} />
+                <RowsTable
+                  rows={drillPayload.rows}
+                  emptyMessage={t('systemData.drill.tableEmpty')}
+                  titleLinksToUrl={drillPayload.titleLinksToUrl}
+                />
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'daily' && (
                 <DailyCoveragePanel

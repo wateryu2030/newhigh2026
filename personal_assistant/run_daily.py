@@ -28,10 +28,10 @@ def main():
     print("=" * 60)
     print(f"运行时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
+
     # 加载配置
     config = load_config()
-    
+
     # Step 1: 股票筛选
     print("📝 Step 1: 筛选股票...")
     screener = StockScreener(
@@ -42,42 +42,42 @@ def main():
         fixed_count=config.get("fixed_count", 10),
         dynamic_count=config.get("dynamic_count", 10)
     )
-    
+
     if not stock_pool:
         print("❌ 股票池为空，退出")
         return
-    
+
     print(f"✅ 筛选完成：{len(stock_pool)} 只股票")
     print()
-    
+
     # Step 2: AI 分析
     print("🤖 Step 2: AI 分析...")
     analyzer = AIStockAnalyzer(api_key=config.get("deepseek_api_key"))
-    
+
     analysis_results = []
     for i, stock in enumerate(stock_pool, 1):
         print(f"  [{i}/{len(stock_pool)}] 分析 {stock['name']} ({stock['code'][:6]})...", end="")
         result = analyzer.analyze_stock(stock)
         analysis_results.append(result)
         print(f" {result.get('rating', 'N/A')} {'⭐' * result.get('stars', 0)}")
-    
+
     print(f"✅ 分析完成：{len(analysis_results)} 只股票")
     print()
-    
+
     # Step 3: 生成报告
     print("📝 Step 3: 生成报告...")
     generator = ReportGenerator()
-    
+
     wechat_report = generator.generate_wechat_report(analysis_results)
     email_report = generator.generate_email_report(analysis_results)
-    
+
     print("✅ 报告生成完成")
     print()
-    
+
     # Step 4: 推送报告
     print("📤 Step 4: 推送报告...")
     pusher = ReportPusher()
-    
+
     push_results = pusher.push_report(
         wechat_content=wechat_report,
         email_subject=email_report["subject"],
@@ -85,24 +85,24 @@ def main():
         email_text=email_report["text"]
     )
     print()
-    
+
     # Step 5: 保存报告
     print("💾 Step 5: 保存报告...")
     report_dir = Path(ROOT) / "reports"
     report_dir.mkdir(exist_ok=True)
-    
+
     date_str = datetime.now().strftime("%Y-%m-%d")
-    
+
     # 保存微信版本
     wechat_path = report_dir / f"report_{date_str}.txt"
     with open(wechat_path, "w", encoding="utf-8") as f:
         f.write(wechat_report)
-    
+
     # 保存 HTML 版本
     html_path = report_dir / f"report_{date_str}.html"
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(email_report["html"])
-    
+
     # 保存 JSON 版本（用于业绩跟踪）
     json_path = report_dir / f"analysis_{date_str}.json"
     with open(json_path, "w", encoding="utf-8") as f:
@@ -112,13 +112,13 @@ def main():
             "stock_count": len(analysis_results),
             "results": analysis_results
         }, f, ensure_ascii=False, indent=2)
-    
+
     print(f"✅ 报告已保存到：{report_dir}")
     print(f"   - {wechat_path.name}")
     print(f"   - {html_path.name}")
     print(f"   - {json_path.name}")
     print()
-    
+
     # 总结
     print("=" * 60)
     print("📊 执行完成")
@@ -139,22 +139,22 @@ def main():
 def load_config() -> dict:
     """加载配置"""
     config_path = Path(ROOT) / "config.json"
-    
+
     if config_path.exists():
         with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
     else:
         config = {}
-    
+
     # 从环境变量加载
     config.setdefault("db_path", os.getenv("QUANT_SYSTEM_DUCKDB_PATH"))
     config.setdefault("deepseek_api_key", os.getenv("DEEPSEEK_API_KEY"))
     config.setdefault("serverchan_sendkey", os.getenv("SERVERCHAN_SENDKEY"))
-    
+
     # 默认配置
     config.setdefault("fixed_count", 10)
     config.setdefault("dynamic_count", 10)
-    
+
     return config
 
 

@@ -15,41 +15,41 @@ from openai import OpenAI
 
 class StockAIAnalyzer:
     """股票AI分析器"""
-    
+
     def __init__(self):
         """初始化"""
         print("=" * 60)
         print("股票AI分析系统 - 完整演示")
         print("=" * 60)
-        
+
         # 初始化Tushare
         self.tushare_token = os.getenv("TUSHARE_TOKEN")
         if not self.tushare_token:
             raise ValueError("未找到TUSHARE_TOKEN环境变量")
-        
+
         ts.set_token(self.tushare_token)
         self.pro = ts.pro_api()
         print("✅ Tushare初始化成功")
-        
+
         # 初始化DeepSeek
         self.deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         if not self.deepseek_key:
             raise ValueError("未找到DEEPSEEK_API_KEY环境变量")
-        
+
         self.ai_client = OpenAI(
             api_key=self.deepseek_key,
             base_url="https://api.deepseek.com"
         )
         print("✅ DeepSeek AI初始化成功")
-    
+
     def fetch_stock_data(self, symbol: str = "600519.SH", days: int = 30) -> Dict[str, Any]:
         """获取股票数据"""
         print(f"\n📊 获取股票数据: {symbol}")
-        
+
         # 计算日期范围
         end_date = datetime.now().strftime("%Y%m%d")
         start_date = (datetime.now() - timedelta(days=days)).strftime("%Y%m%d")
-        
+
         try:
             # 获取日线数据
             df_daily = self.pro.daily(
@@ -57,16 +57,16 @@ class StockAIAnalyzer:
                 start_date=start_date,
                 end_date=end_date
             )
-            
+
             if df_daily is None or df_daily.empty:
                 raise ValueError(f"未找到股票 {symbol} 的数据")
-            
+
             # 获取股票基本信息
             df_info = self.pro.stock_basic(
                 ts_code=symbol,
                 fields="ts_code,symbol,name,area,industry,market,list_date"
             )
-            
+
             # 整理数据
             stock_data = {
                 "symbol": symbol,
@@ -81,7 +81,7 @@ class StockAIAnalyzer:
                     "price_change_pct": ((df_daily.iloc[0]['close'] - df_daily.iloc[-1]['close']) / df_daily.iloc[-1]['close']) * 100
                 }
             }
-            
+
             # 添加每日数据（最近5天）
             for i in range(min(5, len(df_daily))):
                 day = df_daily.iloc[i]
@@ -94,23 +94,23 @@ class StockAIAnalyzer:
                     "volume": float(day['vol']),
                     "amount": float(day['amount'])
                 })
-            
+
             print(f"✅ 获取到 {len(df_daily)} 天数据")
             print(f"   股票名称: {stock_data['name']}")
             print(f"   行业: {stock_data['industry']}")
             print(f"   价格变化: {stock_data['summary']['price_change_pct']:.2f}%")
-            
+
             return stock_data
-            
+
         except Exception as e:
             print(f"❌ 获取股票数据失败: {e}")
             # 返回模拟数据用于演示
             return self._get_mock_stock_data(symbol)
-    
+
     def _get_mock_stock_data(self, symbol: str) -> Dict[str, Any]:
         """获取模拟股票数据（备用）"""
         print(f"⚠ 使用模拟数据: {symbol}")
-        
+
         return {
             "symbol": symbol,
             "name": "贵州茅台" if symbol == "600519.SH" else "示例股票",
@@ -128,18 +128,18 @@ class StockAIAnalyzer:
                 "price_change_pct": 2.15
             }
         }
-    
+
     async def analyze_with_ai(self, stock_data: Dict[str, Any]) -> Dict[str, Any]:
         """使用AI分析股票数据"""
         print(f"\n🤖 AI分析股票: {stock_data['name']} ({stock_data['symbol']})")
-        
+
         try:
             # 准备分析提示
             prompt = self._prepare_analysis_prompt(stock_data)
-            
+
             print("调用DeepSeek AI进行分析...")
             start_time = datetime.now()
-            
+
             # 调用DeepSeek AI
             response = self.ai_client.chat.completions.create(
                 model="deepseek-chat",
@@ -150,24 +150,24 @@ class StockAIAnalyzer:
                 max_tokens=1500,
                 temperature=0.7
             )
-            
+
             end_time = datetime.now()
             response_time = (end_time - start_time).total_seconds()
-            
+
             ai_response = response.choices[0].message.content.strip()
-            
+
             print(f"✅ AI分析完成，耗时: {response_time:.2f}秒")
-            
+
             # 解析AI响应
             analysis_result = self._parse_ai_response(ai_response, stock_data)
-            
+
             return analysis_result
-            
+
         except Exception as e:
             print(f"❌ AI分析失败: {e}")
             # 返回模拟分析结果
             return self._get_mock_analysis(stock_data)
-    
+
     def _prepare_analysis_prompt(self, stock_data: Dict[str, Any]) -> str:
         """准备分析提示"""
         prompt = f"""
@@ -197,7 +197,7 @@ class StockAIAnalyzer:
 请用中文回复，结构清晰，专业但易懂。
 """
         return prompt
-    
+
     def _parse_ai_response(self, ai_response: str, stock_data: Dict[str, Any]) -> Dict[str, Any]:
         """解析AI响应"""
         return {
@@ -209,23 +209,23 @@ class StockAIAnalyzer:
             "key_points": self._extract_key_points(ai_response),
             "recommendation": self._extract_recommendation(ai_response)
         }
-    
+
     def _extract_key_points(self, text: str) -> List[str]:
         """提取关键点"""
         # 简单的关键词提取
         key_points = []
         lines = text.split('\n')
-        
+
         for line in lines:
             line = line.strip()
             if line and len(line) > 10 and any(marker in line for marker in ['建议', '目标', '止损', '风险', '趋势']):
                 key_points.append(line)
-        
+
         return key_points[:5]  # 最多5个关键点
-    
+
     def _extract_recommendation(self, text: str) -> str:
         """提取投资建议"""
-        
+
         if '买入' in text or '建议买入' in text or '推荐买入' in text:
             return "买入"
         elif '卖出' in text or '建议卖出' in text or '减持' in text:
@@ -234,7 +234,7 @@ class StockAIAnalyzer:
             return "持有"
         else:
             return "中性"
-    
+
     def _get_mock_analysis(self, stock_data: Dict[str, Any]) -> Dict[str, Any]:
         """获取模拟分析结果"""
         return {
@@ -274,11 +274,11 @@ class StockAIAnalyzer:
             ],
             "recommendation": "持有"
         }
-    
+
     def generate_report(self, stock_data: Dict[str, Any], analysis_result: Dict[str, Any]) -> str:
         """生成分析报告"""
         print(f"\n📋 生成分析报告...")
-        
+
         report = f"""
 {'=' * 60}
 股票AI分析报告
@@ -306,10 +306,10 @@ AI模型: {analysis_result['ai_model']}
 🔑 关键要点
 {'─' * 40}
 """
-        
+
         for i, point in enumerate(analysis_result['key_points'], 1):
             report += f"{i}. {point}\n"
-        
+
         report += f"""
 📝 详细分析
 {'─' * 40}
@@ -319,18 +319,18 @@ AI模型: {analysis_result['ai_model']}
 报告生成完成
 {'=' * 60}
 """
-        
+
         return report
-    
+
     def save_report(self, report: str, filename: str = None):
         """保存报告到文件"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"stock_ai_analysis_{timestamp}.txt"
-        
+
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(report)
-        
+
         print(f"✅ 报告已保存到: {filename}")
         return filename
 
@@ -339,34 +339,34 @@ async def main():
     try:
         # 创建分析器
         analyzer = StockAIAnalyzer()
-        
+
         # 选择分析的股票（默认茅台，可以修改）
         stock_symbol = "600519.SH"  # 贵州茅台
         # stock_symbol = "000001.SZ"  # 平安银行
-        
+
         # 1. 获取股票数据
         stock_data = analyzer.fetch_stock_data(stock_symbol, days=30)
-        
+
         # 2. AI分析
         analysis_result = await analyzer.analyze_with_ai(stock_data)
-        
+
         # 3. 生成报告
         report = analyzer.generate_report(stock_data, analysis_result)
-        
+
         # 4. 输出报告
         print(report)
-        
+
         # 5. 保存报告
         report_file = analyzer.save_report(report)
-        
+
         print(f"\n🎉 演示完成！")
         print(f"   股票: {stock_data['name']} ({stock_data['symbol']})")
         print(f"   AI模型: {analysis_result['ai_model']}")
         print(f"   投资建议: {analysis_result['recommendation']}")
         print(f"   报告文件: {report_file}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ 演示失败: {e}")
         import traceback
@@ -376,7 +376,7 @@ async def main():
 if __name__ == "__main__":
     print("开始完整的AI股票分析演示...")
     success = asyncio.run(main())
-    
+
     if success:
         print("\n✅ 演示成功！量化平台的AI分析功能已验证可用。")
         print("   下一步：")
@@ -385,5 +385,5 @@ if __name__ == "__main__":
         print("   3. 实现定时自动分析")
     else:
         print("\n❌ 演示失败，请检查配置和网络连接。")
-    
+
     sys.exit(0 if success else 1)

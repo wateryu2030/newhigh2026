@@ -27,6 +27,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "lib"))
 sys.path.insert(0, str(ROOT / "data-pipeline" / "src"))
 
+try:
+    from newhigh_env import load_dotenv_if_present
+
+    load_dotenv_if_present(ROOT)
+except ImportError:
+    pass
+
 LOG = logging.getLogger(__name__)
 
 

@@ -5,13 +5,13 @@
 
 使用示例:
     from lib.database import get_connection
-    
+
     # 获取连接 (默认读写)
     conn = get_connection()
-    
+
     # 仅单测/独立进程内验证只读语义；与 Gateway 同进程访问 quant_system 时请用默认 False
     conn = get_connection(read_only=True)
-    
+
     # 确保表存在
     from lib.database import ensure_core_tables
     ensure_core_tables(conn)
@@ -42,17 +42,17 @@ DEFAULT_DB_PATH: Path = _PROJECT_ROOT / "data" / "quant_system.duckdb"
 def get_db_path() -> str:
     """
     统一数据库路径获取
-    
+
     优先级:
     1. 环境变量 QUANT_DB_PATH
     2. 环境变量 QUANT_SYSTEM_DUCKDB_PATH（与 data_pipeline.duckdb_manager 一致）
     3. 环境变量 NEWHIGH_MARKET_DUCKDB_PATH
     4. 环境变量 NEWHIGH_DB_PATH
     5. 默认路径 data/quant_system.duckdb
-    
+
     Returns:
         数据库文件绝对路径
-    
+
     Example:
         >>> db_path = get_db_path()
         >>> print(db_path)
@@ -85,7 +85,7 @@ def get_db_path() -> str:
                 return env_path
         except ImportError:
             pass
-    
+
     # 默认路径
     return str(DEFAULT_DB_PATH)
 
@@ -93,16 +93,16 @@ def get_db_path() -> str:
 def get_connection(read_only: bool = False) -> Optional[DuckDBConnection]:
     """
     获取数据库连接
-    
+
     Args:
         read_only: 是否只读模式 (默认 False，允许写入)
-    
+
     Returns:
         DuckDB 连接对象，失败返回 None
-    
+
     Raises:
         Exception: 数据库连接失败
-    
+
     Example:
         >>> conn = get_connection()
         >>> if conn:
@@ -110,11 +110,11 @@ def get_connection(read_only: bool = False) -> Optional[DuckDBConnection]:
         ...     conn.close()
     """
     db_path: str = get_db_path()
-    
+
     # 确保目录存在
     db_dir: Path = Path(db_path).parent
     db_dir.mkdir(parents=True, exist_ok=True)
-    
+
     try:
         conn: DuckDBConnection = duckdb.connect(db_path, read_only=read_only)
         return conn
@@ -126,15 +126,15 @@ def get_connection(read_only: bool = False) -> Optional[DuckDBConnection]:
 def ensure_core_tables(conn: DuckDBConnection) -> None:
     """
     确保核心表存在
-    
+
     由 data 层在初始化时调用，避免各模块重复定义。
-    
+
     Args:
         conn: DuckDB 连接
-    
+
     Raises:
         Exception: 表创建失败
-    
+
     表列表:
     - a_stock_basic: 股票基本信息
     - a_stock_daily: 日 K 线数据
@@ -147,13 +147,13 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
     - market_emotion: 市场情绪
     - sniper_candidates: 狙击候选
     - trade_signals: 交易信号
-    
+
     Example:
         >>> conn = get_connection()
         >>> ensure_core_tables(conn)
         >>> conn.close()
     """
-    
+
     tables: Dict[str, str] = {
         "a_stock_basic": """
             CREATE TABLE IF NOT EXISTS a_stock_basic (
@@ -164,7 +164,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """,
-        
+
         "a_stock_daily": """
             CREATE TABLE IF NOT EXISTS a_stock_daily (
                 code VARCHAR NOT NULL,
@@ -178,7 +178,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 PRIMARY KEY (code, date)
             )
         """,
-        
+
         "a_stock_realtime": """
             CREATE TABLE IF NOT EXISTS a_stock_realtime (
                 code VARCHAR,
@@ -190,7 +190,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 snapshot_time TIMESTAMP
             )
         """,
-        
+
         "a_stock_fundflow": """
             CREATE TABLE IF NOT EXISTS a_stock_fundflow (
                 code VARCHAR,
@@ -200,7 +200,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 snapshot_time TIMESTAMP
             )
         """,
-        
+
         "a_stock_limitup": """
             CREATE TABLE IF NOT EXISTS a_stock_limitup (
                 code VARCHAR,
@@ -211,7 +211,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 snapshot_time TIMESTAMP
             )
         """,
-        
+
         "a_stock_longhubang": """
             CREATE TABLE IF NOT EXISTS a_stock_longhubang (
                 code VARCHAR,
@@ -223,7 +223,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 snapshot_time TIMESTAMP
             )
         """,
-        
+
         "market_signals": """
             CREATE TABLE IF NOT EXISTS market_signals (
                 code VARCHAR NOT NULL,
@@ -233,7 +233,7 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 PRIMARY KEY (code, signal_type)
             )
         """,
-        
+
         "news_items": """
             CREATE TABLE IF NOT EXISTS news_items (
                 id INTEGER PRIMARY KEY,
@@ -243,10 +243,11 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 publish_time TIMESTAMP,
                 sentiment_score DOUBLE,
                 sentiment_label VARCHAR,
+                url VARCHAR,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """,
-        
+
         "market_emotion": """
             CREATE TABLE IF NOT EXISTS market_emotion (
                 trade_date DATE PRIMARY KEY,
@@ -257,20 +258,18 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """,
-        
+
+        # 与 data_pipeline duckdb_manager 一致，供 scanner 写入 (code, theme, sniper_score, confidence)
         "sniper_candidates": """
             CREATE TABLE IF NOT EXISTS sniper_candidates (
-                code VARCHAR PRIMARY KEY,
-                name VARCHAR,
+                code VARCHAR NOT NULL,
+                theme VARCHAR,
                 sniper_score DOUBLE,
-                theme_score DOUBLE,
-                fund_spike_score DOUBLE,
-                volume_pattern_score DOUBLE,
-                limitup_behavior_score DOUBLE,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                confidence DOUBLE,
+                snapshot_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """,
-        
+
         "trade_signals": """
             CREATE TABLE IF NOT EXISTS trade_signals (
                 id INTEGER PRIMARY KEY,
@@ -282,24 +281,30 @@ def ensure_core_tables(conn: DuckDBConnection) -> None:
             )
         """,
     }
-    
+
     for table_name, sql in tables.items():
         try:
             conn.execute(sql)
         except Exception as e:
             print(f"⚠️  创建表 {table_name} 失败：{e}")
 
+    # 旧库 news_items 可能无 url，补列以便插入原文链接
+    try:
+        conn.execute("ALTER TABLE news_items ADD COLUMN url VARCHAR")
+    except Exception:
+        pass
+
 
 def get_table_counts(conn: DuckDBConnection) -> Dict[str, int]:
     """
     获取所有表的记录数
-    
+
     Args:
         conn: DuckDB 连接
-    
+
     Returns:
         表名 -> 记录数 的字典
-    
+
     Example:
         >>> conn = get_connection()
         >>> counts = get_table_counts(conn)
@@ -319,7 +324,7 @@ def get_table_counts(conn: DuckDBConnection) -> Dict[str, int]:
         "sniper_candidates",
         "trade_signals",
     ]
-    
+
     counts: Dict[str, int] = {}
     for table in tables:
         try:
@@ -327,5 +332,5 @@ def get_table_counts(conn: DuckDBConnection) -> Dict[str, int]:
             counts[table] = result[0] if result else 0
         except Exception:
             counts[table] = 0
-    
+
     return counts

@@ -16,7 +16,7 @@ class NewsService(BaseService):
     def get_latest_news(self, limit: int = 20) -> List[Dict]:
         """获取最新新闻"""
         rows = self.fetchall(f"""
-            SELECT id, title, content, source_site, publish_time, sentiment_score, sentiment_label
+            SELECT id, title, content, source_site, publish_time, sentiment_score, sentiment_label, url
             FROM news_items
             ORDER BY publish_time DESC
             LIMIT {limit}
@@ -30,6 +30,7 @@ class NewsService(BaseService):
                 "publish_time": r[4],
                 "sentiment_score": r[5],
                 "sentiment_label": r[6],
+                "url": r[7],
             }
             for r in rows
         ]
@@ -78,8 +79,8 @@ class NewsService(BaseService):
         for item in news_items:
             try:
                 conn.execute("""
-                    INSERT INTO news_items (title, content, source_site, publish_time, sentiment_score, sentiment_label)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO news_items (title, content, source_site, publish_time, sentiment_score, sentiment_label, url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, [
                     item.get("title"),
                     item.get("content"),
@@ -87,6 +88,7 @@ class NewsService(BaseService):
                     item.get("publish_time"),
                     item.get("sentiment_score"),
                     item.get("sentiment_label"),
+                    item.get("url"),
                 ])
                 count += 1
             except (ValueError, TypeError, OSError) as e:

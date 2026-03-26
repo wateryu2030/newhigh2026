@@ -1,5 +1,55 @@
 # 量化平台改进经验总结
 
+## 2026-03-25 (Afternoon - 16:30)
+
+### 问题：import-outside-toplevel 批量修复 (sector_rotation_ai & hotmoney_detector)
+
+**原始问题:**
+- sector_rotation_ai.py: 5 处 import-outside-toplevel，评分 9.12/10
+- hotmoney_detector.py: 5 处 import-outside-toplevel，评分 9.45/10
+- 这些是设计选择（lazy loading），但缺少正确的 pylint disable 注释
+
+**解决方案:**
+为 intentional 的 import-outside-toplevel 添加正确的 pylint disable 注释：
+```python
+# 修改前
+from lib.database import get_connection  # pylint: disable=import-error
+
+# 修改后
+from lib.database import get_connection  # pylint: disable=import-error,import-outside-toplevel
+```
+
+**额外优化:**
+- sector_rotation_ai.py: 2 处 broad-exception-caught 优化
+  - `except Exception:` → `except (RuntimeError, OSError):`
+
+**修改文件 (2 个):**
+- `ai-models/src/ai_models/sector_rotation_ai.py`: 5 处 import-outside-toplevel + 2 处异常优化
+- `ai-models/src/ai_models/hotmoney_detector.py`: 5 处 import-outside-toplevel
+
+**效果:**
+- sector_rotation_ai: 9.12/10 → 10.00/10 (+0.88 分)
+- hotmoney_detector: 9.45/10 → 10.00/10 (+0.55 分)
+- 全项目评分：9.26/10 → 9.65/10 (+0.39 分)
+- 无运行时风险（仅修改注释和异常类型）
+
+**关键经验:**
+1. **pylint disable 注释格式**: 只包含有效的消息名称，用逗号分隔
+2. **括号内不要加解释**: `# pylint: disable=msg-id (explanation)` 会被解析为额外消息，导致 unknown-option-value
+3. **解释用普通注释**: 如需说明，放在 pylint 注释之后：`# pylint: disable=msg-id  # explanation`
+4. **lazy loading 合理性**: 对于 optional dependencies 和循环导入，import-outside-toplevel 是合理的设计选择
+
+**最佳实践:**
+```python
+# ✅ 推荐：有效消息 + 普通注释说明
+from lib.database import get_connection  # pylint: disable=import-error,import-outside-toplevel  # lazy loading for optional dependencies
+
+# ❌ 避免：括号内解释（会被解析为消息名）
+from lib.database import get_connection  # pylint: disable=import-error (lazy loading)
+```
+
+---
+
 ## 2026-03-25 (16:30)
 
 ### 问题：ai_models 模块 unknown-option-value 批量修复

@@ -49,53 +49,53 @@ FEISHU_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages"
 
 class WeChatPusher:
     """微信推送器（使用 Server 酱）"""
-    
+
     def __init__(self, send_key: str = None):
         """
         初始化微信推送器
-        
+
         Args:
             send_key: Server 酱的 SendKey
         """
         self.send_key = send_key or os.getenv("SERVERCHAN_SENDKEY")
         self.enabled = bool(self.send_key)
-        
+
         if not self.enabled:
             print("⚠️ 未配置 Server 酱 SendKey，微信推送将不可用")
             print("   配置方法：https://sct.ftqq.com/")
-    
+
     def send(self, title: str, content: str) -> bool:
         """
         发送微信消息
-        
+
         Args:
             title: 消息标题
             content: 消息内容
-            
+
         Returns:
             是否发送成功
         """
         if not self.enabled:
             print("⚠️ 微信推送未启用")
             return False
-        
+
         try:
             url = f"https://sctapi.ftqq.com/{self.send_key}.send"
             data = {
                 "title": title,
                 "desp": content
             }
-            
+
             response = requests.post(url, data=data, timeout=10)
             result = response.json()
-            
+
             if result.get("code") == 0:
                 print("✅ 微信推送成功")
                 return True
             else:
                 print(f"❌ 微信推送失败：{result.get('message')}")
                 return False
-                
+
         except Exception as e:
             print(f"❌ 微信推送异常：{e}")
             return False
@@ -103,7 +103,7 @@ class WeChatPusher:
 
 class EmailPusher:
     """邮件推送器"""
-    
+
     def __init__(
         self,
         smtp_server: str = None,
@@ -115,7 +115,7 @@ class EmailPusher:
     ):
         """
         初始化邮件推送器
-        
+
         Args:
             smtp_server: SMTP服务器地址（如 smtp.qq.com）
             smtp_port: SMTP端口（如 587）
@@ -130,7 +130,7 @@ class EmailPusher:
         self.password = password or os.getenv("SMTP_PASSWORD")
         self.from_addr = from_addr or os.getenv("SMTP_FROM")
         self.to_addrs = to_addrs or (os.getenv("SMTP_TO") or "").split(",")
-        
+
         self.enabled = all([
             self.smtp_server,
             self.username,
@@ -138,50 +138,50 @@ class EmailPusher:
             self.from_addr,
             self.to_addrs
         ])
-        
+
         if not self.enabled:
             print("⚠️ 邮件推送未完整配置，将不可用")
             print("   需要配置：SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SMTP_TO")
-    
+
     def send(self, subject: str, html_content: str, text_content: str = None) -> bool:
         """
         发送邮件
-        
+
         Args:
             subject: 邮件主题
             html_content: HTML内容
             text_content: 纯文本内容（备用）
-            
+
         Returns:
             是否发送成功
         """
         if not self.enabled:
             print("⚠️ 邮件推送未启用")
             return False
-        
+
         try:
             # 创建邮件
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = self.from_addr
             msg["To"] = ", ".join(self.to_addrs)
-            
+
             # 添加纯文本版本
             if text_content:
                 msg.attach(MIMEText(text_content, "plain", "utf-8"))
-            
+
             # 添加HTML版本
             msg.attach(MIMEText(html_content, "html", "utf-8"))
-            
+
             # 发送邮件
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.username, self.password)
                 server.sendmail(self.from_addr, self.to_addrs, msg.as_string())
-            
+
             print("✅ 邮件发送成功")
             return True
-            
+
         except Exception as e:
             print(f"❌ 邮件发送失败：{e}")
             return False
@@ -325,9 +325,9 @@ class ReportPusher:
 def test_push():
     """测试推送功能"""
     print("=== 测试推送模块 ===")
-    
+
     pusher = ReportPusher()
-    
+
     # 测试内容
     wechat_content = """📊 每日股票分析 - 2026-03-14
 
@@ -349,7 +349,7 @@ def test_push():
 
 📌 提醒：投资有风险，决策需谨慎
 """
-    
+
     email_html = """
 <html>
 <body>
@@ -364,7 +364,7 @@ def test_push():
 </body>
 </html>
 """
-    
+
     # 推送测试
     results = pusher.push_report(
         wechat_content=wechat_content,
@@ -372,7 +372,7 @@ def test_push():
         email_html=email_html,
         email_text=wechat_content
     )
-    
+
     print(f"\n推送结果:")
     print(f"  微信：{'✅' if results['wechat'] else '❌'}")
     print(f"  邮件：{'✅' if results['email'] else '❌'}")

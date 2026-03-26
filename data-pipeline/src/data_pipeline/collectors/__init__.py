@@ -5,6 +5,7 @@ from .fund_flow import update_fundflow
 from .limit_up import update_limitup
 from .longhubang import update_longhubang
 from .caixin_news import update_caixin_news
+from .em_stock_news import update_em_stock_news
 
 __all__ = [
     "update_stock_list",
@@ -14,4 +15,5 @@ __all__ = [
     "update_limitup",
     "update_longhubang",
     "update_caixin_news",
+    "update_em_stock_news",
 ]

@@ -51,6 +51,12 @@ def _load_coverage_module():
 def main() -> int:
     sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(ROOT / "lib"))
+    try:
+        from newhigh_env import load_dotenv_if_present
+
+        load_dotenv_if_present(ROOT)
+    except ImportError:
+        pass
 
     REPORTS.mkdir(parents=True, exist_ok=True)
 

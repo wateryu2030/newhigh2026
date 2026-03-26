@@ -4,8 +4,16 @@ from __future__ import annotations
 
 import datetime as dt
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 import pandas as pd
+
+
+def _caixin_query_keywords(keywords: str) -> str:
+    """tushare caixinnews 把 keyword 直接拼进 URL，空格等字符必须编码。"""
+    if not keywords or str(keywords).strip() == "*":
+        return "*"
+    return quote(str(keywords).strip(), safe="")
 
 
 def update_caixin_news(keywords: str = "*", days_back: int = 7) -> int:
@@ -42,8 +50,12 @@ def update_caixin_news(keywords: str = "*", days_back: int = 7) -> int:
     print(f"采集财新新闻: 关键词={keywords}, 时间范围={start_str} 到 {end_str}")
 
     try:
-        # 查询新闻URL列表
-        urls = caixin.query_news(keywords=keywords, start_date=start_str, end_date=end_str)
+        # 查询新闻URL列表（关键词需 URL 编码，否则含空格会触发 urllib 报错）
+        urls = caixin.query_news(
+            keywords=_caixin_query_keywords(keywords),
+            start_date=start_str,
+            end_date=end_str,
+        )
 
         if not urls:
             print("未找到财新新闻")
@@ -104,7 +116,7 @@ def update_caixin_news(keywords: str = "*", days_back: int = 7) -> int:
             if by_url == 0 and by_title_time == 0:
                 conn.execute(
                     """
-                    INSERT INTO news_items 
+                    INSERT INTO news_items
                     (symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -133,6 +145,10 @@ def update_caixin_news(keywords: str = "*", days_back: int = 7) -> int:
 
     except Exception as e:
         print(f"采集财新新闻失败: {e}")
+        print(
+            "提示：财新搜索页若改版会导致 tushare 内置解析失败；"
+            "可改用 scripts/run_news_collect.py（东财个股新闻，含链接）或仅依赖调度器中的东财兜底。"
+        )
         return 0
 
 

@@ -7,6 +7,7 @@
 
 ## 数据系统
 
+- [x] 每日调度：有 `TUSHARE_TOKEN` 时默认 Tushare 日 K + 跳过 akshare 批量（`TUSHARE_DAILY_DAYS_BACK` / `DAILY_AKSHARE_KLINE_LIMIT`，见 `docs/ITERATION_AND_DATA_SLA.md`）
 - [ ] 接入更多数据源（如 Binance / Yahoo 等，与现有 A 股管道并列）
 - [ ] 数据缓存与时效性策略（避免重复拉取、支持 T+0 延迟）
 - [x] 统一数据库 quant_system.duckdb（已完成）

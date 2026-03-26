@@ -135,9 +135,9 @@ export const api = {
     apiGet<StrategiesMarketResponse>(`/strategies/market${limit != null ? `?limit=${limit}` : ''}`),
   portfolio: () => apiGet<PortfolioResponse>('/portfolio/weights'),
   risk: () => apiGet<RiskResponse>('/risk/status'),
-  market: (symbol?: string, interval?: string) =>
+  market: (symbol?: string, interval?: string, limit?: number) =>
     apiGet<MarketResponse>(
-      `/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}`,
+      `/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}&limit=${limit ?? 120}`,
       { unwrapEnvelope: true }
     ),
   /** 最近一条数据质量巡检（信封 unwrap） */
@@ -150,6 +150,11 @@ export const api = {
   trades: () => apiGet<TradesResponse>('/trades'),
   evolution: () => apiGet<EvolutionResponse>('/evolution'),
   alphaLab: () => apiGet<AlphaLabResponse>('/alpha-lab'),
+  alphaLabDrill: (stage: string, limit?: number) => {
+    const q = new URLSearchParams({ stage });
+    if (limit != null) q.set('limit', String(limit));
+    return apiGet<AlphaLabDrillResponse>(`/alpha-lab/drill?${q}`);
+  },
   positions: () => apiGet<PositionsResponse>('/positions'),
   marketEmotion: () => apiGet<MarketEmotionResponse>('/market/emotion'),
   marketSentiment7d: () => apiGet<MarketSentiment7dResponse>('/market/sentiment-7d'),
@@ -551,13 +556,18 @@ export interface TradeSignalItem {
 export interface DashboardResponse {
   total_equity: number;
   daily_return_pct: number;
-  sharpe_ratio: number;
-  max_drawdown_pct: number;
+  /** 由权益曲线估算，样本过短时可能为 null */
+  sharpe_ratio: number | null;
+  max_drawdown_pct: number | null;
   equity_curve: number[];
-  top_strategies: { id: string; name: string; return_pct: number }[];
-  ai_generated_today: number;
-  strategies_alive: number;
-  strategies_live: number;
+  top_strategies: { id: string; name: string; return_pct: number | null }[];
+  ai_generated_today: number | null;
+  strategies_alive: number | null;
+  strategies_live: number | null;
+  /** 权益曲线所依据的股票代码（示意，非组合净值） */
+  equity_proxy_symbol?: string | null;
+  /** 后端说明：如单票示意曲线、无库时演示曲线等 */
+  dashboard_notes?: string[];
 }
 
 export interface StrategiesResponse {
@@ -699,6 +709,26 @@ export interface AlphaLabResponse {
   passed_backtest: number;
   passed_risk: number;
   deployed: number;
+  source?: string;
+  binding_note?: string;
+}
+
+export interface AlphaLabDrillItem {
+  code: string;
+  stock_name: string;
+  subtitle?: string | null;
+  score?: number | null;
+  confidence?: number | null;
+  strategy_id?: string | null;
+  snapshot_time?: string | null;
+}
+
+export interface AlphaLabDrillResponse {
+  stage: string;
+  items: AlphaLabDrillItem[];
+  total: number;
+  source?: string;
+  binding_note?: string;
 }
 
 export interface SystemDataOverviewResponse {

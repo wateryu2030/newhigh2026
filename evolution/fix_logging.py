@@ -10,7 +10,7 @@ from pathlib import Path
 
 def fix_logging_fstrings(content: str) -> str:
     """Convert logger.info(f"...") to logger.info("...", ...)."""
-    
+
     # Pattern for logger.XXX(f"...{var}...")
     # This is simplified - handles common cases
     patterns = [
@@ -23,10 +23,10 @@ def fix_logging_fstrings(content: str) -> str:
         (r'self\.logger\.warning\(f"([^"]*?)\{(\w+)\}([^"]*?)\{(\w+)\}([^"]*?)"\)', r'self.logger.warning("\1%s\3%s\5", \2, \4)'),
         (r'self\.logger\.error\(f"([^"]*?)\{(\w+)\}([^"]*?)\{(\w+)\}([^"]*?)"\)', r'self.logger.error("\1%s\3%s\5", \2, \4)'),
     ]
-    
+
     for pattern, replacement in patterns:
         content = re.sub(pattern, replacement, content)
-    
+
     return content
 
 def fix_trailing_whitespace(content: str) -> str:
@@ -40,7 +40,7 @@ def fix_unused_imports(content: str) -> str:
     # Remove 'Optional' from typing imports if present
     content = re.sub(r',\s*Optional', '', content)
     content = re.sub(r'Optional,\s*', '', content)
-    # Remove 'List' from typing imports if present  
+    # Remove 'List' from typing imports if present
     content = re.sub(r',\s*List', '', content)
     content = re.sub(r'List,\s*', '', content)
     return content
@@ -49,19 +49,19 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: fix_logging.py <file>")
         sys.exit(1)
-    
+
     filepath = Path(sys.argv[1])
     if not filepath.exists():
         print(f"File not found: {filepath}")
         sys.exit(1)
-    
+
     content = filepath.read_text(encoding='utf-8')
-    
+
     # Apply fixes
     content = fix_logging_fstrings(content)
     content = fix_trailing_whitespace(content)
     content = fix_unused_imports(content)
-    
+
     # Write back
     filepath.write_text(content, encoding='utf-8')
     print(f"Fixed: {filepath}")

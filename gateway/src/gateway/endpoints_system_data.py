@@ -34,7 +34,7 @@ def get_system_data_overview() -> dict:
 
         # 并行查询所有表
         counts = {}
-        
+
         # 涨停池
         try:
             result = conn.execute("SELECT COUNT(*) FROM a_stock_limitup").fetchone()

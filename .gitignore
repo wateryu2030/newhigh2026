@@ -20,6 +20,10 @@ build/
 # Node (frontend)
 node_modules/
 frontend/dist/
+frontend/.next/
+
+# macOS
+.DS_Store
 
 # Env files (secrets)
 .env
@@ -34,3 +38,6 @@ scripts/.openclaw_state.json
 
 # 定时任务 / 全量周期日志
 logs/
+
+# 本地 pylint 报告（不入库）
+evolution/pylint_report*.txt

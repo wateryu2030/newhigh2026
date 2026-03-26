@@ -34,7 +34,7 @@ except ImportError:
 
 class OfficialNewsCollector:
     """官方新闻采集器"""
-    
+
     def __init__(self):
         self.session = None
         self.headers = {
@@ -43,30 +43,30 @@ class OfficialNewsCollector:
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate',
         }
-        
+
     def init_session(self):
         """初始化请求会话"""
         if REQUESTS_AVAILABLE:
             self.session = requests.Session()
             self.session.headers.update(self.headers)
-    
+
     def fetch_xinhua_news(self, category: str = "finance", days_back: int = 1) -> List[Dict[str, Any]]:
         """
         采集新华社新闻
-        
+
         Args:
             category: 新闻类别 (finance, politics, economy, etc.)
             days_back: 回溯天数
-            
+
         Returns:
             新闻列表
         """
         news_list = []
-        
+
         if not REQUESTS_AVAILABLE:
             print("⚠ requests不可用，跳过新华社新闻采集")
             return news_list
-        
+
         try:
             # 新华社财经新闻RSS（示例URL，实际需要调整）
             urls = {
@@ -74,16 +74,16 @@ class OfficialNewsCollector:
                 "politics": "http://www.news.cn/politics/news.htm",
                 "economy": "http://www.news.cn/economy/news.htm",
             }
-            
+
             url = urls.get(category, urls["finance"])
             print(f"采集新华社新闻: {category}, URL: {url}")
-            
+
             response = self.session.get(url, timeout=10)
             response.raise_for_status()
-            
+
             # 解析HTML（这里需要根据实际网页结构调整）
             soup = BeautifulSoup(response.content, 'html.parser')
-            
+
             # 模拟采集一些新闻（实际需要实现具体的解析逻辑）
             mock_news = [
                 {
@@ -105,45 +105,45 @@ class OfficialNewsCollector:
                     "keywords": ["金融", "市场", "稳定"]
                 }
             ]
-            
+
             news_list.extend(mock_news)
             print(f"  采集到 {len(mock_news)} 条新华社新闻")
-            
+
         except Exception as e:
             print(f"采集新华社新闻失败: {e}")
-        
+
         return news_list
-    
+
     def fetch_gov_news(self, department: str = "state_council", days_back: int = 1) -> List[Dict[str, Any]]:
         """
         采集国务院新闻
-        
+
         Args:
             department: 部门 (state_council, mofcom, etc.)
             days_back: 回溯天数
-            
+
         Returns:
             新闻列表
         """
         news_list = []
-        
+
         if not REQUESTS_AVAILABLE:
             print("⚠ requests不可用，跳过国务院新闻采集")
             return news_list
-        
+
         try:
             # 国务院新闻（示例URL）
             urls = {
                 "state_council": "http://www.gov.cn/xinwen/",
                 "mofcom": "http://www.mofcom.gov.cn/",
             }
-            
+
             url = urls.get(department, urls["state_council"])
             print(f"采集国务院新闻: {department}, URL: {url}")
-            
+
             response = self.session.get(url, timeout=10)
             response.raise_for_status()
-            
+
             # 模拟采集一些新闻
             mock_news = [
                 {
@@ -165,39 +165,39 @@ class OfficialNewsCollector:
                     "keywords": ["民营经济", "政策", "发展"]
                 }
             ]
-            
+
             news_list.extend(mock_news)
             print(f"  采集到 {len(mock_news)} 条国务院新闻")
-            
+
         except Exception as e:
             print(f"采集国务院新闻失败: {e}")
-        
+
         return news_list
-    
+
     def fetch_mohurd_news(self, days_back: int = 1) -> List[Dict[str, Any]]:
         """
         采集住建部新闻
-        
+
         Args:
             days_back: 回溯天数
-            
+
         Returns:
             新闻列表
         """
         news_list = []
-        
+
         if not REQUESTS_AVAILABLE:
             print("⚠ requests不可用，跳过住建部新闻采集")
             return news_list
-        
+
         try:
             # 住建部新闻（示例URL）
             url = "http://www.mohurd.gov.cn/xwfb/index.html"
             print(f"采集住建部新闻: URL: {url}")
-            
+
             response = self.session.get(url, timeout=10)
             response.raise_for_status()
-            
+
             # 模拟采集一些新闻
             mock_news = [
                 {
@@ -217,29 +217,29 @@ class OfficialNewsCollector:
                     "keywords": ["保障性住房", "建设", "住房困难"]
                 }
             ]
-            
+
             news_list.extend(mock_news)
             print(f"  采集到 {len(mock_news)} 条住建部新闻")
-            
+
         except Exception as e:
             print(f"采集住建部新闻失败: {e}")
-        
+
         return news_list
-    
+
     def save_to_duckdb(self, news_list: List[Dict[str, Any]], table_name: str = "official_news"):
         """
         保存新闻到DuckDB
-        
+
         Args:
             news_list: 新闻列表
             table_name: 表名
         """
         if not DUCKDB_AVAILABLE or not news_list:
             return False
-        
+
         try:
             conn = get_conn()
-            
+
             # 确保表存在
             create_table_sql = f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
@@ -256,7 +256,7 @@ class OfficialNewsCollector:
             )
             """
             conn.execute(create_table_sql)
-            
+
             # 插入数据
             inserted_count = 0
             for news in news_list:
@@ -264,14 +264,14 @@ class OfficialNewsCollector:
                     # 检查是否已存在
                     check_sql = f"SELECT id FROM {table_name} WHERE url = ?"
                     existing = conn.execute(check_sql, (news.get('url', ''),)).fetchone()
-                    
+
                     if not existing:
                         insert_sql = f"""
-                        INSERT INTO {table_name} 
+                        INSERT INTO {table_name}
                         (title, source, category, department, publish_time, content, url, keywords)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         """
-                        
+
                         conn.execute(insert_sql, (
                             news.get('title', ''),
                             news.get('source', ''),
@@ -282,41 +282,41 @@ class OfficialNewsCollector:
                             news.get('url', ''),
                             json.dumps(news.get('keywords', []), ensure_ascii=False)
                         ))
-                        
+
                         inserted_count += 1
-                        
+
                 except Exception as e:
                     print(f"插入新闻失败 {news.get('title', '')}: {e}")
-            
+
             print(f"✅ 保存 {inserted_count} 条新闻到DuckDB表 {table_name}")
             return True
-            
+
         except Exception as e:
             print(f"保存到DuckDB失败: {e}")
             return False
-    
+
     def save_to_json(self, news_list: List[Dict[str, Any]], filename: str = None):
         """
         保存新闻到JSON文件
-        
+
         Args:
             news_list: 新闻列表
             filename: 文件名
         """
         if not news_list:
             return False
-        
+
         try:
             if filename is None:
                 timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"official_news_{timestamp}.json"
-            
+
             # 确保目录存在
             output_dir = project_root / "data" / "news"
             output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             filepath = output_dir / filename
-            
+
             # 添加元数据
             data = {
                 "metadata": {
@@ -326,24 +326,24 @@ class OfficialNewsCollector:
                 },
                 "news": news_list
             }
-            
+
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            
+
             print(f"✅ 保存 {len(news_list)} 条新闻到JSON文件: {filepath}")
             return True
-            
+
         except Exception as e:
             print(f"保存到JSON失败: {e}")
             return False
-    
+
     def collect_all(self, days_back: int = 1) -> Dict[str, List[Dict[str, Any]]]:
         """
         采集所有官方新闻
-        
+
         Args:
             days_back: 回溯天数
-            
+
         Returns:
             按来源分类的新闻字典
         """
@@ -353,80 +353,80 @@ class OfficialNewsCollector:
         print(f"时间: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"回溯天数: {days_back}")
         print()
-        
+
         # 初始化会话
         self.init_session()
-        
+
         all_news = {}
-        
+
         # 1. 采集新华社新闻
         print("📰 采集新华社新闻...")
         xinhua_news = self.fetch_xinhua_news(category="finance", days_back=days_back)
         xinhua_news.extend(self.fetch_xinhua_news(category="economy", days_back=days_back))
         all_news["xinhua"] = xinhua_news
         print(f"  总计: {len(xinhua_news)} 条")
-        
+
         # 2. 采集国务院新闻
         print("\n🏛️ 采集国务院新闻...")
         gov_news = self.fetch_gov_news(department="state_council", days_back=days_back)
         gov_news.extend(self.fetch_gov_news(department="mofcom", days_back=days_back))
         all_news["government"] = gov_news
         print(f"  总计: {len(gov_news)} 条")
-        
+
         # 3. 采集住建部新闻
         print("\n🏗️ 采集住建部新闻...")
         mohurd_news = self.fetch_mohurd_news(days_back=days_back)
         all_news["mohurd"] = mohurd_news
         print(f"  总计: {len(mohurd_news)} 条")
-        
+
         # 汇总统计
         total_news = sum(len(news_list) for news_list in all_news.values())
-        
+
         print("\n" + "=" * 60)
         print("采集完成")
         print("=" * 60)
         print(f"总计采集新闻: {total_news} 条")
         for source, news_list in all_news.items():
             print(f"  {source}: {len(news_list)} 条")
-        
+
         return all_news
-    
+
     def run(self, days_back: int = 1, save_to_db: bool = True, save_to_json: bool = True):
         """
         运行采集任务
-        
+
         Args:
             days_back: 回溯天数
             save_to_db: 是否保存到数据库
             save_to_json: 是否保存到JSON文件
         """
         start_time = time.time()
-        
+
         try:
             # 采集所有新闻
             all_news = self.collect_all(days_back=days_back)
-            
+
             # 合并所有新闻
             all_news_list = []
             for news_list in all_news.values():
                 all_news_list.extend(news_list)
-            
+
             # 保存数据
             if all_news_list:
                 if save_to_db:
                     self.save_to_duckdb(all_news_list)
-                
+
                 if save_to_json:
                     self.save_to_json(all_news_list)
             else:
                 print("⚠ 未采集到任何新闻")
-            
+
             # 计算执行时间
             elapsed_time = time.time() - start_time
             print(f"\n⏱️ 执行时间: {elapsed_time:.2f} 秒")
-            
+
             return len(all_news_list)
-            
+
         except Exception as e:
             print(f"❌ 采集任务失败: {e}")
             import traceback
@@ -437,10 +437,10 @@ class OfficialNewsCollector:
 def update_official_news(days_back: int = 1) -> int:
     """
     更新官方新闻（兼容现有接口）
-    
+
     Args:
         days_back: 回溯天数
-        
+
     Returns:
         采集的新闻数量
     """
@@ -451,19 +451,19 @@ def update_official_news(days_back: int = 1) -> int:
 if __name__ == "__main__":
     """命令行入口"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="官方新闻采集器")
     parser.add_argument("--days", type=int, default=1, help="回溯天数")
     parser.add_argument("--no-db", action="store_true", help="不保存到数据库")
     parser.add_argument("--no-json", action="store_true", help="不保存到JSON")
-    
+
     args = parser.parse_args()
-    
+
     collector = OfficialNewsCollector()
     count = collector.run(
         days_back=args.days,
         save_to_db=not args.no_db,
         save_to_json=not args.no_json
     )
-    
+
     sys.exit(0 if count > 0 else 1)

@@ -41,7 +41,7 @@ MONITOR_KEYWORDS = [
 
 class StockNewsCollector:
     """重点股票新闻采集器"""
-    
+
     def __init__(self):
         self.session = None
         self.headers = {
@@ -49,7 +49,7 @@ class StockNewsCollector:
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         }
-        
+
         # 东方财富数据源
         self.data_sources = {
             'eastmoney_news': {
@@ -68,18 +68,18 @@ class StockNewsCollector:
                 'type': 'web'
             }
         }
-    
+
     def init_session(self):
         """初始化请求会话"""
         if REQUESTS_AVAILABLE:
             self.session = requests.Session()
             self.session.headers.update(self.headers)
-    
+
     def generate_id(self, title: str, source: str, publish_time: str) -> str:
         """生成新闻 ID"""
         content = f"{title}_{source}_{publish_time}"
         return hashlib.md5(content.encode('utf-8')).hexdigest()
-    
+
     def extract_keywords(self, text: str) -> List[str]:
         """提取匹配关键词"""
         matched = []
@@ -87,7 +87,7 @@ class StockNewsCollector:
             if kw in text:
                 matched.append(kw)
         return matched[:5]
-    
+
     def identify_stocks(self, text: str) -> List[Dict[str, str]]:
         """识别新闻中涉及的股票"""
         stocks = []
@@ -95,23 +95,23 @@ class StockNewsCollector:
             if stock['name'] in text or stock['code'] in text or stock['full_name'] in text:
                 stocks.append(stock)
         return stocks
-    
+
     def fetch_eastmoney_search(self, keyword: str) -> List[Dict[str, Any]]:
         """从东方财富搜索 API 采集新闻"""
         news_list = []
-        
+
         if not REQUESTS_AVAILABLE:
             return news_list
-        
+
         try:
             # 使用东方财富搜索接口
             url = f"https://search.eastmoney.com/api/result/get?keyword={keyword}&pageIndex=1&pageSize=20&pageType=news"
-            
+
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             if data.get('Data' and data['Data'].get('result')):
                 items = data['Data']['result']
                 for item in items:
@@ -119,19 +119,19 @@ class StockNewsCollector:
                         title = item.get('title', '')
                         if not title:
                             continue
-                        
+
                         content = item.get('content', '') or item.get('digest', '')
                         url = item.get('url', '')
                         publish_time = item.get('pubTime', '')
                         source = item.get('source', '东方财富')
-                        
+
                         # 提取关键词和涉及的股票
                         keywords = self.extract_keywords(title + ' ' + content)
                         stocks = self.identify_stocks(title + ' ' + content)
-                        
+
                         if not keywords:
                             continue
-                        
+
                         news_item = {
                             'id': self.generate_id(title, source, publish_time),
                             'title': title,
@@ -145,47 +145,47 @@ class StockNewsCollector:
                             'collected_at': datetime.datetime.now().isoformat(),
                             'data_source': 'eastmoney_search'
                         }
-                        
+
                         news_list.append(news_item)
-                        
+
                     except Exception:  # pylint: disable=broad-exception-caught
                         continue
-            
+
             print(f"  东方财富搜索 '{keyword}': {len(news_list)} 条相关新闻")
-            
+
         except Exception:  # pylint: disable=broad-exception-caught
             print(f"  东方财富搜索失败：{e}")
-        
+
         return news_list
-    
+
     def fetch_eastmoney_stock_news(self, code: str) -> List[Dict[str, Any]]:
         """采集东方财富个股新闻"""
         news_list = []
-        
+
         if not REQUESTS_AVAILABLE:
             return news_list
-        
+
         try:
             # 东方财富个股新闻 API
             url = f"https://newsapi.eastmoney.com/ajax/NewsList?callback=jQuery&symbol={code}&marketType={'sz' if code.startswith(('0', '3')) else 'sh'}&page=1&pagesize=20"
-            
+
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
-            
+
             # 解析 JSONP
             content = response.text
             if 'jQuery' in content:
                 content = content.replace('jQuery(', '').rstrip(')')
-            
+
             data = json.loads(content)
-            
+
             if data.get('Data'):
                 for item in data['Data']:
                     try:
                         title = item.get('Title', '')
                         if not title:
                             continue
-                        
+
                         news_item = {
                             'id': self.generate_id(title, '东方财富', item.get('ShowTime', '')),
                             'title': title,
@@ -199,30 +199,30 @@ class StockNewsCollector:
                             'collected_at': datetime.datetime.now().isoformat(),
                             'data_source': f'eastmoney_stock_{code}'
                         }
-                        
+
                         news_list.append(news_item)
-                        
+
                     except Exception:  # pylint: disable=broad-exception-caught
                         continue
-            
+
             print(f"  东方财富个股新闻 {code}: {len(news_list)} 条")
-            
+
         except Exception:  # pylint: disable=broad-exception-caught
             print(f"  东方财富个股新闻采集失败 {code}: {e}")
-        
+
         return news_list
-    
+
     def save_to_database(self, news_list: List[Dict[str, Any]]) -> int:
         """保存到数据库"""
         if not news_list:
             return 0
-        
+
         try:
             import duckdb
-            
+
             db_path = 'data/quant_system.duckdb'
             conn = duckdb.connect(db_path)
-            
+
             saved_count = 0
             for news in news_list:
                 try:
@@ -231,13 +231,13 @@ class StockNewsCollector:
                         "SELECT id FROM news_items WHERE id = ?",
                         [news['id']]
                     ).fetchone()
-                    
+
                     if existing:
                         continue
-                    
+
                     # 插入新记录
                     conn.execute("""
-                        INSERT INTO news_items 
+                        INSERT INTO news_items
                         (id, title, source, category, publish_time, content, url, keywords, collected_at)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, [
@@ -252,25 +252,25 @@ class StockNewsCollector:
                         news['collected_at']
                     ])
                     saved_count += 1
-                    
+
                 except Exception:  # pylint: disable=broad-exception-caught
                     continue
-            
+
             conn.close()
             return saved_count
-            
+
         except Exception:  # pylint: disable=broad-exception-caught
             print(f"保存数据库失败：{e}")
             return 0
-    
+
     def save_to_json(self, news_list: List[Dict[str, Any]], filename: str) -> str:
         """保存到 JSON 文件"""
         if not news_list:
             return ''
-        
+
         output_dir = Path('data-pipeline/data/news')
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         output_path = output_dir / filename
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump({
@@ -282,9 +282,9 @@ class StockNewsCollector:
                 },
                 'news': news_list
             }, f, ensure_ascii=False, indent=2)
-        
+
         return str(output_path)
-    
+
     def collect_all(self) -> Dict[str, Any]:
         """执行完整采集流程"""
         print("=" * 60)
@@ -293,25 +293,25 @@ class StockNewsCollector:
         print(f"时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"监控标的：{', '.join([s['name'] for s in MONITORED_STOCKS])}")
         print()
-        
+
         self.init_session()
-        
+
         all_news = []
-        
+
         # 1. 按关键词搜索
         print("📰 采集关键词相关新闻...")
         for keyword in ['奥瑞金', '易华录', '亚泰集团']:
             news = self.fetch_eastmoney_search(keyword)
             all_news.extend(news)
             time.sleep(0.5)  # 避免请求过快
-        
+
         # 2. 采集个股新闻
         print("\n📈 采集个股新闻...")
         for stock in MONITORED_STOCKS:
             news = self.fetch_eastmoney_stock_news(stock['code'])
             all_news.extend(news)
             time.sleep(0.5)
-        
+
         # 去重
         seen = set()
         unique_news = []
@@ -319,25 +319,25 @@ class StockNewsCollector:
             if news['id'] not in seen:
                 seen.add(news['id'])
                 unique_news.append(news)
-        
+
         all_news = unique_news
-        
+
         # 保存
         print("\n" + "=" * 60)
         print("保存数据...")
-        
+
         db_count = self.save_to_database(all_news)
         json_path = self.save_to_json(all_news, f"stock_monitor_news_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        
+
         print(f"✅ 保存 {db_count} 条新闻到数据库")
         print(f"✅ 保存 JSON 文件：{json_path}")
-        
+
         # 统计
         stock_news_count = {}
         for news in all_news:
             for code in news.get('related_stocks', []):
                 stock_news_count[code] = stock_news_count.get(code, 0) + 1
-        
+
         print("\n" + "=" * 60)
         print("采集完成")
         print("=" * 60)
@@ -346,7 +346,7 @@ class StockNewsCollector:
         for stock in MONITORED_STOCKS:
             count = stock_news_count.get(stock['code'], 0)
             print(f"  {stock['code']} {stock['name']}: {count} 条")
-        
+
         return {
             'total': len(all_news),
             'by_stock': stock_news_count,
@@ -358,7 +358,7 @@ def main():
     """主函数"""
     collector = StockNewsCollector()
     collector.collect_all()
-    
+
     print("\n💡 改进建议:")
     print("1. 可接入东方财富个股新闻 API 提高采集成功率")
     print("2. 可添加情感分析功能")

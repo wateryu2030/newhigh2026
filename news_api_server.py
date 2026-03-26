@@ -78,21 +78,21 @@ async def get_news_list(
     """获取新闻列表"""
     try:
         conn = get_db_connection()
-        
+
         # 构建查询
         where_clauses = []
         params = []
-        
+
         if source:
             where_clauses.append("source = ?")
             params.append(source)
-        
+
         date_from = (datetime.datetime.now() - datetime.timedelta(days=days)).isoformat()
         where_clauses.append("collected_at >= ?")
         params.append(date_from)
-        
+
         where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
-        
+
         query = f"""
             SELECT id, title, source, content, url, keywords, collected_at
             FROM official_news
@@ -101,18 +101,18 @@ async def get_news_list(
             LIMIT ? OFFSET ?
         """
         params.extend([limit, offset])
-        
+
         result = conn.execute(query, params).fetchall()
-        
+
         # 计算总数
         count_query = f"""
             SELECT COUNT(*) FROM official_news
             WHERE {where_sql}
         """
         total = conn.execute(count_query, params[:-2]).fetchone()[0]
-        
+
         conn.close()
-        
+
         # 转换为字典
         news_list = []
         for row in result:
@@ -125,14 +125,14 @@ async def get_news_list(
                 'keywords': row[5],
                 'collected_at': row[6]
             })
-        
+
         return {
             'total': total,
             'limit': limit,
             'offset': offset,
             'news': news_list
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -142,19 +142,19 @@ async def get_news_today():
     """获取今日新闻"""
     try:
         conn = get_db_connection()
-        
+
         today_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        
+
         query = """
             SELECT id, title, source, content, url, keywords, collected_at
             FROM official_news
             WHERE collected_at >= ?
             ORDER BY collected_at DESC
         """
-        
+
         result = conn.execute(query, [today_start.isoformat()]).fetchall()
         conn.close()
-        
+
         news_list = []
         for row in result:
             news_list.append({
@@ -166,20 +166,20 @@ async def get_news_today():
                 'keywords': row[5],
                 'collected_at': row[6]
             })
-        
+
         # 按来源统计
         source_stats = {}
         for news in news_list:
             source = news['source']
             source_stats[source] = source_stats.get(source, 0) + 1
-        
+
         return {
             'date': datetime.datetime.now().strftime('%Y-%m-%d'),
             'total': len(news_list),
             'by_source': source_stats,
             'news': news_list
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -195,11 +195,11 @@ async def get_stock_news(code: str = Query(..., description="股票代码")):
             '600881': '亚泰集团',
             '600889': '南京化纤'
         }
-        
+
         stock_name = stock_names.get(code, code)
-        
+
         conn = get_db_connection()
-        
+
         # 从新闻中筛选包含股票代码或名称的
         query = """
             SELECT id, title, source, content, url, keywords, collected_at
@@ -208,11 +208,11 @@ async def get_stock_news(code: str = Query(..., description="股票代码")):
             ORDER BY collected_at DESC
             LIMIT 50
         """
-        
+
         keyword = f"%{code}%"
         result = conn.execute(query, [keyword, keyword]).fetchall()
         conn.close()
-        
+
         news_list = []
         for row in result:
             news_list.append({
@@ -225,14 +225,14 @@ async def get_stock_news(code: str = Query(..., description="股票代码")):
                 'collected_at': row[6],
                 'related_stock': code
             })
-        
+
         return {
             'stock_code': code,
             'stock_name': stock_name,
             'total': len(news_list),
             'news': news_list
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -242,10 +242,10 @@ async def get_news_summary():
     """获取新闻摘要统计"""
     try:
         conn = get_db_connection()
-        
+
         # 今日统计
         today_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        
+
         # 按来源统计
         source_query = """
             SELECT source, COUNT(*) as count
@@ -255,7 +255,7 @@ async def get_news_summary():
             ORDER BY count DESC
         """
         source_stats = conn.execute(source_query, [today_start.isoformat()]).fetchall()
-        
+
         # 按小时统计
         hourly_query = """
             SELECT strftime(collected_at, '%Y-%m-%d %H:00') as hour, COUNT(*) as count
@@ -265,7 +265,7 @@ async def get_news_summary():
             ORDER BY hour DESC
         """
         hourly_stats = conn.execute(hourly_query, [today_start.isoformat()]).fetchall()
-        
+
         # 最近 7 天趋势
         trend_query = """
             SELECT strftime(collected_at, '%Y-%m-%d') as date, COUNT(*) as count
@@ -276,9 +276,9 @@ async def get_news_summary():
         """
         date_7days = (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()
         trend_stats = conn.execute(trend_query, [date_7days]).fetchall()
-        
+
         conn.close()
-        
+
         return {
             'today': {
                 'total': sum(s[1] for s in source_stats),
@@ -287,7 +287,7 @@ async def get_news_summary():
             'hourly': [{'hour': h[0], 'count': h[1]} for h in hourly_stats],
             'trend': [{'date': t[0], 'count': t[1]} for t in trend_stats]
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -297,10 +297,10 @@ async def news_html_view():
     """新闻网页展示"""
     try:
         conn = get_db_connection()
-        
+
         # 获取今日新闻
         today_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        
+
         query = """
             SELECT id, title, source, content, url, keywords, collected_at
             FROM official_news
@@ -308,10 +308,10 @@ async def news_html_view():
             ORDER BY collected_at DESC
             LIMIT 100
         """
-        
+
         result = conn.execute(query, [today_start.isoformat()]).fetchall()
         conn.close()
-        
+
         # 生成 HTML
         html = """
 <!DOCTYPE html>
@@ -322,7 +322,7 @@ async def news_html_view():
     <title>量化平台 - 新闻监控</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #f5f5f5;
             padding: 20px;
@@ -413,7 +413,7 @@ async def news_html_view():
             <p>实时监控财经新闻，辅助投资决策</p>
             <button class="refresh-btn" onclick="location.reload()" style="margin-top: 15px;">🔄 刷新</button>
         </div>
-        
+
         <div class="stats">
             <div class="stat-card">
                 <h3>今日新闻总数</h3>
@@ -428,13 +428,13 @@ async def news_html_view():
                 <div class="value" style="font-size: 18px;">""" + datetime.datetime.now().strftime('%H:%M') + """</div>
             </div>
         </div>
-        
+
         <div class="news-list">
 """
-        
+
         for row in result:
             news_id, title, source, content, url, keywords, collected_at = row
-            
+
             # 解析关键词
             kw_list = []
             if keywords:
@@ -442,14 +442,14 @@ async def news_html_view():
                     kw_list = eval(keywords) if isinstance(keywords, str) else keywords
                 except:
                     kw_list = []
-            
+
             # 格式化时间
             try:
                 dt = datetime.datetime.fromisoformat(collected_at)
                 time_str = dt.strftime('%m-%d %H:%M')
             except:
                 time_str = collected_at[:16]
-            
+
             html += f"""
             <div class="news-card">
                 <h2>{title}</h2>
@@ -460,18 +460,18 @@ async def news_html_view():
                 <div class="content">{content[:200]}{'...' if len(content) > 200 else ''}</div>
                 <div class="keywords">
 """
-            
+
             for kw in kw_list[:5]:
                 html += f'<span class="keyword">{kw}</span>'
-            
+
             html += """
                 </div>
             </div>
 """
-        
+
         html += """
         </div>
-        
+
         <div class="footer">
             <p>量化平台新闻监控系统 | 数据实时更新</p>
             <p>API 接口：<code>/api/news/list</code> | <code>/api/news/today</code> | <code>/api/news/summary</code></p>
@@ -480,9 +480,9 @@ async def news_html_view():
 </body>
 </html>
 """
-        
+
         return HTMLResponse(content=html)
-        
+
     except Exception as e:
         return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
 
@@ -490,14 +490,14 @@ async def news_html_view():
 def main():
     """主函数"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='新闻展示 API 服务器')
     parser.add_argument('--host', default='0.0.0.0', help='监听地址')
     parser.add_argument('--port', type=int, default=8080, help='监听端口')
     parser.add_argument('--reload', action='store_true', help='开发模式自动重载')
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 60)
     print("📰 量化平台新闻 API 服务器")
     print("=" * 60)
@@ -505,7 +505,7 @@ def main():
     print(f"网页展示：http://{args.host}:{args.port}/news")
     print(f"API 文档：http://{args.host}:{args.port}/docs")
     print("=" * 60)
-    
+
     uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)
 
 

@@ -1,4 +1,8 @@
-"""每日调度：股票池、资金流、龙虎榜；可选全量日K线。建议 18:00 执行。"""
+"""每日调度：股票池、资金流、龙虎榜；可选 Tushare / akshare 日 K。
+
+建议 18:00 执行。生产环境推荐配置 TUSHARE_TOKEN + TUSHARE_DAILY_DAYS_BACK（如 7），
+由 start_schedulers 在有 Token 时默认跳过 akshare 批量日 K，避免代理超时拖垮整轮任务。
+"""
 
 from __future__ import annotations
 import os

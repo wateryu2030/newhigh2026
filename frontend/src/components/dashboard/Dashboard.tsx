@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, type DashboardResponse, type DataStatusResponse } from '@/api/client';
+import {
+  api,
+  type DashboardResponse,
+  type DataStatusResponse,
+  type SystemDataOverviewResponse,
+} from '@/api/client';
 import { KPICard } from './KPICard';
 import { WarningBanner } from './WarningBanner';
 import { SystemDataOverview } from '../SystemDataOverview';
@@ -16,11 +21,11 @@ function formatDataSourceLabel(source: string | null, t: (k: string) => string):
   return source ?? '—';
 }
 
-/** 模拟 sparkline 数据（待接入 WebSocket/轮询时替换） */
-function mockSparkline(base: number, len = 7): number[] {
-  return Array.from({ length: len }, (_, i) =>
-    base + (i - len / 2) * 2 + Math.sin(i * 0.8) * 5
-  );
+/** 取权益曲线末段作 KPI 迷你图（百万单位） */
+function equitySparklineFromCurve(equity: number[], maxPts = 14): number[] {
+  if (!equity.length) return [];
+  const slice = equity.slice(-maxPts);
+  return slice.map((x) => x / 1e6);
 }
 
 export function Dashboard() {
@@ -29,6 +34,8 @@ export function Dashboard() {
   const [dataStatus, setDataStatus] = useState<DataStatusResponse | null>(null);
   const [emotionState, setEmotionState] = useState<string | null>(null);
   const [sniperCount, setSniperCount] = useState<number | null>(null);
+  /** 与首屏请求一并拉取；仅在 loading 结束后挂载子组件，避免 SystemDataOverview 重复请求 */
+  const [overviewPrefetched, setOverviewPrefetched] = useState<SystemDataOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,12 +44,17 @@ export function Dashboard() {
       api.dashboard(),
       api.dataStatus(),
       api.marketEmotion().then((r) => r.stage ?? r.state ?? null).catch(() => null),
-      api.sniperCandidates(10).then((r) => (Array.isArray(r) ? r.length : 0)).catch(() => 0),
+      api.systemDataOverview().catch(() => null),
     ])
-      .then(([d, s, e, sn]) => {
+      .then(([d, s, e, ov]) => {
         setData(d);
         setDataStatus(s);
         setEmotionState(e);
+        setOverviewPrefetched(ov != null && typeof ov === 'object' ? ov : null);
+        const sn =
+          ov && typeof ov === 'object' && ov.ok && ov.counts && typeof ov.counts.sniper_candidates === 'number'
+            ? ov.counts.sniper_candidates
+            : null;
         setSniperCount(sn);
       })
       .catch((e) => setError(e.message))
@@ -71,7 +83,13 @@ export function Dashboard() {
     n >= 1e6 ? `¥${(n / 1e6).toFixed(1)}M` : `¥${n.toLocaleString()}`;
 
   const equityArr = data.equity_curve ?? [];
-  const sparkAum = equityArr.length > 0 ? mockSparkline(equityArr[0] / 1e6) : mockSparkline(100);
+  const sparkAum = equitySparklineFromCurve(equityArr);
+  const aumDayDeltaPct =
+    equityArr.length >= 2
+      ? ((equityArr[equityArr.length - 1] - equityArr[equityArr.length - 2]) /
+          equityArr[equityArr.length - 2]) *
+        100
+      : data.daily_return_pct;
 
   return (
     <div className="max-w-[1200px] space-y-4">
@@ -96,7 +114,7 @@ export function Dashboard() {
 
       {/* 系统数据概览 */}
       <div className="animate-fadeIn" style={{ animationDelay: '50ms' }}>
-        <SystemDataOverview />
+        <SystemDataOverview prefetched={overviewPrefetched} />
       </div>
 
       {/* 数据状态 OK 时的简要信息 */}
@@ -136,7 +154,7 @@ export function Dashboard() {
                 <strong style={{ color: '#FF3B30' }}>{emotionState}</strong>
               </span>
             )}
-            {sniperCount != null && sniperCount > 0 && (
+            {sniperCount != null && (
               <span style={{ color: '#A9ABB3' }}>
                 {t('dashboard.sniperCandidates')}{' '}
                 <strong style={{ color: '#ECEDF6' }}>{sniperCount}</strong>
@@ -152,14 +170,27 @@ export function Dashboard() {
         </div>
       )}
 
+      {data.dashboard_notes?.length ? (
+        <p className="text-xs leading-relaxed" style={{ color: '#94A3B8' }}>
+          {t('dashboard.dataBindingHint')}
+          {data.equity_proxy_symbol ? (
+            <>
+              {' '}
+              {t('dashboard.equityProxySymbol')}
+              <code className="mx-1 rounded bg-white/10 px-1">{data.equity_proxy_symbol}</code>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       {/* 核心指标 KPI - grid-cols-2 on md */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="animate-fadeIn">
           <KPICard
             title={t('dashboard.totalAum')}
             value={formatMoney(data.total_equity)}
-            change={data.daily_return_pct >= 0 ? 0.5 : -0.3}
-            sparklineData={sparkAum}
+            change={aumDayDeltaPct}
+            sparklineData={sparkAum.length > 1 ? sparkAum : undefined}
           />
         </div>
         <div className="animate-fadeIn" style={{ animationDelay: '30ms' } as React.CSSProperties}>
@@ -172,14 +203,16 @@ export function Dashboard() {
         <div className="animate-fadeIn" style={{ animationDelay: '60ms' } as React.CSSProperties}>
           <KPICard
             title={t('dashboard.sharpe')}
-            value={data.sharpe_ratio?.toFixed(1) ?? '—'}
+            value={data.sharpe_ratio != null ? data.sharpe_ratio.toFixed(2) : '—'}
+            sub={t('dashboard.sharpeHint')}
           />
         </div>
         <div className="animate-fadeIn" style={{ animationDelay: '90ms' } as React.CSSProperties}>
           <KPICard
             title={t('dashboard.maxDrawdown')}
-            value={`${data.max_drawdown_pct}%`}
+            value={data.max_drawdown_pct != null ? `${data.max_drawdown_pct}%` : '—'}
             positive={false}
+            sub={t('dashboard.drawdownHint')}
           />
         </div>
       </div>
@@ -193,7 +226,7 @@ export function Dashboard() {
 
       {/* 底部卡片：AI 信号 / Leaderboard / Pipeline */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {(emotionState != null || (sniperCount != null && sniperCount > 0)) && (
+        {(emotionState != null || sniperCount != null) && (
           <div
             className="animate-fadeIn rounded-2xl border p-5 transition-transform duration-200 hover:scale-[1.02]"
             style={{
@@ -212,7 +245,7 @@ export function Dashboard() {
                   <span style={{ color: '#FF3B30' }}>{emotionState}</span>
                 </li>
               )}
-              {sniperCount != null && sniperCount > 0 && (
+              {sniperCount != null && (
                 <li className="flex justify-between">
                   <span style={{ color: '#A9ABB3' }}>{t('dashboard.sniperCandidates')}</span>
                   <Link href="/ai-trading" className="hover:underline" style={{ color: '#FF3B30' }}>
@@ -235,14 +268,22 @@ export function Dashboard() {
             {t('dashboard.leaderboard')}
           </h2>
           <ul className="space-y-2">
-            {(data.top_strategies || []).map((s) => (
-              <li key={s.id} className="flex justify-between text-sm">
-                <span style={{ color: '#A9ABB3' }}>{s.name}</span>
-                <span className="font-medium" style={{ color: '#FF3B30' }}>
-                  +{s.return_pct}%
-                </span>
+            {(data.top_strategies || []).length === 0 ? (
+              <li className="text-sm" style={{ color: '#64748B' }}>
+                {t('dashboard.leaderboardEmpty')}
               </li>
-            ))}
+            ) : (
+              (data.top_strategies || []).map((s) => (
+                <li key={s.id} className="flex justify-between text-sm">
+                  <span style={{ color: '#A9ABB3' }}>{s.name}</span>
+                  <span className="font-medium" style={{ color: '#FF3B30' }}>
+                    {s.return_pct != null && !Number.isNaN(s.return_pct)
+                      ? `${s.return_pct >= 0 ? '+' : ''}${Number(s.return_pct).toFixed(2)}%`
+                      : '—'}
+                  </span>
+                </li>
+              ))
+            )}
           </ul>
         </div>
         <div
@@ -259,15 +300,21 @@ export function Dashboard() {
           <ul className="space-y-2 text-sm">
             <li className="flex justify-between">
               <span style={{ color: '#A9ABB3' }}>{t('dashboard.generatedToday')}</span>
-              <span style={{ color: '#ECEDF6' }}>{data.ai_generated_today ?? '—'}</span>
+              <span style={{ color: '#ECEDF6' }}>
+                {data.ai_generated_today != null ? data.ai_generated_today : '—'}
+              </span>
             </li>
             <li className="flex justify-between">
               <span style={{ color: '#A9ABB3' }}>{t('dashboard.alive')}</span>
-              <span style={{ color: '#ECEDF6' }}>{data.strategies_alive ?? '—'}</span>
+              <span style={{ color: '#ECEDF6' }}>
+                {data.strategies_alive != null ? data.strategies_alive : '—'}
+              </span>
             </li>
             <li className="flex justify-between">
               <span style={{ color: '#A9ABB3' }}>{t('dashboard.live')}</span>
-              <span style={{ color: '#FF3B30' }}>{data.strategies_live ?? '—'}</span>
+              <span style={{ color: '#FF3B30' }}>
+                {data.strategies_live != null ? data.strategies_live : '—'}
+              </span>
             </li>
           </ul>
         </div>

@@ -233,13 +233,13 @@ ignored-classes=optparse.Values,thread._local,_thread._local
     flake8_content = """[flake8]
 max-line-length = 100
 exclude = .git,__pycache__,build,dist,.venv,venv
-ignore = 
+ignore =
     E203,  # whitespace before ':'
     E266,  # too many leading '#' for block comment
     W503,  # line break before binary operator
     W504,  # line break after binary operator
     C901,  # too complex
-per-file-ignores = 
+per-file-ignores =
     __init__.py:F401
 """
 
