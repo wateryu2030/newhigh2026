@@ -4,8 +4,8 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-// API 基础 URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+// 默认空：开发时走 Vite 同源 + proxy（见 vite.config.js → 8010）；生产 Docker Nginx 同源 /api
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 // 创建 axios 实例
 const apiClient = axios.create({
