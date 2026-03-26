@@ -266,6 +266,22 @@ def camofox_fetch_page(url: str, session_key: str, wait: float = 8, port: int = 
     return snapshot
 
 
+# --- Browser backend priority: playwright > camofox ---
+# playwright_client wraps Playwright (OpenClaw built-in browser);
+# camofox_client wraps Camofox (Firefox-based). Both expose the same API.
+# If playwright is available, its functions silently override camofox's.
+try:
+    _sd = os.path.dirname(os.path.abspath(__file__))
+    if _sd not in sys.path:
+        sys.path.insert(0, _sd)
+    from playwright_client import (
+        check_camofox, camofox_open_tab, camofox_snapshot,
+        camofox_close_tab, camofox_fetch_page,
+    )
+except ImportError:
+    pass  # camofox_client imports above remain in effect
+
+
 # ---------------------------------------------------------------------------
 # FxTwitter single-tweet fetch (zero deps)
 # ---------------------------------------------------------------------------
@@ -398,21 +414,100 @@ def fetch_tweet(url: str, timeout: int = 30) -> Dict[str, Any]:
                 }
                 content = article.get("content", {})
                 blocks = content.get("blocks", [])
+                cover = article.get("cover_media", {})
+                media_entities = article.get("media_entities", [])
+
                 if blocks:
-                    full_text = "\n\n".join(
-                        b.get("text", "") for b in blocks if b.get("text", "")
-                    )
+                    # Build media_id -> url index from media_entities + cover
+                    media_id_to_url = {}
+                    if cover:
+                        cover_url = cover.get("media_info", {}).get("original_img_url")
+                        cover_id = cover.get("media_id")
+                        if cover_url and cover_id:
+                            media_id_to_url[str(cover_id)] = cover_url
+                    for me in media_entities:
+                        mid = str(me.get("media_id", ""))
+                        murl = me.get("media_info", {}).get("original_img_url", "")
+                        if mid and murl:
+                            media_id_to_url[mid] = murl
+
+                    # Build entityMap key -> media_url lookup
+                    # content.get("entityMap", {}) returns None if API specifically provides {"entityMap": null}
+                    entity_map = content.get("entityMap") or {}
+                    key_to_url = {}
+                    if isinstance(entity_map, dict):
+                        for e_key, e_val in entity_map.items():
+                            if isinstance(e_val, dict) and e_val.get("type") == "MEDIA":
+                                media_items = e_val.get("data", {}).get("mediaItems", [])
+                                for mi in media_items:
+                                    if isinstance(mi, dict):
+                                        mid = str(mi.get("mediaId", ""))
+                                        if mid in media_id_to_url:
+                                            key_to_url[str(e_key)] = media_id_to_url[mid]
+                    elif isinstance(entity_map, list):
+                        for e in entity_map:
+                            if not isinstance(e, dict):
+                                continue
+                            v = e.get("value", {})
+                            k = e.get("key")
+                            if isinstance(v, dict) and v.get("type") == "MEDIA" and k is not None:
+                                media_items = v.get("data", {}).get("mediaItems", [])
+                                for mi in media_items:
+                                    if isinstance(mi, dict):
+                                        mid = str(mi.get("mediaId", ""))
+                                        if mid in media_id_to_url:
+                                            key_to_url[str(k)] = media_id_to_url[mid]
+
+                    # Build ordered list of (block_index, image_url) for atomic blocks
+                    atomic_media = {}
+                    for bi, b in enumerate(blocks):
+                        if not isinstance(b, dict):
+                            continue
+                        if b.get("type") == "atomic":
+                            for r in b.get("entityRanges", []):
+                                if not isinstance(r, dict):
+                                    continue
+                                ek = r.get("key")
+                                if ek is not None:
+                                    eks = str(ek)
+                                    if eks in key_to_url:
+                                        atomic_media[bi] = key_to_url[eks]
+
+                    # Reconstruct full_text, inserting images from atomic blocks
+                    text_parts = []
+                    for bi, b in enumerate(blocks):
+                        if not isinstance(b, dict):
+                            continue
+                        btype = b.get("type")
+                        btext = b.get("text", "")
+                        if btype == "atomic":
+                            if bi in atomic_media:
+                                img_url = atomic_media[bi]
+                                if (
+                                    isinstance(img_url, str)
+                                    and img_url.startswith(("https://", "http://"))
+                                    and ")" not in img_url
+                                    and "\n" not in img_url
+                                    and "\r" not in img_url
+                                ):
+                                    text_parts.append(f"![]({img_url})")
+                            elif btext:
+                                # Fallback for non-image atomic blocks (e.g. embedded tweets)
+                                text_parts.append(btext)
+                        elif btext:
+                            text_parts.append(btext)
+                    full_text = "\n\n".join(text_parts)
                     article_data["full_text"] = full_text
                     article_data["word_count"] = len(full_text.split())
                     article_data["char_count"] = len(full_text)
-                # 提取 article 内的图片
+
+                # article_images still collected the same way for compatibility
                 article_images = []
-                cover = article.get("cover_media", {})
                 if cover:
                     cover_url = cover.get("media_info", {}).get("original_img_url")
                     if cover_url:
                         article_images.append({"type": "cover", "url": cover_url})
-                for entity in article.get("media_entities", []):
+                for entity in media_entities:
                     img_url = entity.get("media_info", {}).get("original_img_url")
                     if img_url:
                         article_images.append({"type": "image", "url": img_url})
@@ -563,7 +658,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     # ── Step 2b: for each anchor, check if "retweeted" appears within ─────
     # 5 lines after it. If so, the anchor's tweet was retweeted by someone.
     # Also detect if a second status anchor appears in the same block (= quote).
-
+    
     # First, build tweet card boundaries.
     # Each card starts at an anchor. A card ends where the next card starts.
     # But a "quoted" anchor (second anchor inside a card) is NOT a card start.
@@ -573,12 +668,12 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     # within 30 lines AND there is NO "retweeted" marker between them.
     # Actually simpler: a quote anchor's user differs from the preceding
     # card's primary user, AND there's tweet text between them.
-
+    
     # Simpler approach: just mark anchors that have a "retweeted" line
     # within lines [anchor+1 .. anchor+5]. Those are primary card anchors.
     # Non-retweeted anchors that have tweet text before them from the
     # previous anchor are quotes.
-
+    
     # Let's just use the fact that a quoted tweet's anchor appears AFTER
     # the main tweet's text content. So if we see text content (not just
     # author/handle/time) between anchor N-1 and anchor N, then N is a quote.
@@ -593,7 +688,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     for idx in range(1, len(content_anchors)):
         prev_i = content_anchors[idx - 1][0]
         curr_i = content_anchors[idx][0]
-
+        
         # A quoted tweet appears AFTER the main tweet text but BEFORE
         # the stats line. If we see a stats-only line between anchors,
         # that means the previous tweet's content is complete and this
@@ -625,7 +720,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
 
         # If prev anchor is itself a quote, curr can't be a quote of a quote
         prev_is_quote = (idx - 1) in quoted_set
-
+        
         # Quote only if: has text, NO stats line after it, and prev isn't a quote
         if has_tweet_text and not has_stats_line and not prev_is_quote:
             quoted_set.add(idx)
@@ -924,20 +1019,20 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                     nested_likes = 0
                     nested_replies_count = 0
                     nested_views = 0
-
+                    
                     for k in range(j + 1, min(n, j + 15)):
                         nested_line = lines[k].strip()
-
+                        
                         # Skip @handle lines
                         if re.match(r'^- link "@\w+"\s*(\[e\d+\])?:?$', nested_line):
                             continue
-
+                            
                         # Check for timestamp
                         if not nested_time_ago:
                             m = re.match(r'^- link "(\d+[smhd])"\s*(\[e\d+\])?:?$', nested_line)
                             if m:
                                 nested_time_ago = m.group(1)
-
+                        
                         # Parse nested reply text
                         if nested_line.startswith("- text:"):
                             raw = nested_line[len("- text:"):].strip()
@@ -950,11 +1045,11 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                                         nested_likes = lk
                                         nested_replies_count = rc
                                         nested_views = vw
-
+                        
                         # Stop at next "Replying to" block
                         if nested_line == "- text: Replying to":
                             break
-
+                    
                     if nested_reply_text:
                         thread_replies.append({
                             "text": nested_reply_text,
@@ -963,7 +1058,7 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                             "replies": nested_replies_count,
                             "views": nested_views
                         })
-
+                    
                     # Now break for the main loop
                     break
 
@@ -1566,6 +1661,115 @@ def _save_cache(username: str, cache: dict):
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
 
+
+# ── Nitter 直连后端 ─────────────────────────────────────────────────────────
+
+
+def _get_nitter_client():
+    """Import and return nitter_client module."""
+    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    if _scripts_dir not in sys.path:
+        sys.path.insert(0, _scripts_dir)
+    import nitter_client
+    return nitter_client
+
+
+def _nitter_available() -> bool:
+    """Check if local Nitter instance is reachable."""
+    try:
+        nc = _get_nitter_client()
+        return nc.check_nitter()
+    except Exception:
+        return False
+
+
+def _fetch_replies_via_nitter(url: str) -> Dict[str, Any]:
+    """Fetch tweet replies via local Nitter (no browser required)."""
+    try:
+        username, tweet_id = parse_tweet_url(url)
+    except ValueError as e:
+        return {"url": url, "error": str(e)}
+
+    try:
+        nitter_client = _get_nitter_client()
+    except ImportError as e:
+        return {"url": url, "error": f"nitter_client not found: {e}", "replies": []}
+
+    detail = nitter_client.fetch_tweet_detail(username, tweet_id)
+    if detail.get("error"):
+        return {"url": url, "error": detail["error"], "replies": []}
+
+    replies = []
+    for r in detail.get("replies_list", []):
+        replies.append({
+            "author": f"@{r.get('username', '')}",
+            "author_name": r.get("display_name", r.get("username", "")),
+            "text": r.get("text", ""),
+            "time_ago": r.get("time", ""),
+            "likes": r.get("likes", 0),
+            "retweets": r.get("retweets", 0),
+            "replies": r.get("replies", 0),
+            "views": r.get("views", 0),
+            "tweet_id": r.get("tweet_id", ""),
+            "media": r.get("media_urls", []) or [],
+        })
+
+    return {
+        "url": url,
+        "username": username,
+        "tweet_id": tweet_id,
+        "replies": replies,
+        "count": len(replies),
+        "backend": "nitter",
+    }
+
+
+def fetch_user_timeline_nitter(username: str, limit: int = 20) -> Dict[str, Any]:
+    """Fetch user timeline via local Nitter (no browser required)."""
+    try:
+        nitter_client = _get_nitter_client()
+    except ImportError as e:
+        return {"username": username, "error": f"nitter_client not found: {e}", "tweets": []}
+
+    tweets_raw = nitter_client.fetch_timeline(username, count=limit)
+    tweets = []
+    for tw in tweets_raw:
+        tweets.append({
+            "author": f"@{tw.get('username', username)}",
+            "author_name": tw.get("display_name", tw.get("username", username)),
+            "text": tw.get("text", ""),
+            "time_ago": tw.get("time", ""),
+            "likes": tw.get("likes", 0),
+            "retweets": tw.get("retweets", 0),
+            "replies": tw.get("replies", 0),
+            "views": tw.get("views", 0),
+            "tweet_id": tw.get("tweet_id", ""),
+            "media": tw.get("media_urls", []) if tw.get("media_urls") else [],
+        })
+    return {"username": username, "limit": limit, "tweets": tweets, "count": len(tweets), "backend": "nitter"}
+
+
+def search_mentions_nitter(username: str, limit: int = 20) -> List[Dict]:
+    """Search @username mentions via local Nitter."""
+    try:
+        nitter_client = _get_nitter_client()
+    except ImportError as e:
+        print(f"[nitter] nitter_client not found: {e}", file=sys.stderr)
+        return []
+
+    clean = username.lstrip("@")
+    tweets_raw = nitter_client.search_tweets(f"@{clean}", count=limit)
+    results = []
+    for tw in tweets_raw:
+        results.append({
+            "url": tw.get("url", ""),
+            "title": f"@{tw.get('username', '')}: {tw.get('text', '')[:80]}",
+            "snippet": tw.get("text", ""),
+            "username": tw.get("username", ""),
+            "tweet_id": tw.get("tweet_id", ""),
+        })
+    return results
+
 def _search_mentions(username: str, limit: int = 10, port: int = 9377) -> List[Dict]:
     """
     通过 Camofox + Google 搜索该用户的 mentions，返回去重后的搜索结果列表。
@@ -1578,16 +1782,13 @@ def _search_mentions(username: str, limit: int = 10, port: int = 9377) -> List[D
     """
     # 避免循环 import：在函数内部 import
     try:
-        import sys as _sys
-        import os as _os
-        # 将 scripts/ 目录加入路径，确保 camofox_client 可 import
-        scripts_dir = _os.path.dirname(_os.path.abspath(__file__))
-        if scripts_dir not in _sys.path:
-            _sys.path.insert(0, scripts_dir)
-        from camofox_client import camofox_search
+        # Prefer playwright backend (consistent with top-level override)
+        from playwright_client import camofox_search
     except ImportError:
-        # fallback：直接用内置的 camofox_search（如果在同目录运行）
-        from scripts.camofox_client import camofox_search
+        try:
+            from camofox_client import camofox_search
+        except ImportError:
+            raise ImportError("No browser backend available — install playwright or camofox")
 
     clean = username.lstrip("@")
     queries = [
@@ -1619,6 +1820,7 @@ def monitor_mentions(
     username: str,
     limit: int = 10,
     camofox_port: int = 9377,
+    use_nitter: bool = False,
 ) -> Dict[str, Any]:
     """
     监控 X mentions 增量变化。
@@ -1642,10 +1844,11 @@ def monitor_mentions(
         "known_count": 0,
     }
 
-    # 检查 Camofox 是否运行
-    if not check_camofox(camofox_port):
-        result["error"] = t("monitor_camofox_error", port=camofox_port)
-        return result
+    # Nitter 模式：不需要 Camofox
+    if not use_nitter:
+        if not check_camofox(camofox_port):
+            result["error"] = t("monitor_camofox_error", port=camofox_port)
+            return result
 
     # 加载本地缓存
     cache = _load_cache(username)
@@ -1653,7 +1856,10 @@ def monitor_mentions(
     result["known_count"] = len(seen_set)
 
     # 搜索 mentions
-    all_results = _search_mentions(username, limit=limit, port=camofox_port)
+    if use_nitter:
+        all_results = search_mentions_nitter(username, limit=limit)
+    else:
+        all_results = _search_mentions(username, limit=limit, port=camofox_port)
 
     if cache["is_baseline"]:
         # 首次运行：将所有搜索结果写入缓存作为基线，不报新内容
@@ -1722,7 +1928,10 @@ def main():
     parser.add_argument("--text-only", "-t", action="store_true", help="Human-readable output")
     parser.add_argument("--timeout", type=int, default=30, help="Request timeout in seconds (default: 30)")
     parser.add_argument("--port", type=int, default=9377, help="Camofox port (default: 9377)")
-    parser.add_argument("--nitter", default="nitter.net", help="Nitter instance (default: nitter.net)")
+    parser.add_argument("--nitter", default="nitter.net", help="Nitter instance for browser mode (default: nitter.net)")
+    parser.add_argument("--backend", choices=["auto", "nitter", "browser"],
+                        default="auto",
+                        help="Backend: nitter (zero deps), browser (Camofox/Playwright), auto (nitter first, browser fallback)")
     parser.add_argument(
         "--lang", default="zh", choices=["zh", "en"],
         help="Output language for tool messages: zh (default) or en",
@@ -1749,10 +1958,13 @@ def main():
     if args.monitor:
         # --limit 对 --monitor 默认 10（搜索结果），若用户显式传 limit 则用用户的值
         monitor_limit = args.limit if args.limit != 50 else 10
+        # Backend selection for monitor
+        _use_nitter_mon = args.backend == "nitter" or (args.backend == "auto" and _nitter_available())
         result = monitor_mentions(
             args.monitor,
             limit=monitor_limit,
             camofox_port=args.port,
+            use_nitter=_use_nitter_mon,
         )
 
         if result.get("error"):
@@ -1784,14 +1996,25 @@ def main():
         # exit 1 = 有新 mentions（cron 友好），exit 0 = 无新内容
         sys.exit(1 if new_mentions else 0)
 
+    # ── Backend selection ─────────────────────────────────────────────────
+    backend = args.backend
+    use_nitter = False
+    if backend == "nitter":
+        use_nitter = True
+    elif backend == "auto":
+        use_nitter = _nitter_available()
+
     # ── Mode 1: User timeline ─────────────────────────────────────────────
     if args.user:
-        result = fetch_user_timeline(
-            args.user,
-            limit=args.limit,
-            camofox_port=args.port,
-            nitter_instance=args.nitter,
-        )
+        if use_nitter:
+            result = fetch_user_timeline_nitter(args.user, limit=args.limit)
+        else:
+            result = fetch_user_timeline(
+                args.user,
+                limit=args.limit,
+                camofox_port=args.port,
+                nitter_instance=args.nitter,
+            )
 
         if args.text_only:
             if result.get("error"):
@@ -1816,6 +2039,9 @@ def main():
 
     # ── Mode 2: X Article ────────────────────────────────────────────────
     if args.article:
+        if args.backend == "nitter":
+            print("[warning] --article requires a browser backend (Camofox/Playwright). "
+                  "Nitter cannot fetch X Articles. Falling back to browser.", file=sys.stderr)
         result = fetch_article(
             args.article,
             camofox_port=args.port,
@@ -1846,11 +2072,14 @@ def main():
 
     # ── Mode 3: Tweet replies ─────────────────────────────────────────────
     if args.url and args.replies:
-        result = fetch_tweet_replies(
-            args.url,
-            camofox_port=args.port,
-            nitter_instance=args.nitter,
-        )
+        if use_nitter:
+            result = _fetch_replies_via_nitter(args.url)
+        else:
+            result = fetch_tweet_replies(
+                args.url,
+                camofox_port=args.port,
+                nitter_instance=args.nitter,
+            )
 
         if args.text_only:
             if result.get("error"):
@@ -1915,7 +2144,7 @@ def main():
             sys.exit(1)
         return
 
-    # ── Mode 4: Single tweet via FxTwitter (original, zero deps) ─────────
+    # ── Mode 5: Single tweet via FxTwitter (original, zero deps) ─────────
     result = fetch_tweet(args.url, timeout=args.timeout)
 
     if args.text_only:
@@ -1942,14 +2171,9 @@ def main():
 
 
 
-def supplement_views(tweets: List[Dict], max补充: int = 50) -> List[Dict]:
+def supplement_views(tweets: List[Dict], max_supplement: int = 50) -> List[Dict]:
     """用 FxTwitter API 补充浏览量数据"""
-    try:
-        import requests
-    except ImportError:
-        print("[views] 'requests' not installed — skipping view supplementation", file=sys.stderr)
-        return tweets
-    for i, tw in enumerate(tweets[:max补充]):
+    for i, tw in enumerate(tweets[:max_supplement]):
         if tw.get("views", 0) != 0:
             continue  # 已有浏览量，跳过
         # 从 author 构建 tweet URL
@@ -1965,19 +2189,21 @@ def supplement_views(tweets: List[Dict], max补充: int = 50) -> List[Dict]:
             print(f"[views] 跳过无 tweet_id: @{username} - {tw.get('text', '')[:50]}...", file=sys.stderr)
             continue
         try:
-            resp = requests.get(f"https://api.fxtwitter.com/{username}/status/{tweet_id}", timeout=5)
-            data = resp.json()
+            url = f"https://api.fxtwitter.com/{username}/status/{tweet_id}"
+            req = urllib.request.Request(url, headers={"User-Agent": "x-tweet-fetcher/1.0"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="replace"))
             views = data.get("tweet", {}).get("views", 0)
             if views:
                 tw["views"] = views
                 print(f"[views] {username}/{tweet_id[:8]}... → {views}", file=sys.stderr)
-        except Exception as e:
+        except Exception:
             pass
     return tweets
 if __name__ == "__main__":
     # Version check (best-effort, no crash if unavailable)
     try:
-        from scripts.version_check import check_for_update
+        from version_check import check_for_update
         check_for_update("ythx-101/x-tweet-fetcher")
     except Exception:
         pass

@@ -14,7 +14,7 @@ Usage:
   export SOGOU_SSH_HOST=user@host
   python3 sogou_wechat.py --keyword "AI Agent" --via-ssh
 
-Workflow: Sogou search → get titles → Google/DDG find real WeChat URL → fetch_china.py reads full text
+Workflow: Sogou search → get titles → Google/DDG find real WeChat URL → use web_fetch for full text
 """
 
 from urllib.parse import quote
@@ -30,7 +30,7 @@ import subprocess
 
 def sogou_wechat_search_via_router(keyword, max_results=10):
     """Search Sogou WeChat via home router (cmd-queue/cmd-result pattern).
-
+    
     Router polls VPS every minute, executes queued commands, pushes results back.
     Uses home IP — never gets banned by Sogou.
     """
@@ -43,7 +43,7 @@ def sogou_wechat_search_via_router(keyword, max_results=10):
         if not os.path.isabs(path_var) or '..' in path_var:
             print(f"Invalid router path: {path_var}", file=sys.stderr)
             return sogou_wechat_search(keyword, max_results)
-
+    
     # Mark current result file position
     try:
         with open(result_file) as f:
@@ -51,17 +51,17 @@ def sogou_wechat_search_via_router(keyword, max_results=10):
         before_len = len(before)
     except FileNotFoundError:
         before_len = 0
-
+    
     # Queue the curl command — router will fetch raw HTML
     encoded_kw = quote(keyword)
     search_url = f'https://weixin.sogou.com/weixin?type=2&query={encoded_kw}'
     cmd = f'curl -s {shlex.quote(search_url)} -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"'
-
+    
     with open(queue_file, 'w') as f:
         f.write(cmd)
-
+    
     print(f"Command queued, waiting for router (up to 90s)...", file=sys.stderr)
-
+    
     # Wait for result (router polls every ~60s)
     for _ in range(18):  # 18 * 5s = 90s max
         time.sleep(5)
@@ -79,7 +79,7 @@ def sogou_wechat_search_via_router(keyword, max_results=10):
                     pass
         except FileNotFoundError:
             pass
-
+    
     print("Router timeout, falling back to direct", file=sys.stderr)
     return sogou_wechat_search(keyword, max_results)
 
@@ -189,40 +189,40 @@ def sogou_wechat_search(keyword, max_results=10):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     }
-
+    
     url = f'https://weixin.sogou.com/weixin?type=2&query={quote(keyword)}'
-
+    
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         text = response.text
-
+        
         results = []
-
+        
         # 找到所有 txt-box 块
         blocks = re.findall(r'<div class="txt-box">(.*?)</div>\s*</div>', text, re.DOTALL)
-
+        
         for block in blocks[:max_results]:
             # 标题和链接
             title_match = re.search(r'<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>', block, re.DOTALL)
             if not title_match:
                 continue
-
+            
             article_url = title_match.group(1).replace('&amp;', '&')
             # 清理标题中的 HTML 标签
             raw_title = title_match.group(2)
             title = re.sub(r'<[^>]+>', '', raw_title).strip()
             title = html_lib.unescape(title)
-
+            
             # 作者/公众号
             author_match = re.search(r'<a[^>]*class="account"[^>]*>(.*?)</a>', block, re.DOTALL)
             author = re.sub(r'<[^>]+>', '', author_match.group(1)).strip() if author_match else ''
-
+            
             # 摘要
             snippet_match = re.search(r'<p class="txt-info">(.*?)</p>', block, re.DOTALL)
             snippet = re.sub(r'<[^>]+>', '', snippet_match.group(1)).strip() if snippet_match else ''
             snippet = html_lib.unescape(snippet)
-
+            
             # 日期 (timestamp)
             date_match = re.search(r"document\.write\(timeConvert\('(\d+)'\)\)", block)
             if date_match:
@@ -231,11 +231,11 @@ def sogou_wechat_search(keyword, max_results=10):
                 date = datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
             else:
                 date = ''
-
+            
             # 完整链接
             if article_url.startswith('/link'):
                 article_url = 'https://weixin.sogou.com' + article_url
-
+            
             results.append({
                 'title': title,
                 'url': article_url,
@@ -243,53 +243,22 @@ def sogou_wechat_search(keyword, max_results=10):
                 'snippet': snippet,
                 'date': date
             })
-
+            
         return results
-
+        
     except Exception as e:
         print(f"搜索失败: {e}", file=sys.stderr)
         return []
 
 
 def resolve_sogou_link(sogou_url, port=9377):
-    """Resolve Sogou redirect link to real mp.weixin.qq.com URL via Camofox."""
-    try:
-        from camofox_client import camofox_open_tab, camofox_snapshot, camofox_close_tab
-        import time
-        tab_id = camofox_open_tab(sogou_url, f"resolve-{int(time.time())}", port=port)
-        if not tab_id:
-            return sogou_url
-        time.sleep(5)
-        snapshot = camofox_snapshot(tab_id, port=port)
-        camofox_close_tab(tab_id, port=port)
-        if snapshot:
-            # Look for mp.weixin.qq.com in the final page URL or content
-            import re
-            mp_match = re.search(r'(https?://mp\.weixin\.qq\.com/s/[A-Za-z0-9_-]+)', snapshot)
-            if mp_match:
-                return mp_match.group(1)
-            # Check for canonical URL
-            canon = re.search(r'canonical.*?(https?://mp\.weixin\.qq\.com[^\s"<>]+)', snapshot)
-            if canon:
-                return canon.group(1)
-        return sogou_url
-    except Exception:
-        return sogou_url
+    """Resolve Sogou redirect link to real mp.weixin.qq.com URL via HTTP redirect following."""
+    return sogou_url  # Browser dependency removed; direct HTTP resolve not yet implemented
 
 
 def resolve_via_google(title, port=9377):
-    """Resolve article title to real mp.weixin.qq.com URL via Google search."""
-    try:
-        from camofox_client import camofox_search
-        query = f'site:mp.weixin.qq.com "{title}"'
-        results = camofox_search(query, num=3, port=port)
-        for r in results:
-            url = r.get('url', '')
-            if 'mp.weixin.qq.com' in url:
-                return url
-    except Exception:
-        pass
-    # Fallback: try DuckDuckGo
+    """Resolve article title to real mp.weixin.qq.com URL via search."""
+    # Try DuckDuckGo
     try:
         from duckduckgo_search import DDGS
         import warnings
@@ -311,7 +280,7 @@ def main():
     parser.add_argument("--keyword", "-k", required=True, help="Search keyword")
     parser.add_argument("--limit", "-l", type=int, default=10, help="Max results")
     parser.add_argument("--json", "-j", action="store_true", help="Output JSON")
-    parser.add_argument("--resolve", "-r", action="store_true", help="Resolve Sogou links to real WeChat URLs (requires Camofox)")
+    parser.add_argument("--resolve", "-r", action="store_true", help="Resolve Sogou links to real WeChat URLs (deprecated - browser removed)")
     parser.add_argument("--via-ssh", action="store_true", help="Route search via SSH proxy (set SOGOU_SSH_HOST env var)")
     parser.add_argument("--via-router", action="store_true", help="Route search via home router (cmd-queue pattern, 24/7)")
     args = parser.parse_args()
@@ -331,7 +300,7 @@ def main():
                 r['url'] = real_url
                 r['resolved'] = True
             else:
-                # Fallback: try Camofox direct resolve
+                # Browser removed - resolve not available
                 resolved = resolve_sogou_link(r['url'])
                 if resolved != r['url']:
                     r['url'] = resolved

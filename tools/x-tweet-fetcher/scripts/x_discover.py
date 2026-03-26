@@ -3,7 +3,7 @@
 X Discover - Search and discover valuable tweets by keyword.
 Part of x-tweet-fetcher.
 
-Uses SearxNG (local, zero-cost) → DuckDuckGo → Camofox as fallback chain.
+Uses SearxNG (local, zero-cost) → DuckDuckGo as search chain.
 Supports --fresh flag to only get recent results (past week).
 Supports --verify flag to cross-validate freshness via AI (Gemini/Grok).
 
@@ -85,13 +85,13 @@ def save_cache(cache, cache_file):
 def discover_tweets(keywords, max_results=10, cache_file=None, fresh=False):
     """
     Search for tweets matching keywords.
-
+    
     Args:
         keywords: list of keyword strings
         max_results: max results per keyword
         cache_file: optional path to cache file (skip seen URLs)
         fresh: only return recent results (past week)
-
+    
     Returns:
         dict with total_new, finds list
     """

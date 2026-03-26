@@ -2,16 +2,16 @@
 
 # 🦞 x-tweet-fetcher
 
-**Fetch tweets, comments, timelines, and articles from X/Twitter — without login or API keys.**
+**Fetch tweets, lists, articles, and WeChat content — with smart backend routing.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-blue.svg)](https://github.com/openclaw/openclaw)
 [![Python 3.7+](https://img.shields.io/badge/Python-3.7+-green.svg)](https://www.python.org)
 [![GitHub stars](https://img.shields.io/github/stars/ythx-101/x-tweet-fetcher?style=social)](https://github.com/ythx-101/x-tweet-fetcher)
 
-*Zero config · Agent-first JSON output · Cron-friendly exit codes · WeChat + X in one tool*
+*Three backends · Auto fallback · Works everywhere (VPS / Mac / Windows / CI / Claude Code / OpenClaw)*
 
-[Quick Start](#-quick-start) · [Capabilities](#-capabilities) · [Cron Integration](#-cron-integration) · [How It Works](#-how-it-works)
+[Quick Start](#-quick-start) · [Backends](#-three-backends) · [Capabilities](#-capabilities) · [Self-hosted Nitter](#-self-hosted-nitter-setup) · [Claude Code & CC](#-works-with-claude-code--cc)
 
 </div>
 
@@ -20,336 +20,271 @@
 ## 😤 Problem
 
 ```
-You: fetch that tweet for me
+You: fetch that tweet / list / article for me
 AI:  I can't access X/Twitter. Please copy-paste the content manually.
 
 You: ...seriously?
 ```
 
-X has no free API. Scraping gets you blocked. Browser automation is fragile.
+X has no free API. Scraping gets you blocked. Browser automation is fragile and won't work in headless environments.
 
-**x-tweet-fetcher** solves this: one command → structured JSON, ready for your agent to consume. No API keys, no login, no cookies.
+**x-tweet-fetcher** solves this with **smart backend routing**: Nitter for zero-dependency speed, Playwright for full-feature coverage, auto fallback between them.
 
-## 📊 What You Get
+## 🔀 Three Backends
 
-| Feature | Zero Deps | With Camofox | Output |
-|---------|:---------:|:------------:|--------|
-| Single tweet | ✅ | — | text, stats, media, quotes |
-| Reply comments | — | ✅ | threaded comment tree |
-| User timeline | — | ✅ | paginated tweet list (up to 200) |
-| X Articles (long-form) | — | ✅ | full article text |
-| X Lists | — | ✅ | paginated tweet list |
-| @mentions monitor | — | ✅ | incremental new mentions |
-| WeChat article search | ✅ | — | title, url, author, date |
-| Tweet discovery | ✅ | optional | keyword search results |
-| Google search | — | ✅ | zero API key alternative |
-| Chinese platforms | partial | ✅ | Weibo/Bilibili/CSDN/WeChat |
-| User profile analysis | — | ✅ + LLM | MBTI, Big Five, topic graph |
-| **X-Tracker** (growth) | ✅ | — | burst detection, propagation analysis |
-| **Paper Recommend** | ✅ | — | related papers via OpenAlex (250M+ papers) |
-| **Author Finder** | ✅ | — | arxiv/GitHub → author X/Twitter profiles |
+```bash
+# Auto mode (default) — Nitter first, browser fallback
+python3 scripts/fetch_tweet.py --user elonmusk
+
+# Nitter only — zero dependency, no browser
+python3 scripts/fetch_tweet.py --user elonmusk --backend nitter
+
+# Browser only — full features (lists, articles)
+python3 scripts/fetch_tweet.py --list 1455045069516357634 --backend browser
+```
+
+| Backend | Deps | Speed | Features |
+|---------|------|-------|----------|
+| **nitter** | None (stdlib only) | ⚡ Fast | Timeline, search, replies, profile, mentions |
+| **browser** | Playwright/Chromium | 🐢 Slower | Everything above + **Lists** + **Articles** + **fetch_china** |
+| **auto** (default) | Best available | ⚡→🐢 | Tries nitter first, falls back to browser |
+
+> **OpenClaw users**: Playwright + Chromium are built-in. `--backend auto` just works — no extra install needed.
+
+## 📊 Capabilities
+
+| Feature | Backend | Output |
+|---------|---------|--------|
+| Single tweet | FxTwitter (always) | text, stats, media, quotes |
+| Reply comments | nitter / browser | threaded comment list |
+| User timeline | nitter / browser | paginated tweet list |
+| @mentions monitor | nitter / browser | incremental new mentions |
+| Keyword search | nitter / browser | real-time tweet stream |
+| **X Lists** | **browser only** | list member tweets |
+| **X Articles** | **browser only** | full long-form content |
+| User profile analysis | nitter + LLM | MBTI, Big Five, topic graph |
+| WeChat article search | Sogou (direct HTTP) | title, url, author, date |
+| **WeChat/Weibo/Bilibili** | **browser only** | via fetch_china.py |
+| Tweet growth tracker | FxTwitter API | growth curves, burst detection |
 
 > **For AI Agents**: All output is structured JSON. Import as Python modules for direct integration. Exit codes are cron-friendly (`0`=nothing new, `1`=new content).
 
 ## 🚀 Quick Start
 
-### 30 seconds (experienced users)
+### Single tweet (zero setup)
 
 ```bash
-git clone https://github.com/ythx-101/x-tweet-fetcher.git
-python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123456"
-# Done. JSON output with text, likes, retweets, views, media URLs.
+# Works immediately — no Nitter, no browser needed
+python3 scripts/fetch_tweet.py --url https://x.com/elonmusk/status/123456789
 ```
 
-### For Agents (Python import)
-
-```python
-from scripts.fetch_tweet import fetch_tweet
-
-# Fetch a tweet → structured data
-tweet = fetch_tweet("https://x.com/user/status/123456")
-# {"text": "...", "likes": 91, "retweets": 23, "views": 14468, ...}
-
-# Search WeChat articles (no API key)
-from scripts.sogou_wechat import sogou_wechat_search
-articles = sogou_wechat_search("AI Agent", max_results=10)
-
-# Discover tweets by keyword
-from scripts.x_discover import discover_tweets
-result = discover_tweets(["AI Agent", "automation"], max_results=5)
-
-# Google search via Camofox (no API key)
-from scripts.camofox_client import camofox_search
-results = camofox_search("fetch tweets without API key")
-```
-
-### CLI Examples
+### Timeline, search, replies
 
 ```bash
-# Single tweet (JSON)
-python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123"
+# Set your Nitter instance URL (for nitter/auto mode)
+export NITTER_URL=http://127.0.0.1:8788
 
-# Human-readable output
-python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123" --text-only
+# User timeline
+python3 scripts/fetch_tweet.py --user elonmusk --limit 20
 
-# Reply comments (requires Camofox)
-python3 scripts/fetch_tweet.py --url "https://x.com/user/status/123" --replies
+# Keyword search — real-time tweets
+python3 scripts/nitter_client.py --search "AI agent"
 
-# User timeline (up to 200 tweets, auto-pagination)
-python3 scripts/fetch_tweet.py --user elonmusk --limit 50
+# Tweet replies
+python3 scripts/fetch_tweet.py --url https://x.com/elonmusk/status/123456789 --replies
 
-# X Lists
-python3 scripts/fetch_tweet.py --list "https://x.com/i/lists/123456"
-
-# X Articles (long-form)
-python3 scripts/fetch_tweet.py --article "https://x.com/i/article/123"
-
-# Monitor @mentions (cron-friendly)
-python3 scripts/fetch_tweet.py --monitor @username
-
-# WeChat article search
-python3 scripts/sogou_wechat.py --keyword "AI Agent" --limit 10 --json
-
-# Discover tweets by keyword
-python3 scripts/x_discover.py --keywords "AI Agent,LLM tools" --limit 5 --json
-
-# Chinese platforms (auto-detect: Weibo/Bilibili/CSDN/WeChat)
-python3 scripts/fetch_china.py --url "https://mp.weixin.qq.com/s/..."
-
-# Google search (zero API key)
-python3 scripts/camofox_client.py "OpenClaw AI agent"
+# @mentions monitoring (cron-friendly)
+python3 scripts/fetch_tweet.py --monitor @yourusername
 
 # User profile analysis
 python3 scripts/x-profile-analyzer.py --user elonmusk --count 100
-
-# ── X-Tracker: Tweet Growth Monitoring ──
-
-# Add a tweet to track
-python3 scripts/tweet_growth_cli.py --add "https://x.com/user/status/123" "my launch tweet"
-
-# List all tracked tweets
-python3 scripts/tweet_growth_cli.py --list
-
-# Run sampling (new tweets <48h, every 15min)
-python3 scripts/tweet_growth_cli.py --run --fast
-
-# Run sampling (all tweets, hourly)
-python3 scripts/tweet_growth_cli.py --run --normal
-
-# Generate analysis report
-python3 scripts/tweet_growth_cli.py --report 123456789
-
-# Report with topic cross-analysis
-python3 scripts/tweet_growth_cli.py --report 123456789 --cross
 ```
 
-## ⏰ Cron Integration
-
-All monitoring scripts use exit codes for automation:
-
-| Exit Code | Meaning |
-|:---------:|---------|
-| `0` | No new content |
-| `1` | New content found |
-| `2` | Error |
+### Lists & Articles (browser backend)
 
 ```bash
-# Check mentions every 30 min
-*/30 * * * * python3 fetch_tweet.py --monitor @username || notify-send "New mentions!"
+# X List — requires Playwright
+python3 scripts/fetch_tweet.py --list 1455045069516357634 --backend browser
 
-# Discover tweets daily
-0 9 * * * python3 x_discover.py --keywords "AI Agent" --cache ~/.cache/discover.json --json >> ~/discoveries.jsonl
+# X Article
+python3 scripts/fetch_tweet.py --article https://x.com/user/article/123 --backend browser
 
-# X-Tracker: dual-frequency sampling
-*/15 * * * * python3 tweet_growth_cli.py --run --fast    # New tweets (<48h)
-0 * * * *    python3 tweet_growth_cli.py --run --normal  # All tweets (hourly)
+# WeChat / Weibo / Bilibili
+python3 scripts/fetch_china.py --url "https://mp.weixin.qq.com/s/..."
 ```
 
-## 📈 X-Tracker: Tweet Growth Analysis
-
-Track your tweets' growth and detect viral moments — inspired by semiconductor ETCH Endpoint Detection.
-
-### How It Works
-
-```
-New tweet posted
-    │
-    ▼
-Fast sampling (every 15min for 48h)
-    │
-    ├── dV/dt spike? ──────── Candidate burst
-    │                              │
-    │                    3 consecutive? ── ★ BURST CONFIRMED
-    │                              │
-    │                    RT/view ratio ── Influencer vs Algorithm
-    │
-    ▼
-Normal sampling (hourly)
-    │
-    └── 6× growth < 2%/h ── Long tail
-```
-
-### Detection Algorithm
-
-| Component | Method | Purpose |
-|-----------|--------|---------|
-| **Derivative detection** | dV/dt per hour | Spot sudden acceleration |
-| **Sliding window** | 5-sample moving average | Filter noise |
-| **Multi-signal fusion** | views×1 + likes×1 + bookmarks×1.5 + RT×3 | Weighted composite score |
-| **Burst confirmation** | 3 consecutive windows above threshold | Prevent false positives |
-| **Surge override** | Single window +100%/h | Catch massive spikes |
-| **Saturation** | 6 samples < 2%/h growth | Detect long tail |
-| **Propagation** | RT-per-1k-views ratio | Influencer vs algorithm driven |
-
-### Report Example
-
-```
-══════════════════════════════════════════════════
-  推文增长报告：my launch tweet
-  ID: 2024390277386076183
-══════════════════════════════════════════════════
-
-  ── 整体增长 ──
-  浏览：  4,560 → 11,245  (+146.6%)
-  点赞：  40 → 73  (+82.5%)
-  收藏：  35 → 88  (+151.4%)
-
-  ── 爆点时间窗口 ──
-  开始：2026-02-20 12:00
-  结束：2026-02-21 08:00
-  持续：20.0h
-  新增浏览：+4,898
-  峰值增速：103%/h
-
-  ── 传播模式 ──
-  混合传播（平均 0.53‰ RT/千次浏览）
-══════════════════════════════════════════════════
-```
-
-### Configuration
-
-All thresholds in `scripts/growth_config.py`:
-
-```python
-ETCH_SPIKE_RATE     = 0.30   # 30%/h triggers candidate
-ETCH_CONFIRM_COUNT  = 3      # 3 consecutive = confirmed
-WEIGHT_BOOKMARKS    = 1.5    # Bookmarks weighted 1.5x
-WEIGHT_RETWEETS     = 3.0    # Retweets weighted 3x
-```
-
-## 🔧 Camofox Setup (Optional)
-
-Required for: comments, timelines, mentions, Google search, non-WeChat Chinese platforms.
+### WeChat search (always zero-dep)
 
 ```bash
-# Option 1: OpenClaw plugin
-openclaw plugins install @askjo/camofox-browser
-
-# Option 2: Standalone
-git clone https://github.com/jo-inc/camofox-browser
-cd camofox-browser && npm install && npm start  # Port 9377
+python3 scripts/sogou_wechat.py --keyword "AI Agent" --limit 5 --json
 ```
 
-[Camofox](https://github.com/jo-inc/camofox-browser) is built on [Camoufox](https://camoufox.com) — a Firefox fork with C++ level fingerprint spoofing. Bypasses Google, Cloudflare, and most anti-bot detection.
+## 🖥️ Works with Claude Code / CC
+
+Since x-tweet-fetcher has **zero mandatory dependencies**, it works perfectly in constrained environments:
+
+| Environment | nitter mode | browser mode | Notes |
+|-------------|:----------:|:------------:|-------|
+| **Claude Code (CC)** | ✅ | ❌ | No browser runtime |
+| **OpenClaw** | ✅ | ✅ | Playwright built-in |
+| **VPS (headless Linux)** | ✅ | ✅* | *needs `pip install playwright` |
+| **Mac / Windows** | ✅ | ✅* | *needs `pip install playwright` |
+| **CI/CD pipelines** | ✅ | ⚠️ | Possible but heavy |
+| **Docker containers** | ✅ | ⚠️ | Needs Chromium in image |
+| **Termux (Android)** | ✅ | ❌ | No Chromium |
+
+```bash
+# In Claude Code (nitter mode, zero deps):
+export NITTER_URL=http://your-vps:8788
+python3 scripts/fetch_tweet.py --user YuLin807 --limit 10
+
+# In OpenClaw (auto mode, full features):
+python3 scripts/fetch_tweet.py --user YuLin807 --limit 10
+# → auto-detects Nitter, falls back to Playwright if needed
+```
+
+## 🔧 Self-hosted Nitter Setup
+
+> ⚠️ **Public Nitter instances are dead or unreliable** (as of March 2026). Self-hosting is the only reliable option.
+
+### Why you need this
+
+Twitter removed guest API access in 2023. Public Nitter instances get rate-limited because thousands of users share a few accounts. **Your own instance = your own rate limits.**
+
+### 5-minute setup guide
+
+#### 1. Install dependencies
+
+```bash
+# Ubuntu/Debian
+sudo apt install -y redis-server libpcre3-dev libsass-dev
+
+# Install Nim
+curl https://nim-lang.org/choosenim/init.sh -sSf | sh
+export PATH=$HOME/.nimble/bin:$PATH
+```
+
+#### 2. Build Nitter
+
+```bash
+git clone https://github.com/zedeus/nitter
+cd nitter
+nimble build -d:release
+nimble scss
+cp nitter.example.conf nitter.conf
+```
+
+#### 3. Get X session cookies
+
+Use a **secondary account** (not your main).
+
+1. Log into X in browser → DevTools → Application → Cookies → `x.com`
+2. Copy `auth_token` and `ct0`
+3. Create `sessions.jsonl`:
+
+```json
+{"name":"myaccount","auth_token":"YOUR_AUTH_TOKEN","ct0":"YOUR_CT0"}
+```
+
+#### 4. Configure
+
+```ini
+[Server]
+address = "127.0.0.1"  # Local only!
+port = 8788
+
+[Config]
+hmacKey = "$(openssl rand -hex 32)"
+
+[Tokens]
+tokenFile = "sessions.jsonl"
+```
+
+#### 5. Run & test
+
+```bash
+sudo systemctl start redis-server
+./nitter
+
+# Test
+curl http://127.0.0.1:8788/YuLin807
+export NITTER_URL=http://127.0.0.1:8788
+python3 scripts/nitter_client.py --search "test"
+```
+
+### Security
+
+- **Bind to `127.0.0.1` only** — never expose to public internet
+- **Use a secondary X account** — session token gives full access
+- **Session tokens last ~1 year**
 
 ## 📐 How It Works
 
 ```
                     ┌─────────────┐
- --url              │  FxTwitter  │  ← Public API, no auth
+ --url              │  FxTwitter  │  ← Public API, no auth needed
                     │  (free)     │
                     └──────┬──────┘
                            │ JSON
-┌──────────┐       ┌──────┴──────┐       ┌──────────┐
-│ --replies│       │             │       │  Agent   │
-│ --user   │──────▶│  Camofox    │──────▶│  (JSON)  │
-│ --monitor│       │  (browser)  │       │          │
-│ --list   │       └─────────────┘       └──────────┘
-└──────────┘
-                    ┌─────────────┐
- --keyword          │ DuckDuckGo  │  ← No API key
- sogou_wechat       │ Sogou       │
-                    └─────────────┘
+              ┌────────────┴────────────┐
+              │    --backend auto       │
+              │  ┌───────┐  ┌────────┐  │       ┌──────────┐
+ --user       │  │Nitter │→→│Browser │  │       │  Agent   │
+ --replies    │  │(fast) │  │(full)  │  │──────▶│  (JSON)  │
+ --monitor    │  │ 0 dep │  │Playwrt │  │       │          │
+ --search     │  └───────┘  └────────┘  │       └──────────┘
+ --list       └─────────────────────────┘
+ --article
+              ┌─────────────┐
+ sogou_wechat │   Sogou     │  ← Direct HTTP, no API key
+ fetch_china  │  (search)   │
+              └─────────────┘
 ```
 
-- **Basic tweets**: [FxTwitter](https://github.com/FxEmbed/FxEmbed) public API (no auth)
-- **Comments/Timeline/Mentions**: Camofox headless Firefox + Nitter parsing
-- **Views supplement**: FxTwitter API auto-fills view counts missing from Nitter
-- **WeChat search**: Sogou search (direct HTTP, no browser)
-- **Tweet discovery**: DuckDuckGo with Camofox Google fallback
-- **Chinese platforms**: Direct HTTP for WeChat; Camofox for others
-
-## 📚 Academic Paper Mode
-
-Found a paper on X? Get related papers and author Twitter handles in one command.
-
-### Paper Recommendations
-
-```bash
-# From a tweet containing a paper link
-python3 scripts/paper_recommend.py --tweet "https://x.com/someone/status/123"
-
-# From ArXiv
-python3 scripts/paper_recommend.py --arxiv 1706.03762
-
-# From GitHub repo
-python3 scripts/paper_recommend.py --github "https://github.com/org/repo"
-
-# From paper title
-python3 scripts/paper_recommend.py --title "Attention Is All You Need"
-
-# Chinese output
-python3 scripts/paper_recommend.py --arxiv 1706.03762 --zh
-
-# JSON output
-python3 scripts/paper_recommend.py --arxiv 1706.03762 --json
-```
-
-Output: Top-N related papers with title, authors, citation count, abstract, and links — ranked by citations across references, cited-by, and same-author papers.
-
-### Author Twitter Finder
-
-```bash
-# Find paper authors' Twitter/X handles
-python3 scripts/arxiv_author_finder.py --arxiv 1706.03762
-
-# With verbose output
-python3 scripts/arxiv_author_finder.py --arxiv "https://arxiv.org/abs/2603.10165" --verbose
-```
-
-4-layer cascade: ArXiv API → GitHub profiles → Scholars dataset → Search engines.
-
-### APIs Used (all free, no key required)
-
-| API | Purpose | Key Required? |
-|-----|---------|:------------:|
-| ArXiv | Paper metadata | ❌ |
-| Semantic Scholar | Citations, recommendations | ❌ (optional key for higher rate limits) |
-| GitHub REST | Author Twitter lookup | ❌ (optional token for higher rate limits) |
-
-Optional environment variables for better performance:
-```bash
-export S2_API_KEY="your-key"       # https://semanticscholar.org/product/api
-export GITHUB_TOKEN="your-token"   # https://github.com/settings/tokens
-```
+- **Single tweets**: [FxTwitter](https://github.com/FxEmbed/FxEmbed) — always works, zero auth
+- **Timeline / Replies / Search / Mentions**: Self-hosted [Nitter](https://github.com/zedeus/nitter) or Playwright browser
+- **Lists / Articles**: Playwright browser (Nitter doesn't support these)
+- **WeChat / China platforms**: Sogou search + fetch_china.py
 
 ## 📦 Requirements
 
-| | Required | Optional |
-|--|----------|----------|
-| **Runtime** | Python 3.7+ | — |
-| **Basic tweets** | Nothing else | — |
-| **Advanced features** | [Camofox](https://github.com/jo-inc/camofox-browser) | `duckduckgo-search` (pip) |
-| **Academic Paper Mode** | Nothing else | `pip install duckduckgo-search` (improves author search coverage) |
-| **Profile analysis** | Camofox + LLM API key | — |
+```
+Python 3.7+     (that's it for nitter mode)
+```
+
+| Mode | Extra requirement |
+|------|-----------------|
+| `--backend nitter` | Nothing (Python stdlib only) |
+| `--backend browser` | `pip install playwright` + `playwright install chromium` |
+| `--backend auto` | Uses whatever is available |
+
+## ⏰ Cron Integration
+
+Exit codes for automation: `0`=nothing new, `1`=new content, `2`=error.
+
+```bash
+# Check mentions every 30 min
+*/30 * * * * NITTER_URL=http://127.0.0.1:8788 python3 fetch_tweet.py --monitor @username
+
+# Discover tweets daily
+0 9 * * * python3 nitter_client.py --search "AI Agent" >> ~/discoveries.jsonl
+```
 
 ## 🤝 Contributing
 
-Issues and PRs welcome! Especially:
+Issues and PRs welcome! Core platforms:
 
-- 🐛 Parsing edge cases (new Nitter layouts, X Article formats)
-- 🌍 New platform support (Threads, Mastodon, etc.)
-- 📊 Performance improvements for large-scale fetching
+- **X/Twitter** — Nitter + Playwright backends
+- **WeChat articles** — Sogou search
+
+Other platforms welcome as community PRs.
+
+## 🙏 Acknowledgments
+
+- **[Nitter](https://github.com/zedeus/nitter)** by [zedeus](https://github.com/zedeus) (12.6k ⭐) — self-hosted Twitter frontend
+- **[FxTwitter](https://github.com/FxEmbed/FxEmbed)** — public API for single tweet data
+- **[Playwright](https://github.com/microsoft/playwright)** — browser automation for full-feature coverage
+- **[OpenClaw](https://github.com/openclaw/openclaw)** — AI agent framework
 
 ## 📄 License
 
@@ -359,7 +294,7 @@ Issues and PRs welcome! Especially:
 
 <div align="center">
 
-*Built for AI agents. Used by [OpenClaw](https://github.com/openclaw/openclaw) 🦞*
+*Three backends. Auto fallback. Works everywhere.* 🦞
 
 **[GitHub](https://github.com/ythx-101/x-tweet-fetcher)** · **[Issues](https://github.com/ythx-101/x-tweet-fetcher/issues)** · **[OpenClaw Q&A](https://github.com/ythx-101/openclaw-qa)**
 
