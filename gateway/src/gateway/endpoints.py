@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -232,6 +233,127 @@ def _fetch_klines_akshare_daily(symbol: str, limit: int = 160) -> Optional[dict]
     return {"symbol": sym_show, "interval": "1d", "limit": len(data), "data": data}
 
 
+def _stooq_daily_symbol_map(sym: str) -> Optional[str]:
+    """行情页 FALLBACK 标的 → Stooq 日线代码（免费 CSV，无需密钥）。"""
+    u = sym.upper().strip()
+    return {
+        "GOLD": "xauusd",
+        "XAUUSD": "xauusd",
+        "SP500": "^spx",
+        "SPX": "^spx",
+        "NASDAQ": "^ndx",
+        "NDX": "^ndx",
+    }.get(u)
+
+
+def _fetch_klines_stooq_daily(stooq_symbol: str, limit: int) -> Optional[dict]:
+    import csv
+    import io
+    import urllib.parse
+    import urllib.request
+
+    flag = os.environ.get("STOOQ_KLINE_DISABLE", "0").strip().lower()
+    if flag in ("1", "true", "yes"):
+        return None
+
+    lim = max(10, min(int(limit or 160), 3000))
+    qs = urllib.parse.urlencode({"s": stooq_symbol.lower(), "i": "d"})
+    url = f"https://stooq.com/q/d/l/?{qs}"
+    try:
+        with urllib.request.urlopen(url, timeout=28) as resp:
+            text = resp.read().decode("utf-8", errors="replace")
+    except Exception:
+        _log.exception("stooq klines request failed: %s", stooq_symbol)
+        return None
+    if not text or "No data" in text[:300]:
+        return None
+    reader = csv.DictReader(io.StringIO(text))
+    rows: List[dict] = []
+    for raw in reader:
+        rows.append({(k or "").strip(): v for k, v in raw.items()})
+    if len(rows) < 2:
+        return None
+    tail = rows[-lim:]
+    data: List[dict] = []
+    for row in tail:
+        day = (row.get("Date") or "").strip()
+        if not day:
+            continue
+        try:
+            o = float(row.get("Open") or 0)
+            h = float(row.get("High") or 0)
+            l = float(row.get("Low") or 0)
+            c = float(row.get("Close") or 0)
+        except (TypeError, ValueError):
+            continue
+        vol_raw = row.get("Volume")
+        try:
+            v = float(vol_raw) if vol_raw not in (None, "") else 0.0
+        except (TypeError, ValueError):
+            v = 0.0
+        data.append(
+            {
+                "t": f"{day}T00:00:00+00:00",
+                "o": o,
+                "h": h,
+                "l": l,
+                "c": c,
+                "close": c,
+                "v": v,
+            }
+        )
+    if not data:
+        return None
+    return {"symbol": stooq_symbol, "interval": "1d", "limit": len(data), "data": data}
+
+
+def _fetch_klines_binance_usdt(symbol: str, interval: str, limit: int) -> Optional[dict]:
+    """Binance 现货 USDT 公共 K 线（BTCUSDT / ETHUSDT 等）。"""
+    import json
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, timezone
+
+    flag = os.environ.get("BINANCE_KLINE_DISABLE", "0").strip().lower()
+    if flag in ("1", "true", "yes"):
+        return None
+
+    sym = symbol.upper().strip()
+    if not sym.endswith("USDT"):
+        return None
+    iv_map = {"1h": "1h", "4h": "4h", "1d": "1d", "15m": "15m", "30m": "30m", "1w": "1w", "1m": "1m"}
+    iv = iv_map.get((interval or "1h").lower(), "1h")
+    lim = max(10, min(int(limit or 100), 1000))
+    q = urllib.parse.urlencode({"symbol": sym, "interval": iv, "limit": lim})
+    url = f"https://api.binance.com/api/v3/klines?{q}"
+    try:
+        with urllib.request.urlopen(url, timeout=18) as resp:
+            raw = json.loads(resp.read().decode())
+    except Exception:
+        _log.exception("binance klines failed: %s", sym)
+        return None
+    if not raw:
+        return None
+    data: List[dict] = []
+    for k in raw:
+        ts_ms = int(k[0])
+        t_iso = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S+00:00"
+        )
+        data.append(
+            {
+                "t": t_iso,
+                "o": float(k[1]),
+                "h": float(k[2]),
+                "l": float(k[3]),
+                "c": float(k[4]),
+                "close": float(k[4]),
+                "v": float(k[5]),
+            }
+        )
+    return {"symbol": sym, "interval": iv, "limit": len(data), "data": data}
+
+
 @router.get("/market/klines")
 def get_klines(
     symbol: str = "BTCUSDT",
@@ -302,6 +424,19 @@ def get_klines(
             return json_ok(ak_payload, source="akshare")
 
         return json_ok({**empty_payload, "limit": limit}, source="none")
+
+    sym_u = (symbol or "").strip().upper()
+
+    if sym_u.endswith("USDT"):
+        bn = _fetch_klines_binance_usdt(sym_u, interval, limit)
+        if bn:
+            return json_ok(bn, source="binance")
+
+    stq = _stooq_daily_symbol_map(sym_u)
+    if stq:
+        sq = _fetch_klines_stooq_daily(stq, limit)
+        if sq:
+            return json_ok(sq, source="stooq")
 
     return json_ok({**empty_payload, "limit": limit}, source="stub")
 
@@ -2489,30 +2624,7 @@ def post_risk_check(body: dict = Body(default={})) -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# --- 认证与审计 ---
-
-
-class LoginRequest(BaseModel):
-    """JSON 登录体（密码可先占位，后续接用户表）。"""
-
-    username: str = Field(default="", max_length=256)
-    password: str = Field(default="", max_length=512)
-
-
-@router.post("/auth/login")
-def post_auth_login(body: LoginRequest) -> dict:
-    """登录：校验通过后签发 JWT（可选；无 users 表时接受任意非空用户名）。"""
-    username = (body.username or "").strip() or "demo"
-    try:
-        from .auth.jwt_auth import create_access_token
-
-        token = create_access_token(subject=username)
-        return {"token": token, "user": username}
-    except Exception:
-        return {
-            "token": "stub_token_placeholder",
-            "user": username,
-        }
+# --- 审计 ---
 
 
 @router.get("/data/quality")
@@ -3438,3 +3550,18 @@ def get_alpha_lab() -> dict:
             "source": "error",
             "binding_note": note,
         }
+
+
+# Hongshan / Next 共用：认证、行情、委托、持仓（DuckDB 单栈）
+try:
+    from .unified_auth_routes import build_unified_auth_router
+    from .unified_orders_routes import build_unified_orders_routes_router
+    from .unified_positions_routes import build_unified_positions_router
+    from .unified_stocks_routes import build_unified_stocks_router
+
+    router.include_router(build_unified_auth_router())
+    router.include_router(build_unified_stocks_router())
+    router.include_router(build_unified_orders_routes_router())
+    router.include_router(build_unified_positions_router())
+except Exception as e:
+    _log.warning("unified Hongshan routers not mounted: %s", e)

@@ -252,7 +252,8 @@ class AIFusionStrategy:
         try:
             conn = get_conn(read_only=False)
             ensure_tables(conn)
-            conn.execute("DELETE FROM trade_signals")
+            # 仅清空本策略，保留 shareholder_chip / market_agg 等其它 strategy_id
+            conn.execute("DELETE FROM trade_signals WHERE strategy_id = ?", ["ai_fusion"])
             for code, signal, confidence, target_price, stop_loss, signal_score in signals:
                 conn.execute(
                     """INSERT INTO trade_signals

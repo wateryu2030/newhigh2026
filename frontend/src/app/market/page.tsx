@@ -29,6 +29,7 @@ export default function MarketPage() {
   const [symbolList, setSymbolList] = useState<{ symbol: string; name: string }[]>([]);
   const [symbol, setSymbol] = useState('');
   const [prices, setPrices] = useState<{ t: string; p: number; o?: number; h?: number; l?: number }[]>([]);
+  const [klineSource, setKlineSource] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabKey>('chart');
   const [sent7, setSent7] = useState<MarketSentiment7dResponse | null>(null);
@@ -58,14 +59,26 @@ export default function MarketPage() {
     api
       .marketSentiment7d()
       .then(setSent7)
-      .catch(() => setSent7({ error: 'API 不可用', score: 0 }))
+      .catch((e: unknown) => {
+        const aborted = e instanceof Error && e.name === 'AbortError';
+        const msg = e instanceof Error ? e.message : String(e);
+        setSent7({
+          error: aborted
+            ? '请求超时（后端拉东财全市场现货或查库较慢，可稍后重试或先跑 Tushare 日 K / 写入实时表）'
+            : msg || 'API 不可用',
+          score: 0,
+        });
+      })
       .finally(() => setSent7Loading(false));
   }, [tab]);
 
   useEffect(() => {
     if (!symbol) return;
-    const interval = isAshare(symbol) ? '1d' : '1h';
+    setKlineSource(undefined);
+    const u = symbol.toUpperCase();
+    const interval = isAshare(symbol) ? '1d' : u.endsWith('USDT') ? '1h' : '1d';
     api.market(symbol, interval).then((r) => {
+      setKlineSource(r.source);
       const d = r.data || [];
       if (d.length) {
         setPrices(d.map((bar) => ({
@@ -78,11 +91,28 @@ export default function MarketPage() {
       } else {
         setPrices([]);
       }
-    }).catch(() => setPrices([]));
+    }).catch(() => {
+      setKlineSource(undefined);
+      setPrices([]);
+    });
   }, [symbol]);
 
   const displayList = symbolList.length ? symbolList : FALLBACK_SYMBOLS.map((s) => ({ symbol: s, name: s }));
   const current = symbol || displayList[0]?.symbol;
+
+  function klineSubtitle(s: string): string {
+    if (isAshare(s)) return '(A股日线 · DuckDB)';
+    if (klineSource === 'binance') return '(USDT · Binance)';
+    if (klineSource === 'stooq') return '(日线 · Stooq)';
+    if (klineSource === 'duckdb' || klineSource === 'duckdb_pipeline') return '(DuckDB)';
+    if (klineSource === 'akshare') return '(akshare 日线)';
+    if (klineSource === 'none') return '(无本地数据)';
+    if (!prices.length) {
+      if (klineSource === 'stub') return '(暂无数据源，仅占位)';
+      return '(暂无 K 线)';
+    }
+    return '';
+  }
 
   return (
     <div className="space-y-6">
@@ -129,7 +159,7 @@ export default function MarketPage() {
           </div>
           <div className="card">
             <p className="mb-2 text-sm text-slate-400">
-              {current} — {t('market.kline')} {isAshare(current) ? '(A股日线 · DuckDB)' : '(stub)'}
+              {current} — {t('market.kline')} {klineSubtitle(current)}
             </p>
             {loading ? (
               <p className="text-slate-500">{t('common.loading')}</p>
@@ -160,9 +190,13 @@ export default function MarketPage() {
       {tab === 'sentiment' && (
         <div className="card space-y-4">
           <p className="text-slate-400 text-sm">
-            全市场现货聚合评分（对齐 ClawHub「A Stock Monitor」思路，本仓库安全实现）。交易时段可先跑{' '}
+            数据来源聚焦 <strong>东方财富</strong>（AkShare 全市场现货 / 库内实时表）与 <strong>Tushare 日 K</strong>：
+            顺序为库内 <code className="text-xs bg-slate-800 px-1 rounded">a_stock_realtime</code>
+            → 东财现货接口 → 日 K 近似。请用调度或{' '}
+            <code className="text-xs bg-slate-800 px-1 rounded">python scripts/run_tushare_incremental.py</code>{' '}
+            保持 <code className="text-xs bg-slate-800 px-1 rounded">a_stock_daily</code> 的 MAX(date) 最新；盘中可{' '}
             <code className="text-xs bg-slate-800 px-1 rounded">UPDATE_REALTIME_FIRST=1 python scripts/run_market_sentiment_7d.py</code>{' '}
-            更新快照。
+            写入东财快照。
           </p>
           {sent7Loading ? (
             <p className="text-slate-500">{t('common.loading')}</p>
@@ -170,7 +204,10 @@ export default function MarketPage() {
             <div className="rounded-lg bg-amber-900/30 border border-amber-700/50 p-4 text-amber-200 text-sm">
               <p className="font-medium">暂无法计算</p>
               <p className="mt-1">{sent7.error}{sent7.detail ? ` — ${sent7.detail}` : ''}</p>
-              <p className="mt-2 text-slate-400">请确认已写入 a_stock_realtime（实时采集）或本机可访问东财接口（akshare）。</p>
+              <p className="mt-2 text-slate-400">
+                请确认 <code className="text-xs bg-slate-900 px-1 rounded">SENTIMENT_7D_AKSHARE_ENABLE=1</code> 且本机可访问东财，或已写入足够的
+                a_stock_realtime；并跑 Tushare 日 K 增量以免日 K 口径滞后。
+              </p>
             </div>
           ) : (
             <>
@@ -187,6 +224,18 @@ export default function MarketPage() {
                 </div>
                 <p className="text-slate-500 text-sm flex-1 min-w-[200px]">{sent7?.description}</p>
               </div>
+              {(sent7?.data_source || sent7?.trade_date) && (
+                <p className="text-xs text-slate-500">
+                  {sent7.data_source === 'duckdb_a_stock_realtime' && '数据源：实时快照 · a_stock_realtime'}
+                  {sent7.data_source === 'duckdb_a_stock_daily' && '数据源：日 K 近似 · a_stock_daily'}
+                  {sent7.data_source === 'akshare_stock_zh_a_spot_em' && '数据源：AkShare 东财现货'}
+                  {sent7.data_source === 'akshare_stock_zh_a_spot_sina' && '数据源：AkShare 新浪现货（盘中）'}
+                  {sent7.trade_date ? ` · 交易日 ${sent7.trade_date}` : ''}
+                  {sent7.calendar_lag_days != null && sent7.calendar_lag_days > 0
+                    ? ` · 日 K 滞后 ${sent7.calendar_lag_days} 天（自然日）`
+                    : ''}
+                </p>
+              )}
               {sent7?.stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                   {Object.entries(sent7.stats).map(([k, v]) => (

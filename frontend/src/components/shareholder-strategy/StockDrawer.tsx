@@ -98,6 +98,35 @@ export function StockDrawer({ open, onClose, stock }: StockDrawerProps) {
                     <dd className="font-medium" style={{ color: '#F1F5F9' }}>{f.turnover_avg != null ? f.turnover_avg.toFixed(2) : '—'}</dd>
                   </div>
                 </dl>
+                {detail.chip && (
+                  <div className="mt-4 border-t pt-3" style={{ borderColor: '#2A2E36' }}>
+                    <h4 className="mb-2 text-sm font-semibold" style={{ color: '#94A3B8' }}>
+                      筹码结构
+                    </h4>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt style={{ color: '#64748B' }}>筹码得分</dt>
+                        <dd className="font-medium" style={{ color: '#22D3EE' }}>
+                          {detail.chip.chip_score != null ? detail.chip.chip_score : '—'}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt style={{ color: '#64748B' }}>前十大 HHI</dt>
+                        <dd className="font-medium" style={{ color: '#F1F5F9' }}>
+                          {detail.chip.hhi_top10 != null ? detail.chip.hhi_top10 : '—'}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt style={{ color: '#64748B' }}>前十占比环比(pts)</dt>
+                        <dd className="font-medium" style={{ color: '#F1F5F9' }}>
+                          {detail.chip.top10_delta_pp != null
+                            ? `${detail.chip.top10_delta_pp > 0 ? '+' : ''}${detail.chip.top10_delta_pp}`
+                            : '—'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                )}
               </div>
 
               {detail.in_pool && (

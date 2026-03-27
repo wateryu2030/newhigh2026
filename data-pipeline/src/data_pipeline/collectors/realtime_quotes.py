@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import os
 
 
 def update_realtime_quotes() -> int:
@@ -11,9 +12,19 @@ def update_realtime_quotes() -> int:
         import pandas as pd
     except ImportError:
         return 0
+    from ..data_sources.ashare_daily_kline import _pop_proxy_env_vars, _restore_env
     from ..storage.duckdb_manager import get_conn, ensure_tables
 
-    df = ak.stock_zh_a_spot_em()
+    strip = os.environ.get("SENTIMENT_7D_STRIP_PROXY", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+    )
+    saved = _pop_proxy_env_vars() if strip else {}
+    try:
+        df = ak.stock_zh_a_spot_em()
+    finally:
+        _restore_env(saved)
     if df is None or df.empty:
         return 0
     now = dt.datetime.now()

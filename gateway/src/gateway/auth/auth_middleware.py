@@ -1,6 +1,8 @@
 """
 认证中间件：对 /api/* 除白名单路径外校验 Authorization: Bearer <token>。
-白名单含 /api/auth/login、/api/health、/health、/docs、/openapi、/redoc；OPTIONS 预检直接放行。
+白名单含 /api/auth/login、/api/health、/health、/docs、/openapi、/redoc，
+及行情页只读 /api/market/sentiment-7d、/api/market/klines、/api/market/ashare/stocks；
+OPTIONS 预检直接放行。
 通过 JWT_AUTH_REQUIRED=1 启用；未启用时所有请求放行。
 """
 
@@ -12,7 +14,16 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 _SKIP_PREFIXES = ("/docs", "/openapi", "/redoc")
-_SKIP_PATHS = {"/health", "/api/auth/login", "/api/health"}
+# 行情页公开读数（与 Next 同源 /api 反代）；若需全部强制登录可删下列路径
+_SKIP_PATHS = {
+    "/health",
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/health",
+    "/api/market/sentiment-7d",
+    "/api/market/klines",
+    "/api/market/ashare/stocks",
+}
 
 
 def _should_skip(path: str) -> bool:

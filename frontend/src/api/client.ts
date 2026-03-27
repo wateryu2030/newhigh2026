@@ -47,7 +47,7 @@ export function getApiBase(): string {
   return '';
 }
 
-export type ApiGetOptions = { unwrapEnvelope?: boolean };
+export type ApiGetOptions = { unwrapEnvelope?: boolean; /** 超时毫秒，避免后端长时间挂起导致前端永久「加载中」 */ timeoutMs?: number };
 
 export async function apiGet<T>(path: string, options?: ApiGetOptions): Promise<T> {
   const base = getApiBase();
@@ -56,10 +56,22 @@ export async function apiGet<T>(path: string, options?: ApiGetOptions): Promise<
     : base
       ? `${base}/api${path}`
       : `/api${path}`;
-  const res = await fetch(url, {
-    cache: 'no-store',
-    headers: { ...getAuthHeaders() },
-  });
+  const ms = options?.timeoutMs;
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  const tid =
+    ctrl != null && ms != null && ms > 0
+      ? setTimeout(() => ctrl.abort(), ms)
+      : undefined;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      cache: 'no-store',
+      headers: { ...getAuthHeaders() },
+      signal: ctrl?.signal,
+    });
+  } finally {
+    if (tid != null) clearTimeout(tid);
+  }
   if (res.status === 401) {
     redirectToLogin();
     throw new Error('Unauthorized');
@@ -115,8 +127,8 @@ export const api = {
     const b = getApiBase();
     return b ? `${b}/api` : '/api';
   },
-  dashboard: () => apiGet<DashboardResponse>('/dashboard'),
-  dataStatus: () => apiGet<DataStatusResponse>('/data/status'),
+  dashboard: () => apiGet<DashboardResponse>('/dashboard', { timeoutMs: 25_000 }),
+  dataStatus: () => apiGet<DataStatusResponse>('/data/status', { timeoutMs: 20_000 }),
   /** a_stock_daily 覆盖：总行数、有 K 线的标的数、按 bar 数 TopN（解释「池大线少」） */
   dataDailyCoverage: (limitCodes?: number) =>
     apiGet<DailyCoverageResponse>(
@@ -135,11 +147,27 @@ export const api = {
     apiGet<StrategiesMarketResponse>(`/strategies/market${limit != null ? `?limit=${limit}` : ''}`),
   portfolio: () => apiGet<PortfolioResponse>('/portfolio/weights'),
   risk: () => apiGet<RiskResponse>('/risk/status'),
-  market: (symbol?: string, interval?: string, limit?: number) =>
-    apiGet<MarketResponse>(
-      `/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}&limit=${limit ?? 120}`,
-      { unwrapEnvelope: true }
-    ),
+  market: async (symbol?: string, interval?: string, limit?: number) => {
+    const path = `/market/klines?symbol=${encodeURIComponent(symbol || 'BTCUSDT')}&interval=${interval || '1h'}&limit=${limit ?? 120}`;
+    const base = getApiBase();
+    const url = path.startsWith('http') ? path : base ? `${base}/api${path}` : `/api${path}`;
+    const res = await fetch(url, { cache: 'no-store', headers: { ...getAuthHeaders() } });
+    if (res.status === 401) {
+      redirectToLogin();
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+    const json = (await res.json()) as {
+      ok?: boolean;
+      data?: MarketResponse;
+      error?: string;
+      source?: string;
+    };
+    if (json.ok === false) throw new Error(json.error || 'API error');
+    const data = json.data;
+    if (!data) throw new Error('API error: missing data');
+    return { ...data, source: json.source };
+  },
   /** 最近一条数据质量巡检（信封 unwrap） */
   dataQuality: () =>
     apiGet<DataQualityLatest | null>('/data/quality', { unwrapEnvelope: true }),
@@ -156,13 +184,17 @@ export const api = {
     return apiGet<AlphaLabDrillResponse>(`/alpha-lab/drill?${q}`);
   },
   positions: () => apiGet<PositionsResponse>('/positions'),
-  marketEmotion: () => apiGet<MarketEmotionResponse>('/market/emotion'),
-  marketSentiment7d: () => apiGet<MarketSentiment7dResponse>('/market/sentiment-7d'),
+  marketEmotion: () => apiGet<MarketEmotionResponse>('/market/emotion', { timeoutMs: 20_000 }),
+  /** 后端可能走 AkShare 拉全市场，隧道/境外易慢；超时后走 catch 展示兜底文案 */
+  marketSentiment7d: () =>
+    /** 东财现货 + 日 K SQL；应大于服务端 AkShare 超时并预留 DuckDB 时间 */
+    apiGet<MarketSentiment7dResponse>('/market/sentiment-7d', { timeoutMs: 120_000 }),
   marketHotmoney: (limit?: number) => apiGet<HotmoneySeatItem[]>(`/market/hotmoney${limit != null ? `?limit=${limit}` : ''}`),
   marketMainThemes: (limit?: number) => apiGet<MainThemeItem[]>(`/market/main-themes${limit != null ? `?limit=${limit}` : ''}`),
   strategySignals: (limit?: number) => apiGet<TradeSignalItem[]>(`/strategy/signals${limit != null ? `?limit=${limit}` : ''}`),
   sniperCandidates: (limit?: number) => apiGet<SniperCandidateItem[]>(`/market/sniper-candidates${limit != null ? `?limit=${limit}` : ''}`),
-  systemDataOverview: () => apiGet<SystemDataOverviewResponse>('/system/data-overview'),
+  systemDataOverview: () =>
+    apiGet<SystemDataOverviewResponse>('/system/data-overview', { timeoutMs: 45_000 }),
   systemStatus: (limit?: number) =>
     apiGet<SystemStatusResponse>(`/system/status${limit != null ? `?limit=${limit}` : ''}`),
   aiDecision: () => apiGet<AiDecisionResponse>('/ai/decision'),
@@ -250,8 +282,11 @@ export const api = {
     if (limit != null) q.set('limit', String(limit));
     return apiGet<ShareholderByNameResponse>(`/financial/shareholder-by-name?${q}`);
   },
-  shareholderStrategy: (name: string) =>
-    apiGet<ShareholderStrategyResponse>(`/financial/shareholder-strategy?name=${encodeURIComponent(name.trim())}`),
+  shareholderStrategy: (name: string, coLimit?: number) => {
+    const q = new URLSearchParams({ name: name.trim() });
+    if (coLimit != null) q.set('co_limit', String(coLimit));
+    return apiGet<ShareholderStrategyResponse>(`/financial/shareholder-strategy?${q}`);
+  },
   antiQuantPool: (limit?: number, minTop10Ratio?: number) => {
     const q = new URLSearchParams();
     if (limit != null) q.set('limit', String(limit));
@@ -305,12 +340,27 @@ export interface ShareholderByNameResponse {
   count: number;
   data: ShareholderByNameItem[];
   error?: string;
+  /** 是否使用了首尾字/difflib 等宽松匹配 */
+  relaxed_match?: boolean;
+  /** 后端提示用户核对规范名称 */
+  hint?: string;
+}
+
+/** 与当前股东在同一前十榜（同代码+报告日）共现过的其他股东 */
+export interface CoShareholderItem {
+  name: string;
+  shareholder_type: string;
+  /** 共现「榜位」次数（同一股票多期可多次） */
+  co_slot_count: number;
+  /** 涉及不同股票只数 */
+  co_stock_count: number;
 }
 
 export interface ShareholderStrategyResponse {
   ok: boolean;
   shareholder_name?: string;
   latest_quarter?: string | null;
+  co_shareholders?: CoShareholderItem[];
   info?: {
     name: string;
     identity: string;
@@ -325,6 +375,10 @@ export interface ShareholderStrategyResponse {
     pe: number;
     holdShares: number;
     holdValue: number;
+    /** 最近交易日收盘价（元），用于气泡图 X 轴 */
+    latestClose?: number | null;
+    /** 最近一日成交额（亿元），用于气泡图 Y 轴 log */
+    turnoverYi?: number | null;
     ratio: number;
     firstEntry: string;
     status: 'current' | 'exited';
@@ -352,6 +406,12 @@ export interface AntiQuantPoolItem {
   report_count: number;
   latest_report_date: string | null;
   filter_mode: string;
+  /** 前十大 HHI（越高通常头部股东占比越集中） */
+  hhi_top10?: number | null;
+  /** 最近两期前十大合计占比差，单位：百分点 */
+  top10_delta_pp?: number | null;
+  /** 筹码综合得分 0–100，仅用于排序 */
+  chip_score?: number | null;
 }
 
 export interface AntiQuantPoolResponse {
@@ -363,6 +423,7 @@ export interface AntiQuantPoolResponse {
     candidate_count?: number;
     avg_top10_ratio?: number;
     avg_institution_count?: number;
+    avg_chip_score?: number;
   };
   data: AntiQuantPoolItem[];
   note?: string;
@@ -383,6 +444,11 @@ export interface AntiQuantStockResponse {
     data_sufficient: boolean;
   };
   latest_report_date?: string | null;
+  chip?: {
+    hhi_top10: number | null;
+    top10_delta_pp: number | null;
+    chip_score: number | null;
+  };
   error?: string;
 }
 
@@ -515,6 +581,10 @@ export interface MarketSentiment7dResponse {
   weights?: Record<string, number>;
   stats?: Record<string, unknown>;
   data_source?: string;
+  /** 日 K 降级时后端写入的最近交易日 YYYY-MM-DD */
+  trade_date?: string;
+  /** 日 K 的 trade_date 距今天（服务器本地日期）的自然日差 */
+  calendar_lag_days?: number | null;
   error?: string;
   detail?: string;
 }
@@ -603,6 +673,8 @@ export interface MarketResponse {
   interval: string;
   limit: number;
   data: { t: string; o: number; h: number; l: number; c: number; close?: number; v: number }[];
+  /** 来自信封 json_ok(..., source=)，由 api.market 合并 */
+  source?: string;
 }
 
 /** GET /data/quality unwrap 后的 data 字段 */
@@ -737,6 +809,8 @@ export interface SystemDataOverviewResponse {
     limitup_pool: number;
     sniper_candidates: number;
     trade_signals: number;
+    /** 按 strategy_id 计数（如 ai_fusion、shareholder_chip、market_agg；_unset 表示空 id） */
+    trade_signals_by_strategy?: Record<string, number>;
     news_items: number;
     stock_pool: number;
     daily_bars: number;

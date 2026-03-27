@@ -8,6 +8,8 @@ interface ShareholderHeaderProps {
   searchResults: ShareholderByNameItem[];
   searchLoading: boolean;
   selected: Shareholder | null;
+  /** 后端宽松匹配提示（首尾字 / difflib） */
+  searchHint?: string | null;
   onQueryChange: (q: string) => void;
   onSearchSubmit?: (q: string) => void;
   onSelect: (name: string) => void;
@@ -36,6 +38,7 @@ export function ShareholderHeader({
   searchResults,
   searchLoading,
   selected,
+  searchHint,
   onQueryChange,
   onSearchSubmit,
   onSelect,
@@ -68,7 +71,7 @@ export function ShareholderHeader({
         <input
           type="text"
           autoComplete="off"
-          placeholder="输入股东名称模糊搜索（如：高瓴），回车立即搜索"
+          placeholder="股东名称：子串匹配；无结果时自动首尾字/近似名（如 王…忱 → 王世忱）"
           className="w-full rounded-lg border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF3B30] focus:border-[#FF3B30]"
           style={{
             borderColor: '#2A2E36',
@@ -124,6 +127,11 @@ export function ShareholderHeader({
               ))
             )}
           </ul>
+        )}
+        {searchHint && query.trim().length >= 1 && (
+          <p className="mt-2 rounded-lg px-3 py-2 text-xs leading-relaxed" style={{ backgroundColor: 'rgba(245,158,11,0.12)', color: '#FBBF24' }}>
+            {searchHint}
+          </p>
         )}
       </div>
 

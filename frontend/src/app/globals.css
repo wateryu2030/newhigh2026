@@ -1,10 +1,9 @@
+/* @import 必须在本文件最前；Inter/Manrope 用 next/font，仅保留 Material Symbols */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Kinetic Terminal Design System - 参考 stitch */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0&display=swap');
 
 :root {
   --kt-bg: #0B0E14;

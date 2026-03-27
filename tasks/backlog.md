@@ -7,6 +7,8 @@
 
 ## 数据系统
 
+- [x] 股东筹码策略迭代：`lib/shareholder_chip_metrics.py`（HHI、前十占比环比、`chip_score`）；`GET /financial/anti-quant-pool` 与 `anti-quant-stock` 返回扩展字段；`duckdb_manager` 补 `top_10_shareholders` 建表；前端股东策略页/反量化区展示筹码列
+- [x] 股东筹码：定时脚本 `scripts/push_shareholder_chip_signals.py` 将候选写入 `trade_signals`（strategy_id=`shareholder_chip`）；`start_schedulers` 每日任务结束后默认执行（`NEWHIGH_PUSH_SHAREHOLDER_CHIP_SIGNALS=0` 可关闭）
 - [x] 每日调度：有 `TUSHARE_TOKEN` 时默认 Tushare 日 K + 跳过 akshare 批量（`TUSHARE_DAILY_DAYS_BACK` / `DAILY_AKSHARE_KLINE_LIMIT`，见 `docs/ITERATION_AND_DATA_SLA.md`）
 - [ ] 接入更多数据源（如 Binance / Yahoo 等，与现有 A 股管道并列）
 - [ ] 数据缓存与时效性策略（避免重复拉取、支持 T+0 延迟）

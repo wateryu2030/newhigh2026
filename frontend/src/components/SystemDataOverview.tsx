@@ -190,9 +190,11 @@ interface DataCardProps {
   icon?: string;
   onClick?: () => void;
   clickHint: string;
+  /** 卡片底部辅文案（如 trade_signals 按策略拆分） */
+  footer?: ReactNode;
 }
 
-function DataCard({ label, value, icon = '📊', onClick, clickHint }: DataCardProps) {
+function DataCard({ label, value, icon = '📊', onClick, clickHint, footer }: DataCardProps) {
   const extra = useCountSuffix(value, Boolean(onClick));
   const inner = (
     <>
@@ -202,6 +204,7 @@ function DataCard({ label, value, icon = '📊', onClick, clickHint }: DataCardP
         <span>{typeof value === 'number' ? value.toLocaleString() : value}</span>
         {extra ? <span className="text-xs text-text-secondary">{extra}</span> : null}
       </p>
+      {footer ? <div className="mt-1.5 text-[10px] leading-snug text-text-secondary/85">{footer}</div> : null}
       {onClick && <p className="mt-2 text-[10px] text-text-secondary/80">{clickHint}</p>}
     </>
   );
@@ -415,6 +418,7 @@ export function SystemDataOverview({
     limitup_pool: 0,
     sniper_candidates: 0,
     trade_signals: 0,
+    trade_signals_by_strategy: {},
     news_items: 0,
     stock_pool: 0,
     daily_bars: 0,
@@ -424,6 +428,14 @@ export function SystemDataOverview({
     hotmoney_seats: 0,
   };
   const counts = data?.counts ?? defaultCounts;
+
+  const tradeSignalsByStrategyLine = (() => {
+    const by = counts.trade_signals_by_strategy;
+    if (!by || typeof by !== 'object') return null;
+    const entries = Object.entries(by).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) return null;
+    return entries.map(([k, n]) => `${k}: ${n}`).join(' · ');
+  })();
   const emotionStr =
     counts.emotion_state != null && counts.emotion_state !== ''
       ? String(counts.emotion_state)
@@ -467,6 +479,13 @@ export function SystemDataOverview({
           icon="📈"
           clickHint={t('systemData.drill.click')}
           onClick={() => openDrill('trade_signals', t('systemData.overview.tradeSignals'))}
+          footer={
+            tradeSignalsByStrategyLine ? (
+              <span title="strategy_id 维度（含 shareholder_chip / ai_fusion / market_agg 等）">
+                {tradeSignalsByStrategyLine}
+              </span>
+            ) : undefined
+          }
         />
         <DataCard
           label={t('systemData.overview.newsItems')}

@@ -10,6 +10,7 @@
 5. 提供进程管理和监控
 6. 添加错误恢复和自动重启
 7. 提供健康检查接口
+8. 每日任务结束后可选执行 `push_shareholder_chip_signals.py`（写入 trade_signals / shareholder_chip）
 
 使用方法：
 python start_schedulers.py start     # 启动调度系统
@@ -291,6 +292,33 @@ class SchedulerManager:
                 use_tushare=use_tushare,
                 tushare_days_back=ts_days,
             )
+
+            # 反量化筹码池 → trade_signals（仅 strategy_id=shareholder_chip，与 ai_fusion 并存）
+            push_chip = (os.environ.get("NEWHIGH_PUSH_SHAREHOLDER_CHIP_SIGNALS", "1") or "1").strip().lower()
+            if push_chip not in ("0", "false", "no"):
+                try:
+                    chip_script = project_root / "scripts" / "push_shareholder_chip_signals.py"
+                    proc = subprocess.run(
+                        [sys.executable, str(chip_script)],
+                        cwd=str(project_root),
+                        capture_output=True,
+                        text=True,
+                        timeout=900,
+                    )
+                    if proc.returncode != 0:
+                        logger.warning(
+                            "push_shareholder_chip_signals 退出=%s stderr=%s",
+                            proc.returncode,
+                            (proc.stderr or "")[-1500:],
+                        )
+                    else:
+                        out = (proc.stdout or "").strip()
+                        if out:
+                            logger.info(out)
+                except Exception as e:
+                    logger.error("push_shareholder_chip_signals 失败: %s", e)
+            else:
+                logger.info("已跳过 shareholder_chip 信号（NEWHIGH_PUSH_SHAREHOLDER_CHIP_SIGNALS=0）")
 
             logger.info("每日任务执行完成")
 

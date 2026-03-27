@@ -1,10 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 /** 红山量化平台 - 统一设计 Token（与 OpenClaw 协作） */
 module.exports = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+  /** 与 Next src/ 目录一致；根下无 app/ 时勿写 ./app 以免误导排查 */
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -38,9 +36,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        headline: ['Manrope', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-        label: ['Space Grotesk', 'monospace'],
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        headline: ['var(--font-manrope)', 'Manrope', 'sans-serif'],
+        body: ['var(--font-inter)', 'Inter', 'sans-serif'],
+        label: ['Space Grotesk', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         DEFAULT: '0.125rem',

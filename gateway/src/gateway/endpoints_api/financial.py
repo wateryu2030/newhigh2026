@@ -361,17 +361,19 @@ def get_shareholder_by_name(
     """
     按股东名称模糊搜索，返回匹配的股东列表（供大佬策略页搜索下拉）
 
-    Args:
-        name: 股东名称关键词
-        limit: 返回数量
+    匹配顺序：子串 LIKE → 首尾字 LIKE（如 王%忱 命中 王士忱/王世忱）→ difflib 近似名。
+    非技能/MCP，全部是 DuckDB 内查询与 Python 标准库。
     """
     try:
+        import difflib
+
         from lib.database import get_connection
         conn = get_connection(read_only=False)
         if conn is None:
-            return {"ok": False, "error": "数据库连接失败", "count": 0, "data": []}
+            return {"ok": False, "error": "数据库连接失败", "count": 0, "data": [], "relaxed_match": False}
 
-        keyword = f"%{name.strip()}%"
+        raw = name.strip()
+        keyword = f"%{raw}%"
         df = conn.execute("""
             SELECT shareholder_name, shareholder_type,
                    COUNT(DISTINCT stock_code) AS stock_count
@@ -382,10 +384,53 @@ def get_shareholder_by_name(
             LIMIT ?
         """, [keyword, limit]).fetchdf()
 
+        relaxed_match = False
+        hint = None
+
+        # 2) 首尾字：解决「王士忱」搜不到「王世忱」这类单字差异
+        if df.empty and len(raw) >= 2:
+            loose = f"{raw[0]}%{raw[-1]}"
+            df = conn.execute("""
+                SELECT shareholder_name, shareholder_type,
+                       COUNT(DISTINCT stock_code) AS stock_count
+                FROM top_10_shareholders
+                WHERE shareholder_name LIKE ?
+                GROUP BY shareholder_name, shareholder_type
+                ORDER BY stock_count DESC
+                LIMIT ?
+            """, [loose, limit]).fetchdf()
+            if not df.empty:
+                relaxed_match = True
+                hint = f"已按首尾字联想（{raw[0]}…{raw[-1]}），请核对列表中的规范名称"
+
+        # 3) difflib：在同一首字候选中找编辑距离最近的姓名
+        if df.empty and len(raw) >= 2:
+            prefix = f"{raw[0]}%"
+            cand = conn.execute("""
+                SELECT DISTINCT shareholder_name
+                FROM top_10_shareholders
+                WHERE shareholder_name LIKE ? AND LENGTH(shareholder_name) BETWEEN 2 AND 64
+            """, [prefix]).fetchdf()
+            names = [str(x) for x in cand["shareholder_name"].tolist() if x]
+            matches = difflib.get_close_matches(raw, names, n=limit, cutoff=0.55)
+            if matches:
+                placeholders = ",".join(["?"] * len(matches))
+                df = conn.execute(f"""
+                    SELECT shareholder_name, shareholder_type,
+                           COUNT(DISTINCT stock_code) AS stock_count
+                    FROM top_10_shareholders
+                    WHERE shareholder_name IN ({placeholders})
+                    GROUP BY shareholder_name, shareholder_type
+                    ORDER BY stock_count DESC
+                    LIMIT ?
+                """, [*matches, limit]).fetchdf()
+                relaxed_match = True
+                hint = "未找到子串匹配，已使用近似名称联想（编辑距离），请在下拉中选择正确股东"
+
         conn.close()
 
         if df.empty:
-            return {"ok": True, "count": 0, "data": []}
+            return {"ok": True, "count": 0, "data": [], "relaxed_match": False, "hint": None}
 
         data = [
             {
@@ -395,7 +440,10 @@ def get_shareholder_by_name(
             }
             for _, row in df.iterrows()
         ]
-        return {"ok": True, "count": len(data), "data": data}
+        out = {"ok": True, "count": len(data), "data": data, "relaxed_match": relaxed_match}
+        if hint:
+            out["hint"] = hint
+        return out
 
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -404,12 +452,14 @@ def get_shareholder_by_name(
 @router.get("/shareholder-strategy")
 def get_shareholder_strategy(
     name: str = Query(..., description="股东名称（精确）"),
+    co_limit: int = Query(8, ge=1, le=50, description="协同股东 Top N（同一 stock_code+report_date 前十榜共现）"),
 ):
     """
     获取股东策略画像：持仓列表、变动流水、行业偏好等（供大佬策略页主内容）
 
     Args:
         name: 股东名称（需与 shareholder-by-name 返回的 name 一致）
+        co_limit: 协同股东返回条数
     """
     try:
         from lib.database import get_connection
@@ -432,7 +482,7 @@ def get_shareholder_strategy(
 
         if df.empty:
             conn.close()
-            return {"ok": False, "error": "未找到该股东数据", "holdings": [], "changes": []}
+            return {"ok": False, "error": "未找到该股东数据", "holdings": [], "changes": [], "co_shareholders": []}
 
         # 2. 获取最新收盘价用于估算持仓市值（可选）
         latest_dates = df["report_date"].drop_duplicates().sort_values(ascending=False).head(1)
@@ -442,6 +492,32 @@ def get_shareholder_strategy(
         holdings_raw = df.sort_values("report_date", ascending=False).drop_duplicates(
             subset=["stock_code"], keep="first"
         )
+
+        codes_list = [str(c) for c in holdings_raw["stock_code"].astype(str).unique().tolist()]
+        latest_daily: dict[str, dict[str, float]] = {}
+        if codes_list:
+            ph = ",".join(["?"] * len(codes_list))
+            try:
+                daily_df = conn.execute(
+                    f"""
+                    SELECT code, close, amount
+                    FROM (
+                        SELECT code, close, amount,
+                               ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+                        FROM a_stock_daily
+                        WHERE code IN ({ph})
+                    ) sub
+                    WHERE rn = 1
+                    """,
+                    codes_list,
+                ).fetchdf()
+                for _, dr in daily_df.iterrows():
+                    latest_daily[str(dr["code"])] = {
+                        "close": float(dr["close"] or 0),
+                        "amount": float(dr["amount"] or 0),
+                    }
+            except Exception:
+                latest_daily = {}
 
         # 获取每只股票首次出现的报告期
         first_entry = df.groupby("stock_code")["report_date"].min().to_dict()
@@ -482,15 +558,25 @@ def get_shareholder_strategy(
             ratio = float(row.get("share_ratio") or 0)
             # 万股
             hold_shares = share_count / 10000.0
+            dly = latest_daily.get(sc, {})
+            close = float(dly.get("close") or 0)
+            amt = float(dly.get("amount") or 0)
+            # 持仓估算市值（亿元）：持股数(股) × 最新收盘价 / 1e8
+            hold_value_yi = (
+                (share_count * close / 1e8) if (close > 0 and share_count > 0) else 0.0
+            )
+            turnover_yi = (amt / 1e8) if amt > 0 else 0.0
 
             holdings.append({
                 "stockCode": sc,
                 "stockName": str(row.get("stock_name") or sc),
                 "industry": str(row.get("industry") or "—"),
-                "marketCap": 0,  # 暂无市值数据
+                "marketCap": 0,
                 "pe": 0,
                 "holdShares": round(hold_shares, 2),
-                "holdValue": 0,  # 暂无
+                "holdValue": round(hold_value_yi, 4),
+                "latestClose": round(close, 4) if close > 0 else None,
+                "turnoverYi": round(turnover_yi, 6) if turnover_yi > 0 else None,
                 "ratio": round(ratio, 2),
                 "firstEntry": _date_to_quarter(first_entry.get(sc)),
                 "status": status,
@@ -561,14 +647,51 @@ def get_shareholder_strategy(
         stock_count = len(holdings)
         latest_quarter = _date_to_quarter(max_date) if max_date else None
 
+        # 6. 协同股东：与该股东在同一前十名榜单（同 stock_code + report_date）出现过的其他股东
+        nm = name.strip()
+        try:
+            co_df = conn.execute(
+                """
+                WITH target_slots AS (
+                    SELECT DISTINCT stock_code, report_date
+                    FROM top_10_shareholders
+                    WHERE shareholder_name = ?
+                )
+                SELECT
+                    t.shareholder_name,
+                    MAX(t.shareholder_type) AS shareholder_type,
+                    COUNT(*)::BIGINT AS co_slot_count,
+                    COUNT(DISTINCT t.stock_code)::BIGINT AS co_stock_count
+                FROM top_10_shareholders t
+                INNER JOIN target_slots s
+                    ON t.stock_code = s.stock_code AND t.report_date = s.report_date
+                WHERE t.shareholder_name <> ?
+                GROUP BY t.shareholder_name
+                ORDER BY co_slot_count DESC, co_stock_count DESC, t.shareholder_name
+                LIMIT ?
+                """,
+                [nm, nm, int(co_limit)],
+            ).fetchdf()
+            co_shareholders = [
+                {
+                    "name": str(row["shareholder_name"] or ""),
+                    "shareholder_type": str(row["shareholder_type"] or ""),
+                    "co_slot_count": int(row["co_slot_count"] or 0),
+                    "co_stock_count": int(row["co_stock_count"] or 0),
+                }
+                for _, row in co_df.iterrows()
+            ]
+        except Exception:
+            co_shareholders = []
+
         conn.close()
 
         return {
             "ok": True,
-            "shareholder_name": name.strip(),
+            "shareholder_name": nm,
             "latest_quarter": latest_quarter,
             "info": {
-                "name": name.strip(),
+                "name": nm,
                 "identity": _infer_identity(str(holdings_raw.iloc[0].get("shareholder_type", ""))),
                 "tags": [],
                 "stats": {
@@ -580,10 +703,11 @@ def get_shareholder_strategy(
             },
             "holdings": holdings,
             "changes": changes[:50],
+            "co_shareholders": co_shareholders,
         }
 
     except Exception as e:
-        return {"ok": False, "error": str(e), "holdings": [], "changes": []}
+        return {"ok": False, "error": str(e), "holdings": [], "changes": [], "co_shareholders": []}
 
 
 def _infer_identity(shareholder_type: str) -> str:
@@ -730,7 +854,8 @@ def get_anti_quant_pool(
             sys.path.insert(0, str(_proj))
         if str(_proj / "lib") not in sys.path:
             sys.path.insert(0, str(_proj / "lib"))
-        from lib.anti_quant_strategy import run_strategy
+        from lib.anti_quant_strategy import run_strategy, load_data_from_duckdb, calc_top10_ratio, CONFIG
+        from lib.shareholder_chip_metrics import enrich_candidates_chip
 
         factors, candidates = run_strategy()
         if candidates.empty:
@@ -755,6 +880,16 @@ def get_anti_quant_pool(
                 "note": f"持股集中度≥{min_top10_ratio}% 时无候选。可调低 min_top10_ratio。",
             }
         candidates = candidates.head(limit)
+
+        # 筹码结构：HHI、前十大占比环比、综合得分（与反量化因子并列）
+        try:
+            raw_chip = load_data_from_duckdb()
+            _cut = pd.Timestamp.now() - pd.DateOffset(years=CONFIG["years_back"])
+            raw_chip = raw_chip[raw_chip["report_date"] >= _cut].copy()
+            ratio_chip = calc_top10_ratio(raw_chip)
+            candidates = enrich_candidates_chip(raw_chip, ratio_chip, candidates)
+        except Exception:
+            pass
 
         # 关联股票名称
         from lib.database import get_connection
@@ -790,6 +925,11 @@ def get_anti_quant_pool(
                 "report_count": int(row.get("report_count", 0)),
                 "latest_report_date": str(row.get("latest_report_date"))[:10] if pd.notna(row.get("latest_report_date")) else None,
                 "filter_mode": str(row.get("filter_mode", "relaxed")),
+                "hhi_top10": round(float(row["hhi_top10"]), 4) if "hhi_top10" in row.index and pd.notna(row.get("hhi_top10")) else None,
+                "top10_delta_pp": round(float(row["top10_delta_pp"]), 3)
+                if "top10_delta_pp" in row.index and pd.notna(row.get("top10_delta_pp"))
+                else None,
+                "chip_score": round(float(row["chip_score"]), 2) if "chip_score" in row.index and pd.notna(row.get("chip_score")) else None,
             })
 
         # 汇总统计
@@ -800,6 +940,8 @@ def get_anti_quant_pool(
             "avg_institution_count": round(candidates["institution_count_current"].mean(), 2),
             "filter_mode": str(candidates["filter_mode"].iloc[0]) if not candidates.empty else "relaxed",
         }
+        if not candidates.empty and "chip_score" in candidates.columns:
+            summary["avg_chip_score"] = round(float(candidates["chip_score"].mean()), 2)
 
         return {
             "ok": True,
@@ -827,7 +969,8 @@ def get_anti_quant_stock_factors(stock_code: str):
             sys.path.insert(0, str(_proj))
         if str(_proj / "lib") not in sys.path:
             sys.path.insert(0, str(_proj / "lib"))
-        from lib.anti_quant_strategy import run_strategy
+        from lib.anti_quant_strategy import run_strategy, load_data_from_duckdb, calc_top10_ratio, CONFIG
+        from lib.shareholder_chip_metrics import chip_metrics_for_one
 
         factors, candidates = run_strategy()
         sc = str(stock_code).zfill(6)
@@ -837,6 +980,21 @@ def get_anti_quant_stock_factors(stock_code: str):
 
         row = f.iloc[0]
         is_candidate = not candidates[candidates["stock_code"].astype(str) == sc].empty
+
+        try:
+            raw_one = load_data_from_duckdb()
+            _co = pd.Timestamp.now() - pd.DateOffset(years=CONFIG["years_back"])
+            raw_one = raw_one[raw_one["report_date"] >= _co].copy()
+            ratio_one = calc_top10_ratio(raw_one)
+            chip = chip_metrics_for_one(
+                raw_one,
+                ratio_one,
+                sc,
+                float(row.get("top10_ratio_latest", 0)),
+                float(row.get("institution_count_current", 0)),
+            )
+        except Exception:
+            chip = {"hhi_top10": None, "top10_delta_pp": None, "chip_score": None}
 
         return {
             "ok": True,
@@ -851,6 +1009,7 @@ def get_anti_quant_stock_factors(stock_code: str):
                 "report_count": int(row.get("report_count", 0)),
                 "data_sufficient": bool(row.get("data_sufficient", False)),
             },
+            "chip": chip,
             "latest_report_date": str(row.get("latest_report_date"))[:10] if pd.notna(row.get("latest_report_date")) else None,
         }
     except Exception as e:

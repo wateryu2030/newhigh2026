@@ -5,8 +5,10 @@ import os
 import sys
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _root not in sys.path:
-    sys.path.insert(0, _root)
+_dp_src = os.path.join(_root, "data-pipeline", "src")
+for p in (_dp_src, _root):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 if __name__ == "__main__":
     if os.environ.get("UPDATE_REALTIME_FIRST"):

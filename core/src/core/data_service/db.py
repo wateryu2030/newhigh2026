@@ -1,19 +1,9 @@
 """
 数据库连接管理
 
-为 core.data_service 层提供统一的数据库连接接口。
-代理到 lib.database 模块，保持向后兼容。
-
-使用示例:
-    from core.data_service.db import get_conn, get_astock_duckdb_available
-
-    # 获取连接（与 Gateway / duckdb_manager 一致用读写模式，避免同进程混用 read_only 报错）
-    conn = get_conn(read_only=False)
-
-    # 检查数据库是否可用
-    if get_astock_duckdb_available():
-        # 执行查询
-        pass
+为 core.data_service 层提供统一接口。**路径、连接、建表** 的唯一实现见
+``data_pipeline.storage.duckdb_manager``；``lib.database`` 与为本模块的代理链，
+避免两套 DDL / 两套路径逻辑。
 """
 
 from __future__ import annotations

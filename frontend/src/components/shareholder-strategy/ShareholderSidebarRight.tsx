@@ -1,80 +1,37 @@
 'use client';
 
-import {
-  RadarChart as RechartsRadar,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  ZAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import type { Holding } from '@/data/mockShareholder';
-import { INDUSTRIES } from '@/data/mockShareholder';
-
-interface RadarPoint {
-  name: string;
-  value: number[];
-}
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import type { ChangeRecord, Holding } from '@/data/mockShareholder';
+import type { CoShareholderItem } from '@/api/client';
+import { IndustryRadarChart, type IndustryRadarPoint } from './IndustryRadarChart';
 
 interface BubblePoint {
   value: [number, number, number];
   name: string;
+  code: string;
 }
 
 interface ShareholderSidebarRightProps {
-  radarData: RadarPoint[];
+  radarData: IndustryRadarPoint[];
   bubbleData: BubblePoint[];
   holdings: Holding[];
+  changes: ChangeRecord[];
+  coShareholders: CoShareholderItem[];
   timeQuarter: string;
   highlightStock: string | null;
   onStockHover: (code: string | null) => void;
+  onPanoramaStockClick?: (h: Holding) => void;
+  onCoShareholderClick?: (name: string) => void;
 }
 
-/** 行业偏好雷达图 */
-function RadarChart({ data }: { data: RadarPoint[] }) {
-  const indicators = INDUSTRIES.slice(0, 6);
-  const dataMap = new Map(data.map((d) => [d.name, (d.value[0] + d.value[1]) / 2 || 0]));
-  const chartData = indicators.map((subject) => ({
-    subject,
-    value: dataMap.get(subject) ?? 0,
-    fullMark: 100,
-  }));
-  return (
-    <ResponsiveContainer width="100%" height={280}>
-      <RechartsRadar data={chartData}>
-        <PolarGrid stroke="#475569" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748b' }} />
-        <Radar
-          name="持仓市值占比+出现频次"
-          dataKey="value"
-          stroke="#FF3B30"
-          fill="#FF3B30"
-          fillOpacity={0.3}
-          strokeWidth={2}
-        />
-        <Tooltip
-          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: 8 }}
-          labelStyle={{ color: '#94a3b8' }}
-        />
-      </RechartsRadar>
-    </ResponsiveContainer>
-  );
-}
-
-/** 市值-估值气泡图 */
+/** 流动性视角气泡：X=最新收(元)，Y=log10(成交额·亿+ε)，点大小参考持仓估算市值(亿) */
 function BubbleChart({ data }: { data: BubblePoint[] }) {
   const chartData = data.map((d) => ({
     x: d.value[0],
     y: d.value[1],
-    z: Math.max(20, Math.min(80, d.value[2] * 2)),
+    z: Math.max(24, Math.min(120, 20 + (d.value[2] || 0) * 8)),
     name: d.name,
+    code: d.code,
   }));
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -82,16 +39,16 @@ function BubbleChart({ data }: { data: BubblePoint[] }) {
         <XAxis
           type="number"
           dataKey="x"
-          name="PE"
+          name="收盘"
           tick={{ fill: '#94a3b8', fontSize: 10 }}
-          label={{ value: '市盈率(PE)', position: 'bottom', fill: '#64748b' }}
+          label={{ value: '最新收(元)', position: 'bottom', fill: '#64748b' }}
         />
         <YAxis
           type="number"
           dataKey="y"
-          name="log(市值)"
+          name="log成交额"
           tick={{ fill: '#94a3b8', fontSize: 10 }}
-          label={{ value: 'log(市值)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
+          label={{ value: 'log10(日成交额·亿+0.01)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
         />
         <ZAxis type="number" dataKey="z" range={[50, 400]} />
         <Tooltip
@@ -99,11 +56,15 @@ function BubbleChart({ data }: { data: BubblePoint[] }) {
           contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: 8 }}
           content={({ active, payload }) => {
             if (!active || !payload?.[0]?.payload) return null;
-            const p = payload[0].payload as { x: number; y: number; z: number; name: string };
+            const p = payload[0].payload as { x: number; y: number; z: number; name: string; code: string };
             return (
               <div className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                <div className="font-medium text-white">{p.name}</div>
-                <div className="text-slate-400">PE: {p.x} · log(市值): {p.y.toFixed(1)}</div>
+                <div className="font-medium text-white">
+                  {p.name} <span className="font-mono text-slate-400">{p.code}</span>
+                </div>
+                <div className="text-slate-400">
+                  收: {p.x > 0 ? p.x.toFixed(3) : '—'} · Y: {p.y.toFixed(2)}
+                </div>
               </div>
             );
           }}
@@ -118,11 +79,14 @@ export function ShareholderSidebarRight({
   radarData,
   bubbleData,
   holdings,
+  changes,
+  coShareholders,
   timeQuarter,
   highlightStock,
   onStockHover,
+  onPanoramaStockClick,
+  onCoShareholderClick,
 }: ShareholderSidebarRightProps) {
-  /** 持仓集中度：前三大占比 */
   const top3 = holdings
     .filter((h) => {
       const exit = h.exitQuarter ?? '9999Q4';
@@ -141,41 +105,75 @@ export function ShareholderSidebarRight({
       ? ((top3.reduce((s, h) => s + h.holdValue, 0) / totalValue) * 100).toFixed(1)
       : '0';
 
+  const hasBubbleSeries =
+    bubbleData.length > 0 && bubbleData.some((b) => b.value[0] > 0 || b.value[1] > 0);
+
   return (
     <div className="space-y-4">
-      {/* 行业偏好雷达图 */}
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-white">行业偏好</h3>
-        <RadarChart data={radarData} />
+        <h3 className="mb-2 text-sm font-semibold text-white">行业分布（持仓市值 + 频次）</h3>
+        <p className="mb-2 text-xs text-slate-500">基于当前报告期切片内持仓，与申万一级示例行业轴对齐（数据来自 Gateway，非演示脚本）。</p>
+        <IndustryRadarChart data={radarData} height={280} />
       </div>
 
-      {/* 市值-估值气泡图 */}
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-white">市值-估值分布</h3>
-        <BubbleChart data={bubbleData} />
+        <h3 className="mb-2 text-sm font-semibold text-white">价格 · 成交额（气泡）</h3>
+        <p className="mb-2 text-xs text-slate-500">
+          X/Y 取自 a_stock_daily 最新一根 K 线（收盘价、成交额）；若库中无日线则点会叠在原点附近。
+        </p>
+        {hasBubbleSeries ? (
+          <BubbleChart data={bubbleData} />
+        ) : (
+          <div className="flex h-[200px] items-center justify-center text-sm text-slate-500">
+            暂无有效日线数据，无法绘制气泡图（请先回填 a_stock_daily）。
+          </div>
+        )}
       </div>
 
-      {/* 操作风格卡片 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card">
           <div className="text-xs text-slate-400">持仓集中度</div>
           <div className="mt-1 text-xl font-bold text-white">{concentration}%</div>
-          <div className="mt-1 text-xs text-slate-500">前三大重仓</div>
+          <div className="mt-1 text-xs text-slate-500">前三大重仓（按估算市值）</div>
         </div>
         <div className="card">
-          <div className="text-xs text-slate-400">调仓频率</div>
-          <div className="mt-1 text-xl font-bold text-white">32%</div>
-          <div className="mt-1 text-xs text-slate-500">近一年季度调仓占比</div>
+          <div className="text-xs text-slate-400">变动流水</div>
+          <div className="mt-1 text-xl font-bold text-white">{changes.length}</div>
+          <div className="mt-1 text-xs text-slate-500">条（新进/增减持/退出，接口片段）</div>
         </div>
-        <div className="card">
-          <div className="text-xs text-slate-400">常见协同股东</div>
-          <div className="mt-1 text-sm text-white">香港中央结算、社保一一三</div>
+        <div className="card sm:col-span-1">
+          <div className="text-xs text-slate-400">协同股东（同榜 Top10）</div>
+          <p className="mt-1 text-[11px] leading-snug text-slate-600">
+            与被查询股东出现在同一 <span className="text-slate-500">股票代码 + 报告日</span> 的前十股东榜中的其他股东，按共现次数排序。
+          </p>
+          {coShareholders.length === 0 ? (
+            <div className="mt-2 text-sm text-slate-500">暂无或仅自身上榜</div>
+          ) : (
+            <ul className="mt-2 max-h-[140px] space-y-1.5 overflow-y-auto text-sm">
+              {coShareholders.map((c) => (
+                <li key={c.name} className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-700/40 pb-1.5 last:border-0">
+                  <button
+                    type="button"
+                    className="max-w-[11rem] truncate text-left font-medium text-sky-300 hover:underline"
+                    title={c.name}
+                    onClick={() => onCoShareholderClick?.(c.name)}
+                  >
+                    {c.name}
+                  </button>
+                  <span className="text-xs text-slate-500">{c.shareholder_type || '—'}</span>
+                  <span className="ml-auto shrink-0 font-mono text-xs text-slate-400">
+                    同榜×{c.co_slot_count} · {c.co_stock_count}只
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
-      {/* 持股全景网格 */}
       <div className="card">
-        <h3 className="mb-3 text-sm font-semibold text-white">持股全景</h3>
+        <h3 className="mb-1 text-sm font-semibold text-white">持股全景</h3>
+        <p className="mb-3 text-xs text-slate-500">点击标签查看 K 线与快讯（与行情 API 一致）</p>
         <div className="flex flex-wrap gap-2">
           {holdings.map((h) => {
             const isCurrent = h.status === 'current';
@@ -185,19 +183,25 @@ export function ShareholderSidebarRight({
                 ? `${h.firstEntry}建仓→${h.exitQuarter}清仓`
                 : `${h.firstEntry}建仓→持有`;
             return (
-              <div
+              <button
                 key={h.stockCode}
-                className={`cursor-pointer rounded-lg px-3 py-2 text-sm transition ${
+                type="button"
+                className={`cursor-pointer rounded-lg px-3 py-2 text-left text-sm transition ${
                   isCurrent
                     ? 'bg-red-500/30 text-red-200'
                     : 'bg-slate-600/50 text-slate-400'
                 } ${isHighlight ? 'ring-2 ring-fund-indigo' : ''}`}
                 onMouseEnter={() => onStockHover(h.stockCode)}
                 onMouseLeave={() => onStockHover(null)}
+                onClick={() => {
+                  onStockHover(h.stockCode);
+                  onPanoramaStockClick?.(h);
+                }}
                 title={trail}
               >
-                {h.stockName}
-              </div>
+                <span className="font-medium text-white/95">{h.stockName}</span>
+                <span className="mt-0.5 block font-mono text-xs text-slate-400">{h.stockCode}</span>
+              </button>
             );
           })}
         </div>

@@ -49,12 +49,29 @@ def get_system_data_overview() -> dict:
         except Exception:
             counts["sniper_candidates"] = 0
 
-        # 交易信号
+        # 交易信号（总数 + 按 strategy_id 分拆，便于观察 shareholder_chip / ai_fusion 等）
         try:
             result = conn.execute("SELECT COUNT(*) FROM trade_signals").fetchone()
             counts["trade_signals"] = result[0] if result else 0
         except Exception:
             counts["trade_signals"] = 0
+
+        trade_signals_by_strategy: dict[str, int] = {}
+        try:
+            rows = conn.execute(
+                """
+                SELECT COALESCE(NULLIF(TRIM(CAST(strategy_id AS VARCHAR)), ''), '_unset') AS sid,
+                       COUNT(*)::BIGINT AS n
+                FROM trade_signals
+                GROUP BY 1
+                ORDER BY n DESC
+                """
+            ).fetchall()
+            for sid, n in rows or []:
+                trade_signals_by_strategy[str(sid)] = int(n or 0)
+        except Exception:
+            pass
+        counts["trade_signals_by_strategy"] = trade_signals_by_strategy
 
         # 新闻数据
         try:

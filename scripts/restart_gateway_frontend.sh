@@ -2,7 +2,7 @@
 # 停止占用 8000/3000 的进程并后台重启 Gateway + Next 前端。
 # 用法：
 #   bash scripts/restart_gateway_frontend.sh                    # 开发：next dev
-#   NEWHIGH_FRONTEND_PROD=1 bash scripts/restart_gateway_frontend.sh   # 部署：next build + next start
+#   NEWHIGH_FRONTEND_PROD=1 bash scripts/restart_gateway_frontend.sh   # 部署：next build + standalone node server.js
 set -euo pipefail
 
 # 优先使用 Homebrew / 系统 Node，避免 PATH 里 ~/.local/bin/npm 指向已失效的 node（会导致 Next 起不来、3000 拒绝连接）
@@ -60,8 +60,17 @@ fi
 if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   echo "[restart] 前端生产模式：npm run build …"
   npm run build >>"$ROOT/logs/frontend.out" 2>&1
-  echo "[restart] 启动前端 next start http://0.0.0.0:3000 …"
-  nohup npm run start >>"$ROOT/logs/frontend.out" 2>&1 &
+  echo "[restart] 同步 static/public → .next/standalone（next.config output=standalone 必需）…"
+  mkdir -p .next/standalone/.next
+  rm -rf .next/standalone/.next/static
+  cp -R .next/static .next/standalone/.next/static
+  if [ -d public ]; then
+    rm -rf .next/standalone/public
+    cp -R public .next/standalone/public
+  fi
+  echo "[restart] 启动 Next standalone server.js http://0.0.0.0:3000 …"
+  cd .next/standalone
+  nohup env HOSTNAME=0.0.0.0 PORT=3000 node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
 else
   echo "[restart] 启动前端 next dev http://127.0.0.1:3000 …"
   nohup npm run dev >>"$ROOT/logs/frontend.out" 2>&1 &

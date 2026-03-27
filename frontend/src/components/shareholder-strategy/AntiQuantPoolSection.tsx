@@ -52,7 +52,8 @@ export function AntiQuantPoolSection() {
     <div className="card space-y-4">
       <h3 className="text-sm font-semibold text-white">反量化长线选股池</h3>
       <p className="text-slate-500 text-xs">
-        基于股东稳定性、机构纯度、换主频率筛选，筹码结构稳定、长期资金主导的股票池
+        基于股东稳定性、机构纯度、换主频率筛选；列表补充 <strong className="text-slate-400">HHI</strong>、
+        <strong className="text-slate-400">前十大占比环比</strong>、<strong className="text-slate-400">筹码得分</strong>（启发式，非投资建议）
       </p>
 
       {/* 因子汇总卡片 */}
@@ -73,6 +74,12 @@ export function AntiQuantPoolSection() {
           <div className="text-xs text-slate-400">平均机构数</div>
           <div className="text-lg font-bold text-white">{summary?.avg_institution_count ?? '—'}</div>
         </div>
+        {summary?.avg_chip_score != null && (
+          <div className="rounded-lg bg-slate-700/50 px-3 py-2 sm:col-span-2">
+            <div className="text-xs text-slate-400">平均筹码得分</div>
+            <div className="text-lg font-bold text-cyan-300">{summary.avg_chip_score}</div>
+          </div>
+        )}
       </div>
 
       {filter_mode === 'relaxed' && (
@@ -87,7 +94,10 @@ export function AntiQuantPoolSection() {
           <thead>
             <tr className="border-b border-slate-600 text-slate-400">
               <th className="pb-2 pr-2">股票</th>
+              <th className="pb-2 pr-2">筹码分</th>
               <th className="pb-2 pr-2">持股集中度</th>
+              <th className="pb-2 pr-2">HHI</th>
+              <th className="pb-2 pr-2">前十Δ%</th>
               <th className="pb-2 pr-2">机构数</th>
               <th className="pb-2 pr-2">换主频率</th>
               <th className="pb-2 pr-2">报告期</th>
@@ -100,7 +110,16 @@ export function AntiQuantPoolSection() {
                   <span className="font-medium text-white">{row.stock_name}</span>
                   <span className="ml-1 text-slate-500">{row.stock_code}</span>
                 </td>
+                <td className="py-2 pr-2 text-cyan-300 tabular-nums">
+                  {row.chip_score != null ? row.chip_score : '—'}
+                </td>
                 <td className="py-2 pr-2 text-white">{row.top10_ratio}%</td>
+                <td className="py-2 pr-2 text-slate-300 tabular-nums">
+                  {row.hhi_top10 != null ? row.hhi_top10 : '—'}
+                </td>
+                <td className="py-2 pr-2 text-slate-300 tabular-nums">
+                  {row.top10_delta_pp != null ? (row.top10_delta_pp > 0 ? `+${row.top10_delta_pp}` : row.top10_delta_pp) : '—'}
+                </td>
                 <td className="py-2 pr-2 text-slate-300">{row.institution_count_current}</td>
                 <td className="py-2 pr-2 text-slate-300">
                   {row.turnover_avg != null ? row.turnover_avg : '—'}

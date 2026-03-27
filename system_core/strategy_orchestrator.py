@@ -42,11 +42,13 @@ def run() -> Dict[str, Any]:
                 signals = df.to_dict(orient="records")
                 trades = aggregate_market_signals_to_trade_signals(signals, top_n=20)
                 conn = get_conn(read_only=False)
-                conn.execute("DELETE FROM trade_signals")
+                conn.execute("DELETE FROM trade_signals WHERE strategy_id = ?", ["market_agg"])
                 for code, sig, conf, tp, sl in trades:
                     conn.execute(
-                        "INSERT INTO trade_signals (code, signal, confidence, target_price, stop_loss, signal_score) VALUES (?, ?, ?, ?, ?, ?)",
-                        [code, sig, conf, tp, sl, 0.5],
+                        """INSERT INTO trade_signals
+                           (code, signal, confidence, target_price, stop_loss, strategy_id, signal_score)
+                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                        [code, sig, conf, tp, sl, "market_agg", 0.5],
                     )
                 conn.close()
                 result["fallback"] = len(trades)

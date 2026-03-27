@@ -1,4 +1,12 @@
-"""统一 DuckDB 数据仓库：data/quant_system.duckdb，管道 + 日K/新闻/扫描/AI/策略 共用。"""
+"""
+统一 DuckDB 数据仓库（唯一事实源）
+
+- **路径**：``get_db_path()`` / ``get_conn()`` — 环境变量优先级与仓库根 ``.env`` 见 ``get_db_path`` 文档。
+- **DDL**：``ensure_tables(conn)`` — 全项目请使用本函数，勿在 ``lib.database`` 等处重复建表语句。
+- **兼容**：``lib.database`` 仅将 ``get_connection`` / ``ensure_core_tables`` 代理到本模块。
+
+库文件默认 ``<repo>/data/quant_system.duckdb``；与 Gateway、管道、脚本共用同一文件时须统一使用 ``read_only=False``（同进程勿混只读连接）。
+"""
 
 from __future__ import annotations
 
@@ -11,13 +19,39 @@ _NEWHIGH_ROOT = os.path.dirname(_DATA_PIPELINE_ROOT)  # newhigh
 DEFAULT_DB_PATH = os.path.join(_NEWHIGH_ROOT, "data", "quant_system.duckdb")
 
 
-def get_db_path() -> str:
-    """统一入口：环境变量 QUANT_SYSTEM_DUCKDB_PATH 或 NEWHIGH_MARKET_DUCKDB_PATH 覆盖默认路径。"""
+def _db_path_from_environ() -> str:
+    """与 lib.database.get_db_path 相同优先级，避免管道脚本与 Gateway/旧模块各连各库。"""
     return (
-        os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "").strip()
+        os.environ.get("QUANT_DB_PATH", "").strip()
+        or os.environ.get("QUANT_SYSTEM_DUCKDB_PATH", "").strip()
         or os.environ.get("NEWHIGH_MARKET_DUCKDB_PATH", "").strip()
-        or DEFAULT_DB_PATH
+        or os.environ.get("NEWHIGH_DB_PATH", "").strip()
     )
+
+
+def get_db_path() -> str:
+    """
+    统一 DuckDB 文件路径。
+
+    优先级：QUANT_DB_PATH → QUANT_SYSTEM_DUCKDB_PATH → NEWHIGH_MARKET_DUCKDB_PATH → NEWHIGH_DB_PATH；
+    若均未设置，尝试加载仓库根目录 ``.env`` 后再读上述变量（与 lib.database 一致）；
+    最后回落到 ``<repo>/data/quant_system.duckdb``。
+    """
+    p = _db_path_from_environ()
+    if p:
+        return p
+    env_file = os.path.join(_NEWHIGH_ROOT, ".env")
+    if os.path.isfile(env_file):
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv(env_file)
+        except ImportError:
+            pass
+    p = _db_path_from_environ()
+    if p:
+        return p
+    return DEFAULT_DB_PATH
 
 
 def get_conn(read_only: bool = False):
@@ -37,11 +71,14 @@ def get_conn(read_only: bool = False):
 
 
 def ensure_tables(conn) -> None:
-    """创建管道所需表（若不存在）。"""
+    """创建本仓 DuckDB 所需全部表（若不存在）；旧库缺列时由下方 ALTER 补齐。"""
     conn.execute("""
         CREATE TABLE IF NOT EXISTS a_stock_basic (
             code VARCHAR PRIMARY KEY,
-            name VARCHAR
+            name VARCHAR,
+            sector VARCHAR,
+            industry VARCHAR,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.execute("""
@@ -93,6 +130,8 @@ def ensure_tables(conn) -> None:
             name VARCHAR,
             lhb_date DATE,
             net_buy DOUBLE,
+            buy_amount DOUBLE,
+            sell_amount DOUBLE,
             snapshot_time TIMESTAMP
         )
     """)
@@ -194,9 +233,18 @@ def ensure_tables(conn) -> None:
     except Exception:
         pass
     try:
-        conn.execute("ALTER TABLE a_stock_basic ADD COLUMN sector VARCHAR")
+        conn.execute("ALTER TABLE a_stock_longhubang ADD COLUMN sell_amount DOUBLE")
     except Exception:
         pass
+    for _sql in (
+        "ALTER TABLE a_stock_basic ADD COLUMN sector VARCHAR",
+        "ALTER TABLE a_stock_basic ADD COLUMN industry VARCHAR",
+        "ALTER TABLE a_stock_basic ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+    ):
+        try:
+            conn.execute(_sql)
+        except Exception:
+            pass
     try:
         conn.execute("ALTER TABLE trade_signals ADD COLUMN signal_score DOUBLE")
     except Exception:
@@ -349,3 +397,76 @@ def ensure_tables(conn) -> None:
             report_json VARCHAR NOT NULL
         )
     """)
+    # 十大股东（scripts/run_shareholder_collect.py / 财报采集器）；与股东筹码策略 API 共用
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS top_10_shareholders (
+            stock_code VARCHAR NOT NULL,
+            report_date DATE NOT NULL,
+            report_type VARCHAR,
+            rank INTEGER NOT NULL,
+            shareholder_name VARCHAR,
+            shareholder_type VARCHAR,
+            share_count DOUBLE,
+            share_ratio DOUBLE,
+            share_change DOUBLE,
+            change_ratio DOUBLE,
+            pledge_count DOUBLE,
+            freeze_count DOUBLE,
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP,
+            PRIMARY KEY (stock_code, report_date, rank)
+        )
+    """)
+    for _tbl_alter in (
+        "ALTER TABLE top_10_shareholders ADD COLUMN share_change DOUBLE",
+        "ALTER TABLE top_10_shareholders ADD COLUMN change_ratio DOUBLE",
+        "ALTER TABLE top_10_shareholders ADD COLUMN pledge_count DOUBLE",
+        "ALTER TABLE top_10_shareholders ADD COLUMN freeze_count DOUBLE",
+        "ALTER TABLE top_10_shareholders ADD COLUMN created_at TIMESTAMP",
+        "ALTER TABLE top_10_shareholders ADD COLUMN updated_at TIMESTAMP",
+        "ALTER TABLE top_10_shareholders ADD COLUMN report_type VARCHAR",
+    ):
+        try:
+            conn.execute(_tbl_alter)
+        except Exception:
+            pass
+    # 统一终端用户与纸面委托（原 Hongshan PostgreSQL 逻辑迁入 DuckDB，仅保留一套存储）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS hongshan_users (
+            user_id VARCHAR PRIMARY KEY,
+            username VARCHAR NOT NULL UNIQUE,
+            email VARCHAR NOT NULL UNIQUE,
+            phone VARCHAR,
+            password_hash VARCHAR NOT NULL,
+            status VARCHAR DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS hongshan_accounts (
+            user_id VARCHAR PRIMARY KEY,
+            available_cash DOUBLE NOT NULL DEFAULT 500000,
+            frozen_cash DOUBLE NOT NULL DEFAULT 0,
+            total_assets DOUBLE NOT NULL DEFAULT 500000,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS hongshan_paper_orders (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL,
+            symbol VARCHAR NOT NULL,
+            stock_name VARCHAR,
+            order_type VARCHAR NOT NULL,
+            order_style VARCHAR DEFAULT 'limit',
+            order_price DOUBLE,
+            order_quantity INTEGER NOT NULL,
+            filled_quantity INTEGER DEFAULT 0,
+            status VARCHAR DEFAULT 'pending',
+            order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    try:
+        conn.execute("ALTER TABLE hongshan_paper_orders ADD COLUMN filled_at TIMESTAMP")
+    except Exception:
+        pass
