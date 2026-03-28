@@ -28,7 +28,7 @@
           {{ feature }}
         </el-tag>
         <p class="mt-2 text-sm text-gray-500">
-          当前可使用 <strong>政策新闻</strong> 功能，数据已实时采集并更新。
+          采集入库的原文与统计请在顶部 Tab <strong>「📰 采集新闻」</strong> 查看；本页侧重资讯总览与后续 Skills 能力占位。
         </p>
       </template>
     </el-alert>

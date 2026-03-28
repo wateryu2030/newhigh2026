@@ -14,6 +14,7 @@
           <el-menu-item index="4" @click="activeTab = 'strategy'">策略</el-menu-item>
           <el-menu-item index="5" @click="activeTab = 'risk'">风控</el-menu-item>
           <el-menu-item index="6" @click="activeTab = 'finance'">💰 金融</el-menu-item>
+          <el-menu-item index="7" @click="activeTab = 'collector'">📰 采集新闻</el-menu-item>
         </el-menu>
       </div>
       <div class="header-right">
@@ -72,6 +73,11 @@
           <FinanceNewsView />
         </div>
 
+        <!-- 政策采集入库（SQLite / 8001，与 Awesome Finance Skills 无硬依赖） -->
+        <div v-else-if="activeTab === 'collector'">
+          <CollectedNewsView />
+        </div>
+
         <!-- 其他页面占位 -->
         <el-card v-else>
           <template #header>
@@ -95,6 +101,7 @@ import { ref } from 'vue'
 import { TrendCharts, Bell, UserFilled } from '@element-plus/icons-vue'
 import KlineChart from './components/KlineChart.vue'
 import FinanceNewsView from './views/FinanceNews.vue'
+import CollectedNewsView from './views/News.vue'
 
 const activeTab = ref('market')
 const klinePeriod = ref('daily')
@@ -112,7 +119,8 @@ const getPageTitle = () => {
     position: '持仓',
     strategy: '策略',
     risk: '风控',
-    finance: '金融新闻'
+    finance: '金融新闻',
+    collector: '采集新闻'
   }
   return titles[activeTab.value] || '功能开发中'
 }

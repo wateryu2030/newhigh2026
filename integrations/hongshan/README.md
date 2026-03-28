@@ -34,7 +34,7 @@ docker compose up -d --build
    export DB_HOST=127.0.0.1 DB_PORT=5433 DB_PASSWORD=hongshan_dev REDIS_HOST=127.0.0.1 REDIS_PORT=6380
    uvicorn app.main:app --reload --port 8010
    ```
-2. Vue：端口 **5174**，已配置将 `/api`、`/ws` 代理到 **8010**（见 `hongshan-quant-platform/vite.config.js`）。
+2. Vue：端口 **5174**，已配置将 `/api`、`/ws` 代理到 **8010**，将 `/news` 代理到政策新闻 **8001**（见 `hongshan-quant-platform/vite.config.js`）。顶栏 **「📰 采集新闻」** 展示 `policy-news` 入库数据；**「💰 金融」** 为资讯总览与 Skills 占位。
    ```bash
    cd hongshan-quant-platform
    npm ci

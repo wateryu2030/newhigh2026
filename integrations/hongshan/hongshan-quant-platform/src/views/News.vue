@@ -4,8 +4,11 @@
     <el-card class="header-card">
       <div class="header-content">
         <div>
-          <h2>📰 政策新闻</h2>
-          <p class="subtitle">实时采集国务院、新华网等官方政策信息</p>
+          <h2>📰 采集新闻</h2>
+          <p class="subtitle">
+            展示 <code>integrations/hongshan/policy-news</code> 采集并写入 SQLite 的正文与字段（API 默认
+            <code>:8001</code>）。与 Awesome Finance Skills 无硬依赖；未起 API 时列表为空或演示数据。
+          </p>
         </div>
         <div class="stats">
           <el-statistic title="总新闻数" :value="stats.total" />
@@ -175,7 +178,7 @@ async function loadNews() {
     pagination.total = res.total || 0
   } catch (error) {
     console.error('加载新闻失败:', error)
-    ElMessage.error('加载新闻失败，请检查 API 服务是否启动')
+    ElMessage.error('加载失败：请在本机执行 hongshan-quant-platform/start-news-api.sh（或确保 :8001 可访问）')
     // 模拟数据（开发测试用）
     newsList.value = getMockNews()
   } finally {
