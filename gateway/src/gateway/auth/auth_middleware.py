@@ -27,6 +27,7 @@ _SKIP_PATHS = {
     "/api/news",
     "/api/news/coverage",
     "/api/news/hot-ticker",
+    "/api/news/collector",
     "/api/data/status",
 }
 

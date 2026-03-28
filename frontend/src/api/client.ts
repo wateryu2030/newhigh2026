@@ -175,6 +175,12 @@ export const api = {
   ashareStocks: () => apiGet<AshareStocksResponse>('/market/ashare/stocks'),
   news: (symbol?: string, limit?: number) =>
     apiGet<NewsResponse>(`/news?limit=${limit ?? 100}${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`),
+  /** policy-news SQLite（integrations/hongshan/policy-news），主站 /news「政策采集」Tab */
+  newsCollector: (limit?: number, category?: string) => {
+    const q = new URLSearchParams({ limit: String(limit ?? 100) });
+    if (category?.trim()) q.set('category', category.trim());
+    return apiGet<NewsResponse>(`/news/collector?${q}`);
+  },
   hotTicker: () => apiGet<HotTickerResponse>('/news/hot-ticker'),
   trades: () => apiGet<TradesResponse>('/trades'),
   evolution: () => apiGet<EvolutionResponse>('/evolution'),

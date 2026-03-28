@@ -60,4 +60,11 @@ if [[ "$NNEWS" != "200" ]]; then
   exit 1
 fi
 
+NCOL=$(code "http://127.0.0.1:3000/api/news/collector?limit=1")
+echo "[check] Next→/api/news/collector -> HTTP $NCOL"
+if [[ "$NCOL" != "200" ]]; then
+  echo "[check] 警告: 政策采集接口非 200（主站 /news 第二 Tab）" >&2
+  exit 1
+fi
+
 echo "[check] 全部通过。"

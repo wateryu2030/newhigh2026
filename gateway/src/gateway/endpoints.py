@@ -1832,6 +1832,101 @@ def get_news(symbol: Optional[str] = None, limit: int = 100) -> dict:
     return {"news": items, "source": source, "sentiment": sentiment}
 
 
+def _repo_root_from_gateway() -> str:
+    """gateway/src/gateway/endpoints.py → 仓库根。"""
+    return os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
+    )
+
+
+def _policy_news_sqlite_path() -> Optional[str]:
+    """policy-news 采集库；可用环境变量 POLICY_NEWS_DB_PATH 覆盖。"""
+    custom = (os.environ.get("POLICY_NEWS_DB_PATH") or "").strip()
+    if custom:
+        return custom if os.path.isfile(custom) else None
+    default = os.path.join(
+        _repo_root_from_gateway(),
+        "integrations",
+        "hongshan",
+        "policy-news",
+        "sqlite",
+        "news.db",
+    )
+    return default if os.path.isfile(default) else None
+
+
+def _policy_sentiment_label(score: Any) -> Optional[str]:
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        return None
+    if s > 0.1:
+        return "利好"
+    if s < -0.1:
+        return "利空"
+    return "中性"
+
+
+@router.get("/news/collector")
+def get_news_collector(
+    category: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> dict:
+    """
+    政策采集入库（SQLite）：与 OpenClaw/policy-news 脚本同一数据源，供主站 /news「政策采集」Tab。
+    不依赖第三方 Awesome Finance Skills；库不存在时返回空列表。
+    """
+    db_path = _policy_news_sqlite_path()
+    if not db_path:
+        return {
+            "news": [],
+            "source": None,
+            "sentiment": {"count": 0, "avg_score": None, "positive_ratio": None},
+            "detail": "policy_news_db_not_found",
+        }
+    import sqlite3
+
+    items: List[dict] = []
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        try:
+            q = (
+                "SELECT title, source, category, content, url, publish_date, sentiment, domains "
+                "FROM news WHERE (? IS NULL OR category = ?) "
+                "ORDER BY COALESCE(publish_date, '') DESC, created_at DESC LIMIT ? OFFSET ?"
+            )
+            cur = conn.execute(q, (category, category, limit, offset))
+            for row in cur.fetchall():
+                sc = row["sentiment"]
+                items.append(
+                    {
+                        "title": row["title"] or "",
+                        "content": (row["content"] or "")[:2000],
+                        "url": row["url"] or None,
+                        "source": row["source"] or "",
+                        "publish_time": (row["publish_date"] or "")[:19],
+                        "tag": row["category"] or "",
+                        "keyword": (row["domains"] or "")[:200] if row["domains"] else None,
+                        "sentiment_score": float(sc) if sc is not None else None,
+                        "sentiment_label": _policy_sentiment_label(sc),
+                    }
+                )
+        finally:
+            conn.close()
+    except Exception as e:
+        _log.warning("policy news sqlite read failed: %s", e)
+        return {
+            "news": [],
+            "source": None,
+            "sentiment": None,
+            "detail": "policy_news_read_error",
+        }
+    sentiment = _news_sentiment_summary(items)
+    return {"news": items, "source": "policy_sqlite", "sentiment": sentiment}
+
+
 @router.get("/news/coverage")
 def get_news_coverage() -> dict:
     """
