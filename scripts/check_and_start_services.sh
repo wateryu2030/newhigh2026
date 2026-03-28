@@ -15,6 +15,11 @@ code() {
   curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 8 "$1" || echo "000"
 }
 
+# 情绪接口可能拉东财/AkShare，8s 不够则误判失败
+code_slow() {
+  curl -s -o /dev/null -w '%{http_code}' --connect-timeout 5 --max-time 90 "$1" || echo "000"
+}
+
 check_all() {
   CG=$(code "$gw")
   CN=$(code "$nx")
@@ -30,8 +35,9 @@ if check_all; then
   echo "[check] 服务正常，跳过重启。"
 else
   echo "[check] 异常，执行重启…"
+  # 与手动部署一致：生产可 export NEWHIGH_FRONTEND_PROD=1
   bash "$ROOT/scripts/restart_gateway_frontend.sh"
-  sleep 2
+  sleep 3
   if ! check_all; then
     echo "[check] 重启后仍异常。Gateway 日志: $ROOT/logs/gateway.out" >&2
     echo "[check] 前端日志: $ROOT/logs/frontend.out" >&2
@@ -40,10 +46,17 @@ else
   echo "[check] 重启后已恢复。"
 fi
 
-CS=$(code "$sent")
+CS=$(code_slow "$sent")
 echo "[check] sentiment-7d -> HTTP $CS"
 if [[ "$CS" != "200" ]]; then
   echo "[check] 警告: 7维情绪接口非 200，请查 Gateway 与 QUANT_SYSTEM_DUCKDB_PATH" >&2
+  exit 1
+fi
+
+NNEWS=$(code "http://127.0.0.1:3000/api/news?limit=1")
+echo "[check] Next→/api/news -> HTTP $NNEWS"
+if [[ "$NNEWS" != "200" ]]; then
+  echo "[check] 警告: 经 Next 反代的新闻接口非 200（公网 /news 依赖）；请查 API_PROXY_TARGET、Gateway 与 logs/frontend.out" >&2
   exit 1
 fi
 

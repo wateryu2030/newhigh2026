@@ -12,7 +12,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p "$ROOT/logs"
 
-# Next standalone 在 frontend/.next/standalone 下启动，默认读不到仓库根 .env，导致 API_PROXY_TARGET 缺失、/api/* 反代 502
+# 先注入环境变量再启 Gateway/Next：与 dotenv 一致，且保证 uvicorn 子进程继承 API_PROXY_TARGET、CORS_ORIGINS 等
 load_root_env() {
   if [[ -f "$ROOT/.env" ]]; then
     set -a
@@ -22,6 +22,8 @@ load_root_env() {
   fi
   export API_PROXY_TARGET="${API_PROXY_TARGET:-http://127.0.0.1:8000}"
 }
+
+load_root_env
 
 kill_port() {
   local port="$1"
@@ -63,7 +65,6 @@ nohup "$UV" gateway.app:app --host 127.0.0.1 --port 8000 --reload \
 echo $! >"$ROOT/logs/gateway.pid"
 echo "[restart] Gateway PID $(cat "$ROOT/logs/gateway.pid")，日志 $ROOT/logs/gateway.out"
 
-load_root_env
 cd "$ROOT/frontend"
 if ! command -v npm >/dev/null 2>&1 || ! npm --version >/dev/null 2>&1; then
   echo "[restart] 错误: 未找到可用的 npm/node，请安装 Node 或修复 PATH（建议: brew install node）" >&2
@@ -84,6 +85,11 @@ if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   cd .next/standalone
   nohup env HOSTNAME=0.0.0.0 PORT=3000 API_PROXY_TARGET="$API_PROXY_TARGET" node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
 else
+  # 仅删「半截」构建：避免 middleware-manifest.json 缺失导致 dev 全站 500
+  if [[ -d .next ]] && [[ ! -f .next/server/middleware-manifest.json ]]; then
+    echo "[restart] 检测到不完整 .next，先 rm -rf .next …"
+    rm -rf .next
+  fi
   echo "[restart] 启动前端 next dev http://127.0.0.1:3000 …"
   nohup npm run dev >>"$ROOT/logs/frontend.out" 2>&1 &
 fi

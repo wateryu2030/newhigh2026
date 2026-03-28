@@ -23,6 +23,11 @@ _SKIP_PATHS = {
     "/api/market/sentiment-7d",
     "/api/market/klines",
     "/api/market/ashare/stocks",
+    # 新闻 / 数据状态：首页与 /news 页公网可读（JWT_AUTH_REQUIRED=1 时仍需白名单）
+    "/api/news",
+    "/api/news/coverage",
+    "/api/news/hot-ticker",
+    "/api/data/status",
 }
 
 
