@@ -312,7 +312,7 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
 
             return df
 
-        if period == "monthly":  # pylint: disable=no-else-return (false positive - already fixed)
+        if period == "monthly":  # pylint: disable=no-else-return
             # 月线数据
             df = pro.monthly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
             if df.empty:

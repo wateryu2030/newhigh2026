@@ -36,6 +36,7 @@ def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
 def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjust: str):
     """拉取日/周/月 K 线 DataFrame，优先东方财富接口（支持沪深京/北交所）。"""
     # 优先东方财富（沪深京含北交所）
+    # pylint: disable=no-member
     if getattr(ak, "stock_zh_a_hist_em", None) is not None:
         try:
             return ak.stock_zh_a_hist_em(
