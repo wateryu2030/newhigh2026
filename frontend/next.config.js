@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
-const apiTarget = process.env.NEXT_PUBLIC_API_TARGET || 'http://127.0.0.1:8000';
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  /** `/api/*` 由 `src/app/api/[...path]/route.ts` 服务端转发，运行时可读 `API_PROXY_TARGET`，避免仅 rewrites 在构建期写死后生产 502 */
   async rewrites() {
-    return [
-      { source: '/api/:path*', destination: `${apiTarget}/api/:path*` },
-    ];
+    return [];
   },
   /**
    * 仅为 /_next/static 设长缓存。切勿对同一 URL 再叠加「全站 no-cache」，否则部分 CDN/浏览器会合并出

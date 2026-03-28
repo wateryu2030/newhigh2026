@@ -31,7 +31,7 @@ Mobile-first, dark theme. See [FRONTEND_SYSTEM_SPEC.md](./FRONTEND_SYSTEM_SPEC.m
    npm install
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000). The frontend calls the Gateway at `http://127.0.0.1:8000/api` by default (set `NEXT_PUBLIC_API_TARGET` to override). **Start the Gateway first**, otherwise API requests will fail.
+   Open [http://localhost:3000](http://localhost:3000). Browser uses same-origin `/api/*`; the Next server proxies to Gateway (`API_PROXY_TARGET` or `NEXT_PUBLIC_API_TARGET`, default `http://127.0.0.1:8000`). **Start the Gateway first**, otherwise API requests return 502 / `gateway_unreachable`.
 
 ## Build
 

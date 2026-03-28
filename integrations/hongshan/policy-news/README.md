@@ -39,3 +39,10 @@ python3 news_collector.py
 ## LaunchAgent 示例
 
 见同目录 `com.newhigh.news-api.plist.example`（将路径替换为本机 newhigh 根目录后 `cp` 到 `~/Library/LaunchAgents/` 并 `launchctl load`）。
+
+## Awesome Finance Skills（OpenClaw / 飞书机器人曾提示安装）
+
+- **本机 OpenClaw 工作区** `~/.openclaw/workspace/skills/` 当前**无** `awesome-finance`；仅有 `stock-data`、`backtest`、`risk-monitor` 等。
+- 上游仓库 [RKiding/Awesome-finance-skills](https://github.com/RKiding/Awesome-finance-skills) **仅有 `main` 分支**；`alphaear-news` 已不存在，`npx skills add ...@alphaear-news` 会失败。
+- 网络正常时可尝试：`cd ~/.openclaw/workspace && npx skills add RKiding/Awesome-finance-skills --yes`（或 `git clone` 到 `skills/awesome-finance`）；需代理时设置 `https_proxy`。
+- 红山「金融新闻」页不依赖该包；安装后可再接到 OpenClaw 工具链。

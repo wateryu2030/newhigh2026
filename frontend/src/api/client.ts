@@ -1,6 +1,7 @@
 /**
  * 可选：强制指定 API 根（如单独子域 https://api.xxx.com）。
- * 不填时浏览器默认走「当前站点同源 /api」，由 Next rewrites 转到本机 Gateway——
+ * 不填时浏览器默认走「当前站点同源 /api」，由 Next **服务端** `app/api/[...path]/route.ts` 转发到 Gateway。
+ * 生产请在运行 Next 的环境中设置 `API_PROXY_TARGET`（或 `NEXT_PUBLIC_API_TARGET`），见 `.env.example`。
  * Cloudflare Tunnel 只暴露 :3000 时外网才能通，勿再请求 127.0.0.1:8000。
  */
 export const API_BASE_STORAGE_KEY = 'newhigh_api_base';
