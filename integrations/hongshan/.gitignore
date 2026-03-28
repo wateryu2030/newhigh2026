@@ -6,3 +6,4 @@
 **/.env.production
 **/.env.local
 **/dist/
+logs/

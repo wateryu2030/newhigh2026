@@ -13,6 +13,7 @@
           <el-menu-item index="3" @click="activeTab = 'position'">持仓</el-menu-item>
           <el-menu-item index="4" @click="activeTab = 'strategy'">策略</el-menu-item>
           <el-menu-item index="5" @click="activeTab = 'risk'">风控</el-menu-item>
+          <el-menu-item index="6" @click="activeTab = 'finance'">💰 金融</el-menu-item>
         </el-menu>
       </div>
       <div class="header-right">
@@ -49,7 +50,7 @@
             </template>
             <p>实时股票行情，支持搜索和筛选。</p>
           </el-card>
-          
+
           <!-- K 线图表 -->
           <el-card style="margin-bottom: 20px;">
             <template #header>
@@ -65,7 +66,12 @@
             <KlineChart :symbol="'600519'" :period="klinePeriod" />
           </el-card>
         </div>
-        
+
+        <!-- 金融新闻页面 -->
+        <div v-else-if="activeTab === 'finance'">
+          <FinanceNewsView />
+        </div>
+
         <!-- 其他页面占位 -->
         <el-card v-else>
           <template #header>
@@ -88,6 +94,7 @@
 import { ref } from 'vue'
 import { TrendCharts, Bell, UserFilled } from '@element-plus/icons-vue'
 import KlineChart from './components/KlineChart.vue'
+import FinanceNewsView from './views/FinanceNews.vue'
 
 const activeTab = ref('market')
 const klinePeriod = ref('daily')
@@ -104,7 +111,8 @@ const getPageTitle = () => {
     trade: '交易',
     position: '持仓',
     strategy: '策略',
-    risk: '风控'
+    risk: '风控',
+    finance: '金融新闻'
   }
   return titles[activeTab.value] || '功能开发中'
 }

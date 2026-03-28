@@ -11,6 +11,7 @@
 | PostgreSQL | **5433** | 库名 `hongshan_quant` |
 | Redis | **6380** | 与 `cache.py` 中 `REDIS_HOST` 在容器内为 `redis` |
 | newhigh Gateway | 8000 | 主栈，不在此启动 |
+| 政策新闻 API（SQLite + FastAPI） | **8001** | `hongshan-quant-platform/start-news-api.sh`，实现代码在 `policy-news/`；Vue 开发时 `/news` 走 Vite 代理 |
 
 ## Docker 一键启动
 

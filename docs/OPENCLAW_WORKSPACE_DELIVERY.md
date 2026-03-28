@@ -6,7 +6,8 @@
 |------|------|
 | **`/Users/apple/Ahope/newhigh`** | **主工程**：Next.js `frontend/`、`gateway/`、`data-pipeline/`、DuckDB 统一库等（日常迭代以这里为准）。 |
 | **`newhigh/integrations/hongshan/`** | **已与主仓对齐的 Hongshan 子栈**：从 OpenClaw 迁入的 `hongshan-backend` + `hongshan-quant-platform`，见该目录 `README.md` 与 `docker-compose.yml`（API **8010**，与主 Gateway **8000** 并存）。 |
-| **`/Users/apple/.openclaw/workspace`** | **OpenClaw 原工作区**：独立 Git 仓库；历史提交（如 `2aaa6d1`）仍在该目录 `git log`。后续以 **integrations/hongshan** 为准做统一修改，必要时可再从该目录 rsync 同步。 |
+| **`newhigh/integrations/hongshan/policy-news/`** | **政策新闻（OpenClaw 并入）**：原 `~/.openclaw/workspace/scripts/` 采集 + SQLite（`policy-news/sqlite/news.db`）+ API（**8001**），Vue「金融」页见 `hongshan-quant-platform/src/views/FinanceNews.vue`；说明见 `policy-news/README.md`。 |
+| **`/Users/apple/.openclaw/workspace`** | **OpenClaw 原工作区**：独立 Git 仓库；历史提交（如 `2aaa6d1`）仍在该目录 `git log`。后续以 **integrations/hongshan** 与 **policy-news** 为准做统一修改，本地仍可 `rsync` 对照增量。 |
 
 **如何将 OpenClaw 交付「整合进项目」**：
 
