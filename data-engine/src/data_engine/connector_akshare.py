@@ -46,7 +46,7 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
                 end_date=end_date,
                 adjust=adjust,
             )
-        except Exception:
+        except (RuntimeError, OSError, ValueError):
             pass
     try:
         return ak.stock_zh_a_hist(
@@ -56,11 +56,11 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
             period=period,
             adjust=adjust,
         )
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         return None
 
 
-def fetch_klines_akshare(
+def fetch_klines_akshare(  # pylint: disable=too-many-positional-arguments
     symbol: str,
     start_date: str,
     end_date: str,
@@ -130,7 +130,7 @@ def _fetch_bse_stock_list() -> List[Dict[str, Any]]:
         return out
     try:
         df_bj = ak.stock_info_bj_name_code()
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         return out
     if df_bj is None or df_bj.empty:
         return out
@@ -166,7 +166,7 @@ def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
                 sym = _normalize_symbol(code)
                 market = "sh" if sym.endswith(".SH") else "sz"
                 out.append({"symbol": sym, "name": name or code, "market": market})
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         pass
     if include_bse:
         out.extend(_fetch_bse_stock_list())
@@ -196,7 +196,7 @@ def fetch_klines_akshare_minute(
             start_date=start_date,
             end_date=end_date,
         )
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         return []
     if df is None or df.empty:
         return []

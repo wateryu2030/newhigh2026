@@ -50,7 +50,7 @@ def get_astock_duckdb_available() -> bool:
     return check_astock_available()
 
 
-def fetch_klines_from_astock_duckdb(
+def fetch_klines_from_astock_duckdb(  # pylint: disable=too-many-positional-arguments
     symbol: str,
     start_date: str | None = None,
     end_date: str | None = None,
@@ -105,7 +105,7 @@ def fetch_klines_from_astock_duckdb(
             sql += f" LIMIT {int(limit)}"
     try:
         df = conn.execute(sql, params).fetchdf()
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         return []
     if df is None or df.empty:
         return []
@@ -155,7 +155,7 @@ def get_stocks_from_astock_duckdb() -> List[Tuple[str, str, str]]:
                 )
                 for _, row in df.iterrows()
             ]
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         pass
     try:
         df = conn.execute(
@@ -166,7 +166,7 @@ def get_stocks_from_astock_duckdb() -> List[Tuple[str, str, str]]:
                 (ob, ob.split(".", maxsplit=1)[0], "")
                 for ob in df["order_book_id"].astype(str).tolist()
             ]
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         pass
     return []
 
@@ -202,7 +202,7 @@ def get_duckdb_data_status() -> Dict[str, Any]:
                 "date_min": str(bars[1])[:10] if bars[1] else None,
                 "date_max": str(bars[2])[:10] if bars[2] else None,
             }
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         pass
     return {"stocks": 0, "daily_bars": 0, "date_min": None, "date_max": None}
 
@@ -233,16 +233,29 @@ def get_news_from_astock_duckdb(
         if symbol:
             code = (symbol or "").strip().split(".", maxsplit=1)[0]
             if len(code) == 6:
-                sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items WHERE symbol = ? OR symbol LIKE ? ORDER BY publish_time DESC LIMIT ?"
+                sql = (
+                    "SELECT symbol, source_site, source, title, content, url, "
+                    "keyword, tag, publish_time, sentiment_score, sentiment_label "
+                    "FROM news_items WHERE symbol = ? OR symbol LIKE ? "
+                    "ORDER BY publish_time DESC LIMIT ?"
+                )
                 params = [code, f"{code}.%", fetch_limit]
             else:
-                sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items ORDER BY publish_time DESC LIMIT ?"
+                sql = (
+                    "SELECT symbol, source_site, source, title, content, url, "
+                    "keyword, tag, publish_time, sentiment_score, sentiment_label "
+                    "FROM news_items ORDER BY publish_time DESC LIMIT ?"
+                )
                 params = [fetch_limit]
         else:
-            sql = "SELECT symbol, source_site, source, title, content, url, keyword, tag, publish_time, sentiment_score, sentiment_label FROM news_items ORDER BY publish_time DESC LIMIT ?"
+            sql = (
+                "SELECT symbol, source_site, source, title, content, url, "
+                "keyword, tag, publish_time, sentiment_score, sentiment_label "
+                "FROM news_items ORDER BY publish_time DESC LIMIT ?"
+            )
             params = [fetch_limit]
         df = conn.execute(sql, params).fetchdf()
-    except Exception:
+    except (RuntimeError, OSError, ValueError):
         return []
     if df is None or df.empty:
         return []

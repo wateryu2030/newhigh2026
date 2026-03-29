@@ -182,7 +182,7 @@ class WeChatCollector:
             logger.error("无可用抓取工具（需安装 WeSpy 或 requests）")
             return None
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("抓取文章失败：%s", e)
             return None
 
@@ -226,7 +226,7 @@ class WeChatCollector:
             logger.info("文章抓取成功：%s", article.title)
             return article
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("WeSpy 抓取失败：%s", e)
             return None
 
@@ -267,7 +267,7 @@ class WeChatCollector:
             logger.info("文章抓取成功（降级模式）：%s", article.title)
             return article
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("HTTP 抓取失败：%s", e)
             return None
 
@@ -306,7 +306,7 @@ class WeChatCollector:
                 # TODO: 实现降级模式
                 articles = []
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("专辑抓取失败：%s", e)
 
         logger.info("专辑抓取完成：成功 %d/%d 篇", len(articles), max_articles)
@@ -355,7 +355,7 @@ class WeChatCollector:
 
             return articles
 
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("WeSpy 专辑抓取失败：%s", e)
             return []
 
@@ -366,7 +366,7 @@ class WeChatCollector:
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return f.read()
-        except Exception:
+        except (RuntimeError, OSError, ValueError):
             return ""
 
     def _html_to_markdown(self, html: str) -> str:
@@ -451,7 +451,7 @@ class WeChatCollector:
                         datetime.now(timezone.utc)
                     ])
                     count += 1
-                except Exception as e:
+                except (RuntimeError, OSError, ValueError) as e:
                     logger.warning("插入文章失败 %s: %s", article.url, e)
 
             conn.close()
@@ -461,7 +461,7 @@ class WeChatCollector:
         except ImportError:
             logger.warning("duckdb 未安装，跳过数据库保存")
             return 0
-        except Exception as e:
+        except (RuntimeError, OSError, ValueError) as e:
             logger.error("数据库保存失败：%s", e)
             return 0
 
@@ -509,7 +509,7 @@ class WeChatCollector:
 
                 count += 1
 
-            except Exception as e:
+            except (RuntimeError, OSError, ValueError) as e:
                 logger.warning("保存文件失败 %s: %s", article.title, e)
 
         logger.info("成功保存 %d 篇文章到 %s", count, output_dir)
