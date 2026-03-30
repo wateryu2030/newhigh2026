@@ -94,10 +94,12 @@ export default function NewsPage() {
   const [sentiment, setSentiment] = useState<{ count: number; avg_score?: number; positive_ratio?: number } | null>(
     null
   );
+  const [collectorDetail, setCollectorDetail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadMarket = useCallback((symbol?: string) => {
     setLoading(true);
+    setCollectorDetail(null);
     api
       .news(symbol?.trim() || undefined, 100)
       .then((r) => {
@@ -121,11 +123,13 @@ export default function NewsPage() {
         setNews(r.news || []);
         setSource(r.source || null);
         setSentiment(r.sentiment ?? null);
+        setCollectorDetail(r.detail ?? null);
       })
       .catch(() => {
         setNews([]);
         setSource(null);
         setSentiment(null);
+        setCollectorDetail(null);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -161,6 +165,12 @@ export default function NewsPage() {
       </div>
 
       {panel === 'collector' && <p className="text-slate-400 text-sm max-w-3xl">{t('news.collectorHint')}</p>}
+
+      {panel === 'collector' && collectorDetail === 'policy_news_db_not_found' && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-4 py-3 text-sm text-amber-100 max-w-3xl">
+          {t('news.collectorNoDb')}
+        </div>
+      )}
 
       {panel === 'market' && <p className="text-slate-400 text-sm">{t('news.hint')}</p>}
 
@@ -216,7 +226,15 @@ export default function NewsPage() {
       ) : panel === 'market' ? (
         <NewsList news={news} emptyHint={t('news.dataIncompleteHint')} goDataHref />
       ) : (
-        <NewsList news={news} emptyHint={t('news.collectorEmpty')} goDataHref={false} />
+        <NewsList
+          news={news}
+          emptyHint={
+            collectorDetail === 'policy_news_read_error'
+              ? t('news.collectorReadError')
+              : t('news.collectorEmpty')
+          }
+          goDataHref={false}
+        />
       )}
     </div>
   );

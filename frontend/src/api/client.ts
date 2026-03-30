@@ -718,6 +718,8 @@ export interface NewsResponse {
   news: NewsItem[];
   source: string | null;
   sentiment?: { count: number; avg_score?: number; positive_ratio?: number } | null;
+  /** 政策采集：`policy_news_db_not_found` 等，见 Gateway /api/news/collector */
+  detail?: string;
 }
 
 export interface HotTickerLine {

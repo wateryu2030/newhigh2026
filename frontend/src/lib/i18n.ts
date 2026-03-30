@@ -119,6 +119,9 @@ export const translations: Record<Lang, Record<string, string>> = {
       '本栏为仓库内 policy-news 脚本写入的 SQLite（国务院/新华网等），与第三方 Awesome Finance Skills 无依赖。若为空，请在服务器运行采集并确保 Gateway 可读该库（见仓库 integrations/hongshan/policy-news）。',
     'news.collectorEmpty':
       '尚无政策采集数据：在服务器执行 policy-news/news_collector.py 或确认 POLICY_NEWS_DB_PATH / 默认路径存在 news.db。',
+    'news.collectorNoDb':
+      '服务端未找到 policy-news 的 SQLite（integrations/hongshan/policy-news/sqlite/news.db）。部署机上跑一次采集或设置 POLICY_NEWS_DB_PATH。',
+    'news.collectorReadError': '政策库已配置但读取失败（权限/损坏/SQLite 忙）。请查看 Gateway 日志。',
     'news.hint': '按股票代码筛选、展示情感汇总。',
     'news.placeholder': '股票代码（如 000001）留空查全部',
     'news.query': '查询',
@@ -420,6 +423,9 @@ export const translations: Record<Lang, Record<string, string>> = {
       'SQLite filled by policy-news (gov/xinhua sources). Not tied to Awesome Finance Skills. If empty, run the collector on the server.',
     'news.collectorEmpty':
       'No collector rows yet. Run policy-news/news_collector.py or set POLICY_NEWS_DB_PATH.',
+    'news.collectorNoDb':
+      'Policy SQLite not found on server. Run the collector or set POLICY_NEWS_DB_PATH.',
+    'news.collectorReadError': 'Policy DB present but read failed. Check Gateway logs.',
     'news.hint': 'Filter by symbol, sentiment summary.',
     'news.placeholder': 'Symbol (e.g. 000001), empty = all',
     'news.query': 'Query',

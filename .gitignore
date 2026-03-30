@@ -41,3 +41,4 @@ logs/
 
 # 本地 pylint 报告（不入库）
 evolution/pylint_report*.txt
+evolution/daily_summary_*.md

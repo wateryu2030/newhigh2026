@@ -1,7 +1,8 @@
 """
 认证中间件：对 /api/* 除白名单路径外校验 Authorization: Bearer <token>。
 白名单含 /api/auth/login、/api/health、/health、/docs、/openapi、/redoc，
-及行情页只读 /api/market/sentiment-7d、/api/market/klines、/api/market/ashare/stocks；
+及行情页只读 /api/market/sentiment-7d、/api/market/klines、/api/market/ashare/stocks、/api/market/emotion，
+控制台只读 /api/dashboard、/api/system/data-overview、/api/system/status；
 OPTIONS 预检直接放行。
 通过 JWT_AUTH_REQUIRED=1 启用；未启用时所有请求放行。
 """
@@ -29,6 +30,11 @@ _SKIP_PATHS = {
     "/api/news/hot-ticker",
     "/api/news/collector",
     "/api/data/status",
+    # 控制台首页 / 系统卡片只读（生产 JWT 开启时避免整页 401；敏感写操作仍在保护内）
+    "/api/dashboard",
+    "/api/system/data-overview",
+    "/api/system/status",
+    "/api/market/emotion",
 }
 
 
