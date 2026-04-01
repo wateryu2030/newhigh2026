@@ -32,6 +32,8 @@ frontend/.next/
 
 # Local data (A-share DuckDB 由 scripts/copy_astock_duckdb_to_newhigh.py 复制而来)
 data/
+# DuckDB 备份目录（单文件可达数百 MB，GitHub 拒绝 ≥100MB）
+backups/
 
 # OpenClaw 单轮执行状态（可选保留以追踪上次运行）
 scripts/.openclaw_state.json
