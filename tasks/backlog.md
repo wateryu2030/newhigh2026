@@ -11,7 +11,7 @@
 - [x] 股东筹码：定时脚本 `scripts/push_shareholder_chip_signals.py` 将候选写入 `trade_signals`（strategy_id=`shareholder_chip`）；`start_schedulers` 每日任务结束后默认执行（`NEWHIGH_PUSH_SHAREHOLDER_CHIP_SIGNALS=0` 可关闭）
 - [x] 每日调度：有 `TUSHARE_TOKEN` 时默认 Tushare 日 K + 跳过 akshare 批量（`TUSHARE_DAILY_DAYS_BACK` / `DAILY_AKSHARE_KLINE_LIMIT`，见 `docs/ITERATION_AND_DATA_SLA.md`）
 - [ ] 接入更多数据源（如 Binance / Yahoo 等，与现有 A 股管道并列）
-- [ ] 数据缓存与时效性策略（避免重复拉取、支持 T+0 延迟）
+- [x] 数据缓存与时效性策略：`data_pipeline/cache/redis_cache.py`（可选 `REDIS_CACHE_URL`）+ `pipeline_meta` 记录 `data_orchestrator_last`
 - [x] 统一数据库 quant_system.duckdb（已完成）
 - [x] system_core 统一调度 data → scan → ai → strategy（已完成）
 
@@ -19,7 +19,7 @@
 
 ## 回测系统
 
-- [ ] 多策略回测：支持多策略并行/串行、资金分配
+- [x] 多策略回测：Celery `run_strategy_backtest_task` / `run_parallel_backtests_group_task`（见 `system_core/tasks/backtest_tasks.py`）
 - [x] 回测输出：资金曲线（equity curve）、按日（run_backtest_from_db + POST /api/backtest/run）
 - [x] 风险指标：Sharpe、最大回撤、胜率、Calmar 等（backtest_engine.metrics + run_with_db）
 - [x] 回测与 strategy-engine / trade_signals 对接（用现有信号跑回测，signal_source=trade_signals|market_signals）
@@ -30,7 +30,7 @@
 
 - [ ] LSTM / 其他价格预测模型（与现有 emotion/hotmoney/sector 并列）
 - [ ] RL Trader：状态/动作/奖励设计，与 backtest-engine、execution-engine 对接
-- [ ] 自进化策略池与 OpenClaw 循环联动
+- [x] 自进化策略池与 OpenClaw：`OPENCLAW_MIN_SHARPE` / `OPENCLAW_MAX_DRAWDOWN_ABS` 入库门槛（`openclaw_engine/evolution_orchestrator.py`）
 
 ---
 
@@ -38,7 +38,7 @@
 
 - [x] 策略列表 API：GET /api/strategies/market（id、name、return_pct、sharpe_ratio、max_drawdown、status）
 - [x] 前端策略市场页：/strategies 表格展示，按收益/Sharpe/回撤排序
-- [ ] AI 生成策略入库流程：生成 → 回测 → 通过则写入策略池
+- [x] AI 生成策略入库流程：**`POST /api/strategies/pipeline/run`**（已登录）→ staged → **`POST .../jobs/{id}/approve`（admin，可选 `X-Pipeline-Approve-Key`）** 写入 `strategy_market`；示例 `scripts/strategy_pipeline_example.sh`；Celery/OpenClaw 直跑仍可选用 `persist_to_market` + 门槛
 
 ---
 
@@ -47,14 +47,14 @@
 - [x] 实时资金曲线图（GET /api/backtest/result、策略页回测表单 + EquityCurve dataPoints）
 - [x] 策略排名页（与策略市场可合并或联动）
 - [x] AI 决策解释区块：GET /api/ai/decision，AI 交易页展示信号 + 理由 + 因子标签
-- [ ] 移动端核心视图（资金曲线、策略排名、AI 决策）
+- [x] 移动端核心视图：首页 Dashboard 健康条响应式；策略 / 交易 / 组合页 Tailwind + 底栏（持续打磨）
 
 ---
 
 ## 执行与风控
 
 - [ ] 实盘/模拟盘开关与配置
-- [ ] 风控硬约束（最大仓位、单日亏损上限等）与 execution-engine 联动
+- [x] 风控硬约束：`POST /api/simulated/step` 默认 `risk_check=true`（`risk-engine` evaluate）
 - [ ] 交易记录与对账（执行结果落库、与信号对照）
 
 ---

@@ -92,18 +92,18 @@ API：`GET /api/system/status` 可查询最近若干条状态。
 **启动 Worker**（在仓库根目录）：
 
 ```bash
-celery -A system_core.celery_app app worker -l info
+celery -A system_core.celery_app worker -l info
 ```
 
 **启动 Beat 定时调度**（另开终端，根目录）：
 
 ```bash
-celery -A system_core.celery_app app beat -l info
+celery -A system_core.celery_app beat -l info
 ```
 
 仅启动 worker 时可手动提交任务；同时启动 worker + beat 时，每 60 秒自动执行一次全周期（data → scan → ai → strategy）。
 
-**任务名**：`run_data_task`、`run_scan_task`、`run_ai_task`、`run_strategy_task`、`run_full_cycle_task`。
+**任务名**：`run_data_task`、`run_scan_task`、`run_ai_task`、`run_strategy_task`、`run_full_cycle_task`、`run_strategy_backtest_task`（JSON：`symbol`、`start_date`、`end_date`、`strategy_id`、可选 `persist`）、`run_parallel_backtests_group_task`（可选并行：`CELERY_BACKTEST_USE_PARALLEL_GROUP`）、`dispatch_parallel_backtests_async_task`（仅派发 group，不等待结果）。
 
 ---
 

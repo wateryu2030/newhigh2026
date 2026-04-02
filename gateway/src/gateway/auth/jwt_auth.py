@@ -56,6 +56,39 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
+def resolve_effective_role(payload: Optional[dict]) -> str:
+    """
+    JWT claim role：viewer | operator | admin。
+    PIPELINE_ADMIN_SUBJECTS / PIPELINE_OPERATOR_SUBJECTS：逗号分隔，与 JWT `sub`（一般为 user_id）对齐，用于应急赋权。
+    优先级：admin 名单 > operator 名单 > JWT role > viewer。
+    """
+    if not payload:
+        return "viewer"
+    sub = str(payload.get("sub") or "").strip()
+    admin_subjects = os.environ.get("PIPELINE_ADMIN_SUBJECTS", "").strip()
+    if admin_subjects and sub:
+        allowed = {x.strip() for x in admin_subjects.split(",") if x.strip()}
+        if sub in allowed:
+            return "admin"
+    op_env = os.environ.get("PIPELINE_OPERATOR_SUBJECTS", "").strip()
+    if op_env and sub:
+        ops = {x.strip() for x in op_env.split(",") if x.strip()}
+        if sub in ops:
+            return "operator"
+    r = payload.get("role")
+    if isinstance(r, str) and r in ("admin", "operator", "viewer"):
+        return r
+    return "viewer"
+
+
+def is_admin(role: str) -> bool:
+    return role == "admin"
+
+
+def is_operator_or_admin(role: str) -> bool:
+    return role in ("operator", "admin")
+
+
 def get_current_user_optional(authorization: Optional[str] = None) -> Optional[str]:
     """
     从 Authorization: Bearer <token> 解析出 subject（用户名），无效时返回 None。

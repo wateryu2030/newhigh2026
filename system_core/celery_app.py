@@ -42,6 +42,7 @@ try:
             "system_core.tasks.ai_tasks",
             "system_core.tasks.strategy_tasks",
             "system_core.tasks.pipeline_tasks",
+            "system_core.tasks.backtest_tasks",
         ],
     )
     app.conf.update(

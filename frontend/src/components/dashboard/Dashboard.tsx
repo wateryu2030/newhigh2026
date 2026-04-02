@@ -6,10 +6,13 @@ import {
   api,
   type DashboardResponse,
   type DataStatusResponse,
+  type HealthDetailPayload,
+  type NewsManualRefreshResponse,
   type SystemDataOverviewResponse,
 } from '@/api/client';
 import { KPICard } from './KPICard';
 import { WarningBanner } from './WarningBanner';
+import { HealthDetailStrip } from './HealthDetailStrip';
 import { SystemDataOverview } from '../SystemDataOverview';
 import { EquityCurve } from '../EquityCurve';
 import { useLang } from '@/context/LangContext';
@@ -36,8 +39,15 @@ export function Dashboard() {
   const [sniperCount, setSniperCount] = useState<number | null>(null);
   /** 与首屏请求一并拉取；仅在 loading 结束后挂载子组件，避免 SystemDataOverview 重复请求 */
   const [overviewPrefetched, setOverviewPrefetched] = useState<SystemDataOverviewResponse | null>(null);
+  const [healthDetail, setHealthDetail] = useState<HealthDetailPayload | null>(null);
+  const [healthDetailFailed, setHealthDetailFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dashTab, setDashTab] = useState<'overview' | 'news'>('overview');
+  const [newsRefreshBusy, setNewsRefreshBusy] = useState(false);
+  const [newsRefreshErr, setNewsRefreshErr] = useState<string | null>(null);
+  const [newsLastResult, setNewsLastResult] = useState<NewsManualRefreshResponse | null>(null);
+  const [sendNewsWebhook, setSendNewsWebhook] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -45,12 +55,20 @@ export function Dashboard() {
       api.dataStatus(),
       api.marketEmotion().then((r) => r.stage ?? r.state ?? null).catch(() => null),
       api.systemDataOverview().catch(() => null),
+      api.healthDetail().catch(() => null),
     ])
-      .then(([d, s, e, ov]) => {
+      .then(([d, s, e, ov, hd]) => {
         setData(d);
         setDataStatus(s);
         setEmotionState(e);
         setOverviewPrefetched(ov != null && typeof ov === 'object' ? ov : null);
+        if (hd && typeof hd === 'object' && 'status' in hd) {
+          setHealthDetail(hd as HealthDetailPayload);
+          setHealthDetailFailed(false);
+        } else {
+          setHealthDetail(null);
+          setHealthDetailFailed(true);
+        }
         const sn =
           ov && typeof ov === 'object' && ov.ok && ov.counts && typeof ov.counts.sniper_candidates === 'number'
             ? ov.counts.sniper_candidates
@@ -100,6 +118,36 @@ export function Dashboard() {
         Terminal <span style={{ color: '#FF3B30' }}>Overview</span>
       </h1>
 
+      <div
+        className="mb-2 flex flex-wrap gap-2 border-b pb-2"
+        style={{ borderColor: '#2A2E36' }}
+      >
+        <button
+          type="button"
+          onClick={() => setDashTab('overview')}
+          className="rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: dashTab === 'overview' ? '#2A2E36' : 'transparent',
+            color: dashTab === 'overview' ? '#ECEDF6' : '#94A3B8',
+          }}
+        >
+          {t('dashboard.tabOverview')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDashTab('news')}
+          className="rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: dashTab === 'news' ? '#2A2E36' : 'transparent',
+            color: dashTab === 'news' ? '#ECEDF6' : '#94A3B8',
+          }}
+        >
+          {t('dashboard.tabNews')}
+        </button>
+      </div>
+
+      {dashTab === 'overview' ? (
+        <>
       {/* 数据完整性提醒 - 占满宽度 */}
       {dataStatus && !dataStatus.ok && (
         <div className="animate-fadeIn">
@@ -111,6 +159,10 @@ export function Dashboard() {
           />
         </div>
       )}
+
+      <div className="animate-fadeIn" style={{ animationDelay: '40ms' }}>
+        <HealthDetailStrip data={healthDetail} loadFailed={healthDetailFailed} />
+      </div>
 
       {/* 系统数据概览 */}
       <div className="animate-fadeIn" style={{ animationDelay: '50ms' }}>
@@ -319,6 +371,93 @@ export function Dashboard() {
           </ul>
         </div>
       </div>
+        </>
+      ) : (
+        <div
+          className="animate-fadeIn space-y-4 rounded-2xl border p-4 md:p-5"
+          style={{ backgroundColor: '#14171C', borderColor: '#2A2E36' }}
+        >
+          <h2 className="text-sm font-medium" style={{ color: '#94A3B8' }}>
+            {t('dashboard.newsManualTitle')}
+          </h2>
+          <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>
+            {t('dashboard.newsManualHint')}
+          </p>
+          <label className="flex cursor-pointer items-center gap-2 text-sm" style={{ color: '#A9ABB3' }}>
+            <input
+              type="checkbox"
+              checked={sendNewsWebhook}
+              onChange={(e) => setSendNewsWebhook(e.target.checked)}
+              className="rounded border-gray-600 bg-[#1a1d22]"
+            />
+            {t('dashboard.newsManualSendWebhook')}
+          </label>
+          <button
+            type="button"
+            disabled={newsRefreshBusy}
+            onClick={async () => {
+              setNewsRefreshErr(null);
+              setNewsRefreshBusy(true);
+              try {
+                const r = await api.newsManualRefresh({ send_webhook: sendNewsWebhook });
+                setNewsLastResult(r);
+              } catch (e) {
+                setNewsRefreshErr(e instanceof Error ? e.message : String(e));
+              } finally {
+                setNewsRefreshBusy(false);
+              }
+            }}
+            className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+            style={{ backgroundColor: '#FF3B30', color: '#fff' }}
+          >
+            {newsRefreshBusy ? t('common.loading') : t('dashboard.newsManualRefresh')}
+          </button>
+          {newsRefreshErr ? (
+            <p className="text-sm" style={{ color: '#FF7439' }}>
+              {newsRefreshErr}
+            </p>
+          ) : null}
+          {newsLastResult ? (
+            <div className="space-y-2 text-sm" style={{ color: '#A9ABB3' }}>
+              <div>
+                {t('dashboard.newsManualRssInserted')}:{' '}
+                <strong style={{ color: '#ECEDF6' }}>{newsLastResult.rss_inserted}</strong>
+              </div>
+              <div>
+                {t('dashboard.newsManualSummaryLines')}:{' '}
+                <strong style={{ color: '#ECEDF6' }}>{newsLastResult.summary_lines}</strong>
+              </div>
+              <div>
+                {t('dashboard.newsManualWebhookSent')}:{' '}
+                <strong style={{ color: '#ECEDF6' }}>
+                  {newsLastResult.webhook_sent
+                    ? t('dashboard.newsManualWebhookYes')
+                    : t('dashboard.newsManualWebhookNo')}
+                </strong>
+                {newsLastResult.webhook_skipped_reason ? (
+                  <>
+                    {' '}
+                    ({t('dashboard.newsManualSkipReason')}: {newsLastResult.webhook_skipped_reason})
+                  </>
+                ) : null}
+              </div>
+              <pre
+                className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-xs"
+                style={{ borderColor: '#2A2E36', color: '#CBD5E1' }}
+              >
+                {newsLastResult.summary || '—'}
+              </pre>
+              <Link
+                href="/news"
+                className="inline-block text-sm font-medium hover:underline"
+                style={{ color: '#FF3B30' }}
+              >
+                {t('dashboard.newsManualOpenNews')} →
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

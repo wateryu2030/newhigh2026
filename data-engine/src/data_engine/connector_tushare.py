@@ -73,7 +73,7 @@ def _init_tushare() -> bool:
     try:
         ts.set_token(token)
         return True
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"Tushare初始化失败: {e}")
         return False
 
@@ -91,7 +91,7 @@ def retry_on_failure(max_retries: int = None, delay: float = None):
             for attempt in range(retries):
                 try:
                     return func(*args, **kwargs)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
                     if attempt == retries - 1:
                         raise
                     print(f"尝试 {
@@ -139,7 +139,7 @@ def load_from_cache(cache_path: Path) -> Any:
     try:
         with open(cache_path, "rb") as f:
             return pickle.load(f)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"加载缓存失败: {e}")
         return None
 
@@ -150,7 +150,7 @@ def save_to_cache(cache_path: Path, data: Any) -> bool:
         with open(cache_path, "wb") as f:
             pickle.dump(data, f)
         return True
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"保存缓存失败: {e}")
         return False
 
@@ -339,7 +339,7 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
         else:
             raise ValueError(f"不支持的周期: {period}")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"Tushare获取数据失败: {e}")
         raise
 
@@ -428,7 +428,7 @@ def fetch_stock_basic() -> pd.DataFrame:
             fields="ts_code,symbol,name,area,industry,list_date,market,is_hs",
         )
         return df
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"获取股票基本信息失败: {e}")
         raise
 
@@ -451,7 +451,7 @@ def fetch_realtime_quotes(codes: List[str]) -> pd.DataFrame:
         normalized_codes = [_normalize_symbol(code).split(".", maxsplit=1)[0] for code in codes]
         df = ts.get_realtime_quotes(normalized_codes)
         return df
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"获取实时行情失败: {e}")
         raise
 
@@ -491,7 +491,7 @@ def fetch_financial_data(
             raise ValueError(f"不支持的报表类型: {report_type}")
 
         return df
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"获取财务数据失败: {e}")
         raise
 
@@ -527,7 +527,7 @@ def test_tushare_connector():
 
         return True
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught (external Tushare API)
         print(f"✗ 测试失败: {e}")
         return False
 

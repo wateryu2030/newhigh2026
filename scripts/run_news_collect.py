@@ -2,6 +2,7 @@
 """
 新闻采集入口（写入 quant_system.duckdb 的 news_items，含 url）：
 
+0. **国际/宏观 RSS**（BBC 世界·美国·中东·财经等）：与个股东财互补，地缘/联储/大宗要闻；突发命中关键词可推飞书（NEWS_BREAKING_WEBHOOK_URL）。
 1. 东财个股新闻（akshare，稳定）：默认从前 N 只股票各取若干条，带原文链接。
 2. 财新（tushare.internet.caixinnews）：搜索页若改版可能失败，失败时不影响东财结果。
 
@@ -32,6 +33,10 @@ if load_dotenv_if_present:
 def main() -> int:
     from data_pipeline.collectors.caixin_news import update_caixin_news
     from data_pipeline.collectors.em_stock_news import update_em_stock_news
+    from data_pipeline.collectors.rss_macro_news import update_rss_macro_news
+
+    n_rss = update_rss_macro_news()
+    print(f"RSS 宏观: 新写入 {n_rss} 条")
 
     n_em = update_em_stock_news(
         codes_limit=int(os.environ.get("NEWS_EM_CODES_LIMIT", "80")),
@@ -43,7 +48,7 @@ def main() -> int:
     print(f"尝试财新: keywords={kw!r}, days_back={days}")
     n_cx = update_caixin_news(keywords=kw, days_back=days)
 
-    print(f"完成: 东财新写入 {n_em} 条, 财新处理 {n_cx} 条")
+    print(f"完成: RSS {n_rss}, 东财新写入 {n_em} 条, 财新处理 {n_cx} 条")
     return 0
 
 

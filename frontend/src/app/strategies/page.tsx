@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { api, type StrategyMarketItem, type BacktestResultResponse } from '@/api/client';
 import { useLang } from '@/context/LangContext';
 import { EquityCurve } from '@/components/EquityCurve';
+import { AsyncState } from '@/components/AsyncState';
 
 function formatPct(v: number | null): string {
   if (v == null) return '—';
@@ -28,6 +29,7 @@ export default function StrategiesPage() {
   const { t } = useLang();
   const [items, setItems] = useState<StrategyMarketItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'return_pct' | 'sharpe_ratio' | 'max_drawdown' | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
   const [backtestSymbol, setBacktestSymbol] = useState('000001.SZ');
@@ -36,13 +38,21 @@ export default function StrategiesPage() {
   const [backtestResult, setBacktestResult] = useState<BacktestResultResponse | null>(null);
   const [backtestLoading, setBacktestLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchMarket = () => {
     setLoading(true);
+    setLoadError(null);
     api
       .strategiesMarket(50)
       .then((r) => setItems(r.items || []))
-      .catch(() => setItems([]))
+      .catch(() => {
+        setItems([]);
+        setLoadError('加载策略市场失败，请检查网络或稍后重试');
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchMarket();
   }, []);
 
   const sorted = useMemo(() => {
@@ -75,65 +85,72 @@ export default function StrategiesPage() {
       <h1 className="text-2xl font-bold text-white">{t('strategies.title')}</h1>
       <p className="text-slate-400 text-sm">{t('strategies.marketHint')}</p>
 
-      {loading ? (
-        <p className="text-slate-500">{t('common.loading')}</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-600 text-slate-400">
-                <th className="p-3 font-medium">{t('strategies.id')}</th>
-                <th className="p-3 font-medium">{t('strategies.name')}</th>
-                <th
-                  className="p-3 font-medium cursor-pointer hover:text-white"
-                  onClick={() => toggleSort('return_pct')}
-                >
-                  {t('strategies.returnPct')} {sortBy === 'return_pct' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th
-                  className="p-3 font-medium cursor-pointer hover:text-white"
-                  onClick={() => toggleSort('sharpe_ratio')}
-                >
-                  {t('strategies.sharpe')} {sortBy === 'sharpe_ratio' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th
-                  className="p-3 font-medium cursor-pointer hover:text-white"
-                  onClick={() => toggleSort('max_drawdown')}
-                >
-                  {t('strategies.drawdown')} {sortBy === 'max_drawdown' && (sortDesc ? '↓' : '↑')}
-                </th>
-                <th className="p-3 font-medium">{t('strategies.status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((s) => (
-                <tr key={s.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
-                  <td className="p-3 font-mono text-white">{s.id}</td>
-                  <td className="p-3 text-slate-200">{s.name}</td>
-                  <td className="p-3 text-emerald-400">{formatPct(s.return_pct)}</td>
-                  <td className="p-3 text-slate-300">{formatNum(s.sharpe_ratio)}</td>
-                  <td className="p-3 text-slate-300">{s.max_drawdown != null ? `${s.max_drawdown}%` : '—'}</td>
-                  <td className="p-3">
-                    <span
-                      className={
-                        s.status === 'live' || s.status === 'active'
-                          ? 'text-emerald-400'
-                          : 'text-amber-400'
-                      }
-                    >
-                      {s.status}
-                    </span>
-                  </td>
+      <AsyncState<StrategyMarketItem[]>
+        loading={loading}
+        error={loadError}
+        data={loading || loadError ? undefined : sorted}
+        isEmpty={(rows) => rows.length === 0}
+        emptyTitle={t('strategies.noData')}
+        emptyDescription={t('strategies.marketHint')}
+        loadingMessage={t('common.loading')}
+        onRetry={fetchMarket}
+      >
+        {(rows) => (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-600 text-slate-400">
+                  <th className="p-3 font-medium">{t('strategies.id')}</th>
+                  <th className="p-3 font-medium">{t('strategies.name')}</th>
+                  <th
+                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    onClick={() => toggleSort('return_pct')}
+                  >
+                    {t('strategies.returnPct')} {sortBy === 'return_pct' && (sortDesc ? '↓' : '↑')}
+                  </th>
+                  <th
+                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    onClick={() => toggleSort('sharpe_ratio')}
+                  >
+                    {t('strategies.sharpe')} {sortBy === 'sharpe_ratio' && (sortDesc ? '↓' : '↑')}
+                  </th>
+                  <th
+                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    onClick={() => toggleSort('max_drawdown')}
+                  >
+                    {t('strategies.drawdown')} {sortBy === 'max_drawdown' && (sortDesc ? '↓' : '↑')}
+                  </th>
+                  <th className="p-3 font-medium">{t('strategies.status')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {!loading && items.length === 0 && (
-        <p className="text-slate-500">{t('strategies.noData')}</p>
-      )}
+              </thead>
+              <tbody>
+                {rows.map((s) => (
+                  <tr key={s.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
+                    <td className="p-3 font-mono text-white">{s.id}</td>
+                    <td className="p-3 text-slate-200">{s.name}</td>
+                    <td className="p-3 text-emerald-400">{formatPct(s.return_pct)}</td>
+                    <td className="p-3 text-slate-300">{formatNum(s.sharpe_ratio)}</td>
+                    <td className="p-3 text-slate-300">
+                      {s.max_drawdown != null ? `${s.max_drawdown}%` : '—'}
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={
+                          s.status === 'live' || s.status === 'active'
+                            ? 'text-emerald-400'
+                            : 'text-amber-400'
+                        }
+                      >
+                        {s.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </AsyncState>
 
       <section className="card">
         <h2 className="text-lg font-semibold text-white mb-2">{t('strategies.backtestTitle')}</h2>

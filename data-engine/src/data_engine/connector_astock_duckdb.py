@@ -230,16 +230,48 @@ def get_news_from_astock_duckdb(
     try:
         # 多取一些以便去重后仍能接近 limit
         fetch_limit = min(limit * 3, 500) if limit else 500
+        records_prebuilt: List[Dict[str, Any]] | None = None
         if symbol:
             code = (symbol or "").strip().split(".", maxsplit=1)[0]
             if len(code) == 6:
+                # 国际宏观 RSS（symbol=__GLOBAL__）与个股东财新闻合并；前者占部分额度，避免漏掉地缘/联储等要闻
+                gcap = min(6, max(2, (limit + 1) // 2))
+                try:
+                    df_g = conn.execute(
+                        """
+                        SELECT symbol, source_site, source, title, content, url,
+                               keyword, tag, publish_time, sentiment_score, sentiment_label
+                        FROM news_items WHERE symbol = '__GLOBAL__'
+                        ORDER BY ts DESC NULLS LAST, publish_time DESC NULLS LAST
+                        LIMIT ?
+                        """,
+                        [gcap],
+                    ).fetchdf()
+                except (RuntimeError, OSError, ValueError):
+                    df_g = None
                 sql = (
                     "SELECT symbol, source_site, source, title, content, url, "
                     "keyword, tag, publish_time, sentiment_score, sentiment_label "
-                    "FROM news_items WHERE symbol = ? OR symbol LIKE ? "
-                    "ORDER BY publish_time DESC LIMIT ?"
+                    "FROM news_items WHERE (symbol = ? OR symbol LIKE ?) "
+                    "AND COALESCE(symbol,'') <> '__GLOBAL__' "
+                    "ORDER BY ts DESC NULLS LAST, publish_time DESC NULLS LAST LIMIT ?"
                 )
                 params = [code, f"{code}.%", fetch_limit]
+                df_s = conn.execute(sql, params).fetchdf()
+                rows_g = (
+                    df_g.to_dict("records")
+                    if df_g is not None and not df_g.empty
+                    else []
+                )
+                rows_s = (
+                    df_s.to_dict("records")
+                    if df_s is not None and not df_s.empty
+                    else []
+                )
+                merged = rows_g + rows_s
+                if not merged:
+                    return []
+                records_prebuilt = merged
             else:
                 sql = (
                     "SELECT symbol, source_site, source, title, content, url, "
@@ -247,6 +279,7 @@ def get_news_from_astock_duckdb(
                     "FROM news_items ORDER BY publish_time DESC LIMIT ?"
                 )
                 params = [fetch_limit]
+                df = conn.execute(sql, params).fetchdf()
         else:
             sql = (
                 "SELECT symbol, source_site, source, title, content, url, "
@@ -254,12 +287,15 @@ def get_news_from_astock_duckdb(
                 "FROM news_items ORDER BY publish_time DESC LIMIT ?"
             )
             params = [fetch_limit]
-        df = conn.execute(sql, params).fetchdf()
+            df = conn.execute(sql, params).fetchdf()
     except (RuntimeError, OSError, ValueError):
         return []
-    if df is None or df.empty:
-        return []
-    records = df.to_dict("records")
+    if records_prebuilt is not None:
+        records = records_prebuilt
+    else:
+        if df is None or df.empty:
+            return []
+        records = df.to_dict("records")
     # 按 (title, publish_time) 去重，保留首次出现（已按时间倒序）
     seen: set[tuple[str, str]] = set()
     out: List[Dict[str, Any]] = []

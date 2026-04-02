@@ -34,6 +34,8 @@ _SKIP_PATHS = {
     "/api/dashboard",
     "/api/system/data-overview",
     "/api/system/status",
+    "/api/system/health-detail",
+    "/api/system/backtest-errors",
     "/api/market/emotion",
 }
 

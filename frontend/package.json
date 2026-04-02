@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
+    "dev:brew": "env PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "build:clean": "rm -rf .next && next build",
     "start": "next start -H 0.0.0.0 -p 3000",
+    "start:standalone": "bash -c 'mkdir -p .next/standalone/.next/static && cp -R public .next/standalone/public 2>/dev/null || true && cp -R .next/static/. .next/standalone/.next/static/ && exec env PORT=${PORT:-3000} HOSTNAME=0.0.0.0 node .next/standalone/server.js'",
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"

@@ -3,6 +3,7 @@
 简单数据库迁移脚本 - 直接复制数据
 """
 
+import os
 import duckdb
 from datetime import datetime
 

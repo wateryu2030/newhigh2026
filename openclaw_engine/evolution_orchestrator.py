@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List
 
 from .gene import StrategyGene
@@ -12,12 +13,37 @@ from .evaluation import evaluate_gene
 from .population_manager import load_population_from_market, save_gene_to_market
 
 
+def passes_strategy_market_gate(ev: Dict[str, Any]) -> bool:
+    """
+    写入 strategy_market 前的过滤：OPENCLAW_MIN_SHARPE、OPENCLAW_MAX_DRAWDOWN_ABS（绝对值比例，如 0.35）。
+    未设置环境变量时不限制该项。
+    """
+    min_s = os.environ.get("OPENCLAW_MIN_SHARPE", "").strip()
+    if min_s:
+        sr = ev.get("sharpe_ratio")
+        try:
+            if sr is None or float(sr) < float(min_s):
+                return False
+        except (TypeError, ValueError):
+            return False
+    max_dd_s = os.environ.get("OPENCLAW_MAX_DRAWDOWN_ABS", "").strip()
+    if max_dd_s:
+        md = ev.get("max_drawdown")
+        try:
+            if md is not None and abs(float(md)) > float(max_dd_s):
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
+
+
 def run_evolution_cycle(
     population_limit: int = 10,
     elite_size: int = 2,
     offspring_size: int = 4,
     mutation_rate: float = 0.1,
     symbol: str = "000001.SZ",
+    persist_to_market: bool = True,
 ) -> Dict[str, Any]:
     """
     执行一轮进化：从 strategy_market 加载种群，评估适应度，选择+交叉+变异生成子代，评估子代，
@@ -29,6 +55,7 @@ def run_evolution_cycle(
         "population_size": 0,
         "offspring_evaluated": 0,
         "saved": 0,
+        "staged": [],
         "best_fitness": None,
         "error": None,
     }
@@ -57,23 +84,45 @@ def run_evolution_cycle(
         best_fitness = max(fitness_scores) if fitness_scores else None
         result["best_fitness"] = best_fitness
         saved = 0
+        filtered = 0
+        staged: List[Dict[str, Any]] = []
         for child in offspring:
             ev = evaluate_gene(child, symbol=symbol)
             result["offspring_evaluated"] += 1
             f = ev.get("fitness") or 0
             if best_fitness is not None and f >= best_fitness * 0.9:
-                save_gene_to_market(
-                    child,
-                    name=child.strategy_id,
-                    return_pct=(
-                        ev.get("total_return") * 100 if ev.get("total_return") is not None else None
-                    ),
-                    sharpe_ratio=ev.get("sharpe_ratio"),
-                    max_drawdown=ev.get("max_drawdown"),
-                    status="active",
+                if not passes_strategy_market_gate(ev):
+                    filtered += 1
+                    continue
+                rp = (
+                    ev.get("total_return") * 100 if ev.get("total_return") is not None else None
                 )
-                saved += 1
-        result["saved"] = saved
+                entry = {
+                    "strategy_id": child.strategy_id,
+                    "name": child.strategy_id,
+                    "return_pct": rp,
+                    "sharpe_ratio": ev.get("sharpe_ratio"),
+                    "max_drawdown": ev.get("max_drawdown"),
+                    "status": "pending_publish",
+                    "source": "evolution",
+                }
+                if persist_to_market:
+                    save_gene_to_market(
+                        child,
+                        name=child.strategy_id,
+                        return_pct=rp,
+                        sharpe_ratio=ev.get("sharpe_ratio"),
+                        max_drawdown=ev.get("max_drawdown"),
+                        status="active",
+                    )
+                    saved += 1
+                else:
+                    staged.append(entry)
+                    saved += 1
+        result["saved"] = saved if persist_to_market else 0
+        result["staged"] = staged
+        result["staged_count"] = len(staged)
+        result["filtered_by_gate"] = filtered
     except (ImportError, ModuleNotFoundError, ValueError, TypeError, AttributeError) as e:
         result["error"] = str(e)
     return result

@@ -294,6 +294,42 @@ def ensure_tables(conn) -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS pipeline_meta (
+            k VARCHAR PRIMARY KEY,
+            v VARCHAR,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS backtest_task_errors (
+            id INTEGER PRIMARY KEY,
+            task_name VARCHAR,
+            strategy_id VARCHAR,
+            payload_json VARCHAR,
+            error_message VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # 策略流水线（对外开放：提交 → 审批后写入 strategy_market）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS pipeline_jobs (
+            job_id VARCHAR PRIMARY KEY,
+            owner_sub VARCHAR NOT NULL,
+            client_request_id VARCHAR,
+            mode VARCHAR NOT NULL,
+            status VARCHAR NOT NULL,
+            payload_json VARCHAR,
+            result_json VARCHAR,
+            staged_candidates_json VARCHAR,
+            approved_by VARCHAR,
+            approved_at TIMESTAMP,
+            rejected_by VARCHAR,
+            reject_reason VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     # 日K/标的/新闻（与 data_engine 共用，与 astock 复制脚本结构一致）
     conn.execute("""
         CREATE TABLE IF NOT EXISTS daily_bars (
@@ -442,6 +478,11 @@ def ensure_tables(conn) -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    for _user_col in ("ALTER TABLE hongshan_users ADD COLUMN role VARCHAR DEFAULT 'viewer'",):
+        try:
+            conn.execute(_user_col)
+        except Exception:
+            pass
     conn.execute("""
         CREATE TABLE IF NOT EXISTS hongshan_accounts (
             user_id VARCHAR PRIMARY KEY,

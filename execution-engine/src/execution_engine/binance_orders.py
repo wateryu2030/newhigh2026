@@ -1,5 +1,6 @@
 """Binance order execution: place_order, cancel_order (REST API)."""
 
+import os
 import time
 from typing import Any, Dict, Optional
 

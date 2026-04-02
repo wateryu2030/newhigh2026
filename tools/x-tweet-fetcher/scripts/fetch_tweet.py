@@ -658,7 +658,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     # ── Step 2b: for each anchor, check if "retweeted" appears within ─────
     # 5 lines after it. If so, the anchor's tweet was retweeted by someone.
     # Also detect if a second status anchor appears in the same block (= quote).
-    
+
     # First, build tweet card boundaries.
     # Each card starts at an anchor. A card ends where the next card starts.
     # But a "quoted" anchor (second anchor inside a card) is NOT a card start.
@@ -668,12 +668,12 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     # within 30 lines AND there is NO "retweeted" marker between them.
     # Actually simpler: a quote anchor's user differs from the preceding
     # card's primary user, AND there's tweet text between them.
-    
+
     # Simpler approach: just mark anchors that have a "retweeted" line
     # within lines [anchor+1 .. anchor+5]. Those are primary card anchors.
     # Non-retweeted anchors that have tweet text before them from the
     # previous anchor are quotes.
-    
+
     # Let's just use the fact that a quoted tweet's anchor appears AFTER
     # the main tweet's text content. So if we see text content (not just
     # author/handle/time) between anchor N-1 and anchor N, then N is a quote.
@@ -688,7 +688,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
     for idx in range(1, len(content_anchors)):
         prev_i = content_anchors[idx - 1][0]
         curr_i = content_anchors[idx][0]
-        
+
         # A quoted tweet appears AFTER the main tweet text but BEFORE
         # the stats line. If we see a stats-only line between anchors,
         # that means the previous tweet's content is complete and this
@@ -720,7 +720,7 @@ def parse_timeline_snapshot(snapshot: str, limit: int = 20) -> List[Dict]:
 
         # If prev anchor is itself a quote, curr can't be a quote of a quote
         prev_is_quote = (idx - 1) in quoted_set
-        
+
         # Quote only if: has text, NO stats line after it, and prev isn't a quote
         if has_tweet_text and not has_stats_line and not prev_is_quote:
             quoted_set.add(idx)
@@ -1019,20 +1019,20 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                     nested_likes = 0
                     nested_replies_count = 0
                     nested_views = 0
-                    
+
                     for k in range(j + 1, min(n, j + 15)):
                         nested_line = lines[k].strip()
-                        
+
                         # Skip @handle lines
                         if re.match(r'^- link "@\w+"\s*(\[e\d+\])?:?$', nested_line):
                             continue
-                            
+
                         # Check for timestamp
                         if not nested_time_ago:
                             m = re.match(r'^- link "(\d+[smhd])"\s*(\[e\d+\])?:?$', nested_line)
                             if m:
                                 nested_time_ago = m.group(1)
-                        
+
                         # Parse nested reply text
                         if nested_line.startswith("- text:"):
                             raw = nested_line[len("- text:"):].strip()
@@ -1045,11 +1045,11 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                                         nested_likes = lk
                                         nested_replies_count = rc
                                         nested_views = vw
-                        
+
                         # Stop at next "Replying to" block
                         if nested_line == "- text: Replying to":
                             break
-                    
+
                     if nested_reply_text:
                         thread_replies.append({
                             "text": nested_reply_text,
@@ -1058,7 +1058,7 @@ def parse_replies_snapshot(snapshot: str, original_author: str) -> List[Dict]:
                             "replies": nested_replies_count,
                             "views": nested_views
                         })
-                    
+
                     # Now break for the main loop
                     break
 

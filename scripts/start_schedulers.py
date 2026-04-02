@@ -4,9 +4,10 @@
 
 功能：
 1. 启动每日调度器（18:00 执行）
-2. 十大股东采集（02:00 执行，多期历史）
-3. 晚间 22:15 股东覆盖巡检（JSON + reports/missing_stocks.txt，可选补采见 NIGHTLY_SHAREHOLDER_BACKFILL）
-4. 启动实时调度器（每30秒执行）
+2. 日内数据刷新（默认 08:30、12:00、22:00）：优先活跃标的东财新闻 + 日 K + 可选 Tushare 增量；见 INTRADAY_* 环境变量
+3. 十大股东采集（02:00 执行，多期历史）
+4. 晚间 22:15 股东覆盖巡检（JSON + reports/missing_stocks.txt，可选补采见 NIGHTLY_SHAREHOLDER_BACKFILL）
+5. 启动实时调度器（每30秒执行）
 5. 提供进程管理和监控
 6. 添加错误恢复和自动重启
 7. 提供健康检查接口
@@ -19,6 +20,7 @@ python start_schedulers.py status    # 查看调度系统状态
 python start_schedulers.py restart   # 重启调度系统
 python start_schedulers.py monitor   # 监控模式（前台运行）
 python start_schedulers.py backfill-shareholder  # 十大股东全量回补（一次性）
+python start_schedulers.py intraday-now  # 立即跑一轮日内刷新（调试用）
 """
 
 import os
@@ -77,9 +79,28 @@ class SchedulerManager:
         self._last_shareholder_run = None  # 避免重复执行
         self._last_data_quality_run = None
         self._last_shareholder_nightly_run = None
+        self._last_intraday_fire = {}  # (hour, minute) -> date 已触发日内刷新
+
+        # 日内刷新时刻：默认 8:30、12:00、22:00；可用 SCHEDULER_INTRADAY_TIMES=08:30,12:00,22:00 覆盖
+        self.intraday_times = self._parse_intraday_times()
 
         # 状态文件
         self.status_file = log_dir / "scheduler_status.json"
+
+    @staticmethod
+    def _parse_intraday_times():
+        raw = (os.environ.get("SCHEDULER_INTRADAY_TIMES") or "08:30,12:00,22:00").strip()
+        out = []
+        for part in raw.split(","):
+            part = part.strip()
+            if not part or ":" not in part:
+                continue
+            try:
+                a, b = part.split(":", 1)
+                out.append((int(a), int(b)))
+            except ValueError:
+                continue
+        return out if out else [(8, 30), (12, 0), (22, 0)]
 
     def start_daily_scheduler(self):
         """启动每日调度器"""
@@ -122,6 +143,27 @@ class SchedulerManager:
                             self.run_nightly_shareholder_coverage()
                             self._last_shareholder_nightly_run = today
                         time.sleep(60)
+
+                    # 日内 8:30 / 12:00 / 22:00：新闻 + 优先标的日 K（减轻 Alpha 工坊穿透无 K 线/无新闻）
+                    intraday_on = (os.environ.get("INTRADAY_REFRESH_ENABLE", "1") or "1").strip().lower() not in (
+                        "0",
+                        "false",
+                        "no",
+                    )
+                    if intraday_on:
+                        for ih, im in self.intraday_times:
+                            if now_time.hour == ih and now_time.minute == im:
+                                key = (ih, im)
+                                if self._last_intraday_fire.get(key) != today:
+                                    logger.info(
+                                        "触发日内数据刷新 %02d:%02d（K 线/东财新闻/Tushare 可选）",
+                                        ih,
+                                        im,
+                                    )
+                                    self.run_intraday_refresh_task(slot=f"{ih:02d}{im:02d}")
+                                    self._last_intraday_fire[key] = today
+                                time.sleep(60)
+                                break
 
                     time.sleep(60)
 
@@ -256,6 +298,34 @@ class SchedulerManager:
 
         t = threading.Thread(target=_run, daemon=True)
         t.start()
+
+    def run_intraday_refresh_task(self, slot: str = "manual"):
+        """后台执行一轮日内刷新（不阻塞调度主循环）。"""
+        def _run():
+            try:
+                log_path = project_root / "logs" / "intraday_refresh.log"
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(log_path, "a", encoding="utf-8") as f:
+                    proc = subprocess.Popen(
+                        [
+                            self._python_executable(),
+                            "-c",
+                            (
+                                "from data_pipeline.scheduler.daily_scheduler import run_intraday_refresh;"
+                                f"run_intraday_refresh({slot!r})"
+                            ),
+                        ],
+                        cwd=str(project_root),
+                        env={**os.environ, "PYTHONPATH": str(project_root / "data-pipeline" / "src")},
+                        stdout=f,
+                        stderr=subprocess.STDOUT,
+                    )
+                    proc.wait()
+                logger.info("日内刷新完成 slot=%s code=%s", slot, proc.returncode)
+            except Exception as e:
+                logger.exception("日内刷新子进程失败: %s", e)
+
+        threading.Thread(target=_run, daemon=True).start()
 
     def run_daily_tasks(self):
         """执行每日任务"""
@@ -510,8 +580,19 @@ class SchedulerManager:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="调度系统管理工具")
-    parser.add_argument("action", choices=["start", "stop", "restart", "status", "monitor", "backfill-shareholder"],
-                       help="执行的操作")
+    parser.add_argument(
+        "action",
+        choices=[
+            "start",
+            "stop",
+            "restart",
+            "status",
+            "monitor",
+            "backfill-shareholder",
+            "intraday-now",
+        ],
+        help="执行的操作",
+    )
     parser.add_argument("--config", help="配置文件路径")
 
     args = parser.parse_args()
@@ -543,6 +624,14 @@ def main():
         status = manager.status()
         import json
         print(json.dumps(status, indent=2, default=str))
+
+    elif args.action == "intraday-now":
+        sys.path.insert(0, str(project_root / "data-pipeline" / "src"))
+        from data_pipeline.scheduler.daily_scheduler import run_intraday_refresh
+
+        run_intraday_refresh(slot_label="manual")
+        print("intraday-now 完成")
+        return 0
 
     elif args.action == "backfill-shareholder":
         print("执行十大股东全量回补（约 35 分钟）...")

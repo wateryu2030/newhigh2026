@@ -32,7 +32,7 @@ def _last_cash_and_equity(conn) -> tuple[float, float]:
         """).fetchone()
         if row:
             return float(row[0]), float(row[1])
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         pass
     return DEFAULT_INITIAL_CASH, 0.0
 
@@ -46,7 +46,7 @@ def _positions_list(conn) -> List[Dict[str, Any]]:
         if df is None or df.empty:
             return []
         return df.to_dict("records")
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         return []
 
 
@@ -66,7 +66,7 @@ def _price_for_code(conn, code: str) -> float:
         ).fetchone()
         if row and row[0] is not None:
             return float(row[0])
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         pass
     try:
         row = conn.execute(
@@ -77,7 +77,7 @@ def _price_for_code(conn, code: str) -> float:
         ).fetchone()
         if row and row[0] is not None:
             return float(row[0])
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         pass
     return DEFAULT_STUB_PRICE
 
@@ -129,7 +129,7 @@ def step_simulated(
                         "risk_violations": res.get("violations") or [],
                         "orders_created": 0,
                     }
-            except Exception:
+            except (ValueError, OSError, RuntimeError):
                 pass
         buys, sells = get_actionable_signals(
             buy_threshold=buy_threshold,
@@ -238,10 +238,10 @@ def step_simulated(
             "equity": round(equity, 2),
             "total_assets": round(total_assets, 2),
         }
-    except Exception as e:
+    except (ValueError, OSError, RuntimeError) as e:
         try:
             conn.close()
-        except Exception:
+        except (ValueError, OSError, RuntimeError):
             pass
         return {"ok": False, "error": str(e), "orders_created": 0}
 
@@ -260,10 +260,10 @@ def get_positions(limit: int = 100) -> List[Dict[str, Any]]:
         if df is None or df.empty:
             return []
         return df.to_dict("records")
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         try:
             conn.close()
-        except Exception:
+        except (ValueError, OSError, RuntimeError):
             pass
         return []
 
@@ -292,10 +292,10 @@ def get_orders(limit: int = 100, status: Optional[str] = None) -> List[Dict[str,
         if df is None or df.empty:
             return []
         return df.to_dict("records")
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         try:
             conn.close()
-        except Exception:
+        except (ValueError, OSError, RuntimeError):
             pass
         return []
 
@@ -314,9 +314,9 @@ def get_account_snapshots(limit: int = 100) -> List[Dict[str, Any]]:
         if df is None or df.empty:
             return []
         return df.to_dict("records")
-    except Exception:
+    except (ValueError, OSError, RuntimeError):
         try:
             conn.close()
-        except Exception:
+        except (ValueError, OSError, RuntimeError):
             pass
         return []

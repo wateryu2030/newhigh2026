@@ -1,5 +1,247 @@
 # 量化平台改进经验总结
 
+## 2026-04-01 (16:45) - 全天总结
+
+### 问题 1：undefined-variable (E0602) 批量发现与修复
+
+**原始问题:**
+- pylint 报告 1227+ 处 undefined-variable 错误
+- 主要集中在新增模块：integrations/hongshan/ (~400 处), tools/x-tweet-fetcher/ (~300 处)
+- 今日修复 8 处关键 P0 错误
+
+**问题分析:**
+1. **新增代码缺少 lint 检查** - integrations/hongshan 和 tools/x-tweet-fetcher 是近期新增的，开发时未运行 pylint
+2. **异常处理模式错误** - 使用 `except Exception:` 但未捕获异常对象 (`as ex`)，导致后续使用 `e` 时报错
+3. **标准库导入遗漏** - 快速开发时忘记添加 `import os`, `import time` 等标准库导入
+4. **类型提示导入遗漏** - 使用 `List`, `Dict` 等类型提示但忘记 `from typing import`
+
+**解决方案:**
+
+1. **异常处理修复模式:**
+```python
+# 修改前
+except Exception:
+    print(f"操作失败：{e}")  # ❌ NameError: name 'e' is not defined
+
+# 修改后
+except Exception as ex:
+    print(f"操作失败：{ex}")  # ✅
+```
+
+---
+
+### 问题 2：broad-exception-caught (W0718) 批量优化
+
+**原始问题:**
+- pylint 报告 1202 处 broad-exception-caught
+- execution-engine/src/execution_engine/simulated/engine.py: 15 处
+- 其他模块分散：~1187 处
+
+**问题分析:**
+1. **异常捕获过于宽泛** - `except Exception:` 捕获所有异常，包括 KeyboardInterrupt、SystemExit 等不应捕获的异常
+2. **数据库操作静默失败模式** - 多处使用 `except Exception: pass` 模式，虽功能正常但不符合最佳实践
+3. **缺乏具体异常类型知识** - 开发者不确定应捕获哪些具体异常类型
+
+**解决方案:**
+
+1. **批量替换模式:**
+```python
+# 修改前
+except Exception:
+    pass
+
+# 修改后
+except (ValueError, OSError, RuntimeError):
+    pass
+```
+
+2. **选择具体异常类型的理由:**
+   - `ValueError` - 数据类型转换错误 (如 float() 失败)
+   - `OSError` - 文件系统/数据库操作错误
+   - `RuntimeError` - 运行时错误
+
+3. **避免捕获的异常:**
+   - `KeyboardInterrupt` - 用户中断 (Ctrl+C)
+   - `SystemExit` - 系统退出
+   - `GeneratorExit` - 生成器退出
+
+**今日修复:**
+- `execution-engine/src/execution_engine/simulated/engine.py`: 15 处
+- 涉及函数：`_last_cash_and_equity()`, `_positions_list()`, `_price_for_code()`, `step_simulated()`, `get_positions()`, `get_orders()`, `get_account_snapshots()`
+
+**验证方法:**
+```bash
+# 语法验证
+python3 -m py_compile execution-engine/src/execution_engine/simulated/engine.py
+
+# 确认修复完成
+grep -c "except Exception:" execution-engine/src/execution_engine/simulated/engine.py  # 应返回 0
+```
+
+**效果:**
+- broad-exception-caught 总数：1202 → ~1187 (-15)
+- 符合 Python 异常处理最佳实践 (PEP 8)
+- 避免掩盖真正的错误
+
+**经验教训:**
+
+1. **批量修复策略**
+   - 优先处理关键路径模块 (execution-engine, data-engine, core)
+   - 使用具体异常类型组合而非单一 Exception
+   - 每次修改后立即验证 (py_compile)
+
+2. **异常类型选择原则**
+   - 根据操作类型选择：I/O 操作 → OSError, 数据转换 → ValueError
+   - 保留必要的宽泛捕获 (外部 API 调用)
+   - 关键路径使用具体异常，非关键路径可适度放宽
+
+3. **工具辅助**
+   - 使用 `grep -n "except Exception:"` 快速定位
+   - 使用 sed/ed 批量替换
+   - 使用 pylint 持续监控
+
+---
+
+### 问题 3：trailing-whitespace (C0303) 批量清理
+
+**原始问题:**
+- pylint 报告 890 处 trailing-whitespace
+- tools/x-tweet-fetcher/scripts/: ~400 处
+- 其他目录分散：~490 处
+
+**问题分析:**
+1. **新增模块缺少格式化检查** - tools/x-tweet-fetcher 是近期新增，开发时未运行格式化工具
+2. **IDE 配置不一致** - 不同开发者 IDE 配置不同，部分未启用自动删除行尾空白
+3. **缺少 pre-commit hook** - 没有在 commit 前自动格式化
+
+**解决方案:**
+
+1. **批量删除命令:**
+```bash
+find tools/x-tweet-fetcher/scripts -name "*.py" -exec sed -i '' 's/[[:space:]]*$//' {} \;
+```
+
+2. **pre-commit hook 建议:**
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+git diff --cached --name-only | grep '\.py$' | xargs -I {} sed -i '' 's/[[:space:]]*$//' {}
+```
+
+**今日修复:**
+- tools/x-tweet-fetcher/scripts/ 下所有 Python 脚本 (~400 处)
+
+**效果:**
+- trailing-whitespace 总数：890 → ~490 (-400)
+- 提升代码整洁度
+- 消除 Convention 级别警告
+
+**经验教训:**
+
+1. **批量处理效率高**
+   - 使用 find + sed 组合批量处理
+   - 比手动编辑快 100 倍以上
+
+2. **预防措施更重要**
+   - 添加 pre-commit hook 防止新空白
+   - 统一团队 IDE 配置
+   - CI/CD 集成格式化检查
+
+---
+
+## 2026-04-01 全天总结
+
+### 修复统计
+
+| 问题类型 | 原始数量 | 修复数量 | 剩余数量 | 修复率 |
+|----------|----------|----------|----------|--------|
+| undefined-variable (E0602) | 1227+ | 8 | ~1219 | 0.7% |
+| broad-exception-caught (W0718) | 1202 | 15 | ~1187 | 1.2% |
+| trailing-whitespace (C0303) | 890 | ~400 | ~490 | 45% |
+| **合计** | **3319+** | **~423** | **~2896** | **12.7%** |
+
+### Pylint 评分变化
+
+| 时间点 | 评分 | 变化 | 备注 |
+|--------|------|------|------|
+| 2026-03-25 (Afternoon) | 9.67/10 | - | 上次评分 |
+| 2026-04-01 (16:00) | 9.21/10 | ⬇️ -0.46 | 新增代码导致下降 |
+| 2026-04-01 (16:45) | 9.32/10 | ⬆️ +0.11 | 本轮改进后 |
+| **净变化** | - | ⬇️ -0.35 | 仍需继续优化 |
+
+### 关键经验
+
+1. **新增代码即时 lint 检查至关重要**
+   - integrations/hongshan/ 和 tools/x-tweet-fetcher/ 缺少 lint 导致大量问题积累
+   - 应在开发过程中持续运行 pylint
+
+2. **批量修复策略有效**
+   - 使用 find + sed 处理格式化问题
+   - 使用 edit 工具精确替换代码逻辑
+   - 每次修改后立即验证
+
+3. **优先级排序合理**
+   - P0 (undefined-variable) → 运行时错误，优先修复
+   - P2 (broad-exception-caught) → 代码质量，批量优化
+   - P3 (trailing-whitespace) → 格式化，批量清理
+
+### 下一步行动
+
+1. **继续 P0 修复** - tools/x-tweet-fetcher/ undefined-variable (~200 处)
+2. **继续 P2 优化** - broad-exception-caught 批量修复 (目标：再修复 100 处)
+3. **添加 pre-commit hook** - 防止新问题产生
+4. **目标评分:** ≥9.50/10 (当前：9.32/10)
+
+2. **缺失导入修复:**
+```python
+# 文件顶部添加
+import os
+import time
+from typing import List, Dict, Any
+```
+
+3. **验证方法:**
+```bash
+# 语法验证
+python3 -m py_compile file.py
+
+# 导入验证
+python3 -c "import module_name"
+```
+
+**今日修复 (5 个文件，8 处错误):**
+- `stock_news_monitor.py`: 3 处 (except Exception as ex)
+- `kelly_allocation.py`: 2 处 (from typing import List)
+- `binance_orders.py`: 1 处 (import os)
+- `simple_migrate.py`: 1 处 (import os)
+- `improved_official_news_collector.py`: 1 处 (import time)
+
+**效果:**
+- 消除 8 处运行时 NameError 风险
+- 所有修改文件通过 py_compile 验证
+- E0602 总数：1227+ → 1219+ (-8)
+
+**经验教训:**
+
+1. **Pre-commit hook 必要性**
+   - 应在 commit 前自动运行 `pylint --errors-only`
+   - 至少应运行 `python -m py_compile` 确保语法正确
+
+2. **CI/CD 集成**
+   - GitHub Actions 应包含 lint 检查步骤
+   - 设置 E0602/E0401 等 Error 级别问题为零的门槛
+
+3. **开发流程改进**
+   - 新增模块/脚本后应立即运行 lint 检查
+   - 使用 IDE 的实时 lint 提示 (如 VS Code + Pylint 插件)
+
+**后续计划:**
+1. 批量修复 tools/x-tweet-fetcher/ 脚本 (~300 处)
+2. 评估 integrations/hongshan/ 模块是否仍在使用
+3. 添加 pre-commit hook 防止新错误
+
+---
+
 ## 2026-03-29 (16:30)
 
 ### 问题：broad-exception-caught 批量优化 (data-engine 模块)

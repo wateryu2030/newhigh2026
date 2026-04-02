@@ -41,7 +41,9 @@ class RegisterBody(BaseModel):
         return s
 
 
-def _login_response_dict(token: str, user_id: str, username: str) -> dict[str, Any]:
+def _login_response_dict(
+    token: str, user_id: str, username: str, role: str = "viewer"
+) -> dict[str, Any]:
     return {
         "token": token,
         "access_token": token,
@@ -49,6 +51,7 @@ def _login_response_dict(token: str, user_id: str, username: str) -> dict[str, A
         "user_id": user_id,
         "username": username,
         "user": username,
+        "role": role,
     }
 
 
@@ -77,7 +80,7 @@ def build_unified_auth_router() -> APIRouter:
             if conn:
                 row = conn.execute(
                     """
-                    SELECT user_id, username, password_hash
+                    SELECT user_id, username, password_hash, role
                     FROM hongshan_users
                     WHERE username = ? AND status = 'active'
                     """,
@@ -85,10 +88,13 @@ def build_unified_auth_router() -> APIRouter:
                 ).fetchone()
                 if row:
                     uid, uname, ph = str(row[0]), str(row[1]), str(row[2] or "")
+                    urole = str(row[3]).strip().lower() if len(row) > 3 and row[3] else "viewer"
+                    if urole not in ("viewer", "operator", "admin"):
+                        urole = "viewer"
                     if not verify_password(password, ph):
                         raise HTTPException(status_code=401, detail="用户名或密码错误")
-                    token = create_access_token(subject=uid)
-                    return _login_response_dict(token, uid, uname)
+                    token = create_access_token(subject=uid, extra_claims={"role": urole})
+                    return _login_response_dict(token, uid, uname, urole)
         finally:
             if conn:
                 try:
@@ -99,10 +105,10 @@ def build_unified_auth_router() -> APIRouter:
         if password:
             raise HTTPException(status_code=401, detail="用户名或密码错误")
         try:
-            token = create_access_token(subject=username)
+            token = create_access_token(subject=username, extra_claims={"role": "viewer"})
         except Exception:
             token = "stub_token_placeholder"
-        return _login_response_dict(token, "demo-user", username)
+        return _login_response_dict(token, "demo-user", username, "viewer")
 
     @r.post("/register")
     def post_register(body: RegisterBody) -> dict:

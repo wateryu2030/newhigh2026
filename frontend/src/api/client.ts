@@ -109,6 +109,131 @@ export async function apiPostJson<T>(path: string, body?: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function _apiErrorMessage(path: string, status: number, json: unknown): string {
+  if (json && typeof json === 'object') {
+    const o = json as { error?: string; detail?: unknown };
+    if (typeof o.error === 'string' && o.error) return o.error;
+    if (typeof o.detail === 'string') return o.detail;
+  }
+  return `API ${path}: ${status}`;
+}
+
+/** POST JSON，解包 { ok, data }；支持可选 X-Pipeline-Approve-Key */
+async function postPipelineEnvelope<T>(path: string, body: unknown, approveKey?: string): Promise<T> {
+  const base = getApiBase();
+  const url = base ? `${base}/api${path}` : `/api${path}`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...getAuthHeaders() };
+  const k = approveKey?.trim();
+  if (k) headers['X-Pipeline-Approve-Key'] = k;
+  const res = await fetch(url, {
+    method: 'POST',
+    cache: 'no-store',
+    headers,
+    body: JSON.stringify(body ?? {}),
+  });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(`API ${path}: ${res.status}`);
+  }
+  if (res.status >= 400) {
+    throw new Error(_apiErrorMessage(path, res.status, json));
+  }
+  const env = json as { ok?: boolean; data?: T; error?: string };
+  if (env.ok === false) {
+    throw new Error(env.error || _apiErrorMessage(path, res.status, json));
+  }
+  return env.data as T;
+}
+
+export type PipelineRunMode = 'evolve_then_backtest' | 'backtest_only' | 'evolve_only';
+
+export interface PipelineEvolutionParams {
+  population_limit?: number;
+  symbol?: string;
+  offspring_size?: number;
+  mutation_rate?: number;
+  elite_size?: number;
+}
+
+export interface PipelineBacktestSpec {
+  strategy_id: string;
+  name?: string | null;
+  symbol?: string;
+  start_date?: string;
+  end_date?: string;
+  signal_source?: string;
+  strategy_id_filter?: string | null;
+  init_cash?: number;
+  fees?: number;
+  slippage?: number;
+}
+
+export interface PipelineRunRequest {
+  request_id?: string | null;
+  mode: PipelineRunMode;
+  evolution?: PipelineEvolutionParams | null;
+  backtest?: { specs: PipelineBacktestSpec[] };
+  gates?: { min_sharpe?: number | null; max_drawdown_abs?: number | null } | null;
+}
+
+export interface PipelineJobListItem {
+  job_id: string;
+  owner_sub: string;
+  mode: string;
+  status: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  client_request_id?: string | null;
+}
+
+export interface PipelineJobsListResponse {
+  items: PipelineJobListItem[];
+}
+
+export interface PipelineStagedCandidate {
+  strategy_id: string;
+  name?: string;
+  return_pct?: number | null;
+  sharpe_ratio?: number | null;
+  max_drawdown?: number | null;
+  status?: string;
+  source?: string;
+}
+
+export interface PipelineJobDetail {
+  job_id: string;
+  owner_sub: string;
+  mode: string;
+  status: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  client_request_id?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  rejected_by?: string | null;
+  reject_reason?: string | null;
+  result?: Record<string, unknown> | null;
+  staged_candidates?: PipelineStagedCandidate[];
+}
+
+export interface PipelineRunResponse {
+  job_id: string;
+  status: string;
+  deduplicated?: boolean;
+}
+
+export interface PipelineApproveResponse {
+  job_id: string;
+  promoted: number;
+  status: string;
+}
+
 export interface StockItem {
   ts_code: string;
   name: string;
@@ -182,6 +307,9 @@ export const api = {
     return apiGet<NewsResponse>(`/news/collector?${q}`);
   },
   hotTicker: () => apiGet<HotTickerResponse>('/news/hot-ticker'),
+  /** 手动 RSS 宏观入库 + 摘要；可选发飞书等 Webhook（服务端 NEWS_BREAKING_WEBHOOK_URL） */
+  newsManualRefresh: (body?: { send_webhook?: boolean }) =>
+    postPipelineEnvelope<NewsManualRefreshResponse>('/news/manual-refresh', body ?? {}),
   trades: () => apiGet<TradesResponse>('/trades'),
   evolution: () => apiGet<EvolutionResponse>('/evolution'),
   alphaLab: () => apiGet<AlphaLabResponse>('/alpha-lab'),
@@ -204,6 +332,57 @@ export const api = {
     apiGet<SystemDataOverviewResponse>('/system/data-overview', { timeoutMs: 45_000 }),
   systemStatus: (limit?: number) =>
     apiGet<SystemStatusResponse>(`/system/status${limit != null ? `?limit=${limit}` : ''}`),
+  healthDetail: () =>
+    apiGet<HealthDetailPayload>('/system/health-detail', { unwrapEnvelope: true, timeoutMs: 25_000 }),
+  backtestErrors: (limit?: number) =>
+    apiGet<{ items: BacktestErrorRow[] }>(
+      `/system/backtest-errors${limit != null ? `?limit=${limit}` : ''}`,
+      { unwrapEnvelope: true, timeoutMs: 15_000 },
+    ),
+  /** 策略流水线：已登录即可提交；admin 审批后入库 strategy_market */
+  pipelineRun: (body: PipelineRunRequest) =>
+    postPipelineEnvelope<PipelineRunResponse>('/strategies/pipeline/run', body),
+  pipelineJobs: (limit?: number) =>
+    apiGet<PipelineJobsListResponse>(
+      `/strategies/pipeline/jobs${limit != null ? `?limit=${limit}` : ''}`,
+      { unwrapEnvelope: true, timeoutMs: 60_000 },
+    ),
+  pipelineJob: (jobId: string) =>
+    apiGet<PipelineJobDetail>(`/strategies/pipeline/jobs/${encodeURIComponent(jobId)}`, {
+      unwrapEnvelope: true,
+      timeoutMs: 30_000,
+    }),
+  pipelineApprove: (jobId: string, body?: { strategy_ids?: string[] }, approveKey?: string) =>
+    postPipelineEnvelope<PipelineApproveResponse>(
+      `/strategies/pipeline/jobs/${encodeURIComponent(jobId)}/approve`,
+      body ?? {},
+      approveKey,
+    ),
+  pipelineReject: async (jobId: string, reason?: string) => {
+    const base = getApiBase();
+    const q = reason != null && reason !== '' ? `?reason=${encodeURIComponent(reason)}` : '';
+    const path = `/strategies/pipeline/jobs/${encodeURIComponent(jobId)}/reject${q}`;
+    const url = base ? `${base}/api${path}` : `/api${path}`;
+    const res = await fetch(url, { method: 'POST', cache: 'no-store', headers: { ...getAuthHeaders() } });
+    if (res.status === 401) {
+      redirectToLogin();
+      throw new Error('Unauthorized');
+    }
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch {
+      throw new Error(`API ${path}: ${res.status}`);
+    }
+    if (res.status >= 400) {
+      throw new Error(_apiErrorMessage(path, res.status, json));
+    }
+    const env = json as { ok?: boolean; data?: { job_id: string; status: string }; error?: string };
+    if (env.ok === false) {
+      throw new Error(env.error || 'reject failed');
+    }
+    return env.data as { job_id: string; status: string };
+  },
   aiDecision: () => apiGet<AiDecisionResponse>('/ai/decision'),
   backtestResult: (params?: { symbol?: string; start_date?: string; end_date?: string; signal_source?: string }) => {
     const p = params || {};
@@ -734,6 +913,15 @@ export interface HotTickerResponse {
   updated_at: string;
 }
 
+/** POST /api/news/manual-refresh 解包后 data */
+export interface NewsManualRefreshResponse {
+  rss_inserted: number;
+  summary: string;
+  summary_lines: number;
+  webhook_sent: boolean;
+  webhook_skipped_reason?: string | null;
+}
+
 /** /data/status 中单套 schema 的统计切片 */
 export interface DataStatusBreakdownSlice {
   stocks: number;
@@ -781,8 +969,10 @@ export interface TradesResponse {
 
 export interface EvolutionResponse {
   current_generation: number;
-  best_strategy: { id: string; sharpe: number; return_pct: number };
+  best_strategy?: { id: string; sharpe: number; return_pct: number } | null;
   generations: { gen: number }[];
+  /** duckdb：最近成功进化任务摘要；demo：无记录时的占位 */
+  source?: string;
 }
 
 export interface AlphaLabResponse {
@@ -810,6 +1000,32 @@ export interface AlphaLabDrillResponse {
   total: number;
   source?: string;
   binding_note?: string;
+}
+
+export interface HealthDetailPayload {
+  status: string;
+  services?: Record<string, unknown>;
+  data_availability?: Record<string, unknown>;
+  checks?: Record<string, unknown>;
+  timestamp?: string;
+  celery: {
+    status: string;
+    workers?: string[];
+    reason?: string;
+    error?: string;
+  };
+  pipeline_meta_recent: Array<{ k?: string; v?: string; updated_at?: string }>;
+  prometheus_metrics_path: string;
+  alert_webhook_configured?: boolean;
+}
+
+export interface BacktestErrorRow {
+  id: number;
+  task_name?: string | null;
+  strategy_id?: string | null;
+  payload_preview?: string | null;
+  error_message?: string | null;
+  created_at?: string | null;
 }
 
 export interface SystemDataOverviewResponse {

@@ -109,4 +109,10 @@ def update(
             except (ValueError, TypeError, OSError, AttributeError) as e:
                 result["errors"].append(f"longhubang: {e}")
 
+    try:
+        from data_pipeline.strategy_market_writer import record_pipeline_meta
+
+        record_pipeline_meta("data_orchestrator_last", result)
+    except (ImportError, RuntimeError, ValueError, TypeError, OSError):
+        pass
     return result

@@ -302,7 +302,7 @@ def _fx_article_to_markdown(article, local_images=None):
             for er in block.get('entityRanges', []) or []:
                 ent = entity_map.get(er.get('key')) or {}
                 ent_type = ent.get('type')
-                
+
                 # 处理 MEDIA 类型（图片等）
                 if ent_type == 'MEDIA':
                     media_items = (((ent.get('data') or {}).get('mediaItems')) or [])
@@ -312,14 +312,14 @@ def _fx_article_to_markdown(article, local_images=None):
                     local_name = local_images.get(str(media_id)) or local_images.get(media_id)
                     if local_name:
                         parts.append(f'![图片](assets/{local_name})')
-                
+
                 # 处理 MARKDOWN 类型（代码块等）
                 elif ent_type == 'MARKDOWN':
                     markdown_data = ent.get('data', {})
                     markdown_content = markdown_data.get('markdown', '')
                     if markdown_content:
                         parts.append(markdown_content)
-                
+
                 # 处理 LINK 类型
                 elif ent_type == 'LINK':
                     link_data = ent.get('data', {})
@@ -894,7 +894,7 @@ def main():
     script_dir = Path(__file__).parent
     skill_dir = script_dir.parent
 
-    
+
     if args.html:
         if not args.tweet_url:
             print('❌ --html 模式必须同时提供 --tweet-url')
@@ -929,17 +929,17 @@ def main():
     safe_title = sanitize_filename(title)
     # 文件名不包含日期前缀
     filename = f'{safe_title}.md'
-    
+
     # 用文档名在 assets 下创建专属子目录
     doc_name = filename.replace('.md', '')
     assets_subdir = output_dir / 'assets' / doc_name
-    
+
     # 更新 markdown 里的图片引用路径
     md_content = md_content.replace('](assets/', f'](assets/{doc_name}/')
-    
+
     output_path = output_dir / filename
     output_path.write_text(md_content, encoding='utf-8')
-    
+
     # 重命名临时目录到 assets 子目录
     temp_assets_dir = output_dir / 'temp_assets'
     if temp_assets_dir.exists():

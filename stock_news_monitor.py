@@ -153,8 +153,8 @@ class StockNewsCollector:
 
             print(f"  东方财富搜索 '{keyword}': {len(news_list)} 条相关新闻")
 
-        except Exception:  # pylint: disable=broad-exception-caught
-            print(f"  东方财富搜索失败：{e}")
+        except Exception as ex:  # pylint: disable=broad-exception-caught
+            print(f"  东方财富搜索失败：{ex}")
 
         return news_list
 
@@ -207,8 +207,8 @@ class StockNewsCollector:
 
             print(f"  东方财富个股新闻 {code}: {len(news_list)} 条")
 
-        except Exception:  # pylint: disable=broad-exception-caught
-            print(f"  东方财富个股新闻采集失败 {code}: {e}")
+        except Exception as ex:  # pylint: disable=broad-exception-caught
+            print(f"  东方财富个股新闻采集失败 {code}: {ex}")
 
         return news_list
 
@@ -259,8 +259,8 @@ class StockNewsCollector:
             conn.close()
             return saved_count
 
-        except Exception:  # pylint: disable=broad-exception-caught
-            print(f"保存数据库失败：{e}")
+        except Exception as ex:  # pylint: disable=broad-exception-caught
+            print(f"保存数据库失败：{ex}")
             return 0
 
     def save_to_json(self, news_list: List[Dict[str, Any]], filename: str) -> str:

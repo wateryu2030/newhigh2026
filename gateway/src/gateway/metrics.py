@@ -57,6 +57,8 @@ def path_to_stage(path: str) -> str:
         return "trade"
     if "/api/backtest/" in p:
         return "backtest"
+    if "/api/system/health" in p or "/api/system/backtest-errors" in p:
+        return "ops"
     return "other"
 
 

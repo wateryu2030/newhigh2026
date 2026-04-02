@@ -16,9 +16,14 @@ def _normalize_news_article_url(raw: object) -> str:
     return u
 
 
-def update_em_stock_news(codes_limit: int = 50, per_code_limit: int = 15) -> int:
+def update_em_stock_news(
+    codes_limit: int = 50,
+    per_code_limit: int = 15,
+    extra_codes_first: list[str] | None = None,
+) -> int:
     """
     从 a_stock_basic 取前 codes_limit 只股票，逐只拉东财新闻并写入 news_items。
+    extra_codes_first：优先采集的股票代码（含 .SZ 亦可），去重后排在最前，再按 basic 补齐至 codes_limit。
     与 Gateway akshare 兜底列名逻辑对齐；按 url / (title, publish_time) 去重插入。
     """
     try:
@@ -35,26 +40,55 @@ def update_em_stock_news(codes_limit: int = 50, per_code_limit: int = 15) -> int
 
     conn = get_conn()
     ensure_tables(conn)
-    try:
-        codes_df = conn.execute(
-            "SELECT code FROM a_stock_basic ORDER BY code LIMIT ?",
-            [max(1, int(codes_limit))],
-        ).fetchdf()
-    except Exception as e:
-        print(f"读取股票池失败: {e}")
-        conn.close()
-        return 0
 
-    if codes_df is None or codes_df.empty:
-        print("a_stock_basic 为空，跳过东财新闻采集")
+    lim = max(1, int(codes_limit))
+    seen: set[str] = set()
+    ordered: list[str] = []
+
+    if extra_codes_first:
+        for raw in extra_codes_first:
+            code6 = str(raw).split(".", maxsplit=1)[0].strip()
+            if len(code6) < 5 or code6 in seen:
+                continue
+            seen.add(code6)
+            ordered.append(code6)
+            if len(ordered) >= lim:
+                ordered = ordered[:lim]
+                break
+
+    if len(ordered) < lim:
+        try:
+            codes_df = conn.execute(
+                "SELECT code FROM a_stock_basic ORDER BY code LIMIT ?",
+                [max(lim * 4, 800)],
+            ).fetchdf()
+        except Exception as e:
+            print(f"读取股票池失败: {e}")
+            conn.close()
+            return 0
+
+        if (codes_df is None or codes_df.empty) and not ordered:
+            print("a_stock_basic 为空且无优先代码，跳过东财新闻采集")
+            conn.close()
+            return 0
+
+        if codes_df is not None and not codes_df.empty:
+            for raw_code in codes_df["code"].astype(str).tolist():
+                if len(ordered) >= lim:
+                    break
+                code6 = raw_code.split(".", maxsplit=1)[0].strip()
+                if len(code6) < 5 or code6 in seen:
+                    continue
+                seen.add(code6)
+                ordered.append(code6)
+
+    if not ordered:
+        print("无可用股票代码，跳过东财新闻采集")
         conn.close()
         return 0
 
     inserted = 0
-    for raw_code in codes_df["code"].astype(str).tolist():
-        code6 = raw_code.split(".", maxsplit=1)[0].strip()
-        if len(code6) < 5:
-            continue
+    for code6 in ordered:
         try:
             df = ak.stock_news_em(symbol=code6)
         except Exception as e:

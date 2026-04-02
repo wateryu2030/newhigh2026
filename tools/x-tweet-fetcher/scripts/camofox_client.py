@@ -24,7 +24,7 @@ def check_camofox(port: int = 9377) -> bool:
         with urllib.request.urlopen(req, timeout=3) as resp:
             resp.read()
         return True
-    except Exception:
+    except (urllib.error.URLError, TimeoutError, OSError):
         return False
 
 
@@ -48,7 +48,7 @@ def camofox_open_tab(url: str, session_key: str, port: int = 9377) -> Optional[s
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
         return data.get("tabId")
-    except Exception as e:
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
         print(f"[Camofox] open tab error: {e}", file=sys.stderr)
         return None
 
@@ -60,7 +60,7 @@ def camofox_snapshot(tab_id: str, port: int = 9377) -> Optional[str]:
         with urllib.request.urlopen(url, timeout=15) as resp:
             data = json.loads(resp.read().decode())
         return data.get("snapshot", "")
-    except Exception as e:
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
         print(f"[Camofox] snapshot error: {e}", file=sys.stderr)
         return None
 
@@ -73,7 +73,7 @@ def camofox_close_tab(tab_id: str, port: int = 9377):
             method="DELETE",
         )
         urllib.request.urlopen(req, timeout=5)
-    except Exception:
+    except (urllib.error.URLError, TimeoutError, OSError):
         pass
 
 
@@ -91,18 +91,18 @@ def camofox_fetch_page(url: str, session_key: str, wait: float = 8, port: int = 
 def camofox_search(query: str, num: int = 10, lang: str = "zh-CN", engine: str = "google", port: int = 9377) -> list:
     """
     Search via Camofox. Supports Google and DuckDuckGo.
-    
+
     Args:
         query: search keywords
         num: max results
         lang: language code
         engine: "google" or "duckduckgo"
         port: Camofox port
-    
+
     Returns list of dicts: [{"title": ..., "url": ..., "snippet": ...}, ...]
     """
     encoded = urllib.parse.quote(query)
-    
+
     if engine == "duckduckgo":
         search_url = f"https://duckduckgo.com/?q={encoded}&kl={lang}&t=h_"
         snapshot = camofox_fetch_page(search_url, f"ddg-{secrets.token_hex(8)}", wait=5, port=port)
@@ -128,7 +128,7 @@ def _parse_duckduckgo_results(snapshot: str, max_results: int = 10) -> list:
         if '- heading "' in line and '[level=' in line:
             m = re.search(r'heading "(.+?)"', line)
             title = m.group(1) if m else ""
-            
+
             # Look for URL nearby
             url = ""
             for j in range(max(0, i - 3), min(len(lines), i + 3)):
@@ -137,7 +137,7 @@ def _parse_duckduckgo_results(snapshot: str, max_results: int = 10) -> list:
                     if candidate and "duckduckgo.com" not in candidate:
                         url = candidate
                         break
-            
+
             # Look forward for snippet
             snippet_parts = []
             k = i + 1
@@ -150,9 +150,9 @@ def _parse_duckduckgo_results(snapshot: str, max_results: int = 10) -> list:
                         snippet_parts.append(sline.split(prefix, 1)[1].strip())
                         break
                 k += 1
-            
+
             snippet = " ".join(snippet_parts).strip()
-            
+
             if url and title:
                 results.append({"title": title, "url": url, "snippet": snippet})
         i += 1
@@ -176,14 +176,14 @@ def _parse_google_results(snapshot: str) -> list:
             # Extract title
             m = re.search(r'heading "(.+?)"', line)
             title = m.group(1) if m else ""
-            
+
             # Look backwards for the URL
             url = ""
             for j in range(max(0, i - 3), i):
                 if "/url:" in lines[j]:
                     url = lines[j].strip().split("/url:", 1)[1].strip()
                     break
-            
+
             # Look forward for snippet text
             snippet_parts = []
             k = i + 1
@@ -204,9 +204,9 @@ def _parse_google_results(snapshot: str) -> list:
                 elif sline.startswith("emphasis:"):
                     snippet_parts.append(sline.split("emphasis:", 1)[1].strip())
                 k += 1
-            
+
             snippet = " ".join(snippet_parts).strip()
-            
+
             # Filter out non-result entries
             if url and title and not url.startswith("/search") and "google.com" not in url:
                 results.append({
@@ -219,7 +219,6 @@ def _parse_google_results(snapshot: str) -> list:
 
 
 if __name__ == "__main__":
-    import sys
     # Usage: python3 camofox_client.py [--engine google|duckduckgo] query...
     engine = "google"
     args = sys.argv[1:]

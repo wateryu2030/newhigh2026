@@ -17,8 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 def _ensure_repo_paths_for_health() -> None:
-    """保证可 import data_pipeline（与 app 审计中间件一致）。"""
+    """保证可 import data_pipeline、system_core（健康详情需 Celery inspect）。"""
     root = Path(__file__).resolve().parents[3]
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
     for sub in ("data-pipeline/src", "core/src", "execution-engine/src"):
         p = root / sub
         if p.is_dir() and str(p) not in sys.path:
@@ -142,3 +144,68 @@ def build_health_payload() -> Dict[str, Any]:
         "checks": checks,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _celery_inspect_brief() -> Dict[str, Any]:
+    broker = os.environ.get("CELERY_BROKER_URL", "").strip()
+    if not broker:
+        return {"status": "skipped", "reason": "CELERY_BROKER_URL not set"}
+    try:
+        from system_core.celery_app import app as celery_app
+
+        if celery_app is None:
+            return {"status": "skipped", "reason": "celery not installed or import failed"}
+        insp = celery_app.control.inspect(timeout=1.0)
+        if insp is None:
+            return {"status": "degraded", "reason": "inspect unavailable"}
+        ping = insp.ping()
+        if ping:
+            return {"status": "ok", "workers": list(ping.keys())}
+        return {"status": "degraded", "reason": "no worker ping response"}
+    except TypeError:
+        try:
+            from system_core.celery_app import app as celery_app
+
+            if celery_app is None:
+                return {"status": "skipped", "reason": "celery_app_none"}
+            insp = celery_app.control.inspect()
+            if insp is None:
+                return {"status": "degraded", "reason": "inspect unavailable"}
+            ping = insp.ping()
+            if ping:
+                return {"status": "ok", "workers": list(ping.keys())}
+            return {"status": "degraded", "reason": "no worker ping response"}
+        except Exception as e:
+            return {"status": "error", "error": str(e)[:200]}
+    except Exception as e:
+        return {"status": "error", "error": str(e)[:200]}
+
+
+def _pipeline_meta_recent() -> list:
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables, get_db_path
+
+        if not os.path.isfile(get_db_path()):
+            return []
+        conn = get_conn(read_only=False)
+        ensure_tables(conn)
+        df = conn.execute(
+            "SELECT k, v, updated_at FROM pipeline_meta ORDER BY updated_at DESC LIMIT 8"
+        ).fetchdf()
+        conn.close()
+        if df is None or df.empty:
+            return []
+        return df.to_dict(orient="records")
+    except Exception:
+        return []
+
+
+def build_health_detail_payload() -> Dict[str, Any]:
+    """在 build_health_payload 基础上增加 Celery、pipeline_meta、Prometheus 路径提示。"""
+    out = build_health_payload()
+    out["celery"] = _celery_inspect_brief()
+    out["pipeline_meta_recent"] = _pipeline_meta_recent()
+    out["prometheus_metrics_path"] = "/metrics"
+    _webhook = os.environ.get("ALERT_WEBHOOK_URL", "").strip()
+    out["alert_webhook_configured"] = bool(_webhook)
+    return out

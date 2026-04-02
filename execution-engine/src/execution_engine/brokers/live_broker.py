@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from .base import BaseBroker, OrderResult, PositionInfo
+
+if TYPE_CHECKING:
+    from core import Position  # pylint: disable=import-error
 
 
 class LiveBroker(BaseBroker):
@@ -76,9 +79,8 @@ class LiveBroker(BaseBroker):
     def get_positions(self, **kwargs: Any) -> List[PositionInfo]:
         try:
             from execution_engine.order_manager import fetch_positions
-            from core import Position
 
-            positions: List[Position] = fetch_positions(
+            positions = fetch_positions(
                 base_url=self.base_url, api_key=self.api_key, api_secret=self.api_secret
             )
             return [

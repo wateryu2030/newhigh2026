@@ -1759,6 +1759,50 @@ def get_system_status(limit: int = 10):
         }
 
 
+@router.get("/system/health-detail")
+def get_system_health_detail() -> dict:
+    """健康检查扩展：Celery worker 探测、pipeline_meta 最近项、Prometheus 路径（供运维 / OpenClaw）。"""
+    try:
+        from .endpoints_health import build_health_detail_payload
+
+        return json_ok(build_health_detail_payload(), source="gateway")
+    except Exception as e:
+        return json_fail(str(e)[:200], status_code=503)
+
+
+@router.get("/system/backtest-errors")
+def get_system_backtest_errors(limit: int = 20) -> dict:
+    """Celery / 回测任务最近错误（backtest_task_errors），供排障。"""
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables, get_db_path
+
+        lim = max(1, min(limit, 200))
+        if not os.path.isfile(get_db_path()):
+            return json_ok({"items": []}, source="none")
+        conn = get_conn(read_only=False)
+        ensure_tables(conn)
+        try:
+            df = conn.execute(
+                """
+                SELECT id, task_name, strategy_id,
+                       SUBSTRING(payload_json, 1, 400) AS payload_preview,
+                       SUBSTRING(error_message, 1, 500) AS error_message,
+                       created_at
+                FROM backtest_task_errors
+                ORDER BY id DESC LIMIT ?
+                """,
+                [lim],
+            ).fetchdf()
+        except Exception:
+            df = None
+        conn.close()
+        if df is None or df.empty:
+            return json_ok({"items": []}, source="duckdb")
+        return json_ok({"items": df.to_dict(orient="records")}, source="duckdb")
+    except Exception as e:
+        return json_fail(str(e)[:200], status_code=503)
+
+
 def _normalize_news_article_url(raw: object) -> str:
     """东方财富等来源可能返回相对路径或 // 协议相对 URL，补全为可点击的 https 链接。"""
     u = (raw or "").strip() if isinstance(raw, str) else str(raw or "").strip()
@@ -1951,6 +1995,37 @@ def get_news_coverage() -> dict:
     }
 
 
+def _hot_ticker_from_duckdb_news(limit: int = 16) -> List[dict]:
+    """热榜、东财实时均失败时，用 DuckDB news_items 近期标题兜底（日内任务写入后可滚动展示）。"""
+    out: List[dict] = []
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        if not os.path.isfile(get_db_path()):
+            return out
+        conn = get_conn(read_only=True)
+        rows = conn.execute(
+            """
+            SELECT title, symbol FROM news_items
+            WHERE title IS NOT NULL AND LENGTH(TRIM(CAST(title AS VARCHAR))) > 6
+            ORDER BY ts DESC NULLS LAST
+            LIMIT ?
+            """,
+            [max(4, int(limit))],
+        ).fetchall()
+        conn.close()
+        for title, sym in rows or []:
+            t = str(title or "").strip()[:72]
+            if not t:
+                continue
+            code = str(sym or "").strip()
+            code6 = code[-6:] if len(code) >= 6 and code[-6:].isdigit() else None
+            out.append({"type": "news_db", "text": t, "code": code6})
+    except Exception:
+        pass
+    return out
+
+
 def _fetch_hot_ticker_payload() -> dict:
     """东财热榜 + 快讯标题，供顶部滚动条。"""
     import datetime as dt
@@ -1993,9 +2068,19 @@ def _fetch_hot_ticker_payload() -> dict:
         except Exception:
             pass
 
+    if len(lines) < 6:
+        for x in _hot_ticker_from_duckdb_news(18):
+            lines.append(x)
+            if len(lines) >= 14:
+                break
+
     if not lines:
         lines = [
-            {"type": "tip", "text": "热点加载中，请稍后刷新；确保本机可访问东财数据", "code": None}
+            {
+                "type": "tip",
+                "text": "热点加载中：本机无法实时访问东财时可依赖 Tushare/日内同步的站内新闻；检查代理或运行 scripts/start_schedulers.py intraday-now",
+                "code": None,
+            }
         ]
 
     parts = [x["text"] for x in lines[:20]]
@@ -2011,6 +2096,95 @@ def _fetch_hot_ticker_payload() -> dict:
 def get_news_hot_ticker() -> dict:
     """顶部滚动热点：东方财富热榜 + 财经快讯标题。"""
     return _fetch_hot_ticker_payload()
+
+
+class NewsManualRefreshBody(BaseModel):
+    """手动拉取 RSS 宏观入库并可选推送一条汇总到 NEWS_BREAKING_WEBHOOK_URL（飞书等）。"""
+
+    send_webhook: bool = False
+
+
+def _duckdb_global_macro_news_summary(limit: int = 20) -> tuple[str, int]:
+    """自 DuckDB 取最近国际宏观 / __GLOBAL__ 标题列表，用于汇总正文。"""
+    from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+    if not os.path.isfile(get_db_path()):
+        return "", 0
+    lim = max(1, min(50, int(limit)))
+    conn = get_conn(read_only=True)
+    try:
+        rows = conn.execute(
+            """
+            SELECT title, url, source_site
+            FROM news_items
+            WHERE symbol = '__GLOBAL__' OR TRIM(COALESCE(tag, '')) = '国际宏观'
+            ORDER BY ts DESC NULLS LAST
+            LIMIT ?
+            """,
+            [lim],
+        ).fetchall()
+    finally:
+        conn.close()
+    lines: List[str] = []
+    for title, url, site in rows or []:
+        ti = str(title or "").strip()[:180]
+        if not ti:
+            continue
+        u = str(url or "").strip()[:120]
+        meta = str(site or "").strip()
+        extra = f" | {u}" if u else ""
+        src = f" ({meta})" if meta else ""
+        lines.append(f"· {ti}{extra}{src}")
+    return "\n".join(lines), len(lines)
+
+
+def _run_manual_news_refresh(send_webhook: bool) -> dict:
+    """RSS 拉取（关闭逐条突发推送）→ 汇总文案 → 可选一条 Webhook。"""
+    from data_pipeline.collectors.rss_macro_news import _send_feishu_text, update_rss_macro_news
+
+    n_inserted = int(update_rss_macro_news(send_breaking_alerts=False))
+    summary, n_lines = _duckdb_global_macro_news_summary(20)
+    front = (os.environ.get("FRONTEND_BASE_URL") or "https://htma.newhigh.com.cn").rstrip("/")
+    head = f"【新闻汇总｜手动刷新】RSS 新写入 {n_inserted} 条。全文: {front}/news\n\n"
+    body_text = summary or "（暂无国际宏观 RSS 条目，请确认采集与 DuckDB。）"
+    full_text = (head + body_text)[:3900]
+
+    webhook_sent = False
+    webhook_skipped_reason: Optional[str] = None
+    if send_webhook:
+        wh = (os.environ.get("NEWS_BREAKING_WEBHOOK_URL") or "").strip()
+        if wh:
+            webhook_sent = bool(_send_feishu_text(wh, full_text))
+            if not webhook_sent:
+                webhook_skipped_reason = "webhook_failed"
+        else:
+            webhook_skipped_reason = "no_webhook_url"
+    else:
+        webhook_skipped_reason = "send_webhook_false"
+
+    return {
+        "rss_inserted": n_inserted,
+        "summary": summary,
+        "summary_lines": n_lines,
+        "webhook_sent": webhook_sent,
+        "webhook_skipped_reason": webhook_skipped_reason,
+    }
+
+
+@router.post("/news/manual-refresh")
+def post_news_manual_refresh(
+    body: NewsManualRefreshBody = Body(default_factory=NewsManualRefreshBody),
+) -> Any:
+    """
+    手动触发 RSS 宏观入库，并返回最近条目摘要；可选 POST 一条汇总到 NEWS_BREAKING_WEBHOOK_URL。
+    需登录：JWT_AUTH_REQUIRED=1 时由中间件校验 Bearer（本路由不在白名单）。
+    """
+    try:
+        payload = _run_manual_news_refresh(bool(body.send_webhook))
+        return json_ok(payload, source="news_manual_refresh")
+    except Exception as e:
+        _log.exception("news manual-refresh failed")
+        return json_fail(str(e)[:400], status_code=500)
 
 
 @router.post("/news/web-insight")
@@ -2298,32 +2472,9 @@ def list_strategies() -> dict:
 def _save_backtest_to_strategy_market(strategy_id: str, name: str, result: dict) -> bool:
     """将回测结果写入 strategy_market 表。"""
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
+        from data_pipeline.strategy_market_writer import upsert_strategy_market_from_backtest
 
-        conn = get_conn(read_only=False)
-        ensure_tables(conn)
-        tr = result.get("total_return")
-        return_pct = float(tr * 100) if tr is not None else None
-        sharpe = result.get("sharpe_ratio")
-        max_dd = result.get("max_drawdown")
-        conn.execute(
-            """
-            INSERT INTO strategy_market (strategy_id, name, return_pct, sharpe_ratio, max_drawdown, status, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
-            ON CONFLICT (strategy_id) DO UPDATE SET
-            name=EXCLUDED.name, return_pct=EXCLUDED.return_pct, sharpe_ratio=EXCLUDED.sharpe_ratio,
-            max_drawdown=EXCLUDED.max_drawdown, status=EXCLUDED.status, updated_at=CURRENT_TIMESTAMP
-        """,
-            [
-                strategy_id,
-                name or strategy_id.replace("_", " ").title(),
-                return_pct,
-                sharpe,
-                max_dd,
-            ],
-        )
-        conn.close()
-        return True
+        return upsert_strategy_market_from_backtest(strategy_id, name, result)
     except Exception:
         return False
 
@@ -2861,10 +3012,11 @@ def post_simulated_step(
     lot_size: int = 100,
     max_buys: int = 10,
     max_sells: int = 10,
+    risk_check: bool = True,
 ) -> dict:
     """
     执行一步模拟盘：根据 trade_signals 生成模拟订单，更新持仓与资金快照。
-    返回本步 orders_created、cash、equity、total_assets。
+    risk_check=True（默认）时先走 risk-engine，不通过则返回 risk_violations。
     """
     try:
         step_simulated, _, _, _ = _simulated_module()
@@ -2874,6 +3026,7 @@ def post_simulated_step(
             lot_size=lot_size,
             max_buys=max_buys,
             max_sells=max_sells,
+            risk_check=risk_check,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -3095,11 +3248,67 @@ def get_dashboard() -> dict:
 
 @router.get("/evolution")
 def get_evolution() -> dict:
-    """Evolution: generation, best strategy, tree (stub)."""
+    """Evolution：优先从 DuckDB evolution_tasks 最近一条 success 结果摘要；否则返回演示数据。"""
+    try:
+        import json
+        import os
+
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        if os.path.isfile(get_db_path()):
+            conn = get_conn(read_only=True)
+            row = conn.execute(
+                """
+                SELECT result FROM evolution_tasks
+                WHERE lower(status) = 'success' AND result IS NOT NULL AND length(trim(result)) > 2
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+            conn.close()
+            if row and row[0]:
+                try:
+                    res = json.loads(row[0])
+                except Exception:
+                    res = None
+                if isinstance(res, dict) and not res.get("error"):
+                    gen = int(res.get("generation") or 1)
+                    staged = res.get("staged") if isinstance(res.get("staged"), list) else []
+                    best_strategy = None
+                    if staged:
+
+                        def _sharpe_key(c: dict) -> float:
+                            try:
+                                return float(c.get("sharpe_ratio") or -1e9)
+                            except (TypeError, ValueError):
+                                return -1e9
+
+                        dict_rows = [x for x in staged if isinstance(x, dict)]
+                        if dict_rows:
+                            b = max(dict_rows, key=_sharpe_key)
+                            sid = str(b.get("strategy_id") or "unknown")
+                            try:
+                                sh = float(b.get("sharpe_ratio") or 0)
+                            except (TypeError, ValueError):
+                                sh = 0.0
+                            try:
+                                rp = float(b.get("return_pct") or 0)
+                            except (TypeError, ValueError):
+                                rp = 0.0
+                            best_strategy = {"id": sid, "sharpe": sh, "return_pct": rp}
+                    return {
+                        "current_generation": gen,
+                        "best_strategy": best_strategy,
+                        "generations": [{"gen": gen}],
+                        "source": "duckdb",
+                    }
+    except Exception:
+        pass
     return {
         "current_generation": 3,
         "best_strategy": {"id": "STR_0034", "sharpe": 2.6, "return_pct": 41},
         "generations": [{"gen": 1}, {"gen": 2}, {"gen": 3}],
+        "source": "demo",
     }
 
 
@@ -3648,6 +3857,12 @@ def get_alpha_lab() -> dict:
 
 
 # Hongshan / Next 共用：认证、行情、委托、持仓（DuckDB 单栈）
+try:
+    from .endpoints_pipeline import build_pipeline_router
+
+    router.include_router(build_pipeline_router())
+except Exception as e:
+    _log.warning("strategy pipeline router not mounted: %s", e)
 try:
     from .unified_auth_routes import build_unified_auth_router
     from .unified_orders_routes import build_unified_orders_routes_router

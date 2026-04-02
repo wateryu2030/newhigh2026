@@ -1,5 +1,7 @@
 """Kelly criterion allocation: fraction = (win_rate * payoff - (1 - win_rate)) / payoff."""
 
+from typing import List
+
 
 def kelly_fraction(
     win_rate: float,
@@ -40,6 +42,7 @@ def kelly_weights(
         kellys[s] = kelly_fraction(wr, aw, al, fraction=kelly_frac)
     total = sum(kellys.values())
     if total <= 0:
+        from .equal_weight import equal_weight_weights  # pylint: disable=import-outside-toplevel
         return equal_weight_weights(symbols) if symbols else {}
     return {s: kellys[s] / total for s in symbols}
 

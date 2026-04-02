@@ -85,10 +85,15 @@ if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   cd .next/standalone
   nohup env HOSTNAME=0.0.0.0 PORT=3000 API_PROXY_TARGET="$API_PROXY_TARGET" node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
 else
-  # 仅删「半截」构建：避免 middleware-manifest.json 缺失导致 dev 全站 500
-  if [[ -d .next ]] && [[ ! -f .next/server/middleware-manifest.json ]]; then
-    echo "[restart] 检测到不完整 .next，先 rm -rf .next …"
+  # 仅删「半截」.next，或显式 NEWHIGH_NEXT_CLEAN=1（陈旧 chunk：Cannot find module './xxx.js'）
+  if [[ "${NEWHIGH_NEXT_CLEAN:-}" == "1" ]] || [[ -d .next && ! -f .next/server/middleware-manifest.json ]]; then
+    echo "[restart] 清理前端 .next（NEWHIGH_NEXT_CLEAN=1 或缺 middleware-manifest）…"
     rm -rf .next
+  fi
+  mkdir -p .next/server
+  # Next 14 dev 冷启动时可能在首包编译完成前 require 此文件；占位避免全站/API 反代 500（随后由 dev 覆盖）
+  if [[ ! -f .next/server/middleware-manifest.json ]]; then
+    printf '%s\n' '{"version":3,"middleware":{},"functions":{},"sortedMiddleware":[]}' >.next/server/middleware-manifest.json
   fi
   echo "[restart] 启动前端 next dev http://127.0.0.1:3000 …"
   nohup npm run dev >>"$ROOT/logs/frontend.out" 2>&1 &
