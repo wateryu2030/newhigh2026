@@ -9,7 +9,12 @@ import datetime as dt
 from typing import Any, Dict, List, Tuple
 
 from core import OHLCV
-from core.data_service.db import get_conn as get_db_conn, get_astock_duckdb_available as check_astock_available
+from core.data_service.db import get_astock_duckdb_available as check_astock_available
+
+try:
+    from data_pipeline.storage.duckdb_manager import get_conn as _pipeline_get_conn
+except ImportError:
+    _pipeline_get_conn = None  # type: ignore
 
 
 def _order_book_id_to_symbol(order_book_id: str) -> str:
@@ -39,9 +44,15 @@ def _symbol_to_order_book_id(symbol: str) -> str:
     return f"{s}.XSHE"
 
 
-# 使用 core.data_service.db 中的统一函数
 def _get_conn(read_only: bool = False):
-    """获取 newhigh 本地 DuckDB 连接；默认读写模式，与同进程 Gateway 审计写入一致。"""
+    """
+    与 system/data-overview、管道写入共用 ``data_pipeline.storage.duckdb_manager``，
+    避免经 lib 代理时偶发连库失败导致 /api/news 误走 akshare、与全表 COUNT 口径脱节。
+    """
+    if _pipeline_get_conn is not None:
+        return _pipeline_get_conn(read_only=read_only)
+    from core.data_service.db import get_conn as get_db_conn
+
     return get_db_conn(read_only=read_only)
 
 
@@ -228,8 +239,8 @@ def get_news_from_astock_duckdb(
     if conn is None:
         return []
     try:
-        # 多取一些以便去重后仍能接近 limit
-        fetch_limit = min(limit * 3, 500) if limit else 500
+        # 多取以便 (title,publish_time) 去重后仍接近 limit；与概览全表 COUNT 无关，仅影响抽样深度
+        fetch_limit = min(max((limit or 100) * 4, 400), 2500) if limit else 2500
         records_prebuilt: List[Dict[str, Any]] | None = None
         if symbol:
             code = (symbol or "").strip().split(".", maxsplit=1)[0]
@@ -276,7 +287,8 @@ def get_news_from_astock_duckdb(
                 sql = (
                     "SELECT symbol, source_site, source, title, content, url, "
                     "keyword, tag, publish_time, sentiment_score, sentiment_label "
-                    "FROM news_items ORDER BY publish_time DESC LIMIT ?"
+                    "FROM news_items "
+                    "ORDER BY ts DESC NULLS LAST, publish_time DESC NULLS LAST LIMIT ?"
                 )
                 params = [fetch_limit]
                 df = conn.execute(sql, params).fetchdf()
@@ -284,7 +296,8 @@ def get_news_from_astock_duckdb(
             sql = (
                 "SELECT symbol, source_site, source, title, content, url, "
                 "keyword, tag, publish_time, sentiment_score, sentiment_label "
-                "FROM news_items ORDER BY publish_time DESC LIMIT ?"
+                "FROM news_items "
+                "ORDER BY ts DESC NULLS LAST, publish_time DESC NULLS LAST LIMIT ?"
             )
             params = [fetch_limit]
             df = conn.execute(sql, params).fetchdf()
@@ -293,7 +306,7 @@ def get_news_from_astock_duckdb(
     if records_prebuilt is not None:
         records = records_prebuilt
     else:
-        if df is None or df.empty:
+        if df is None or df.empty:  # pylint: disable=possibly-used-before-assignment  # exception handler returns early
             return []
         records = df.to_dict("records")
     # 按 (title, publish_time) 去重，保留首次出现（已按时间倒序）

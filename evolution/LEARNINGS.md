@@ -1,5 +1,126 @@
 # 量化平台改进经验总结
 
+## 2026-04-03 (16:45) - Pylint 注释格式陷阱与真实 Bug 发现
+
+### 问题 1：unknown-option-value 反复出现
+
+**原始问题:**
+- 上午修复了 48 处 unknown-option-value，下午又出现 15 处
+- 根本原因：pylint disable 注释格式错误
+
+**问题分析:**
+1. **错误格式:** `# pylint: disable=xxx (explanation)` - 括号内的文本被解析为额外的 disable 选项
+2. **正确格式:** `# pylint: disable=xxx  # explanation` - 解释文本应放在单独的注释中
+3. **批量修复风险:** 之前的批量修复脚本可能使用了错误格式，导致问题反复出现
+
+**解决方案:**
+
+1. **正确注释格式:**
+```python
+# 错误格式
+except Exception as e:  # pylint: disable=broad-exception-caught (external API)
+
+# 正确格式
+except Exception as e:  # pylint: disable=broad-exception-caught  # external API
+```
+
+2. **多个 disable 组合:**
+```python
+# 同时禁用多个检查
+from module import func  # pylint: disable=import-outside-toplevel,import-error  # lazy loading
+```
+
+3. **验证脚本 (建议):**
+```bash
+# 检查是否有错误的 pylint 注释格式
+grep -r "pylint: disable.*(" --include="*.py" .
+```
+
+**预期收益:**
+- unknown-option-value 问题清零
+- 建立正确的 pylint 注释规范
+- 避免批量修复引入新问题
+
+---
+
+### 问题 2：undefined-variable 暴露真实 Bug
+
+**原始问题:**
+- pylint 报告 `ensure_tables` 未定义
+- 实际导入的函数名为 `ensure_core_tables`
+
+**问题分析:**
+1. **拼写错误:** 函数调用时拼写错误，少了 `core_` 前缀
+2. **运行时未触发:** 可能是该代码路径未被测试覆盖
+3. **静态分析价值:** pylint 帮助发现了运行时未暴露的 bug
+
+**解决方案:**
+
+1. **修复拼写错误:**
+```python
+# 修改前
+ensure_tables(conn)
+
+# 修改后
+ensure_core_tables(conn)
+```
+
+2. **验证修复:**
+```bash
+python3 -m py_compile ai_fusion_strategy.py
+```
+
+**预期收益:**
+- 修复 AI 融合策略的数据库表初始化 bug
+- 证明静态分析对发现潜在 bug 的价值
+
+---
+
+### 问题 3：import-error 误报处理
+
+**原始问题:**
+- pylint 报告 `from lib.database import get_connection` 为 import-error
+- 实际运行时正常
+
+**问题分析:**
+1. **路径配置缺失:** .pylintrc 未配置项目根目录到 Python 路径
+2. **静态分析局限:** pylint 无法理解项目内部模块结构
+
+**解决方案:**
+
+1. **短期方案 - 添加 disable 注释:**
+```python
+from lib.database import get_connection  # pylint: disable=import-error
+```
+
+2. **长期方案 - 优化 pylintrc:**
+```ini
+[MASTER]
+init-hook='import sys; sys.path.insert(0, ".")'
+```
+
+**预期收益:**
+- 减少误报干扰
+- 提高 pylint 报告的可信度
+
+---
+
+### 关键发现
+
+1. **pylint 注释格式陷阱** - 括号内的文本会被解析为额外选项，应使用双注释格式
+2. **静态分析发现真实 Bug** - undefined-variable 帮助发现了函数名拼写错误
+3. **路径配置重要** - .pylintrc 需要正确配置项目路径以减少误报
+4. **批量修复需谨慎** - 错误的批量修复会引入新问题
+
+### 改进建议
+
+1. **pylintrc 优化** - 添加 init-hook 配置项目路径
+2. **验证脚本** - 编写脚本验证 pylint disable 注释格式
+3. **CI/CD 集成** - 在 PR 流程中添加 pylint 检查，error 级别必须修复
+4. **代码审查清单** - 将 pylint 注释格式纳入审查清单
+
+---
+
 ## 2026-04-02 (17:30) - broad-exception-caught 批量优化策略
 
 ### 问题 1：broad-exception-caught (W0718) 规模巨大

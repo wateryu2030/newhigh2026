@@ -29,7 +29,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from lib.database import get_connection
+from lib.database import get_connection  # pylint: disable=import-error
 
 
 class FinancialAnalyzer:
