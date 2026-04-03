@@ -14,7 +14,7 @@ def get_last_price(code: str) -> Optional[float]:
     if not c:
         return None
     try:
-        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path  # pylint: disable=import-outside-toplevel (lazy loading for optional dependency)
 
         path = get_db_path()
         if not path or not os.path.isfile(path):

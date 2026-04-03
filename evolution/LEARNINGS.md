@@ -1675,3 +1675,184 @@ except ImportError:
 - v1.4 (16:00): 9.60/10 - 6 个修复
 - v1.5 (16:18): 9.54/10 - 3 个修复
 - **总体趋势: 连续 Positive! (9.31 → 9.54)**
+
+## 2026-04-02 (17:45) - Afternoon Session
+
+### 问题 1：TYPE_CHECKING 模式处理可选依赖导入
+
+**原始问题:**
+- `execution-engine/src/execution_engine/brokers/live_broker.py` 报告 E0602 (undefined-variable) 和 E0401 (import-error)
+- `from core import Position` 失败，因为 core 模块未安装在当前 Python 环境
+- `List` 类型提示未导入
+
+**问题分析:**
+1. **模块依赖未安装** - core 模块是本地开发模块，未通过 pip install -e 安装，pylint 无法解析
+2. **运行时不需要导入** - Position 仅用于类型注解，使用 `from __future__ import annotations` 后类型注解在运行时是字符串
+3. **pylint 静态检查限制** - pylint 在静态分析时无法识别未安装的模块
+
+**解决方案:**
+
+1. **使用 TYPE_CHECKING 块:**
+```python
+from typing import TYPE_CHECKING, Any, List, Optional
+
+if TYPE_CHECKING:
+    from core import Position  # pylint: disable=import-error
+```
+
+2. **移除运行时导入:**
+```python
+# 修改前
+from core import Position
+positions: List[Position] = fetch_positions(...)
+
+# 修改后
+positions = fetch_positions(...)  # 类型推断，无需显式注解
+```
+
+**预期收益:**
+- 消除 E0602, E0401, E0611 错误
+- 保持类型提示的 IDE 支持
+- 避免运行时 ImportError
+
+**适用场景:**
+- 可选依赖 (optional dependencies)
+- 循环导入 (circular imports)
+- 开发中模块 (modules under development)
+- 平台特定导入 (platform-specific imports)
+
+**经验总结:**
+- 对于仅用于类型注解的导入，优先使用 TYPE_CHECKING 块
+- 添加 `# pylint: disable=import-error` 注释说明原因
+- 运行时代码应避免依赖未安装的模块
+
+---
+
+### 问题 2：broad-exception-caught 批量优化 (网络请求场景)
+
+**原始问题:**
+- `tools/x-tweet-fetcher/scripts/camofox_client.py` 有 4 处 broad-exception-caught
+- 网络请求和 JSON 解析使用 `except Exception:` 捕获所有异常
+
+**问题分析:**
+1. **网络请求异常类型明确** - urllib.request.urlopen 主要抛出 URLError, TimeoutError, OSError
+2. **JSON 解析异常类型明确** - json.loads 主要抛出 JSONDecodeError
+3. **宽泛捕获风险** - 可能捕获 KeyboardInterrupt, SystemExit 等不应处理的异常
+
+**解决方案:**
+
+1. **具体异常类型组合:**
+```python
+# 修改前
+except Exception:
+    return False
+
+# 修改后
+except (urllib.error.URLError, TimeoutError, OSError):
+    return False
+```
+
+2. **JSON 解析场景:**
+```python
+# 修改前
+except Exception as e:
+    print(f"error: {e}")
+    return None
+
+# 修改后
+except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as e:
+    print(f"error: {e}")
+    return None
+```
+
+**预期收益:**
+- 符合 PEP8 最佳实践
+- 避免捕获不应处理的异常
+- 提升代码可读性和可维护性
+
+**经验总结:**
+- 网络请求场景：URLError, TimeoutError, OSError
+- JSON 解析场景：JSONDecodeError
+- 文件操作场景：FileNotFoundError, PermissionError, OSError
+- 数据库操作场景：根据具体数据库驱动选择异常类型
+
+---
+
+---
+
+## 2026-04-03: Pylint Disable 注释格式规范
+
+**问题:** 批量修复 broad-exception-caught 时使用了错误的注释格式，导致 48 处 unknown-option-value 错误
+
+**错误格式:**
+```python
+except Exception as e:  # pylint: disable=broad-exception-caught (external API calls)
+```
+
+**正确格式:**
+```python
+except Exception as e:  # pylint: disable=broad-exception-caught  # external API calls
+```
+
+**原因:** pylint 将括号内的文本解析为额外的 disable 选项，而非解释说明
+
+**解决方案:** 
+1. 使用双注释格式：`# pylint: disable=xxx  # explanation`
+2. 批量修复后运行 pylint 验证
+3. 修改后运行 py_compile 验证语法
+
+**效果:** 修复 48 处 unknown-option-value，核心模块评分从 9.52 提升至 9.79 (+0.27)
+
+**教训:**
+- 批量修复需谨慎，应先在少量文件上验证格式
+- pylint disable 注释的解释文本应放在单独注释中
+- 建议编写验证脚本检查注释格式
+
+**相关文件:** 
+- data-engine/src/data_engine/connector_tushare.py (9 处)
+- strategy/src/strategies/daily_stock_analysis/ai_decision.py (5 处)
+- strategy/src/strategies/daily_stock_analysis/data_fetcher.py (2 处)
+- strategy/src/strategy_engine/ai_fusion_strategy.py (7 处)
+
+---
+
+## 2026-04-03: Syntax Error 修复 - Import 缩进问题
+
+**问题:** trade_signal_aggregator.py 中 import 语句错误地缩进到函数内部
+
+**错误代码:**
+```python
+def aggregate_market_signals_to_trade_signals(...):
+    """docstring"""
+    from core import Signal
+
+from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
+
+    out = []
+```
+
+**正确代码:**
+```python
+from core import Signal
+from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
+
+def aggregate_market_signals_to_trade_signals(...):
+    """docstring"""
+    out = []
+```
+
+**原因:** 可能是之前的编辑操作导致缩进混乱
+
+**解决方案:** 
+1. 将 import 语句移到模块级别
+2. 运行 py_compile 验证语法
+
+**效果:** 修复 2 处 syntax-error，消除 E0001 错误
+
+**教训:**
+- 修改 import 语句后应立即运行 py_compile 验证
+- CI/CD 中应包含语法检查步骤
+- 使用编辑器/IDE 的自动格式化功能可避免此类问题
+
+**相关文件:** strategy/src/strategy_engine/trade_signal_aggregator.py
+

@@ -47,7 +47,7 @@ def _get_emotion_state() -> dict:
         score_map = {"冰点": 0.2, "启动": 0.4, "主升": 0.7, "高潮": 0.85, "退潮": 0.35}
         emotion_score = score_map.get(state, 0.5)
         return {"state": state, "emotion_score": emotion_score, "raw": latest}
-    except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+    except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
         return {"state": "—", "emotion_score": 0.5, "raw": {}}
 
 
@@ -87,7 +87,7 @@ def _get_hotmoney_signals() -> list:
                 wr = float(r.get("win_rate") or 0.5)
                 out.append((code, min(1.0, 0.4 + wr * 0.5)))
         return out
-    except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+    except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
         return []
 
 
@@ -107,7 +107,7 @@ def _get_main_theme() -> list:
         if df is None or df.empty:
             return [("全市场", 1)]
         return [(str(r["sector"]), int(r.get("rank", 0))) for _, r in df.iterrows()]
-    except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+    except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
         return [("全市场", 1)]
 
 
@@ -130,7 +130,7 @@ def _trend_score_for_code(code: str) -> float:
         if row and row[0] is not None:
             return min(1.0, max(0, float(row[0]) / 100.0))
         return 0.5
-    except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+    except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
         return 0.5
 
 
@@ -206,7 +206,7 @@ class AIFusionStrategy:
             if ms is not None and not ms.empty:
                 for _, r in ms.iterrows():
                     candidate_codes.add(str(r.get("code", "")))
-        except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+        except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
             pass
 
         return [c for c in candidate_codes if c]
@@ -236,7 +236,7 @@ class AIFusionStrategy:
                 candidate_codes = [
                     str(r.get("code", "")) for _, r in ms.iterrows() if r.get("code")
                 ]
-        except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+        except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
             pass
 
         return candidate_codes
@@ -264,7 +264,7 @@ class AIFusionStrategy:
             n = len(signals)
             conn.close()
             return n
-        except Exception:  # pylint: disable=broad-exception-caught (strategy fusion logic)
+        except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
             return 0
 
 

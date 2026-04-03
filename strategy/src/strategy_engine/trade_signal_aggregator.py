@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from core import Signal
+from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
+
 
 def aggregate_market_signals_to_trade_signals(
     market_signals: list[dict],
@@ -10,12 +13,8 @@ def aggregate_market_signals_to_trade_signals(
 ) -> list[tuple[str, str, float, float, float]]:
     """
     market_signals: [{"code", "signal_type", "score"}, ...]
-    返回: [(code, signal, confidence, target_price, stop_loss), ...]
+    返回：[(code, signal, confidence, target_price, stop_loss), ...]
     """
-    from core import Signal
-
-from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
-
     out = []
     sorted_s = sorted(
         [s for s in market_signals if float(s.get("score") or 0) >= min_score],

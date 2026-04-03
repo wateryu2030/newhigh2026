@@ -156,7 +156,7 @@ class AIDecisionMaker:
             self.logger.info("AI分析完成，生成 {len(recommendations.get('stocks', []))} 条推荐")
             return result
 
-        except Exception as e:  # pylint: disable=broad-exception-caught (external AI API calls can fail in many ways)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external AI API calls can fail in many ways
             self.logger.error("AI分析失败: {e}", exc_info=True)
             return {
                 "timestamp": datetime.now().isoformat(),
@@ -212,7 +212,7 @@ class AIDecisionMaker:
 
         try:
             return await model_handler(analysis_data)
-        except Exception as e:  # pylint: disable=broad-exception-caught (external AI API calls can fail in many ways)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external AI API calls can fail in many ways
             self.logger.error("调用 AI 模型 %s 失败：%s", self.config.ai_model, e)
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
@@ -285,7 +285,7 @@ class AIDecisionMaker:
                 # 降级到模拟响应
                 return await self._generate_mock_ai_response(analysis_data)
 
-        except Exception as e:  # pylint: disable=broad-exception-caught (external AI API calls can fail in many ways)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external AI API calls can fail in many ways
             self.logger.error("调用 Gemini AI 异常：%s", e)
             # 降级到模拟响应
             return await self._generate_mock_ai_response(analysis_data)
@@ -359,7 +359,7 @@ class AIDecisionMaker:
                 )
                 return await self._generate_mock_ai_response(analysis_data)
 
-        except Exception as e:  # pylint: disable=broad-exception-caught (external AI API calls can fail in many ways)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external AI API calls can fail in many ways
             self.logger.error("调用通义千问AI异常: %s", e)
             return await self._generate_mock_ai_response(analysis_data)
 
@@ -561,7 +561,7 @@ class AIDecisionMaker:
 
             return result
 
-        except Exception as e:  # pylint: disable=broad-exception-caught (external AI API calls can fail in many ways)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external AI API calls can fail in many ways
             self.logger.error("股票分析失败：%s", e)
             return {
                 "symbol": symbol,

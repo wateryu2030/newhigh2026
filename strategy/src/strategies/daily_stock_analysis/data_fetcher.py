@@ -65,7 +65,7 @@ class DataFetcher:
             self.logger.info("市场数据获取完成，共获取 %d 个市场数据", len(results['markets']))
             return results
 
-        except Exception as e:  # pylint: disable=broad-exception-caught (external data API calls)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # external data API calls
             self.logger.error("获取市场数据失败: %s", e, exc_info=True)
             results["status"] = "error"
             results["error"] = str(e)
@@ -98,7 +98,7 @@ class DataFetcher:
                         successful_sources.append(source)
                         self.logger.info("从 %s 成功获取 %s 市场数据", source, market)
 
-                except Exception as e:  # pylint: disable=broad-exception-caught (external data API calls)
+                except Exception as e:  # pylint: disable=broad-exception-caught  # external data API calls
                     self.logger.warning("从 %s 获取 %s 数据失败: %s", source, market, e)
 
         # 生成摘要

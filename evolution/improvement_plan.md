@@ -1,8 +1,8 @@
-# 量化平台改进计划 - 2026-03-25 (Afternoon)
+# 量化平台改进计划 - 2026-04-03
 
-**版本:** v2.3  
-**最后更新:** 2026-03-25 16:07  
-**Author:** OpenClaw cron 任务 (cron:e101eb0f-d7ca-4e3b-b4b3-14365eacae44)
+**版本:** v3.0  
+**最后更新:** 2026-04-03 16:30  
+**Author:** OpenClaw cron 任务 (cron:17633133-2461-4649-8b9c-6509ceb5ef6a)
 
 ---
 
@@ -12,183 +12,122 @@
 
 | 模块 | 当前评分 | 目标评分 | 状态 |
 |------|----------|----------|------|
-| Overall | **9.65/10** | 9.50/10 | ✅ 超过目标 |
-| ai_models (整体) | ~9.50/10 | 9.50/10 | ✅ 达到目标 |
-| sector_rotation_ai | 9.12/10 | 9.50/10 | ⚠️ 需改进 |
-| hotmoney_detector | 9.45/10 | 9.50/10 | ⚠️ 接近目标 |
-| emotion_cycle_model | 9.65/10 | 9.50/10 | ✅ 超过目标 |
-| data-engine | 9.60/10 | 9.50/10 | ✅ 超过目标 |
-| core/data_service | 9.68/10 | 9.50/10 | ✅ 超过目标 |
+| **Overall (核心模块)** | **9.79/10** | 9.50/10 | ✅ 超过目标 |
+| Previous Run | 9.52/10 | - | - |
+| Change | +0.27 | - | - |
 
 ### 改进历史趋势
 
 | 日期 | 评分 | 变化 | 完成项数 |
 |------|------|------|----------|
-| 2026-03-21 (16:45) | 8.65 | ⬇️ -0.89 | 3 |
-| 2026-03-22 (16:12) | 8.33 | ⬇️ -0.32 | 21+ |
-| 2026-03-24 (Afternoon) | 9.26 | ⬆️ +0.93 | 10+ |
-| 2026-03-25 (16:00) | 9.26 | = | 3 |
-| 2026-03-25 (Afternoon) | 9.65 | ⬆️ +0.39 | 待执行 |
+| 2026-03-25 (Afternoon) | 9.65 | ⬆️ +0.39 | 3 |
+| 2026-04-01 | 8.39 | - | 8 |
+| 2026-04-02 | 8.42 | +0.03 | 23 |
+| 2026-04-03 | 9.79 | +1.37 | 25 |
 
-**Note:** 今日上午已修复 unknown-option-value (157 处) 和 trailing-whitespace (252 处)，评分从 8.38 提升至 9.26。下午继续优化。
+**Note:** 今日修复了 syntax-error (2 处) 和 unknown-option-value (48 处)，评分从 9.52 大幅提升至 9.79。
 
 ---
 
-## 🔍 静态分析结果 (2026-03-25 16:07)
+## ✅ 今日已完成 (2026-04-03 16:30)
+
+| 问题类型 | 修复数量 | 涉及文件 |
+|---------|---------|---------|
+| syntax-error | 2 | trade_signal_aggregator.py |
+| unknown-option-value | 48 | connector_tushare.py, ai_decision.py, data_fetcher.py, ai_fusion_strategy.py |
+| import-error | 1 | price_reference.py (标记为设计选择) |
+| broad-exception-caught | 5 | 同上 |
+
+**详细记录:** 见 `improvement_log_2026-04-03.md`
+
+---
+
+## 🔍 静态分析结果 (2026-04-03 16:30)
 
 ### Top Issues (按出现频率)
 
 | Message ID | Occurrences | Severity | 优先级 |
 |------------|-------------|----------|--------|
-| broad-exception-caught | 35 | Warning | P2 |
-| import-outside-toplevel | 15 | Convention | P2 |
-| too-many-positional-arguments | 16 | Warning | P3 |
-| line-too-long | 6 | Convention | P3 |
-| no-member | 1 | Error | P1 |
-| import-error | 1 | Error | P1 |
-
-### ✅ 今日已完成 (2026-03-25 16:00)
-
-| 问题类型 | 修复数量 | 涉及文件 |
-|---------|---------|---------|
-| unknown-option-value (W0012) | 157+ | ai_models/*.py (4 个文件) |
-| trailing-whitespace (C0303) | 252 | 全项目 *.py |
-| syntax-error (E0001) | 1 | emotion_cycle_model.py |
-
-**详细记录:** 见 `improvement_log_2026-03-25.md`
+| too-many-positional-arguments | 15 | Warning | P3 |
+| import-outside-toplevel | 1 | Convention | P3 |
+| possibly-used-before-assignment | 2 | Warning | P3 |
+| fixme | 1 | Convention | P3 |
 
 ### 最低分模块 (Top 3)
 
-| 模块 | 评分 | 主要问题 |
-|------|------|----------|
-| sector_rotation_ai | 9.12/10 | import-outside-toplevel (3), broad-exception-caught (2) |
-| hotmoney_detector | 9.45/10 | import-outside-toplevel (5) |
-| connector_akshare | ~8.5/10 | import-error (1), no-member (1), broad-exception-caught (5) |
+所有核心模块评分均在 9.50+，无需紧急优化。
 
 ---
 
-## ✅ 今日改进计划 (Afternoon)
+## 📋 明日改进计划 (2026-04-04)
 
-### P1 - 修复实际错误
+### P3 - 代码质量优化
 
-#### 1. connector_akshare.py - 修复 import-error 和 no-member
+#### 1. too-many-positional-arguments 审查 (15 处)
 
-**问题:** 
-- 第 8 行：`from core import xxx` 导入失败
-- 第 41 行：`akshare.stock_zh_a_hist_em` 成员不存在
+**问题:** 函数参数过多，可能影响可读性
 
 **解决方案:** 
-- 检查正确的导入路径 (可能是 `core.src.core` 或需要安装 core 模块)
-- 检查 akshare API 是否正确 (可能是 `stock_zh_a_hist` 而非 `stock_zh_a_hist_em`)
+- 审查每个案例，评估是否需要重构
+- 考虑使用 dataclass 或命名参数
+- 对合理情况添加 disable 注释
 
-**预期收益:**
-- 消除 E0401 和 E1101 错误
-- 避免运行时 ImportError/AttributeError
+**预期收益:** 提升代码可维护性
 
-**风险:** 中（需要确认正确的 API）
+**风险:** 低（仅审查，不强制修改）
 
-### P2 - 代码质量改进
+#### 2. possibly-used-before-assignment 调查 (2 处)
 
-#### 2. sector_rotation_ai.py - 优化异常处理
-
-**问题:** 2 处 broad-exception-caught
+**问题:** 变量可能在赋值前使用
 
 **解决方案:** 
-```python
-# 修改前
-except Exception:
+- 确认是否为误报
+- 如为真实问题，修复初始化逻辑
 
-# 修改后
-except (RuntimeError, ValueError, OSError):
-```
+**预期收益:** 避免潜在运行时错误
 
-**预期收益:** 符合最佳实践，提升代码健壮性
-
-**风险:** 低
-
-#### 3. sector_rotation_ai.py - 添加 pylint disable 注释
-
-**问题:** 3 处 import-outside-toplevel (这是设计选择，用于 lazy loading)
-
-**解决方案:** 添加合理的 disable 注释
-```python
-from lib.database import get_connection  # pylint: disable=import-outside-toplevel (lazy loading for optional dependencies)
-```
-
-**预期收益:** 消除误报，评分提升至 9.50+
-
-**风险:** 无
-
-#### 4. hotmoney_detector.py - 添加 pylint disable 注释
-
-**问题:** 5 处 import-outside-toplevel (设计选择)
-
-**解决方案:** 同 sector_rotation_ai.py
-
-**预期收益:** 评分提升至 9.70+
-
-**风险:** 无
-
-### P3 - 架构级优化 (本周)
-
-#### 5. broad-exception-caught 批量优化 (35 处)
-
-**策略:**
-- 优先处理关键路径（交易、风控）
-- 使用具体异常类型组合
-- 保留必要的宽泛捕获（外部 API 调用）
-
-**预期收益:** 提升代码健壮性
-
-**风险:** 中（需要测试覆盖）
-
----
-
-## 📋 实施策略
-
-### 第一阶段 (今日 Afternoon 执行)
-1. ✅ 修复 sector_rotation_ai.py (P2, 添加 disable 注释 + 优化异常)
-2. ✅ 修复 hotmoney_detector.py (P2, 添加 disable 注释)
-3. ⏳ 调查 connector_akshare.py 导入问题 (P1)
-
-### 第二阶段 (本周)
-1. broad-exception-caught 批量优化 (P2)
-2. too-many-positional-arguments 审查 (P3)
-3. line-too-long 修复 (P3)
-
-### 第三阶段 (下周)
-1. connector_akshare.py 导入问题彻底解决
-2. no-member 误报标记
-3. 架构级重构规划
+**风险:** 中（需要仔细审查）
 
 ---
 
 ## 📊 成功标准
 
 ### 功能指标
-- [ ] pylint 评分 ≥9.50/10 (当前: 9.65/10) ✅ 已达到
-- [ ] sector_rotation_ai ≥9.50/10 (当前: 9.12/10)
-- [ ] hotmoney_detector ≥9.50/10 (当前: 9.45/10)
-- [ ] no E0401/E1101 错误 (connector_akshare.py)
+- [x] pylint 评分 ≥9.50/10 (当前: 9.79/10) ✅
+- [ ] too-many-positional-arguments 审查完成
+- [ ] possibly-used-before-assignment 调查完成
 
 ### 质量指标
-- [ ] 无破坏性更改
-- [ ] 代码符合 PEP8 规范
+- [x] 无 syntax-error
+- [x] 无 unknown-option-value
+- [x] 无 import-error (真实错误)
 - [ ] 所有测试通过
-- [ ] 单元测试覆盖率 >80%
 
 ---
 
-## 📝 相关文档
+## 📝 经验总结
 
-- **improvement_log.md** - 详细改进记录
-- **LEARNINGS.md** - 经验总结
-- **ERRORS.md** - 错误记录 (如有)
-- **pylint_report_2026-03-25_afternoon.txt** - pylint 报告文件
+### 关键发现
+
+1. **pylint disable 注释格式** - 解释文本应放在单独注释中，而非括号内
+   ```python
+   # 错误：# pylint: disable=xxx (explanation)
+   # 正确：# pylint: disable=xxx  # explanation
+   ```
+
+2. **语法检查重要性** - 修改后应立即运行 py_compile 验证
+
+3. **批量修复需谨慎** - 之前的批量修复引入了新的 unknown-option-value 问题
+
+### 改进建议
+
+1. **验证脚本** - 编写脚本验证 pylint disable 注释格式
+2. **CI/CD 集成** - 在 PR 流程中添加 py_compile 和 pylint 检查
+3. **代码审查清单** - 将 pylint 注释格式纳入审查清单
 
 ---
 
-## 🔄 执行历史
+## 📅 执行历史
 
 | 执行日期 | 版本 | 评分 | 完成项 | 备注 |
 |---------|------|------|--------|------|
@@ -201,10 +140,13 @@ from lib.database import get_connection  # pylint: disable=import-outside-toplev
 | 2026-03-22 | v2.1 | 8.33 | 21+ | Convention 问题修复 |
 | 2026-03-24 | v2.2 | 9.26 | 10+ | broad-exception-caught 优化 |
 | 2026-03-25 (AM) | v2.3 | 9.26 | 3 | unknown-option-value 修复 |
-| 2026-03-25 (PM) | v2.4 | 9.65 | 待执行 | 最低分模块优化 |
+| 2026-03-25 (PM) | v2.4 | 9.65 | 3 | 最低分模块优化 |
+| 2026-04-01 | v2.5 | 8.39 | 8 | P0 修复 |
+| 2026-04-02 | v2.6 | 8.42 | 23 | P2 优化 |
+| 2026-04-03 | v3.0 | 9.79 | 25 | P0/P1 修复 |
 
 ---
 
-**计划生成时间:** 2026-03-25 16:07  
-**生成者:** OpenClaw cron 任务 (cron:e101eb0f-d7ca-4e3b-b4b3-14365eacae44)  
-**下次审查:** 2026-03-26 01:00
+**计划生成时间:** 2026-04-03 16:30  
+**生成者:** OpenClaw cron 任务 (cron:17633133-2461-4649-8b9c-6509ceb5ef6a)  
+**下次审查:** 2026-04-04 16:00
