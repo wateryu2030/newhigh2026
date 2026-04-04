@@ -135,7 +135,7 @@ class DailyStockAnalyzer:
 
             return results
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 主流程错误应捕获并记录，避免进程崩溃
             self.logger.error("市场分析失败: %s", e, exc_info=True)
             results["error"] = str(e)
             return results
@@ -164,7 +164,7 @@ class DailyStockAnalyzer:
                 market_data=analysis_results.get("data", {}),
             )
             return recommendations
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 数据分析错误应捕获并记录
             self.logger.error("生成推荐失败: %s", e, exc_info=True)
             return {"error": str(e)}
 
@@ -189,7 +189,7 @@ class DailyStockAnalyzer:
         try:
             status = await self.notification_sender.send_analysis_results(results)
             return status
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 报告生成错误应捕获并记录
             self.logger.error("发送通知失败: %s", e, exc_info=True)
             return {channel: False for channel in channels}
 

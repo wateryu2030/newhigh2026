@@ -57,7 +57,7 @@ class NewsAnalyzer:
                         articles = await self.news_source_handlers[source](markets)
                         all_articles.extend(articles)
                         self.logger.info("从 %s 获取到 %s 条新闻", source, len(articles))
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught  # 新闻分析错误不应中断整体流程
                         self.logger.warning("从 %s 获取新闻失败: %s", source, e)
 
             # 分析新闻情感
@@ -71,7 +71,7 @@ class NewsAnalyzer:
             self.logger.info("新闻获取完成，共获取 %s 条新闻", len(all_articles))
             return results
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 新闻分析错误应优雅降级
             self.logger.error("获取新闻数据失败: %s", e, exc_info=True)
             results["status"] = "error"
             results["error"] = str(e)

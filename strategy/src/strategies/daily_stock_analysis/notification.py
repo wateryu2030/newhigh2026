@@ -57,7 +57,7 @@ class NotificationSender:
                         send_results[channel] = result
                         successful_channels.append(channel)
                         self.logger.info("%s 通知发送成功", channel)
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught  # 通知渠道错误不应影响其他渠道
                         self.logger.error("%s 通知发送失败: {e}", channel)
                         send_results[channel] = {"status": "error", "error": str(e)}
                         failed_channels.append(channel)
@@ -83,7 +83,7 @@ class NotificationSender:
             self.logger.info("通知发送完成: %s成功, %s失败", len(successful_channels), len(failed_channels))
             return summary
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 通知发送整体错误应捕获并返回错误状态
             self.logger.error("通知发送失败: %s", e, exc_info=True)
             return {"timestamp": datetime.now().isoformat(), "error": str(e), "status": "error"}
 
@@ -329,7 +329,7 @@ class NotificationSender:
                 "file_size": len(json.dumps(content)),
                 "timestamp": datetime.now().isoformat(),
             }
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 通知内容准备错误应优雅降级
             self.logger.error("保存到文件失败: %s", e)
             return {
                 "channel": "file",

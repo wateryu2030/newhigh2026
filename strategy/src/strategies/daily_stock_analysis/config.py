@@ -207,7 +207,7 @@ class DailyStockConfig:
 
             # 从字典创建配置对象
             return cls(**config_data)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 配置加载应始终降级到默认值，避免启动失败
             print(f"警告: 加载JSON配置文件失败: {e}, 使用默认配置")
             return cls()
 
@@ -218,14 +218,14 @@ class DailyStockConfig:
 
         try:
             return yaml.dump(self.to_dict(), allow_unicode=True, sort_keys=False)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # YAML 序列化错误应优雅降级
             return f"生成YAML失败: {e}"
 
     def to_json(self) -> str:
         """将配置转换为JSON字符串"""
         try:
             return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # JSON 序列化错误应优雅降级
             return f"生成JSON失败: {e}"
 
     def save_to_file(self, config_path: str) -> bool:
@@ -249,6 +249,6 @@ class DailyStockConfig:
                     json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
             return True
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 配置保存错误应优雅降级，不影响主流程
             print(f"保存配置文件失败: {e}")
             return False

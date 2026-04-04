@@ -199,7 +199,7 @@ class AIFusionStrategy:
 
             conn = get_conn(read_only=False)
             ms = conn.execute(
-                "SELECT code, score FROM market_signals " "ORDER BY score DESC NULLS LAST LIMIT 200"
+                "SELECT code, score FROM market_signals ORDER BY score DESC NULLS LAST LIMIT 200"
             ).fetchdf()
             conn.close()
 
@@ -228,7 +228,7 @@ class AIFusionStrategy:
 
             conn = get_conn(read_only=False)
             ms = conn.execute(
-                "SELECT code FROM market_signals " "ORDER BY snapshot_time DESC LIMIT 50"
+                "SELECT code FROM market_signals ORDER BY snapshot_time DESC LIMIT 50"
             ).fetchdf()
             conn.close()
 

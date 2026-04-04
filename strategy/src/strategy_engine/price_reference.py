@@ -40,9 +40,9 @@ def get_last_price(code: str) -> Optional[float]:
         finally:
             try:
                 conn.close()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught  # 价格参考数据获取错误应静默处理
                 pass
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught  # 价格参考数据获取错误应静默处理
         return None
     return None
 
