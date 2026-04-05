@@ -1,6 +1,5 @@
 """Tests for akshare A-share connector (mock to avoid network)."""
 
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,7 +7,6 @@ import pytest
 from data_engine.connector_akshare import (
     _normalize_symbol,
     fetch_klines_akshare,
-    fetch_klines_akshare_minute,
 )
 
 

@@ -118,7 +118,7 @@ class DailyStockConfig:
 
             # 从字典创建配置对象
             return cls(**config_data)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # 配置加载失败应降级到默认值
             print(f"警告: 加载配置文件失败: {e}, 使用默认配置")
             return cls()
 

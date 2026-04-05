@@ -130,7 +130,7 @@ def run_pipeline_tushare(
                 print(f"✓ 成功获取 {symbol} 数据: {len(rows)} 条")
             else:
                 print(f"⚠ 未获取到 {symbol} 数据")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # Continue processing other symbols on error
             print(f"✗ 获取 {symbol} 数据失败: {e}")
 
     return total

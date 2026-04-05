@@ -3,7 +3,7 @@
 from datetime import date
 from unittest.mock import MagicMock, patch
 
-import pytest
+import pytest  # pylint: disable=unused-import  # Used for test discovery
 
 
 def test_order_book_id_to_symbol():

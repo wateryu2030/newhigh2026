@@ -78,7 +78,7 @@ async def test_basic_functionality():
             )
             print("   ✅ 完整流程测试成功")
             print("   分析完成时间: %s", results.get("timestamp"))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # Test error reporting
             print("   ⚠ 完整流程测试遇到问题: %s", e)
             print("   (这可能是正常的，因为某些功能还在开发中)")
 
@@ -94,7 +94,7 @@ async def test_basic_functionality():
 
         return True
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught  # Test error reporting
         print("测试失败: %s", e)
         traceback.print_exc()
         return False
@@ -126,7 +126,7 @@ async def test_individual_stock_analysis():
 
         return True
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught  # Test error reporting
         print(f"❌ 单个股票分析测试失败: {e}")
         return False
 
@@ -171,7 +171,7 @@ async def test_config_validation():
 
         return True
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught  # Test error reporting
         print("配置验证测试失败: %s", e)
         return False
 

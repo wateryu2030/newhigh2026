@@ -1,7 +1,6 @@
 """Tests for Binance connector."""
 
-import pytest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from data_engine.connector_binance import fetch_klines
 

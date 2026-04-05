@@ -2,9 +2,11 @@
 core.data_service 模块单元测试
 """
 
-import unittest
 import os
 import tempfile
+import unittest
+
+# pylint: disable=consider-using-with  # NamedTemporaryFile with delete=False is intentional for DB tests
 
 
 
