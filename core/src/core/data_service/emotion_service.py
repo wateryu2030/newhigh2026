@@ -52,7 +52,7 @@ class EmotionService(BaseService):
             for r in rows
         ]
 
-    def update_emotion_state(
+    def update_emotion_state(  # pylint: disable=too-many-positional-arguments  # Macro-level parameters needed for emotion state tracking
         self,
         trade_date: str,
         emotion_state: str,

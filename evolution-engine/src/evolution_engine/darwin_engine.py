@@ -3,7 +3,6 @@ Strategy Darwin Engine — 策略达尔文淘汰系统
 持续评估实盘表现，淘汰劣质策略、保留/进化优质策略
 """
 
-from datetime import datetime, timedelta
 from typing import Callable, List, Optional
 
 from .strategy_pool import StrategyPool, StrategyRecord, StrategyStatus
@@ -23,7 +22,7 @@ def should_retire(
     - 回撤超限（若提供 backtest_metrics）
     - 实盘时间过短则不轻易淘汰（可选）
     """
-    if record.status != StrategyStatus.LIVE and record.status != StrategyStatus.SUSPENDED:
+    if record.status not in (StrategyStatus.LIVE, StrategyStatus.SUSPENDED):  # pylint: disable=use-implicit-booleaness-not-comparison  # Explicit status check for clarity
         return False
     if record.alpha_score is not None and record.alpha_score < min_alpha_score:
         return True

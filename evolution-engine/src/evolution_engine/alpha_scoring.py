@@ -6,7 +6,7 @@ Alpha Scoring Engine — Alpha 评分系统
 from typing import Any, Dict, Optional
 
 
-def alpha_score(
+def alpha_score(  # pylint: disable=too-many-positional-arguments  # Multi-metric scoring requires 6 parameters for comprehensive evaluation
     sharpe_ratio: Optional[float] = None,
     sortino_ratio: Optional[float] = None,
     max_drawdown: Optional[float] = None,

@@ -63,5 +63,5 @@ def predict_signal(model: Any, obs: Any) -> int:
     try:
         action, _ = model.predict(obs, deterministic=True)
         return int(action)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught  # RL model prediction fallback, safe to return 0 (HOLD)
         return 0

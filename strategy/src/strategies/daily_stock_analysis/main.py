@@ -169,7 +169,7 @@ class DailyStockAnalyzer:
             return {"error": str(e)}
 
     async def send_notifications(
-        self, results: Dict[str, Any], channels: Optional[List[str]] = None
+        self, results: Dict[str, Any], channels: Optional[List[str]] = None  # pylint: disable=redefined-outer-name  # Parameter shadows outer scope in different method
     ) -> Dict[str, bool]:
         """
         发送通知
