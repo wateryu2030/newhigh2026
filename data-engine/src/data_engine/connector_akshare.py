@@ -3,27 +3,18 @@
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from typing import Any, Dict, List
 
 from core import OHLCV
+from core.ashare_symbol import normalize_ashare_symbol
+
+logger = logging.getLogger(__name__)
 
 try:
     import akshare as ak
 except ImportError:
     ak = None
-
-
-def _normalize_symbol(code: str) -> str:
-    """A 股/北交所代码转为带交易所后缀：600519->600519.SH, 000001->000001.SZ, 830799->830799.BSE。"""
-    code = str(code).strip().split(".", maxsplit=1)[0]
-    if not code:
-        return code
-    # 北交所：4/8/9 开头或 8 位
-    if code.startswith(("4", "8", "9")) or len(code) == 8:
-        return f"{code}.BSE"
-    if code.startswith("6"):
-        return f"{code}.SH"
-    return f"{code}.SZ"
 
 
 def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
@@ -46,8 +37,8 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
                 end_date=end_date,
                 adjust=adjust,
             )
-        except (RuntimeError, OSError, ValueError):
-            pass
+        except Exception as e:  # pylint: disable=broad-exception-caught  # External API (akshare) error handling
+            logger.debug("akshare stock_zh_a_hist_em failed: %s", e)
     try:
         return ak.stock_zh_a_hist(
             symbol=code,
@@ -56,7 +47,8 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
             period=period,
             adjust=adjust,
         )
-    except (RuntimeError, OSError, ValueError):
+    except Exception as e:  # pylint: disable=broad-exception-caught  # External API (akshare) error handling
+        logger.debug("akshare stock_zh_a_hist failed: %s", e)
         return None
 
 
@@ -90,7 +82,7 @@ def fetch_klines_akshare(  # pylint: disable=too-many-positional-arguments
     col_vol = "成交量"
     if col_date not in df.columns:
         return []
-    out_symbol = _normalize_symbol(code)
+    out_symbol = normalize_ashare_symbol(code)
     interval = "1d" if period == "daily" else "1w" if period == "weekly" else "1M"
     result = []
     for _, row in df.iterrows():
@@ -130,7 +122,8 @@ def _fetch_bse_stock_list() -> List[Dict[str, Any]]:
         return out
     try:
         df_bj = ak.stock_info_bj_name_code()
-    except (RuntimeError, OSError, ValueError):
+    except Exception as e:  # pylint: disable=broad-exception-caught  # External API (akshare) error handling
+        logger.debug("akshare stock_info_bj_name_code failed: %s", e)
         return out
     if df_bj is None or df_bj.empty:
         return out
@@ -141,7 +134,7 @@ def _fetch_bse_stock_list() -> List[Dict[str, Any]]:
         name = str(row.get(name_col, row.get("证券简称", ""))).strip()
         if not code:
             continue
-        sym = _normalize_symbol(code)
+        sym = normalize_ashare_symbol(code)
         out.append({"symbol": sym, "name": name or code, "market": "bse"})
     return out
 
@@ -163,11 +156,16 @@ def get_stock_list_akshare(include_bse: bool = True) -> List[Dict[str, Any]]:
                 name = str(row.get("name", "")).strip()
                 if not code:
                     continue
-                sym = _normalize_symbol(code)
-                market = "sh" if sym.endswith(".SH") else "sz"
-                out.append({"symbol": sym, "name": name or code, "market": market})
-    except (RuntimeError, OSError, ValueError):
-        pass
+                sym = normalize_ashare_symbol(code)
+                if sym.endswith(".BSE"):
+                    mkt = "bse"
+                elif sym.endswith(".SH"):
+                    mkt = "sh"
+                else:
+                    mkt = "sz"
+                out.append({"symbol": sym, "name": name or code, "market": mkt})
+    except Exception as e:  # pylint: disable=broad-exception-caught  # External API (akshare) error handling
+        logger.debug("akshare stock_info_a_code_name failed: %s", e)
     if include_bse:
         out.extend(_fetch_bse_stock_list())
     return out
@@ -187,8 +185,8 @@ def fetch_klines_akshare_minute(
     if ak is None:
         raise ImportError("akshare is required: pip install akshare")
     code = str(symbol).strip().split(".", maxsplit=1)[0]
-    if not code or len(code) != 6:
-        raise ValueError("A-share symbol must be 6 digits")
+    if not code or len(code) not in (6, 8):
+        raise ValueError("A-share/BSE symbol: 6 位（沪深）或 8 位（北交所）")
     try:
         df = ak.stock_zh_a_hist_min_em(
             symbol=code,
@@ -196,11 +194,12 @@ def fetch_klines_akshare_minute(
             start_date=start_date,
             end_date=end_date,
         )
-    except (RuntimeError, OSError, ValueError):
+    except Exception as e:  # pylint: disable=broad-exception-caught  # External API (akshare) error handling
+        logger.debug("akshare stock_zh_a_hist_min_em failed: %s", e)
         return []
     if df is None or df.empty:
         return []
-    out_symbol = _normalize_symbol(code)
+    out_symbol = normalize_ashare_symbol(code)
     interval = f"{period}m"
     result = []
     for _, row in df.iterrows():

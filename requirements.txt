@@ -18,7 +18,7 @@ duckdb>=0.9.0
 -e ./ai-models
 -e ./feature-engine
 -e ./backtest-engine
--e ./strategy-engine
+-e ./strategy
 -e ./portfolio-engine
 -e ./risk-engine
 -e ./execution-engine
@@ -32,3 +32,11 @@ duckdb>=0.9.0
 -e ./simulation-world
 -e ./meta-fund-manager
 -e ./gateway
+
+# Optional / quant platform extras (init_data, parquet, unified logging)
+yfinance>=0.2.40
+pyarrow>=14.0.0
+loguru>=0.7.0
+pandas-datareader>=0.10.0
+PyYAML>=6.0.1
+vectorbt>=0.26.0

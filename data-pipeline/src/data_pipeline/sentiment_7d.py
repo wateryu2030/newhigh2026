@@ -144,11 +144,11 @@ def _from_spot_df(df: pd.DataFrame) -> Dict[str, Any]:
 def compute_sentiment_7d_from_akshare() -> Dict[str, Any]:
     """
     拉东财全市场现货；在服务器或隧道环境可能极慢，使用线程超时避免 Gateway 长时间挂起。
-    超时秒数：环境变量 SENTIMENT_7D_AKSHARE_TIMEOUT_SEC（默认 25）。
+    超时秒数：环境变量 SENTIMENT_7D_AKSHARE_TIMEOUT_SEC（默认 12，失败则尽快走日 K 兜底）。
     默认临时剥离 *proxy* 环境变量（与 ashare_daily_kline 一致），避免本机坏代理导致 HTTPSConnectionPool 失败。
     若必须走公司代理，设 SENTIMENT_7D_STRIP_PROXY=0。
     """
-    timeout = float(os.environ.get("SENTIMENT_7D_AKSHARE_TIMEOUT_SEC", "25"))
+    timeout = float(os.environ.get("SENTIMENT_7D_AKSHARE_TIMEOUT_SEC", "12"))
 
     def _fetch():
         import akshare as ak
@@ -233,30 +233,66 @@ def compute_sentiment_7d_from_daily() -> Optional[Dict[str, Any]]:
                 "detail": f"DuckDB 文件不存在: {path}（请设置 QUANT_SYSTEM_DUCKDB_PATH）",
             }
         conn = get_conn(read_only=False)
-        row_m = conn.execute("SELECT MAX(date) AS d FROM a_stock_daily").fetchone()
-        if not row_m or row_m[0] is None:
+        # 最近若干 DISTINCT 交易日，从中找「相邻两日 + 有效 join 行数 ≥ 阈值」的第一对。
+        # 避免仅个别标的写入最新 date（增量未跑完）时全局 MAX(date) 只有 1 行、情绪整条链路失败。
+        min_n = max(30, int(os.environ.get("SENTIMENT_7D_MIN_STOCKS", "50")))
+        max_pairs = max(3, int(os.environ.get("SENTIMENT_7D_DAILY_DATE_LOOKBACK", "25")))
+        date_rows = conn.execute(
+            """
+            SELECT DISTINCT date FROM a_stock_daily ORDER BY date DESC LIMIT ?
+            """,
+            [max_pairs + 1],
+        ).fetchall()
+        dates = [r[0] for r in date_rows if r and r[0] is not None]
+        if not dates:
             conn.close()
             return {"error": "daily_empty_table", "detail": "a_stock_daily 无数据，请先 Tushare 回补"}
-        d_last = row_m[0]
+        if len(dates) < 2:
+            conn.close()
+            return {
+                "error": "daily_single_date_only",
+                "detail": "a_stock_daily 仅有一个交易日，无法算涨跌",
+            }
+        d_last = d_prev = None
+        best_diag: List[str] = []
+        for i in range(min(len(dates) - 1, max_pairs)):
+            dl, dp = dates[i], dates[i + 1]
+            cnt_row = conn.execute(
+                """
+                SELECT COUNT(*) FROM a_stock_daily AS a
+                INNER JOIN a_stock_daily AS b
+                  ON a.code = b.code AND a.date = ? AND b.date = ?
+                WHERE b.close IS NOT NULL AND b.close > 0 AND a.close IS NOT NULL
+                """,
+                [dl, dp],
+            ).fetchone()
+            cnt = int(cnt_row[0]) if cnt_row else 0
+            if len(best_diag) < 5:
+                best_diag.append(f"{str(dl)[:10]}/{str(dp)[:10]}:{cnt}")
+            if cnt >= min_n:
+                d_last, d_prev = dl, dp
+                break
+        if d_last is None or d_prev is None:
+            conn.close()
+            return {
+                "error": "daily_no_valid_date_pair",
+                "detail": (
+                    f"最近 {len(dates)} 个交易日无相邻两日同时满足 ≥{min_n} 只有效涨跌样本（"
+                    f"示例计数 {', '.join(best_diag)}）；请补全最新交易日全市场日 K 或稍后重试。"
+                ),
+            }
         df = conn.execute(
             """
-            WITH x AS (
-                SELECT
-                    code::VARCHAR AS code,
-                    date,
-                    close,
-                    amount,
-                    LAG(close) OVER (PARTITION BY code ORDER BY date) AS prev_close
-                FROM a_stock_daily
-            )
             SELECT
-                code,
-                (close - prev_close) / NULLIF(prev_close, 0) * 100.0 AS change_pct,
-                COALESCE(amount, 0.0) AS amount
-            FROM x
-            WHERE date = ? AND prev_close IS NOT NULL AND prev_close > 0
+                a.code::VARCHAR AS code,
+                (a.close - b.close) / NULLIF(b.close, 0) * 100.0 AS change_pct,
+                COALESCE(a.amount, 0.0) AS amount
+            FROM a_stock_daily AS a
+            INNER JOIN a_stock_daily AS b
+              ON a.code = b.code AND a.date = ? AND b.date = ?
+            WHERE b.close IS NOT NULL AND b.close > 0 AND a.close IS NOT NULL
             """,
-            [d_last],
+            [d_last, d_prev],
         ).df()
         conn.close()
         if df is None or df.empty:
@@ -330,10 +366,25 @@ def compute_sentiment_7d_from_duckdb() -> Optional[Dict[str, Any]]:
 
 def get_market_sentiment_7d(prefer_db: bool = True) -> Dict[str, Any]:
     """
-    顺序：库内实时 → 东财现货 →（可选）新浪现货 → 日 K 近似。
-    先前实现把日 K 放在现货之前，导致只要有日线就永远看不到盘中现货，体感严重滞后。
+    顺序（可配）：
+
+    - 默认（``SENTIMENT_7D_DAILY_BEFORE_SPOT=1``）：库内实时 → **日 K 快路径** → 东财现货 → 新浪 → 兜底。
+      日 K 查询已优化为仅扫最近两个交易日，避免全表 LAG 卡死；东财 ``spot_em`` 在弱网可能跑数分钟，
+      故默认先给可响应的 DuckDB 结果。
+    - 设 ``SENTIMENT_7D_DAILY_BEFORE_SPOT=0``：恢复「实时 → 东财 → 新浪 → 日 K」，优先盘中现货。
     """
     errors: List[str] = []
+
+    daily_on = os.environ.get("SENTIMENT_7D_DAILY_FALLBACK", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+    )
+    daily_before_spot = os.environ.get("SENTIMENT_7D_DAILY_BEFORE_SPOT", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+    )
 
     if prefer_db:
         out = compute_sentiment_7d_from_duckdb()
@@ -341,7 +392,19 @@ def get_market_sentiment_7d(prefer_db: bool = True) -> Dict[str, Any]:
             out["data_source"] = "duckdb_a_stock_realtime"
             return out
 
-    ak_em = os.environ.get("SENTIMENT_7D_AKSHARE_ENABLE", "1").strip().lower() not in (
+    if daily_before_spot and daily_on:
+        out_d = compute_sentiment_7d_from_daily()
+        if out_d:
+            if "error" not in out_d:
+                out_d["data_source"] = "duckdb_a_stock_daily"
+                return out_d
+            err = str(out_d.get("error", "daily"))
+            tail = out_d.get("detail") or ""
+            errors.append(f"{err}:{tail[:80]}")
+
+    # 默认关：东财 spot_em 全市场抓取在弱网/境外常数分钟且线程难中断；有日 K 时由 DAILY_BEFORE_SPOT 已足够。
+    # 需要盘中全市场现货时再设 SENTIMENT_7D_AKSHARE_ENABLE=1（可配合 DAILY_BEFORE_SPOT=0）。
+    ak_em = os.environ.get("SENTIMENT_7D_AKSHARE_ENABLE", "0").strip().lower() not in (
         "0",
         "false",
         "no",
@@ -367,12 +430,7 @@ def get_market_sentiment_7d(prefer_db: bool = True) -> Dict[str, Any]:
         if out_s and out_s.get("error"):
             errors.append(str(out_s.get("error")))
 
-    daily_on = os.environ.get("SENTIMENT_7D_DAILY_FALLBACK", "1").strip().lower() not in (
-        "0",
-        "false",
-        "no",
-    )
-    if daily_on:
+    if (not daily_before_spot) and daily_on:
         out_d = compute_sentiment_7d_from_daily()
         if out_d:
             if "error" not in out_d:

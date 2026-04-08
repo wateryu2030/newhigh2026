@@ -13,44 +13,28 @@ interface KPICardProps {
 }
 
 export function KPICard({ title, value, change, sparklineData, positive, sub, className = '' }: KPICardProps) {
-  const valueColor =
-    positive === true ? '#FF3B30' : positive === false ? '#FF7439' : '#ECEDF6';
-  const changeColor = change != null ? (change >= 0 ? '#22C55E' : '#FF3B30') : undefined;
+  const valueTone =
+    positive === true ? 'text-primary-fixed' : positive === false ? 'text-tertiary' : 'text-on-surface';
+  const changeTone =
+    change != null ? (change >= 0 ? 'text-accent-green' : 'text-accent-red') : '';
   const chartData = (sparklineData ?? []).map((v, i) => ({ v, i }));
 
   return (
     <div
-      className={`rounded-2xl p-5 transition-all duration-200 hover:scale-[1.02] ${className}`}
-      style={{
-        backgroundColor: '#14171C',
-        border: '1px solid #2A2E36',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-      }}
+      className={`rounded-2xl border border-card-border bg-card-bg p-5 shadow-card transition-all duration-200 hover:scale-[1.02] ${className}`}
     >
-      <p
-        className="mb-1 text-xs font-medium uppercase tracking-wider"
-        style={{ color: '#94A3B8', fontFamily: 'Space Grotesk' }}
-      >
+      <p className="mb-1 font-label text-xs font-medium uppercase tracking-wider text-text-secondary">
         {title}
       </p>
       <div className="flex items-baseline justify-between gap-2">
-        <span
-          className="text-2xl font-bold md:text-3xl"
-          style={{ color: valueColor, fontFamily: 'Space Grotesk' }}
-        >
-          {value ?? '—'}
-        </span>
+        <span className={`font-label text-2xl font-bold md:text-3xl ${valueTone}`}>{value ?? '—'}</span>
         {change != null && (
-          <span className="text-sm font-semibold" style={{ color: changeColor }}>
+          <span className={`text-sm font-semibold ${changeTone}`}>
             {change >= 0 ? '↑' : '↓'} {Math.abs(change).toFixed(1)}%
           </span>
         )}
       </div>
-      {sub != null && (
-        <p className="mt-1 text-xs" style={{ color: '#94A3B8' }}>
-          {sub}
-        </p>
-      )}
+      {sub != null && <p className="mt-1 text-xs text-text-secondary">{sub}</p>}
       {chartData.length > 1 && (
         <div className="mt-3 h-8 w-full">
           <ResponsiveContainer width="100%" height={30}>
@@ -58,7 +42,7 @@ export function KPICard({ title, value, change, sparklineData, positive, sub, cl
               <Line
                 type="monotone"
                 dataKey="v"
-                stroke="#FF3B30"
+                stroke="var(--color-primary)"
                 strokeWidth={1.5}
                 dot={false}
                 isAnimationActive

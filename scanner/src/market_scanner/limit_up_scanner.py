@@ -7,13 +7,16 @@ def run_limit_up_scanner() -> int:
     from ._storage import _get_conn, write_signals
 
     conn = _get_conn()
+    if not conn:
+        return write_signals([], "limitup")
     try:
         df = conn.execute(
             "SELECT code, name, limit_up_times FROM a_stock_limitup ORDER BY limit_up_times DESC NULLS LAST LIMIT 200"
         ).fetchdf()
     except Exception:
         df = None
-    conn.close()
+    finally:
+        conn.close()
     if df is None or df.empty:
         return write_signals([], "limitup")
     signals = []

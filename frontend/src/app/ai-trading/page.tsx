@@ -111,7 +111,7 @@ export default function AITradingPage() {
       <SystemDataOverview />
 
       {error && (
-        <div className="rounded-card border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+        <div className="rounded-card border border-[color:var(--color-warning-banner-border)] bg-[color:var(--color-warning-banner-bg)] p-4 text-sm text-[color:var(--color-badge-amber-text)]">
           <p className="font-medium">API 请求失败（404）</p>
           <p className="mt-1 text-text-secondary">请先启动 Gateway：在项目根目录执行</p>
           <code className="mt-2 block rounded bg-surface-container px-3 py-2 text-xs text-text-primary">uvicorn gateway.app:app --reload --host 0.0.0.0 --port 8000</code>
@@ -129,10 +129,10 @@ export default function AITradingPage() {
               <span
                 className={`rounded px-3 py-1 text-sm font-medium ${
                   decision.signal === 'BUY'
-                    ? 'bg-emerald-500/20 text-emerald-400'
+                    ? 'bg-[color:var(--color-success-alpha-15)] text-accent-green'
                     : decision.signal === 'SELL'
-                    ? 'bg-rose-500/20 text-rose-400'
-                    : 'bg-slate-500/20 text-slate-300'
+                      ? 'bg-accent-red/15 text-accent-red'
+                      : 'bg-outline-variant/20 text-text-primary'
                 }`}
               >
                 {decision.signal}
@@ -254,7 +254,7 @@ export default function AITradingPage() {
           </div>
         ) : themes.length > 0 ? (
           <div className="space-y-2 text-sm text-text-secondary">
-            <p className="text-amber-200/90 font-medium">{t('aiTrading.noEffectiveData')}</p>
+            <p className="font-medium text-[color:var(--color-badge-amber-text)]/90">{t('aiTrading.noEffectiveData')}</p>
             <p>{t('aiTrading.placeholderHiddenHint')}</p>
             <p>{t('aiTrading.dataIncompleteHint')}</p>
           </div>
@@ -270,7 +270,7 @@ export default function AITradingPage() {
           <SniperCandidatesTable rows={sniper} />
         ) : sniper.length > 0 ? (
           <div className="space-y-2 text-sm text-text-secondary">
-            <p className="text-amber-200/90 font-medium">{t('aiTrading.noEffectiveData')}</p>
+            <p className="font-medium text-[color:var(--color-badge-amber-text)]/90">{t('aiTrading.noEffectiveData')}</p>
             <p>{t('aiTrading.placeholderHiddenHint')}</p>
             <p>{t('aiTrading.sniperIncompleteHint')}</p>
             <p>{t('aiTrading.sniperNoDataHint')}</p>
@@ -287,7 +287,7 @@ export default function AITradingPage() {
           <TradeSignalsTable rows={signals} />
         ) : signals.length > 0 ? (
           <div className="space-y-2 text-sm text-text-secondary">
-            <p className="text-amber-200/90 font-medium">{t('aiTrading.noEffectiveData')}</p>
+            <p className="font-medium text-[color:var(--color-badge-amber-text)]/90">{t('aiTrading.noEffectiveData')}</p>
             <p>{t('aiTrading.placeholderHiddenHint')}</p>
             <p>{t('aiTrading.signalsNoDataHint')}</p>
           </div>

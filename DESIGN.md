@@ -66,8 +66,16 @@
 ### 1.6 叠加与特效
 
 - `--shadow-glass`: `0px 24px 48px rgba(0,0,0,0.4)`
+- `--shadow-card`: `0 2px 8px rgba(0,0,0,0.2)`（卡片/侧栏）
 - `--glow-primary`: `0 0 20px rgba(255,59,48,0.3)`
-- 毛玻璃：`rgba(28,32,40,0.6)` + `blur(20px)`（`.glass-card`）
+- 毛玻璃：`--color-glass-bg`（`rgba(28,32,40,0.6)`）+ `blur(20px)`（`.glass-card`）
+- `--color-primary-alpha-15`: `rgba(255,59,48,0.15)`（顶栏热点标签底）
+- `--color-hot-ticker-bar`: `rgba(16,19,26,0.95)`（独立热点条背景）
+- `--color-text-code`: `#CBD5E1`（`<pre>` / 代码块正文）
+- `--color-surface-container`: `#161A21`（表单控件底等，与 Tailwind `surface-container` 对齐）
+- `--color-chart-amber`: `#f59e0b`（风险曲线等辅助序列）
+- `--color-text-on-warm-fill`: `#ffffff`（热力图等高饱和格内文字）
+- **`chartTheme.ts` / `lwChartColors`**：`lightweight-charts` 使用与上表一致的小写 hex 镜像，因第三方库不解析 `var()`。
 
 ---
 

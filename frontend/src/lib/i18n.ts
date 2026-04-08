@@ -69,11 +69,14 @@ export const translations: Record<Lang, Record<string, string>> = {
     'dashboard.healthWebhookOn': '告警 Webhook 已配置',
     'dashboard.healthWebhookOff': '未配置 ALERT_WEBHOOK_URL',
     'dashboard.tabOverview': '总览',
+    'dashboard.partialApiWarning':
+      '部分接口不可用（常见：Gateway 未启动、反代 502/超时）。下方示意数据仅供布局预览；请在本机或服务器启动 uvicorn，并确认 Next 的 API_PROXY_TARGET 指向可达的 Gateway。',
     'dashboard.tabNews': '新闻手刷',
     'dashboard.newsManualTitle': '手动拉取宏观 RSS 并生成汇总',
     'dashboard.newsManualHint':
       '点击后从配置的 RSS 源写入 DuckDB（国际宏观），下方展示最近头条列表。勾选推送将把本页汇总发到服务器配置的 NEWS_BREAKING_WEBHOOK_URL（如飞书机器人）。生产环境开启 JWT 时需登录。',
     'dashboard.newsManualRefresh': '拉取并生成汇总',
+    'dashboard.newsManualFetchError': 'RSS 写入失败（仍展示库内已有摘要）：',
     'dashboard.newsManualSendWebhook': '同时推送 Webhook（飞书等）',
     'dashboard.newsManualRssInserted': '本次 RSS 新入库',
     'dashboard.newsManualSummaryLines': '摘要条数',
@@ -139,12 +142,10 @@ export const translations: Record<Lang, Record<string, string>> = {
     'news.tabMarket': '市场快讯',
     'news.tabCollector': '政策采集',
     'news.collectorHint':
-      '本栏为仓库内 policy-news 脚本写入的 SQLite（国务院/新华网等），与第三方 Awesome Finance Skills 无依赖。若为空，请在服务器运行采集并确保 Gateway 可读该库（见仓库 integrations/hongshan/policy-news）。',
+      '本栏数据写入主库 DuckDB 表 news_items（symbol=__POLICY__，国务院/新华网等），与站内 RSS、东财快讯同源。与第三方 Awesome Finance Skills 无依赖。若为空，请在部署机运行 integrations/hongshan/policy-news/news_collector.py（需与 Gateway 相同 QUANT_SYSTEM_DUCKDB_PATH）。',
     'news.collectorEmpty':
-      '尚无政策采集数据：在服务器执行 policy-news/news_collector.py 或确认 POLICY_NEWS_DB_PATH / 默认路径存在 news.db。',
-    'news.collectorNoDb':
-      '服务端未找到 policy-news 的 SQLite（integrations/hongshan/policy-news/sqlite/news.db）。部署机上跑一次采集或设置 POLICY_NEWS_DB_PATH。',
-    'news.collectorReadError': '政策库已配置但读取失败（权限/损坏/SQLite 忙）。请查看 Gateway 日志。',
+      '尚无政策采集数据：在服务器执行 integrations/hongshan/policy-news/news_collector.py，写入 news_items（与 Gateway 共用 QUANT_SYSTEM_DUCKDB_PATH）。',
+    'news.collectorReadError': '政策数据读取失败（DuckDB 路径/权限/连接）。请查看 Gateway 日志与 QUANT_SYSTEM_DUCKDB_PATH。',
     'news.hint': '按股票代码筛选、展示情感汇总。',
     'news.placeholder': '股票代码（如 000001）留空查全部',
     'news.query': '查询',
@@ -158,6 +159,9 @@ export const translations: Record<Lang, Record<string, string>> = {
     'news.hintDataPage': '在「数据」页查看数据状态与更新说明',
     'news.goDataPage': '前往数据页',
     'news.dataSource': '数据来源',
+    'news.akshareHint':
+      '东财实时接口单股约 10 条；输入代码筛选时条数有限。留空「查全部」时会合并多只旗舰股快讯。入库 news_items 后可展示更多。',
+    'news.dbTotalLine': '全库 news_items 约 {n} 条（与系统数据概览同源）',
     'strategies.title': '策略池',
     'strategies.id': '策略 ID',
     'strategies.name': '名称',
@@ -400,11 +404,14 @@ export const translations: Record<Lang, Record<string, string>> = {
     'dashboard.healthWebhookOn': 'Alert webhook configured',
     'dashboard.healthWebhookOff': 'ALERT_WEBHOOK_URL not set',
     'dashboard.tabOverview': 'Overview',
+    'dashboard.partialApiWarning':
+      'Some APIs failed (Gateway down, proxy 502/timeout). Numbers below are stub layout preview only. Start uvicorn and point Next API_PROXY_TARGET at a reachable Gateway.',
     'dashboard.tabNews': 'News refresh',
     'dashboard.newsManualTitle': 'Pull macro RSS & build summary',
     'dashboard.newsManualHint':
       'Fetches configured RSS into DuckDB (global macro), then shows recent headlines. If “send webhook” is checked, the summary is POSTed to NEWS_BREAKING_WEBHOOK_URL on the server (e.g. Feishu bot). JWT required when JWT_AUTH_REQUIRED=1.',
     'dashboard.newsManualRefresh': 'Refresh & summarize',
+    'dashboard.newsManualFetchError': 'RSS ingest failed (showing cached summary if any):',
     'dashboard.newsManualSendWebhook': 'Also send webhook',
     'dashboard.newsManualRssInserted': 'RSS rows inserted',
     'dashboard.newsManualSummaryLines': 'Summary lines',
@@ -470,12 +477,10 @@ export const translations: Record<Lang, Record<string, string>> = {
     'news.tabMarket': 'Market briefs',
     'news.tabCollector': 'Policy collector',
     'news.collectorHint':
-      'SQLite filled by policy-news (gov/xinhua sources). Not tied to Awesome Finance Skills. If empty, run the collector on the server.',
+      'Policy feed is stored in main DuckDB news_items (symbol=__POLICY__), same DB as RSS/EM. Not tied to Awesome Finance Skills. If empty, run integrations/hongshan/policy-news/news_collector.py with the same QUANT_SYSTEM_DUCKDB_PATH as Gateway.',
     'news.collectorEmpty':
-      'No collector rows yet. Run policy-news/news_collector.py or set POLICY_NEWS_DB_PATH.',
-    'news.collectorNoDb':
-      'Policy SQLite not found on server. Run the collector or set POLICY_NEWS_DB_PATH.',
-    'news.collectorReadError': 'Policy DB present but read failed. Check Gateway logs.',
+      'No policy rows yet. Run integrations/hongshan/policy-news/news_collector.py (same QUANT_SYSTEM_DUCKDB_PATH as Gateway).',
+    'news.collectorReadError': 'Failed to read policy rows from DuckDB. Check Gateway logs and QUANT_SYSTEM_DUCKDB_PATH.',
     'news.hint': 'Filter by symbol, sentiment summary.',
     'news.placeholder': 'Symbol (e.g. 000001), empty = all',
     'news.query': 'Query',
@@ -489,6 +494,9 @@ export const translations: Record<Lang, Record<string, string>> = {
     'news.hintDataPage': 'Check Data page for status and update instructions',
     'news.goDataPage': 'Go to Data page',
     'news.dataSource': 'Source',
+    'news.akshareHint':
+      'Eastmoney live feed returns ~10 items per symbol when a code is set. Leave the box empty for a broader merge across several liquid names. Run news pipelines into news_items for larger lists.',
+    'news.dbTotalLine': 'news_items table ≈ {n} rows (same DB as system overview)',
     'strategies.title': 'Strategy Pool',
     'strategies.id': 'ID',
     'strategies.name': 'Name',

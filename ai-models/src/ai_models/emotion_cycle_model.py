@@ -109,6 +109,8 @@ class EmotionCycleModel:
         if df is None or df.empty:
             return 0
         conn = self._get_connection()
+        if not conn:
+            return 0
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
             ensure_tables(conn)
@@ -164,6 +166,8 @@ def run_emotion_cycle() -> str:
     from ._storage import _get_conn
 
     conn = _get_conn()
+    if not conn:
+        return "冰点期"
     try:
         from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error
         ensure_tables(conn)

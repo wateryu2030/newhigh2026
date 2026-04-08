@@ -6,6 +6,7 @@ from .order_manager import (
     place_market_sell,
     cancel_all_open_orders,
 )
+from .paper_trading import PaperTradingConfig, paper_step
 
 __all__ = [
     "place_order",
@@ -15,4 +16,6 @@ __all__ = [
     "place_market_buy",
     "place_market_sell",
     "cancel_all_open_orders",
+    "PaperTradingConfig",
+    "paper_step",
 ]

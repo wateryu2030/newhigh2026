@@ -38,29 +38,22 @@ export function StockDrawer({ open, onClose, stock }: StockDrawerProps) {
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-[color:var(--color-overlay-scrim)] backdrop-blur-sm"
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="button"
         tabIndex={0}
         aria-label="关闭"
       />
-      <aside
-        className="animate-drawer-in fixed top-0 right-0 z-50 h-full w-full max-w-md overflow-y-auto shadow-2xl md:w-[420px]"
-        style={{
-          backgroundColor: '#14171C',
-          borderLeft: '1px solid #2A2E36',
-        }}
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b px-4 py-3" style={{ backgroundColor: '#14171C', borderColor: '#2A2E36' }}>
-          <h3 className="text-lg font-bold" style={{ color: '#F1F5F9' }}>
+      <aside className="animate-drawer-in fixed right-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto border-l border-card-border bg-card-bg shadow-2xl md:w-[420px]">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-card-border bg-card-bg px-4 py-3">
+          <h3 className="text-lg font-bold text-text-primary">
             {stock?.stock_name} ({stock?.stock_code})
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 transition hover:bg-white/10"
-            style={{ color: '#94A3B8' }}
+            className="rounded-lg p-2 text-text-secondary transition hover:bg-white/10"
             aria-label="关闭"
           >
             <span className="text-xl">×</span>
@@ -68,57 +61,51 @@ export function StockDrawer({ open, onClose, stock }: StockDrawerProps) {
         </div>
 
         <div className="space-y-4 p-4">
-          {loading && (
-            <div className="py-8 text-center" style={{ color: '#64748B' }}>
-              加载中...
-            </div>
-          )}
+          {loading && <div className="py-8 text-center text-text-dim">加载中...</div>}
 
           {!loading && detail?.ok && f && (
             <>
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#0A0C10', border: '1px solid #2A2E36' }}>
-                <h4 className="mb-3 text-sm font-semibold" style={{ color: '#94A3B8' }}>
-                  因子概览
-                </h4>
+              <div className="rounded-xl border border-card-border bg-terminal-bg p-4">
+                <h4 className="mb-3 text-sm font-semibold text-text-secondary">因子概览</h4>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt style={{ color: '#64748B' }}>持股集中度</dt>
-                    <dd className="font-medium" style={{ color: '#F1F5F9' }}>{f.top10_ratio}%</dd>
+                    <dt className="text-text-dim">持股集中度</dt>
+                    <dd className="font-medium text-text-primary">{f.top10_ratio}%</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt style={{ color: '#64748B' }}>机构数</dt>
-                    <dd className="font-medium" style={{ color: '#F1F5F9' }}>{f.institution_count_current}</dd>
+                    <dt className="text-text-dim">机构数</dt>
+                    <dd className="font-medium text-text-primary">{f.institution_count_current}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt style={{ color: '#64748B' }}>长期机构数</dt>
-                    <dd className="font-medium" style={{ color: '#F1F5F9' }}>{f.long_term_institution_count}</dd>
+                    <dt className="text-text-dim">长期机构数</dt>
+                    <dd className="font-medium text-text-primary">{f.long_term_institution_count}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt style={{ color: '#64748B' }}>换主频率</dt>
-                    <dd className="font-medium" style={{ color: '#F1F5F9' }}>{f.turnover_avg != null ? f.turnover_avg.toFixed(2) : '—'}</dd>
+                    <dt className="text-text-dim">换主频率</dt>
+                    <dd className="font-medium text-text-primary">
+                      {f.turnover_avg != null ? f.turnover_avg.toFixed(2) : '—'}
+                    </dd>
                   </div>
                 </dl>
                 {detail.chip && (
-                  <div className="mt-4 border-t pt-3" style={{ borderColor: '#2A2E36' }}>
-                    <h4 className="mb-2 text-sm font-semibold" style={{ color: '#94A3B8' }}>
-                      筹码结构
-                    </h4>
+                  <div className="mt-4 border-t border-card-border pt-3">
+                    <h4 className="mb-2 text-sm font-semibold text-text-secondary">筹码结构</h4>
                     <dl className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <dt style={{ color: '#64748B' }}>筹码得分</dt>
-                        <dd className="font-medium" style={{ color: '#22D3EE' }}>
+                        <dt className="text-text-dim">筹码得分</dt>
+                        <dd className="font-medium text-[color:var(--color-data-cyan)]">
                           {detail.chip.chip_score != null ? detail.chip.chip_score : '—'}
                         </dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt style={{ color: '#64748B' }}>前十大 HHI</dt>
-                        <dd className="font-medium" style={{ color: '#F1F5F9' }}>
+                        <dt className="text-text-dim">前十大 HHI</dt>
+                        <dd className="font-medium text-text-primary">
                           {detail.chip.hhi_top10 != null ? detail.chip.hhi_top10 : '—'}
                         </dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt style={{ color: '#64748B' }}>前十占比环比(pts)</dt>
-                        <dd className="font-medium" style={{ color: '#F1F5F9' }}>
+                        <dt className="text-text-dim">前十占比环比(pts)</dt>
+                        <dd className="font-medium text-text-primary">
                           {detail.chip.top10_delta_pp != null
                             ? `${detail.chip.top10_delta_pp > 0 ? '+' : ''}${detail.chip.top10_delta_pp}`
                             : '—'}
@@ -130,10 +117,7 @@ export function StockDrawer({ open, onClose, stock }: StockDrawerProps) {
               </div>
 
               {detail.in_pool && (
-                <div
-                  className="rounded-lg px-3 py-2 text-sm"
-                  style={{ backgroundColor: 'rgba(34,197,94,0.15)', color: '#22C55E' }}
-                >
+                <div className="rounded-lg bg-[color:var(--color-success-alpha-15)] px-3 py-2 text-sm text-accent-green">
                   ✓ 当前在反量化选股池内
                 </div>
               )}
@@ -141,7 +125,7 @@ export function StockDrawer({ open, onClose, stock }: StockDrawerProps) {
           )}
 
           {!loading && !detail?.ok && detail !== null && (
-            <p className="text-sm" style={{ color: '#64748B' }}>暂无详细数据</p>
+            <p className="text-sm text-text-dim">暂无详细数据</p>
           )}
         </div>
       </aside>

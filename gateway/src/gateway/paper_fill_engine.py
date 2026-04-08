@@ -17,6 +17,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from core.ashare_symbol import normalize_ashare_symbol_bj_display
+
 _log = logging.getLogger(__name__)
 
 
@@ -25,11 +27,7 @@ def _ex_symbol(code6: str) -> str:
     if len(c) < 6:
         c = c.zfill(6) if c.isdigit() else "000001"
     c = "".join(x for x in c if x.isdigit())[:6] or "000001"
-    if c.startswith("6"):
-        return f"{c}.SH"
-    if c.startswith(("4", "8")):
-        return f"{c}.BJ"
-    return f"{c}.SZ"
+    return normalize_ashare_symbol_bj_display(c)
 
 
 def _last_price_and_name(conn, code6: str) -> tuple[Optional[float], Optional[str]]:

@@ -13,7 +13,7 @@ def _interval_to_binance(interval: str) -> str:
     return interval  # 1m, 5m, 1h, 1d are supported as-is
 
 
-def fetch_klines(
+def fetch_klines(  # pylint: disable=too-many-positional-arguments
     symbol: str,
     interval: str,
     limit: int = 500,

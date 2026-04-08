@@ -7,19 +7,19 @@ from typing import List
 from .gene import StrategyGene
 
 
-def _get_conn():
+def _get_conn(read_only: bool = False):
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path  # pylint: disable=import-outside-toplevel
 
         if not os.path.isfile(get_db_path()):
             return None
-        return get_conn(read_only=False)
+        return get_conn(read_only=read_only)
     except (ImportError, ModuleNotFoundError, OSError):
         return None
 
 
 def load_population_from_market(limit: int = 20) -> List[StrategyGene]:
-    conn = _get_conn()
+    conn = _get_conn(read_only=True)
     if conn is None:
         return []
     try:
@@ -35,7 +35,12 @@ def load_population_from_market(limit: int = 20) -> List[StrategyGene]:
             if sid:
                 genes.append(
                     StrategyGene(
-                        rule_tree={}, params={"name": str(row.get("name") or sid)}, strategy_id=sid
+                        rule_tree={"source": "strategy_market"},
+                        params={
+                            "name": str(row.get("name") or sid),
+                            "eval_strategy_id": sid,
+                        },
+                        strategy_id=sid,
                     )
                 )
         return genes
@@ -66,15 +71,15 @@ def save_gene_to_market(
         name = name or gene.params.get("name") or sid
         conn.execute(
             """
-            INSERT INTO strategy_market (strategy_id, name, return_pct, sharpe_ratio, max_drawdown, status, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO strategy_market (strategy_id, name, return_pct, sharpe_ratio, max_drawdown, status)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT (strategy_id) DO UPDATE SET
             name=EXCLUDED.name, return_pct=EXCLUDED.return_pct, sharpe_ratio=EXCLUDED.sharpe_ratio,
-            max_drawdown=EXCLUDED.max_drawdown, status=EXCLUDED.status, updated_at=CURRENT_TIMESTAMP
+            max_drawdown=EXCLUDED.max_drawdown, status=EXCLUDED.status, updated_at=now()
         """,
             [sid, name, return_pct, sharpe_ratio, max_drawdown, status],
         )
         conn.close()
         return True
-    except (ImportError, ModuleNotFoundError, ValueError, TypeError, OSError):
+    except Exception:
         return False

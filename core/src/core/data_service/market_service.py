@@ -6,22 +6,13 @@ from typing import Any, Dict, List
 
 import duckdb
 
+from ..ashare_symbol import order_book_id_to_newhigh_symbol
 from .db import get_conn
 
 
 def _order_book_id_to_ts_code(ob: str) -> str:
     """与 data_engine 一致：600519.XSHG -> 600519.SH, 000001.XSHE -> 000001.SZ"""
-    ob = (ob or "").strip()
-    if "." in ob:
-        code, market = ob.split(".", 1)
-        if market.upper() == "XSHG":
-            return f"{code}.SH"
-        if market.upper() == "XSHE":
-            return f"{code}.SZ"
-        if market.upper() == "BSE":
-            return f"{code}.BSE"
-        return f"{code}.{market}"
-    return ob
+    return order_book_id_to_newhigh_symbol(ob)
 
 
 def get_stock_list(limit: int = 100) -> List[Dict[str, Any]]:

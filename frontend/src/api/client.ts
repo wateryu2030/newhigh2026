@@ -1,6 +1,6 @@
 /**
  * 可选：强制指定 API 根（如单独子域 https://api.xxx.com）。
- * 不填时浏览器默认走「当前站点同源 /api」，由 Next **服务端** `app/api/[...path]/route.ts` 转发到 Gateway。
+ * 不填时浏览器默认走「当前站点同源 /api」，由 `next.config.js` rewrites 反代到 `API_PROXY_TARGET`（Gateway）。
  * 生产请在运行 Next 的环境中设置 `API_PROXY_TARGET`（或 `NEXT_PUBLIC_API_TARGET`），见 `.env.example`。
  * Cloudflare Tunnel 只暴露 :3000 时外网才能通，勿再请求 127.0.0.1:8000。
  */
@@ -118,19 +118,34 @@ function _apiErrorMessage(path: string, status: number, json: unknown): string {
   return `API ${path}: ${status}`;
 }
 
-/** POST JSON，解包 { ok, data }；支持可选 X-Pipeline-Approve-Key */
-async function postPipelineEnvelope<T>(path: string, body: unknown, approveKey?: string): Promise<T> {
+/** POST JSON，解包 { ok, data }；支持可选 X-Pipeline-Approve-Key 与超时（RSS 手刷等长任务） */
+async function postPipelineEnvelope<T>(
+  path: string,
+  body: unknown,
+  approveKey?: string,
+  timeoutMs?: number,
+): Promise<T> {
   const base = getApiBase();
   const url = base ? `${base}/api${path}` : `/api${path}`;
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...getAuthHeaders() };
   const k = approveKey?.trim();
   if (k) headers['X-Pipeline-Approve-Key'] = k;
-  const res = await fetch(url, {
-    method: 'POST',
-    cache: 'no-store',
-    headers,
-    body: JSON.stringify(body ?? {}),
-  });
+  const ms = timeoutMs != null && timeoutMs > 0 ? timeoutMs : undefined;
+  const ctrl = ms != null && typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  const tid =
+    ctrl != null && ms != null ? setTimeout(() => ctrl.abort(), ms) : undefined;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      cache: 'no-store',
+      headers,
+      body: JSON.stringify(body ?? {}),
+      signal: ctrl?.signal,
+    });
+  } finally {
+    if (tid != null) clearTimeout(tid);
+  }
   if (res.status === 401) {
     redirectToLogin();
     throw new Error('Unauthorized');
@@ -300,7 +315,7 @@ export const api = {
   ashareStocks: () => apiGet<AshareStocksResponse>('/market/ashare/stocks'),
   news: (symbol?: string, limit?: number) =>
     apiGet<NewsResponse>(`/news?limit=${limit ?? 100}${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ''}`),
-  /** policy-news SQLite（integrations/hongshan/policy-news），主站 /news「政策采集」Tab */
+  /** 政策采集：GET /api/news/collector → DuckDB news_items（symbol=__POLICY__） */
   newsCollector: (limit?: number, category?: string) => {
     const q = new URLSearchParams({ limit: String(limit ?? 100) });
     if (category?.trim()) q.set('category', category.trim());
@@ -309,7 +324,7 @@ export const api = {
   hotTicker: () => apiGet<HotTickerResponse>('/news/hot-ticker'),
   /** 手动 RSS 宏观入库 + 摘要；可选发飞书等 Webhook（服务端 NEWS_BREAKING_WEBHOOK_URL） */
   newsManualRefresh: (body?: { send_webhook?: boolean }) =>
-    postPipelineEnvelope<NewsManualRefreshResponse>('/news/manual-refresh', body ?? {}),
+    postPipelineEnvelope<NewsManualRefreshResponse>('/news/manual-refresh', body ?? {}, undefined, 120_000),
   trades: () => apiGet<TradesResponse>('/trades'),
   evolution: () => apiGet<EvolutionResponse>('/evolution'),
   alphaLab: () => apiGet<AlphaLabResponse>('/alpha-lab'),
@@ -897,7 +912,9 @@ export interface NewsResponse {
   news: NewsItem[];
   source: string | null;
   sentiment?: { count: number; avg_score?: number; positive_ratio?: number } | null;
-  /** 政策采集：`policy_news_db_not_found` 等，见 Gateway /api/news/collector */
+  /** 与 /api/system/data-overview 同源：``news_items`` 表行数；列表为抽样+去重 */
+  news_items_total?: number | null;
+  /** 政策采集：主库 DuckDB `news_items`；detail 如 `policy_news_empty` / `policy_news_read_error`，见 GET /api/news/collector */
   detail?: string;
 }
 
@@ -920,6 +937,9 @@ export interface NewsManualRefreshResponse {
   summary_lines: number;
   webhook_sent: boolean;
   webhook_skipped_reason?: string | null;
+  /** 写入阶段失败时的说明；HTTP 仍为 200 时也会出现 */
+  error?: string | null;
+  rss_fetch_ok?: boolean;
 }
 
 /** /data/status 中单套 schema 的统计切片 */

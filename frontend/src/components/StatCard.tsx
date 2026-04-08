@@ -6,16 +6,15 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, sub, positive }: StatCardProps) {
-  const valueColor = positive === true ? '#FF3B30' : positive === false ? '#FF7439' : '#ECEDF6';
+  const valueTone =
+    positive === true ? 'text-primary-fixed' : positive === false ? 'text-tertiary' : 'text-on-surface';
   return (
     <div className="card">
-      <p className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: '#A9ABB3', fontFamily: 'Space Grotesk' }}>
+      <p className="mb-1 font-label text-xs font-medium uppercase tracking-wider text-on-surface-variant">
         {title}
       </p>
-      <p className="mt-1 text-2xl font-bold sm:text-3xl" style={{ color: valueColor, fontFamily: 'Space Grotesk' }}>
-        {value}
-      </p>
-      {sub != null && <p className="mt-1 text-xs" style={{ color: '#A9ABB3' }}>{sub}</p>}
+      <p className={`mt-1 font-label text-2xl font-bold sm:text-3xl ${valueTone}`}>{value}</p>
+      {sub != null && <p className="mt-1 text-xs text-on-surface-variant">{sub}</p>}
     </div>
   );
 }

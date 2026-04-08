@@ -38,7 +38,7 @@ export function LimitupDrillTable({
     <div className="max-h-[55vh] overflow-auto rounded-lg border border-card-border">
       <p className="mb-2 text-[11px] text-text-secondary">{t('drill.rowClickPenetrate')}</p>
       <table className="w-full min-w-[640px] text-left text-text-primary">
-        <thead className="sticky top-0 z-[1] border-b border-card-border bg-[#1a1d24]">
+        <thead className="sticky top-0 z-[1] border-b border-card-border bg-surface-container">
           <tr className="text-text-secondary">
             <th className={th}>{t('market.code')}</th>
             <th className={th}>{t('aiTrading.stockName')}</th>
@@ -93,7 +93,7 @@ export function LonghubangDrillTable({
     <div className="max-h-[55vh] overflow-auto rounded-lg border border-card-border">
       {onRowClick ? <p className="mb-2 text-[11px] text-text-secondary">{t('drill.rowClickPenetrate')}</p> : null}
       <table className="w-full min-w-[720px] text-left text-text-primary">
-        <thead className="sticky top-0 z-[1] border-b border-card-border bg-[#1a1d24]">
+        <thead className="sticky top-0 z-[1] border-b border-card-border bg-surface-container">
           <tr className="text-text-secondary">
             <th className={th}>{t('market.code')}</th>
             <th className={th}>{t('aiTrading.stockName')}</th>
@@ -150,7 +150,7 @@ export function FundflowDrillTable({
     <div className="max-h-[55vh] overflow-auto rounded-lg border border-card-border">
       {onRowClick ? <p className="mb-2 text-[11px] text-text-secondary">{t('drill.rowClickPenetrate')}</p> : null}
       <table className="w-full min-w-[720px] text-left text-text-primary">
-        <thead className="sticky top-0 z-[1] border-b border-card-border bg-[#1a1d24]">
+        <thead className="sticky top-0 z-[1] border-b border-card-border bg-surface-container">
           <tr className="text-text-secondary">
             <th className={th}>{t('market.code')}</th>
             <th className={th}>{t('aiTrading.stockName')}</th>

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Dict, Optional
 
 
@@ -66,6 +67,45 @@ def log_backtest_task_error(
         conn.close()
     except Exception:
         pass
+
+
+def ensure_baseline_strategy_market_rows(min_rows: int = 2) -> int:
+    """
+    若 strategy_market 中登记数少于 min_rows，则插入与现有 trade_signals.strategy_id
+    对齐的基线条目（无回测指标），供 OpenClaw 进化加载种群。
+    返回本次尝试插入的条数（DuckDB 对 DO NOTHING 不区分是否为新行，故为「执行插入语句数」）。
+    """
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables, get_db_path
+
+        if not os.path.isfile(get_db_path()):
+            return 0
+        conn = get_conn(read_only=False)
+        ensure_tables(conn)
+        row = conn.execute("SELECT COUNT(*) FROM strategy_market").fetchone()
+        cnt = int(row[0]) if row and row[0] is not None else 0
+        if cnt >= min_rows:
+            conn.close()
+            return 0
+        n_exec = 0
+        for sid, title in (
+            ("ai_fusion", "AI 多因子融合"),
+            ("market_agg", "扫描信号聚合"),
+            ("shareholder_chip", "股东筹码信号"),
+        ):
+            conn.execute(
+                """
+                INSERT INTO strategy_market (strategy_id, name, return_pct, sharpe_ratio, max_drawdown, status)
+                VALUES (?, ?, NULL, NULL, NULL, 'active')
+                ON CONFLICT (strategy_id) DO NOTHING
+                """,
+                [sid, title],
+            )
+            n_exec += 1
+        conn.close()
+        return n_exec
+    except Exception:
+        return 0
 
 
 def record_pipeline_meta(key: str, value: Any) -> None:

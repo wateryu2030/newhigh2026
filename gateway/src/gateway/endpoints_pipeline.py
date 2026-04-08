@@ -396,7 +396,7 @@ def build_pipeline_router() -> APIRouter:
     def approve_pipeline_job(
         job_id: str,
         body: ApprovePipelineBody = Body(default_factory=ApprovePipelineBody),
-        authorization: Optional[str] = Header(default=None),
+        authorization: Optional[str] = Header(default=None, alias="Authorization"),
         x_pipeline_approve_key: Optional[str] = Header(default=None, alias="X-Pipeline-Approve-Key"),
     ) -> dict:
         pl = _auth_payload(authorization)

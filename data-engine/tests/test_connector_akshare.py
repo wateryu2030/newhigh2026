@@ -4,17 +4,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from data_engine.connector_akshare import (
-    _normalize_symbol,
-    fetch_klines_akshare,
-)
+from core.ashare_symbol import normalize_ashare_symbol
+
+from data_engine.connector_akshare import fetch_klines_akshare
 
 
 def test_normalize_symbol():
-    assert _normalize_symbol("600519") == "600519.SH"
-    assert _normalize_symbol("000001") == "000001.SZ"
-    assert _normalize_symbol("000001.SZ") == "000001.SZ"
-    assert _normalize_symbol("300750") == "300750.SZ"
+    assert normalize_ashare_symbol("600519") == "600519.SH"
+    assert normalize_ashare_symbol("000001") == "000001.SZ"
+    assert normalize_ashare_symbol("000001.SZ") == "000001.SZ"
+    assert normalize_ashare_symbol("300750") == "300750.SZ"
+    assert normalize_ashare_symbol("900901") == "900901.SH"
+    assert normalize_ashare_symbol("830799") == "830799.BSE"
+    assert normalize_ashare_symbol("920001") == "920001.BSE"
 
 
 @patch("data_engine.connector_akshare.ak")

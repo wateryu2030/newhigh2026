@@ -5,9 +5,10 @@ A 股日 K 线数据源：支持按全局最新日期增量拉取多标的。
 from __future__ import annotations
 
 import os
-import time
-from datetime import datetime, timedelta
 import sys
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from .base import BaseDataSource, register_source
@@ -258,7 +259,8 @@ class AShareDailyKlineSource(BaseDataSource):
         未传 codes 时从 **a_stock_basic** 取列表（全市场回填入口），不再优先用 a_stock_daily
         （否则只会反复更新已有 K 线的少数股票，无法扩量）。
 
-        非 force_full 时：对「尚无日线」的 code 用约一年历史回填；对已有数据的 code 用全局 max(date) 做增量。
+        非 force_full 时：尚无日线的 code 约一年历史回填；已有数据者按**各 code 自身** MAX(date) 分组续拉
+        （避免全局 MAX(date) 被少数「多一天」标的抬高导致 start>end、整批 0 行）。
 
         verbose=True 时每完成一批（默认 250 只）打印进度到 stderr。
         """
@@ -350,8 +352,16 @@ class AShareDailyKlineSource(BaseDataSource):
             _log(f"完成，本 run 共写入 {total_written} 行")
             return total_written
 
+        def _date_to_yyyymmdd(d: Any) -> str:
+            if d is None:
+                return ""
+            if hasattr(d, "strftime"):
+                return d.strftime("%Y%m%d")
+            s = str(d).replace("-", "")[:8]
+            return s if len(s) >= 8 and s.isdigit() else ""
+
         need_full: List[str] = []
-        need_incr: List[str] = []
+        incr_by_last: dict[str, List[str]] = defaultdict(list)
         for c in codes:
             try:
                 row = conn.execute(
@@ -361,19 +371,30 @@ class AShareDailyKlineSource(BaseDataSource):
                 if not row or row[0] is None:
                     need_full.append(c)
                 else:
-                    need_incr.append(c)
+                    lk = _date_to_yyyymmdd(row[0])
+                    if lk:
+                        incr_by_last[lk].append(c)
+                    else:
+                        need_full.append(c)
             except Exception:
                 need_full.append(c)
 
         nf = (len(need_full) + chunk_size - 1) // chunk_size
-        ni = (len(need_incr) + chunk_size - 1) // chunk_size
-        total_batches = nf + ni
+        ni_total = sum(
+            (len(lst) + chunk_size - 1) // chunk_size for lst in incr_by_last.values()
+        )
+        total_batches = max(1, nf + ni_total)
+        n_incr_codes = sum(len(lst) for lst in incr_by_last.values())
         _log(
             f"开始增量：候选 {len(codes)} 只 → 需历史回填 {len(need_full)} 只（{nf} 批）"
-            f"，需续拉 {len(need_incr)} 只（{ni} 批）；全局最新日 {global_last}"
+            f"，需续拉 {n_incr_codes} 只（末日分 {len(incr_by_last)} 组，约 {ni_total} 批）；全局最新日 {global_last}"
         )
         _run_batches("历史回填", None, need_full, 1, total_batches)
-        _run_batches("增量续拉", global_last, need_incr, nf + 1, total_batches)
+        bnum = nf + 1
+        for last_k in sorted(incr_by_last.keys()):
+            lst = incr_by_last[last_k]
+            _run_batches(f"增量(末{last_k})", last_k, lst, bnum, total_batches)
+            bnum += (len(lst) + chunk_size - 1) // chunk_size
         _log(f"完成，本 run 共写入 {total_written} 行")
         return total_written
 

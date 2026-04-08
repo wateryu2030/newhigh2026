@@ -7,6 +7,12 @@ import { useLang } from '@/context/LangContext';
 import { StockPenetrationPanel, type StockPenetrationRow } from '@/components/StockPenetrationPanel';
 import { AsyncState } from '@/components/AsyncState';
 import { PageLoading } from '@/components/LoadingSpinner';
+import {
+  chartFunnelColors,
+  rechartsTooltipContent,
+  rechartsTickSecondary,
+  rechartsTickSecondary11,
+} from '@/lib/chartTheme';
 
 type AlphaStage = 'generated' | 'backtest' | 'risk' | 'deployed';
 
@@ -100,8 +106,8 @@ export default function AlphaLabPage() {
 
   return (
     <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-white">{t('alphaLab.title')}</h1>
-      <p className="text-sm text-slate-400">{t('alphaLab.drillHint')}</p>
+      <h1 className="text-2xl font-bold text-on-surface">{t('alphaLab.title')}</h1>
+      <p className="text-sm text-text-secondary">{t('alphaLab.drillHint')}</p>
 
       <AsyncState<AlphaLabResponse>
         loading={summaryLoading}
@@ -117,42 +123,52 @@ export default function AlphaLabPage() {
               stage: 'generated' as const,
               name: t('alphaLab.funnel.generated'),
               value: d.generated_today,
-              fill: '#6366F1',
+              fill: chartFunnelColors[0],
             },
             {
               stage: 'backtest' as const,
               name: t('alphaLab.funnel.backtest'),
               value: d.passed_backtest,
-              fill: '#8b5cf6',
+              fill: chartFunnelColors[1],
             },
             {
               stage: 'risk' as const,
               name: t('alphaLab.funnel.risk'),
               value: d.passed_risk,
-              fill: '#10B981',
+              fill: chartFunnelColors[2],
             },
             {
               stage: 'deployed' as const,
               name: t('alphaLab.funnel.deployed'),
               value: d.deployed,
-              fill: '#059669',
+              fill: chartFunnelColors[3],
             },
           ];
           return (
           <>
             {d.binding_note ? (
-              <details className="rounded-lg border border-slate-700/80 bg-slate-900/40 px-3 py-2 text-sm text-slate-500">
-                <summary className="cursor-pointer text-slate-400">{t('alphaLab.bindingNote')}</summary>
+              <details className="rounded-lg border border-card-border bg-terminal-bg/40 px-3 py-2 text-sm text-text-dim">
+                <summary className="cursor-pointer text-text-secondary">{t('alphaLab.bindingNote')}</summary>
                 <p className="mt-2 leading-relaxed">{d.binding_note}</p>
               </details>
             ) : null}
             <div className="grid-dashboard">
               {(
                 [
-                  ['generated', d.generated_today, 'text-white', 'hover:ring-indigo-500/50'] as const,
-                  ['backtest', d.passed_backtest, 'text-violet-400', 'hover:ring-violet-500/50'] as const,
-                  ['risk', d.passed_risk, 'text-emerald-500', 'hover:ring-emerald-500/50'] as const,
-                  ['deployed', d.deployed, 'text-emerald-400', 'hover:ring-emerald-600/50'] as const,
+                  ['generated', d.generated_today, 'text-on-surface', 'hover:ring-primary-fixed/50'] as const,
+                  [
+                    'backtest',
+                    d.passed_backtest,
+                    'text-[color:var(--color-chart-purple)]',
+                    'hover:ring-[color:var(--color-chart-purple)]/50',
+                  ] as const,
+                  ['risk', d.passed_risk, 'text-accent-green', 'hover:ring-accent-green/50'] as const,
+                  [
+                    'deployed',
+                    d.deployed,
+                    'text-accent-green',
+                    'hover:ring-[color:var(--color-chart-emerald-dark)]/50',
+                  ] as const,
                 ] as const
               ).map(([key, num, color, hoverRing]) => {
                 const st = key as AlphaStage;
@@ -170,30 +186,30 @@ export default function AlphaLabPage() {
                     key={key}
                     type="button"
                     className={`card cursor-pointer text-left transition ${hoverRing} ${
-                      active ? 'ring-2 ring-indigo-400/70 ring-offset-2 ring-offset-[#0B0E14]' : ''
+                      active ? 'ring-2 ring-primary-fixed/70 ring-offset-2 ring-offset-surface' : ''
                     }`}
                     onClick={() => selectStage(st)}
                   >
-                    <p className="text-sm text-slate-400">{label}</p>
+                    <p className="text-sm text-text-secondary">{label}</p>
                     <p className={`text-2xl font-bold ${color}`}>{num}</p>
-                    <p className="mt-1 text-xs text-indigo-400/90">{t('alphaLab.cardCta')} →</p>
+                    <p className="mt-1 text-xs text-primary-fixed/90">{t('alphaLab.cardCta')} →</p>
                   </button>
                 );
               })}
             </div>
             <div className="card">
-              <p className="mb-4 text-sm font-medium text-slate-400">Pipeline funnel</p>
+              <p className="mb-4 text-sm font-medium text-text-secondary">Pipeline funnel</p>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={funnel} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} />
+                  <XAxis dataKey="name" tick={rechartsTickSecondary11} />
+                  <YAxis tick={rechartsTickSecondary} />
+                  <Tooltip contentStyle={rechartsTooltipContent} />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} cursor="pointer">
                     {funnel.map((entry) => (
                       <Cell
                         key={entry.stage}
                         fill={entry.fill}
-                        stroke={selectedStage === entry.stage ? '#e2e8f0' : undefined}
+                        stroke={selectedStage === entry.stage ? 'var(--color-chart-slate-stroke)' : undefined}
                         strokeWidth={selectedStage === entry.stage ? 2 : 0}
                         style={{ cursor: 'pointer' }}
                         onClick={() => selectStage(entry.stage)}
@@ -202,28 +218,28 @@ export default function AlphaLabPage() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              <p className="mt-2 text-xs text-slate-500">{t('alphaLab.stockListSub')}</p>
+              <p className="mt-2 text-xs text-text-dim">{t('alphaLab.stockListSub')}</p>
             </div>
 
             <div ref={listAnchorRef} className="card space-y-3 scroll-mt-4">
-              <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-800/80 pb-3">
+              <div className="flex flex-wrap items-end justify-between gap-2 border-b border-[color:var(--color-border-subtle)] pb-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-on-surface">
                     {t('alphaLab.stockListTitle')} · {funnel.find((x) => x.stage === selectedStage)?.name}
                   </h2>
-                  <p className="text-xs text-slate-500">API: /api/alpha-lab/drill · source: {d.source ?? '—'}</p>
+                  <p className="text-xs text-text-dim">API: /api/alpha-lab/drill · source: {d.source ?? '—'}</p>
                 </div>
               </div>
               {drillError ? (
                 <div
-                  className="rounded-md border border-amber-900/50 bg-amber-950/30 px-3 py-3 text-sm text-amber-200"
+                  className="rounded-md border border-[color:var(--color-warning-banner-border)] bg-[color:var(--color-warning-banner-bg)] px-3 py-3 text-sm text-[color:var(--color-badge-amber-text)]"
                   role="alert"
                 >
                   <p>{drillError}</p>
                   <button
                     type="button"
                     onClick={() => retryDrill()}
-                    className="mt-2 rounded-lg bg-amber-900/50 px-3 py-1.5 text-amber-100 hover:bg-amber-800/50"
+                    className="mt-2 rounded-lg bg-[color:var(--color-badge-amber-bg)] px-3 py-1.5 text-on-surface hover:opacity-90"
                   >
                     重试
                   </button>
@@ -232,11 +248,11 @@ export default function AlphaLabPage() {
               {drillLoading ? (
                 <PageLoading message={t('common.loading')} />
               ) : drillItems.length === 0 ? (
-                <p className="text-slate-500">{t('alphaLab.drillEmpty')}</p>
+                <p className="text-text-dim">{t('alphaLab.drillEmpty')}</p>
               ) : (
-                <div className="max-h-[min(520px,55vh)] overflow-auto rounded-lg border border-slate-700/60">
-                  <table className="w-full text-left text-sm text-slate-200">
-                    <thead className="sticky top-0 z-10 bg-slate-900/95 text-xs uppercase text-slate-500">
+                <div className="max-h-[min(520px,55vh)] overflow-auto rounded-lg border border-card-border">
+                  <table className="w-full text-left text-sm text-on-surface">
+                    <thead className="sticky top-0 z-10 bg-terminal-bg/95 text-xs uppercase text-text-dim">
                       <tr>
                         <th className="px-3 py-2">{t('alphaLab.col.code')}</th>
                         <th className="px-3 py-2">{t('alphaLab.col.name')}</th>
@@ -249,7 +265,7 @@ export default function AlphaLabPage() {
                       {drillItems.map((row) => (
                         <tr
                           key={`${row.code}-${row.snapshot_time ?? ''}-${row.subtitle ?? ''}`}
-                          className="cursor-pointer border-t border-slate-800/80 hover:bg-slate-800/50 active:bg-slate-800/70"
+                          className="cursor-pointer border-t border-[color:var(--color-border-subtle)] hover:bg-surface-container-high/50 active:bg-surface-container-high/70"
                           onClick={() =>
                             setDetailRow({
                               code: row.code,
@@ -257,13 +273,13 @@ export default function AlphaLabPage() {
                             })
                           }
                         >
-                          <td className="px-3 py-2 font-mono text-indigo-300">{row.code}</td>
-                          <td className="px-3 py-2 text-slate-300">{row.stock_name || '—'}</td>
-                          <td className="px-3 py-2 text-slate-400">{row.subtitle ?? '—'}</td>
+                          <td className="px-3 py-2 font-mono text-primary-fixed">{row.code}</td>
+                          <td className="px-3 py-2 text-text-primary">{row.stock_name || '—'}</td>
+                          <td className="px-3 py-2 text-text-secondary">{row.subtitle ?? '—'}</td>
                           <td className="px-3 py-2">
                             {row.confidence != null ? `${(row.confidence * 100).toFixed(1)}%` : '—'}
                           </td>
-                          <td className="px-3 py-2 text-xs text-slate-500">
+                          <td className="px-3 py-2 text-xs text-text-dim">
                             {row.snapshot_time
                               ? String(row.snapshot_time).replace('T', ' ').slice(0, 19)
                               : '—'}

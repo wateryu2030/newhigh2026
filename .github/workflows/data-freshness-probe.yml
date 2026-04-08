@@ -1,0 +1,37 @@
+# 对公网或自建 Gateway 拉取 /api/system/data-overview，校验 data_freshness（硬失败）。
+# 配置：仓库 Settings → Secrets and variables → Actions
+#   - NEWHIGH_GATEWAY_PROBE_URL（可选，若不设则使用下方默认生产基址）
+# 手动运行：Actions → Data freshness probe → Run workflow
+
+name: Data freshness probe
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 0,8,16 * * *"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run probe (urllib only; no pip)
+        env:
+          BASE_URL: ${{ secrets.NEWHIGH_GATEWAY_PROBE_URL }}
+        run: |
+          set -euo pipefail
+          URL="${BASE_URL:-https://htma.newhigh.com.cn}"
+          URL="${URL%/}"
+          echo "Probing $URL/api/system/data-overview"
+          # 非交易时段可能长时间不刷现货；48h 内视为链路存活（真「断更」再收紧阈值）
+          python3 scripts/check_data_freshness.py \
+            --base-url "$URL" \
+            --max-age-realtime 172800 \
+            --max-age-limitup 172800 \
+            --require-realtime

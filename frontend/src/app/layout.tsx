@@ -40,10 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh" className={`dark ${inter.variable} ${manrope.variable}`}>
-      <body
-        className={`min-h-screen ${inter.className}`}
-        style={{ backgroundColor: '#0B0E14', color: '#ECEDF6' }}
-      >
+      <body className={`min-h-screen bg-surface text-on-surface ${inter.className}`}>
         <ClientProviders>
           <Layout>
           {/* Main Content - 新闻滚动已并入 TopBar，节约垂直空间 */}

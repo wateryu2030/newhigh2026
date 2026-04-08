@@ -126,6 +126,17 @@ Tunnel 的 **Public Hostname** 填：`http://127.0.0.1:4173` 或 `http://127.0.0
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.newhigh.cloudflared.plist
 ```
 
+### 浏览器控制台：`/_next/static/...` 404（main-app.js、layout.css、error.js 等）
+
+含义：页面 HTML 里引用的前端资源在**当前域名**下拿不到。常见原因：
+
+1. **Tunnel 指错端口**：必须指向 **Next（3000）**，不能指向 **Gateway（8000）**；8000 没有 `/_next/static`。  
+2. **`output: 'standalone'` 与启动方式不一致**：应用 `cd frontend && npm run start:standalone`（或 `NEWHIGH_FRONTEND_PROD=1` 的 `restart_gateway_frontend.sh`），确保 `.next/static` 已复制进 `.next/standalone/.next/static`。本仓库 **`scripts/run_tunnel_stack.sh` 已改为 `start:standalone`**。  
+3. **Cloudflare 缓存了旧 HTML**：边缘仍返回上一版 HTML，但 chunk 名已变 → 404。对 `htma.newhigh.com.cn` 做一次 **Purge Everything**（或至少清理 HTML），并避免对站根套「Cache Everything」长缓存。  
+4. **扩展注入**：控制台里 `content.js`、`tongyi` 等与本项目无关，可忽略。
+
+本机快速自检（Next 已监听 3000 时）：`bash scripts/verify_next_static_local.sh`
+
 ---
 
 ## 7. 合规与备案提示

@@ -24,27 +24,15 @@ export function Sidebar({ hidden }: SidebarProps) {
 
   if (hidden) return null;
 
-  const linkStyle = (active: boolean) =>
-    active
-      ? { color: '#F1F5F9', fontWeight: 600 }
-      : { color: '#94A3B8' };
+  const linkClass = (active: boolean) =>
+    `${navItemBase} ${active ? 'font-semibold text-text-primary' : 'text-text-secondary'} ${active ? '' : 'hover:bg-white/5'}`;
 
   return (
-    <aside
-      className="sidebar-scroll fixed bottom-3 left-3 z-40 hidden w-[260px] flex-col overflow-y-auto rounded-2xl border border-card-border md:flex"
-      style={{
-        fontFamily: 'Inter',
-        top: 'calc(4rem + 0.75rem)',
-        backgroundColor: '#14171C',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-      }}
-    >
+    <aside className="sidebar-scroll fixed bottom-3 left-3 top-[calc(4rem+0.75rem)] z-40 hidden w-[260px] flex-col overflow-y-auto rounded-2xl border border-card-border bg-card-bg shadow-card md:flex">
       <div className="flex flex-col gap-4 p-4">
         {/* 快捷导航 */}
         <div>
-          <h3 className="mb-2 text-sm font-semibold" style={{ color: '#94A3B8' }}>
-            快捷导航
-          </h3>
+          <h3 className="mb-2 text-sm font-semibold text-text-secondary">快捷导航</h3>
           <nav className="space-y-1">
             {quickNavItems.map((item) => {
               const active = pathname === item.path;
@@ -52,8 +40,7 @@ export function Sidebar({ hidden }: SidebarProps) {
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`${navItemBase} ${active ? '' : 'hover:bg-white/5'}`}
-                  style={linkStyle(active)}
+                  className={linkClass(active)}
                 >
                   {t(item.key)}
                 </Link>
@@ -63,10 +50,8 @@ export function Sidebar({ hidden }: SidebarProps) {
         </div>
 
         {/* 全部菜单：与股东页侧栏相同的顶部分割线 */}
-        <div className="border-t pt-4" style={{ borderColor: '#2A2E36' }}>
-          <h3 className="mb-2 text-sm font-semibold" style={{ color: '#94A3B8' }}>
-            全部菜单
-          </h3>
+        <div className="border-t border-card-border pt-4">
+          <h3 className="mb-2 text-sm font-semibold text-text-secondary">全部菜单</h3>
           <nav className="space-y-1">
             {fullMenuItems.map((item) => {
               const active = pathname === item.path;
@@ -74,8 +59,7 @@ export function Sidebar({ hidden }: SidebarProps) {
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`${navItemBase} ${active ? '' : 'hover:bg-white/5'}`}
-                  style={linkStyle(active)}
+                  className={linkClass(active)}
                 >
                   {t(item.key)}
                 </Link>
@@ -87,8 +71,7 @@ export function Sidebar({ hidden }: SidebarProps) {
         <div className="pt-2">
           <Link
             href="/ai-trading"
-            className="flex w-full items-center justify-center rounded-lg py-2.5 text-sm font-medium transition hover:opacity-90"
-            style={{ backgroundColor: '#FF3B30', color: '#FFF' }}
+            className="flex w-full items-center justify-center rounded-lg bg-primary-fixed py-2.5 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
           >
             启动策略
           </Link>

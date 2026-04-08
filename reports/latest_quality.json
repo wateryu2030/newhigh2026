@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-04-05T18:05:27.676128+00:00",
+  "checks": [
+    {
+      "name": "shareholder_top10",
+      "result": {
+        "ok": false,
+        "error": "无法连接数据库"
+      }
+    }
+  ]
+}

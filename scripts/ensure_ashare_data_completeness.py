@@ -29,12 +29,6 @@ def _duckdb_path() -> str:
     return os.environ.get("NEWHIGH_DUCKDB_PATH", "").strip() or default_path
 
 
-def _symbol_to_order_book_id(symbol: str) -> str:
-    from data_engine.connector_astock_duckdb import _symbol_to_order_book_id as _ob
-
-    return _ob(symbol)
-
-
 def run(
     symbols: list[str] | None = None,
     days_back: int = 365,
@@ -47,6 +41,7 @@ def run(
     返回 {"filled": int, "skipped": int, "errors": int, "details": [...]}。
     """
     import duckdb
+    from core.ashare_symbol import symbol_to_order_book_id
     from data_engine.connector_akshare import fetch_klines_akshare, get_stock_list_akshare
     from data_engine.connector_astock_duckdb import get_astock_duckdb_available, get_stocks_for_api
 
@@ -93,27 +88,11 @@ def run(
     filled, skipped, errors = 0, 0, 0
     details = []
 
-    def _code_to_ob(c: str) -> str:
-        suf = (
-            ".SH"
-            if c.startswith("6")
-            else (".BSE" if (c.startswith(("4", "8", "9")) or len(c) == 8) else ".SZ")
-        )
-        return _symbol_to_order_book_id(c + suf)
-
     for code in symbol_list:
         try:
-            ob = _code_to_ob(code)
+            ob = symbol_to_order_book_id(code)
             if not ob or "." not in ob:
-                ob = (
-                    code + ".XSHG"
-                    if code.startswith("6")
-                    else (
-                        code + ".BSE"
-                        if len(code) == 8 or code.startswith(("4", "8", "9"))
-                        else code + ".XSHE"
-                    )
-                )
+                continue
             cur = conn.execute(
                 "SELECT MAX(trade_date) AS md FROM daily_bars WHERE order_book_id = ?",
                 [ob],
@@ -148,9 +127,7 @@ def run(
                 skipped += 1
                 continue
 
-            ob_id = _code_to_ob(code)
-            if not ob_id:
-                ob_id = ob
+            ob_id = symbol_to_order_book_id(code) or ob
             for bar in klines:
                 td = bar.timestamp.strftime("%Y-%m-%d")
                 try:

@@ -1,12 +1,11 @@
 # 红山量化 — 政策新闻板块（已并入 newhigh 主仓）
 
-功能：采集国务院/新华网等摘要、SQLite 存储、FastAPI（8001）、Vue「💰 金融」页展示。
+功能：采集国务院/新华网等摘要，写入主仓 **DuckDB** `news_items`（`symbol=__POLICY__`）；可选 FastAPI（8001）、Vue「💰 金融」页展示。
 
 ## 目录（主仓内）
 
-- `integrations/hongshan/policy-news/`：`news_database.py`、`news_collector.py`、定时脚本与说明
+- `integrations/hongshan/policy-news/`：`news_database.py`、`news_collector.py`、定时脚本与说明（与 Gateway、RSS、东财快讯共 `QUANT_SYSTEM_DUCKDB_PATH`）
 - `integrations/hongshan/hongshan-quant-platform/src/views/FinanceNews.vue`：金融新闻页
-- `integrations/hongshan/policy-news/sqlite/`：本地 `news.db`（目录已 gitignore）
 
 ## 快速启动
 

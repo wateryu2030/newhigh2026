@@ -72,12 +72,7 @@ export function ShareholderHeader({
           type="text"
           autoComplete="off"
           placeholder="股东名称：子串匹配；无结果时自动首尾字/近似名（如 王…忱 → 王世忱）"
-          className="w-full rounded-lg border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF3B30] focus:border-[#FF3B30]"
-          style={{
-            borderColor: '#2A2E36',
-            backgroundColor: '#0A0C10',
-            color: '#F1F5F9',
-          }}
+          className="w-full rounded-lg border border-card-border bg-terminal-bg px-4 py-2.5 text-text-primary focus:border-primary-fixed focus:outline-none focus:ring-2 focus:ring-primary-fixed"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -93,24 +88,22 @@ export function ShareholderHeader({
           }}
         />
         {showDropdown && (
-          <ul
-            className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-auto rounded-lg py-1 shadow-xl"
-            style={{ border: '1px solid #2A2E36', backgroundColor: '#14171C' }}
-          >
+          <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-auto rounded-lg border border-card-border bg-card-bg py-1 shadow-xl">
             {searchLoading ? (
-              <li className="px-4 py-3 text-sm" style={{ color: '#94A3B8' }}>搜索中...</li>
+              <li className="px-4 py-3 text-sm text-text-secondary">搜索中...</li>
             ) : searchResults.length === 0 ? (
-              <li className="px-4 py-3 text-sm" style={{ color: '#94A3B8' }}>
+              <li className="px-4 py-3 text-sm text-text-secondary">
                 未找到匹配股东
-                <span className="mt-1 block text-xs" style={{ color: '#64748B' }}>请确认 Gateway 已启动：uvicorn gateway.app:app --port 8000</span>
+                <span className="mt-1 block text-xs text-text-dim">
+                  请确认 Gateway 已启动：uvicorn gateway.app:app --port 8000
+                </span>
               </li>
             ) : (
               searchResults.map((s) => (
                 <li key={s.name}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm transition hover:bg-white/5"
-                    style={{ color: '#F1F5F9' }}
+                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-text-primary transition hover:bg-white/5"
                     onClick={() => {
                       onSelect(s.name);
                       setQuery(s.name);
@@ -118,10 +111,10 @@ export function ShareholderHeader({
                     }}
                   >
                     <span>{s.name}</span>
-                    <span className="rounded px-2 py-0.5 text-xs" style={{ backgroundColor: '#2A2E36', color: '#94A3B8' }}>
+                    <span className="rounded bg-card-border px-2 py-0.5 text-xs text-text-secondary">
                       {(IDENTITY_LABEL[_inferIdentity(s.shareholder_type)] ?? s.shareholder_type) || '—'}
                     </span>
-                    <span className="text-xs" style={{ color: '#64748B' }}>{s.stock_count} 只</span>
+                    <span className="text-xs text-text-dim">{s.stock_count} 只</span>
                   </button>
                 </li>
               ))
@@ -129,7 +122,7 @@ export function ShareholderHeader({
           </ul>
         )}
         {searchHint && query.trim().length >= 1 && (
-          <p className="mt-2 rounded-lg px-3 py-2 text-xs leading-relaxed" style={{ backgroundColor: 'rgba(245,158,11,0.12)', color: '#FBBF24' }}>
+          <p className="mt-2 rounded-lg bg-[color:var(--color-badge-amber-bg)] px-3 py-2 text-xs leading-relaxed text-[color:var(--color-badge-amber-text)]">
             {searchHint}
           </p>
         )}
@@ -137,33 +130,20 @@ export function ShareholderHeader({
 
       {/* 股东概览卡 */}
       {selected && (
-        <div
-          className="flex flex-wrap items-center justify-between gap-4 rounded-lg p-4"
-          style={{ border: '1px solid #2A2E36', backgroundColor: 'rgba(10,12,16,0.8)' }}
-        >
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-card-border bg-[color:var(--color-header-glass)] p-4">
           <div className="flex items-center gap-4">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold"
-              style={{ backgroundColor: 'rgba(255,59,48,0.2)', color: '#FF3B30' }}
-            >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--color-tag-primary-bg)] text-lg font-bold text-primary-fixed">
               {selected.name.slice(0, 1)}
             </div>
             <div>
-              <h2 className="font-semibold" style={{ color: '#F1F5F9' }}>{selected.name}</h2>
+              <h2 className="font-semibold text-text-primary">{selected.name}</h2>
               <div className="mt-1 flex flex-wrap gap-2">
                 {selected.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded px-2 py-0.5 text-xs"
-                    style={{ backgroundColor: '#2A2E36', color: '#94A3B8' }}
-                  >
+                  <span key={t} className="rounded bg-card-border px-2 py-0.5 text-xs text-text-secondary">
                     {t}
                   </span>
                 ))}
-                <span
-                  className="rounded px-2 py-0.5 text-xs"
-                  style={{ backgroundColor: 'rgba(255,59,48,0.2)', color: '#FF3B30' }}
-                >
+                <span className="rounded bg-[color:var(--color-tag-primary-bg)] px-2 py-0.5 text-xs text-primary-fixed">
                   {IDENTITY_LABEL[selected.identity] ?? selected.identity}
                 </span>
               </div>
@@ -171,35 +151,26 @@ export function ShareholderHeader({
           </div>
           <div className="flex flex-wrap gap-6">
             <div className="text-center">
-              <div className="text-lg font-bold" style={{ color: '#F1F5F9' }}>
-                {selected.stats.totalMarketCap.toFixed(1)}
-              </div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>总持仓市值(亿)</div>
+              <div className="text-lg font-bold text-text-primary">{selected.stats.totalMarketCap.toFixed(1)}</div>
+              <div className="text-xs text-text-secondary">总持仓市值(亿)</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold" style={{ color: '#F1F5F9' }}>
-                {selected.stats.stockCount}
-              </div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>持股数量</div>
+              <div className="text-lg font-bold text-text-primary">{selected.stats.stockCount}</div>
+              <div className="text-xs text-text-secondary">持股数量</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold" style={{ color: '#F1F5F9' }}>
-                {selected.stats.avgHoldPeriod}
-              </div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>平均持股周期(月)</div>
+              <div className="text-lg font-bold text-text-primary">{selected.stats.avgHoldPeriod}</div>
+              <div className="text-xs text-text-secondary">平均持股周期(月)</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold" style={{ color: '#22C55E' }}>
-                {selected.stats.winRate}%
-              </div>
-              <div className="text-xs" style={{ color: '#94A3B8' }}>胜率</div>
+              <div className="text-lg font-bold text-accent-green">{selected.stats.winRate}%</div>
+              <div className="text-xs text-text-secondary">胜率</div>
             </div>
           </div>
           <button
             type="button"
             onClick={onCompare}
-            className="rounded-lg px-4 py-2 text-sm font-medium transition hover:opacity-90"
-            style={{ backgroundColor: '#FF3B30', color: '#FFF' }}
+            className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
           >
             对比分析
           </button>

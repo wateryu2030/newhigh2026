@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Dict, Any
 
 
@@ -13,7 +14,20 @@ def run() -> Dict[str, Any]:
         "fusion": 0,
         "fallback": 0,
         "errors": [],
+        "strategy_market_seed": 0,
     }
+    if os.environ.get("NEWHIGH_AUTO_STRATEGY_MARKET", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        try:
+            from data_pipeline.strategy_market_writer import ensure_baseline_strategy_market_rows
+
+            result["strategy_market_seed"] = ensure_baseline_strategy_market_rows(min_rows=2)
+        except (ImportError, RuntimeError, OSError, ValueError, TypeError) as e:
+            result["errors"].append(f"strategy_market_seed: {e}")
     try:
         from strategy_engine.ai_fusion_strategy import run_ai_fusion
 

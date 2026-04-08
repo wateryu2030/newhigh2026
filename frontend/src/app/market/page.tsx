@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { api, type MarketSentiment7dResponse } from '@/api/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLang } from '@/context/LangContext';
+import { rechartsTooltipContent, rechartsTickSecondary } from '@/lib/chartTheme';
 
 const FALLBACK_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SP500', 'NASDAQ', 'GOLD'];
 
@@ -116,28 +117,28 @@ export default function MarketPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">{t('market.title')}</h1>
-      <p className="text-slate-400 text-sm">{t('market.hint')}</p>
+      <h1 className="text-2xl font-bold text-on-surface">{t('market.title')}</h1>
+      <p className="text-text-secondary text-sm">{t('market.hint')}</p>
 
-      <div className="flex gap-2 border-b border-slate-700 pb-2">
+      <div className="flex gap-2 border-b border-card-border pb-2">
         <button
           type="button"
           onClick={() => setTab('chart')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'chart' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'chart' ? 'bg-primary-fixed text-on-warm-fill' : 'bg-surface-container-high text-text-primary hover:bg-surface-container-highest'}`}
         >
           {t('market.quotes')}
         </button>
         <button
           type="button"
           onClick={() => setTab('list')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'list' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'list' ? 'bg-primary-fixed text-on-warm-fill' : 'bg-surface-container-high text-text-primary hover:bg-surface-container-highest'}`}
         >
           {t('market.list')} ({displayList.length})
         </button>
         <button
           type="button"
           onClick={() => setTab('sentiment')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'sentiment' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'sentiment' ? 'bg-primary-fixed text-on-warm-fill' : 'bg-surface-container-high text-text-primary hover:bg-surface-container-highest'}`}
         >
           7 维情绪
         </button>
@@ -150,7 +151,7 @@ export default function MarketPage() {
               <button
                 key={s}
                 onClick={() => setSymbol(s)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${current === s ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${current === s ? 'bg-primary-fixed text-on-warm-fill' : 'bg-surface-container-high text-text-primary hover:bg-surface-container-highest'}`}
                 title={name}
               >
                 {s}
@@ -158,18 +159,18 @@ export default function MarketPage() {
             ))}
           </div>
           <div className="card">
-            <p className="mb-2 text-sm text-slate-400">
+            <p className="mb-2 text-sm text-text-secondary">
               {current} — {t('market.kline')} {klineSubtitle(current)}
             </p>
             {loading ? (
-              <p className="text-slate-500">{t('common.loading')}</p>
+              <p className="text-text-dim">{t('common.loading')}</p>
             ) : (
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={prices} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="t" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} />
+                  <XAxis dataKey="t" tick={rechartsTickSecondary} />
+                  <YAxis tick={rechartsTickSecondary} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
+                    contentStyle={rechartsTooltipContent}
                     labelFormatter={(t) => t}
                     formatter={(value: number, _name: string, props: { payload?: { o?: number; h?: number; l?: number; p?: number } }) => {
                       const p = props?.payload;
@@ -179,7 +180,14 @@ export default function MarketPage() {
                       return [value, '收'];
                     }}
                   />
-                  <Line type="monotone" dataKey="p" stroke="#6366F1" strokeWidth={2} dot={false} name="收" />
+                  <Line
+                    type="monotone"
+                    dataKey="p"
+                    stroke="var(--color-chart-indigo)"
+                    strokeWidth={2}
+                    dot={false}
+                    name="收"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -189,23 +197,23 @@ export default function MarketPage() {
 
       {tab === 'sentiment' && (
         <div className="card space-y-4">
-          <p className="text-slate-400 text-sm">
+          <p className="text-text-secondary text-sm">
             数据来源聚焦 <strong>东方财富</strong>（AkShare 全市场现货 / 库内实时表）与 <strong>Tushare 日 K</strong>：
-            顺序为库内 <code className="text-xs bg-slate-800 px-1 rounded">a_stock_realtime</code>
+            顺序为库内 <code className="text-xs bg-surface-container-high px-1 rounded">a_stock_realtime</code>
             → 东财现货接口 → 日 K 近似。请用调度或{' '}
-            <code className="text-xs bg-slate-800 px-1 rounded">python scripts/run_tushare_incremental.py</code>{' '}
-            保持 <code className="text-xs bg-slate-800 px-1 rounded">a_stock_daily</code> 的 MAX(date) 最新；盘中可{' '}
-            <code className="text-xs bg-slate-800 px-1 rounded">UPDATE_REALTIME_FIRST=1 python scripts/run_market_sentiment_7d.py</code>{' '}
+            <code className="text-xs bg-surface-container-high px-1 rounded">python scripts/run_tushare_incremental.py</code>{' '}
+            保持 <code className="text-xs bg-surface-container-high px-1 rounded">a_stock_daily</code> 的 MAX(date) 最新；盘中可{' '}
+            <code className="text-xs bg-surface-container-high px-1 rounded">UPDATE_REALTIME_FIRST=1 python scripts/run_market_sentiment_7d.py</code>{' '}
             写入东财快照。
           </p>
           {sent7Loading ? (
-            <p className="text-slate-500">{t('common.loading')}</p>
+            <p className="text-text-dim">{t('common.loading')}</p>
           ) : sent7?.error && !sent7.score ? (
-            <div className="rounded-lg bg-amber-900/30 border border-amber-700/50 p-4 text-amber-200 text-sm">
+            <div className="rounded-lg border border-[color:var(--color-warning-banner-border)] bg-[color:var(--color-warning-banner-bg)] p-4 text-sm text-[color:var(--color-badge-amber-text)]">
               <p className="font-medium">暂无法计算</p>
               <p className="mt-1">{sent7.error}{sent7.detail ? ` — ${sent7.detail}` : ''}</p>
-              <p className="mt-2 text-slate-400">
-                请确认 <code className="text-xs bg-slate-900 px-1 rounded">SENTIMENT_7D_AKSHARE_ENABLE=1</code> 且本机可访问东财，或已写入足够的
+              <p className="mt-2 text-text-secondary">
+                请确认 <code className="text-xs bg-terminal-bg px-1 rounded">SENTIMENT_7D_AKSHARE_ENABLE=1</code> 且本机可访问东财，或已写入足够的
                 a_stock_realtime；并跑 Tushare 日 K 增量以免日 K 口径滞后。
               </p>
             </div>
@@ -213,19 +221,19 @@ export default function MarketPage() {
             <>
               <div className="flex flex-wrap items-end gap-4">
                 <div>
-                  <p className="text-slate-500 text-sm">综合得分</p>
-                  <p className="text-4xl font-bold text-white tabular-nums">{sent7?.score ?? '—'}</p>
+                  <p className="text-text-dim text-sm">综合得分</p>
+                  <p className="text-4xl font-bold text-on-surface tabular-nums">{sent7?.score ?? '—'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 text-sm">情绪等级</p>
+                  <p className="text-text-dim text-sm">情绪等级</p>
                   <p className="text-2xl">
                     {sent7?.emoji} {sent7?.level}
                   </p>
                 </div>
-                <p className="text-slate-500 text-sm flex-1 min-w-[200px]">{sent7?.description}</p>
+                <p className="text-text-dim text-sm flex-1 min-w-[200px]">{sent7?.description}</p>
               </div>
               {(sent7?.data_source || sent7?.trade_date) && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-text-dim">
                   {sent7.data_source === 'duckdb_a_stock_realtime' && '数据源：实时快照 · a_stock_realtime'}
                   {sent7.data_source === 'duckdb_a_stock_daily' && '数据源：日 K 近似 · a_stock_daily'}
                   {sent7.data_source === 'akshare_stock_zh_a_spot_em' && '数据源：AkShare 东财现货'}
@@ -239,28 +247,28 @@ export default function MarketPage() {
               {sent7?.stats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                   {Object.entries(sent7.stats).map(([k, v]) => (
-                    <div key={k} className="bg-slate-800/50 rounded-lg px-3 py-2">
-                      <span className="text-slate-500 block text-xs">{k}</span>
-                      <span className="text-slate-200 font-mono">{String(v)}</span>
+                    <div key={k} className="rounded-lg bg-surface-container-high/50 px-3 py-2">
+                      <span className="block text-xs text-text-dim">{k}</span>
+                      <span className="font-mono text-on-surface">{String(v)}</span>
                     </div>
                   ))}
                 </div>
               )}
               {sent7?.dimensions && (
                 <div>
-                  <p className="text-slate-400 text-sm mb-2">分项得分（0–100）</p>
+                  <p className="mb-2 text-sm text-text-secondary">分项得分（0–100）</p>
                   <div className="grid sm:grid-cols-2 gap-2">
                     {Object.entries(sent7.dimensions).map(([k, v]) => (
-                      <div key={k} className="flex justify-between bg-slate-800/30 rounded px-3 py-2 text-sm">
-                        <span className="text-slate-400">{DIM_LABELS[k] ?? k}</span>
-                        <span className="text-indigo-300 font-mono">{Number(v).toFixed(1)}</span>
+                      <div key={k} className="flex justify-between rounded bg-surface-container-high/30 px-3 py-2 text-sm">
+                        <span className="text-text-secondary">{DIM_LABELS[k] ?? k}</span>
+                        <span className="font-mono text-primary-fixed">{Number(v).toFixed(1)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
               {sent7?.data_source && (
-                <p className="text-xs text-slate-600">数据源: {sent7.data_source}</p>
+                <p className="text-xs text-outline-variant">数据源: {sent7.data_source}</p>
               )}
             </>
           )}
@@ -271,7 +279,7 @@ export default function MarketPage() {
         <div className="card overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="text-slate-400 border-b border-slate-600">
+              <tr className="border-b border-card-border text-text-secondary">
                 <th className="py-2 pr-4">{t('market.code')}</th>
                 <th className="py-2 pr-4">{t('market.name')}</th>
                 <th className="py-2">{t('market.action')}</th>
@@ -279,14 +287,14 @@ export default function MarketPage() {
             </thead>
             <tbody>
               {displayList.slice(0, 300).map(({ symbol: s, name }) => (
-                <tr key={s} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="py-2 pr-4 font-mono text-slate-300">{s}</td>
-                  <td className="py-2 pr-4 text-slate-300">{name || '—'}</td>
+                <tr key={s} className="border-b border-card-border/80 hover:bg-surface-container-high/30">
+                  <td className="py-2 pr-4 font-mono text-text-primary">{s}</td>
+                  <td className="py-2 pr-4 text-text-primary">{name || '—'}</td>
                   <td className="py-2">
                     <button
                       type="button"
                       onClick={() => { setSymbol(s); setTab('chart'); }}
-                      className="text-indigo-400 hover:underline"
+                      className="text-primary-fixed hover:underline"
                     >
                       {t('market.viewChart')}
                     </button>
@@ -295,11 +303,11 @@ export default function MarketPage() {
               ))}
             </tbody>
           </table>
-          <p className="mt-2 text-slate-500 text-xs">{displayList.length} {t('market.onlyFirst')}</p>
+          <p className="mt-2 text-xs text-text-dim">{displayList.length} {t('market.onlyFirst')}</p>
         </div>
       )}
 
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-text-dim">
         {symbolList.length ? t('market.dataFrom') : t('market.stub')}
       </p>
     </div>

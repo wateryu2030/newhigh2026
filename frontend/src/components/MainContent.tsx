@@ -16,8 +16,7 @@ export function MainContent({ children }: MainContentProps) {
 
   return (
     <main
-      className={`min-h-screen px-4 pb-24 pt-20 md:pr-6 md:pb-8 md:pt-20 ${mainPl}`}
-      style={{ backgroundColor: '#0B0E14' }}
+      className={`min-h-screen bg-surface px-4 pb-24 pt-20 md:pr-6 md:pb-8 md:pt-20 ${mainPl}`}
     >
       {children}
     </main>

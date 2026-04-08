@@ -10,29 +10,23 @@ interface KPICardProps {
   className?: string;
 }
 
-/** 现代量化终端风格 KPI 卡片：标题、大号数值、涨跌色、迷你折线图 */
+/** 现代量化终端风格 KPI 卡片（与 dashboard/KPICard、DESIGN.md token 对齐） */
 export function KPICard({ title, value, change, sparklineData, className = '' }: KPICardProps) {
-  const changeColor = change == null ? undefined : change >= 0 ? '#22C55E' : '#FF3B30';
+  const changeTone =
+    change != null ? (change >= 0 ? 'text-accent-green' : 'text-accent-red') : '';
   const chartData = (sparklineData ?? []).map((v, i) => ({ v, i }));
 
   return (
     <div
-      className={`rounded-2xl p-5 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 ${className}`}
-      style={{
-        backgroundColor: '#14171C',
-        border: '1px solid #2A2E36',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-      }}
+      className={`rounded-2xl border border-card-border bg-card-bg p-5 shadow-card transition-all duration-200 hover:shadow-lg hover:shadow-black/20 ${className}`}
     >
-      <div className="mb-1 text-xs font-medium uppercase tracking-wider" style={{ color: '#94A3B8' }}>
+      <div className="mb-1 font-label text-xs font-medium uppercase tracking-wider text-text-secondary">
         {title}
       </div>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-2xl font-bold md:text-3xl" style={{ color: '#F1F5F9' }}>
-          {value}
-        </span>
+        <span className="text-2xl font-bold text-text-primary md:text-3xl">{value}</span>
         {change != null && (
-          <span className="text-sm font-semibold" style={{ color: changeColor }}>
+          <span className={`text-sm font-semibold ${changeTone}`}>
             {change >= 0 ? '↑' : '↓'} {Math.abs(change).toFixed(1)}%
           </span>
         )}
@@ -44,7 +38,7 @@ export function KPICard({ title, value, change, sparklineData, className = '' }:
               <Line
                 type="monotone"
                 dataKey="v"
-                stroke="#FF3B30"
+                stroke="var(--color-primary)"
                 strokeWidth={1.5}
                 dot={false}
                 isAnimationActive={true}

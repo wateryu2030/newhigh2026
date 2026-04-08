@@ -55,6 +55,8 @@ class HotMoneyAnalyzer:
     def calculate_winrate(self, forward_days: int = 5) -> pd.DataFrame:
         """结合后续涨幅算席位胜率与平均收益。买价用龙虎榜当日收盘价近似。"""
         conn = self._get_connection()
+        if not conn:
+            return pd.DataFrame(columns=["seat", "win_rate", "avg_return"])
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error,import-outside-toplevel
             ensure_tables(conn)
@@ -121,6 +123,8 @@ class HotMoneyAnalyzer:
         if df is None or df.empty:
             return 0
         conn = self._get_connection()
+        if not conn:
+            return 0
         try:
             from data_pipeline.storage.duckdb_manager import ensure_tables  # pylint: disable=import-error,import-outside-toplevel
             ensure_tables(conn)
@@ -152,16 +156,18 @@ def run_hotmoney_detector() -> int:
         from ._storage import _get_conn  # pylint: disable=import-outside-toplevel
 
         conn = _get_conn()
-        try:
-            df = conn.execute(
-                "SELECT code, net_buy FROM a_stock_longhubang ORDER BY net_buy DESC NULLS LAST LIMIT 50"
-            ).fetchdf()
-            if df is not None and not df.empty:
-                for _, row in df.iterrows():
-                    signals.append((str(row.get("code", "")), "游资", 0.55))
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
-        conn.close()
+        if conn:
+            try:
+                df = conn.execute(
+                    "SELECT code, net_buy FROM a_stock_longhubang ORDER BY net_buy DESC NULLS LAST LIMIT 50"
+                ).fetchdf()
+                if df is not None and not df.empty:
+                    for _, row in df.iterrows():
+                        signals.append((str(row.get("code", "")), "游资", 0.55))
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+            finally:
+                conn.close()
     from ._storage import write_hotmoney_signals  # pylint: disable=import-outside-toplevel
 
     write_hotmoney_signals(signals)

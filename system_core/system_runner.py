@@ -9,23 +9,9 @@ import os
 import sys
 import time
 
-# 将仓库根与各包 src 加入 path，便于各编排器 import data_pipeline / market_scanner / ai_models / strategy_engine
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
-for _d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-]:
-    _p = os.path.join(_ROOT, _d)
-    if os.path.isdir(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
-_opt = os.path.join(_ROOT, "ai-optimizer/src")
-if os.path.isdir(_opt) and _opt not in sys.path:
-    sys.path.insert(0, _opt)
+from system_core.repo_paths import prepend_repo_sources
+
+_ROOT = prepend_repo_sources()
 try:
     from core.logging_config import configure_logging
 

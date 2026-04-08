@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  每日 08:30 政策采集（带 DNS 重试：run_policy_news_collect_retry.sh）
+  1) sed 替换 REPLACE_WITH_NEWHIGH_ROOT
+  2) cp 本文件 ~/Library/LaunchAgents/com.newhigh.policy-collector.plist
+  3) chmod +x REPLACE_WITH_NEWHIGH_ROOT/scripts/run_policy_news_collect.sh
+     chmod +x REPLACE_WITH_NEWHIGH_ROOT/scripts/run_policy_news_collect_retry.sh
+  4) launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.newhigh.policy-collector.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.newhigh.policy-collector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>REPLACE_WITH_NEWHIGH_ROOT/scripts/run_policy_news_collect_retry.sh</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>REPLACE_WITH_NEWHIGH_ROOT</string>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>REPLACE_WITH_NEWHIGH_ROOT/logs/policy-collector.launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>REPLACE_WITH_NEWHIGH_ROOT/logs/policy-collector.launchd.err.log</string>
+</dict>
+</plist>

@@ -9,6 +9,8 @@ from typing import Any, List
 
 from fastapi import APIRouter, HTTPException, Query
 
+from core.ashare_symbol import normalize_ashare_symbol_bj_display
+
 _log = logging.getLogger(__name__)
 
 
@@ -27,11 +29,7 @@ def _open():
 def _code_daily_param(code6: str) -> str:
     if not code6:
         return "000001.SZ"
-    if code6.startswith("6"):
-        return f"{code6}.SH"
-    if code6.startswith(("4", "8")):
-        return f"{code6}.BJ"
-    return f"{code6}.SZ"
+    return normalize_ashare_symbol_bj_display(code6)
 
 
 def _seed_demo_account(conn, user_id: str) -> None:

@@ -1,5 +1,7 @@
+# Auto-fixed by Cursor on 2026-04-02: logging on vectorbt failures.
 """Backtest runner using vectorbt."""
 
+import logging
 from typing import List, Optional
 
 import numpy as np
@@ -8,28 +10,34 @@ import vectorbt as vbt
 
 from core import OHLCV
 
+_log = logging.getLogger(__name__)
+
 
 def run_backtest(
     close: pd.Series,
     entries: pd.Series,
     exits: pd.Series,
     init_cash: float = 10000.0,
-    fees: float = 0.001,
+    fees: float = 0.0012,
     freq: Optional[str] = "1h",
 ) -> vbt.Portfolio:
     """
     Run vectorized backtest from close prices and boolean entry/exit signals.
     Returns vectorbt Portfolio.
     """
-    pf = vbt.Portfolio.from_signals(
-        close,
-        entries,
-        exits,
-        init_cash=init_cash,
-        fees=fees,
-        freq=freq,
-    )
-    return pf
+    try:
+        pf = vbt.Portfolio.from_signals(
+            close,
+            entries,
+            exits,
+            init_cash=init_cash,
+            fees=fees,
+            freq=freq,
+        )
+        return pf
+    except Exception:
+        _log.exception("vectorbt Portfolio.from_signals failed")
+        raise
 
 
 def run_backtest_from_ohlcv(

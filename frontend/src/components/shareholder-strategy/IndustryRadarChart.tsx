@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { INDUSTRIES } from '@/data/mockShareholder';
+import { rechartsTickSecondary, rechartsTickDim } from '@/lib/chartTheme';
 
 export type IndustryRadarPoint = { name: string; value: number[] };
 
@@ -34,7 +35,7 @@ export function IndustryRadarChart({ data, height = 280 }: IndustryRadarChartPro
 
   if (!hasAny) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-sm" style={{ color: '#64748B' }}>
+      <div className="flex h-[200px] items-center justify-center text-sm text-text-dim">
         该报告期无持仓或行业数据为空，暂无行业分布雷达。
       </div>
     );
@@ -43,14 +44,14 @@ export function IndustryRadarChart({ data, height = 280 }: IndustryRadarChartPro
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsRadar data={chartData}>
-        <PolarGrid stroke="#2A2E36" />
-        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94A3B8', fontSize: 10 }} />
-        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748B', fontSize: 10 }} />
+        <PolarGrid stroke="var(--color-border)" />
+        <PolarAngleAxis dataKey="subject" tick={rechartsTickSecondary} />
+        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={rechartsTickDim} />
         <Radar
           name="行业分布"
           dataKey="value"
-          stroke="#FF3B30"
-          fill="#FF3B30"
+          stroke="var(--color-primary)"
+          fill="var(--color-primary)"
           fillOpacity={0.28}
           strokeWidth={2}
         />
@@ -59,13 +60,12 @@ export function IndustryRadarChart({ data, height = 280 }: IndustryRadarChartPro
             if (!active || !payload?.[0]) return null;
             const p = payload[0].payload as { subject: string; valuePct: number; freqScore: number; value: number };
             return (
-              <div
-                className="rounded-lg px-3 py-2 text-sm"
-                style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36' }}
-              >
-                <div className="font-medium" style={{ color: '#F1F5F9' }}>{p.subject}</div>
-                <div style={{ color: '#94A3B8' }}>市值占比 {p.valuePct.toFixed(1)}%</div>
-                <div style={{ color: '#64748B' }}>频次分 {p.freqScore.toFixed(0)} · 综合 {p.value.toFixed(1)}</div>
+              <div className="rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm">
+                <div className="font-medium text-text-primary">{p.subject}</div>
+                <div className="text-text-secondary">市值占比 {p.valuePct.toFixed(1)}%</div>
+                <div className="text-text-dim">
+                  频次分 {p.freqScore.toFixed(0)} · 综合 {p.value.toFixed(1)}
+                </div>
               </div>
             );
           }}

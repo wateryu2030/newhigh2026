@@ -4,9 +4,10 @@
 - 使用 Python requests 抓取网页
 - AI 分类整理 + 情绪分析
 - 通过 OpenClaw message 工具发送飞书推送
+- 入库：主库 DuckDB ``news_items``（``symbol=__POLICY__``），与 Gateway 共用 ``QUANT_SYSTEM_DUCKDB_PATH``。
 
 定时任务：每日 08:30
-执行方式：python scripts/news_collector.py
+执行方式：`python3 integrations/hongshan/policy-news/news_collector.py`
 
 依赖:
     pip install requests beautifulsoup4
@@ -20,6 +21,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+from urllib.parse import urljoin
 
 try:
     import requests
@@ -69,28 +71,117 @@ def log(message: str):
         f.write(log_line + "\n")
 
 
-def fetch_web_content(url: str, timeout: int = 30) -> Optional[str]:
-    """抓取网页内容"""
+_POLICY_LINK_NOISE = frozenset(
+    {
+        "首页",
+        "更多",
+        "下一页",
+        "上一页",
+        "关闭",
+        "打开菜单",
+        "关怀版",
+        "无障碍",
+        "繁体版",
+        "注册",
+        "登录",
+        "网站地图",
+        "联系我们",
+    }
+)
+
+
+def fetch_soup(url: str, timeout: int = 30):
+    """下载并解析 HTML；失败返回 None。"""
     if not HAS_REQUESTS:
-        # 简化模式：返回空，使用预设数据
         return None
-    
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         response = requests.get(url, headers=headers, timeout=timeout)
         response.raise_for_status()
-        
-        # 解析 HTML
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 提取文本
-        text = soup.get_text(separator='\n', strip=True)
-        return text[:10000]  # 限制长度
+        response.encoding = response.apparent_encoding or response.encoding or "utf-8"
+        return BeautifulSoup(response.text, "html.parser")
     except Exception as e:
         log(f"抓取 {url} 失败：{e}")
         return None
+
+
+def fetch_web_content(url: str, timeout: int = 30) -> Optional[str]:
+    """纯文本（兜底关键词行解析）。"""
+    soup = fetch_soup(url, timeout=timeout)
+    if not soup:
+        return None
+    text = soup.get_text(separator="\n", strip=True)
+    return text[:10000]
+
+
+def _link_looks_like_policy_article(url: str, title: str, list_page: str = "") -> bool:
+    """过滤导航链：正文链接通常含栏目路径或标题含政策语义。"""
+    u = url.lower()
+    lp = list_page.lower()
+    if any(
+        x in u
+        for x in (
+            "/zhengce/",
+            "/content_",
+            "gov.cn/lianbo",
+            "gov.cn/xinwen",
+            "xinhuanet.com/fortune/",
+            "xinhuanet.com/politics/",
+            "/202",
+            "/2023/",
+            "/2024/",
+            "/2025/",
+            "/2026/",
+        )
+    ):
+        return True
+    # 新华网财经列表以脚本/相对路径为主，放宽为同站 + 标题长度
+    if "xinhuanet.com" in u and ("/fortune/" in lp or "fortune" in lp):
+        return len(title) >= 14
+    return any(
+        kw in title
+        for kw in ("国务院", "中共中央", "国办", "通知", "意见", "条例", "政策", "规划", "方案", "部署", "会议")
+    )
+
+
+def extract_items_from_policy_links(soup: BeautifulSoup, source: str, page_url: str, max_items: int = 12) -> List[Dict]:
+    """从列表页 ``<a href>`` 抽标题+链接，比整页纯文本关键词更稳。"""
+    items: List[Dict] = []
+    seen: set[str] = set()
+    for a in soup.select("a[href]"):
+        href = (a.get("href") or "").strip()
+        if not href or href.startswith("#") or "javascript:" in href.lower():
+            continue
+        full = urljoin(page_url, href).split("#")[0]
+        title = " ".join((a.get_text() or "").split())
+        if len(title) < 12 or len(title) > 180:
+            continue
+        if title in _POLICY_LINK_NOISE:
+            continue
+        if not any("\u4e00" <= c <= "\u9fff" for c in title):
+            continue
+        if not _link_looks_like_policy_article(full, title, page_url):
+            continue
+        key = title[:120]
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append(
+            {
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "source": source,
+                "title": title,
+                "url": full,
+                "category": "待分类",
+                "sentiment": 0.0,
+                "domains": [],
+            }
+        )
+        if len(items) >= max_items:
+            break
+    return items
 
 
 def extract_items_from_content(content: str, source: str) -> List[Dict]:
@@ -261,18 +352,17 @@ def format_message(items: List[Dict]) -> str:
 
 
 def save_to_database(items: List[Dict]) -> int:
-    """保存新闻到数据库"""
+    """保存新闻至主库 DuckDB ``news_items``（symbol=__POLICY__）。"""
+    _here = Path(__file__).resolve().parent
+    sys.path.insert(0, str(_here))
     try:
-        # 调用数据库脚本的 ingest 功能
-        import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
         from news_database import insert_news
-        
-        count = insert_news(items)
-        log(f"✓ 数据库写入 {count} 条")
-        return count
+
+        n = insert_news(items)
+        log(f"✓ DuckDB news_items 写入 {n} 条")
+        return n
     except Exception as e:
-        log(f"✗ 数据库写入失败：{e}")
+        log(f"✗ DuckDB 写入失败：{e}")
         return 0
 
 
@@ -306,27 +396,30 @@ def main():
     
     all_items = []
     
-    # 1. 抓取各来源
+    # 1. 抓取各来源（优先 DOM 链接，再兜底纯文本关键词）
     for source in SOURCES:
         log(f"抓取 {source['name']}...")
-        content = fetch_web_content(source["url"])
-        
-        if content:
-            items = extract_items_from_content(content, source["name"])
+        soup = fetch_soup(source["url"])
+        items: List[Dict] = []
+        if soup:
+            items = extract_items_from_policy_links(soup, source["name"], source["url"])
+            if not items:
+                text = soup.get_text(separator="\n", strip=True)
+                items = extract_items_from_content(text[:10000], source["name"])
             for item in items:
-                item = ai_classify_item(item)
+                ai_classify_item(item)
             all_items.extend(items)
             log(f"  → 提取 {len(items)} 条")
         else:
             log(f"  → 抓取失败，使用预设数据")
-            # 预设数据（当抓取失败时）
             all_items.append({
                 "date": datetime.now().strftime("%Y-%m-%d"),
                 "source": source["name"],
                 "title": f"{source['name']}内容更新",
                 "category": "其他政策",
                 "sentiment": 0.0,
-                "domains": ["综合"]
+                "domains": ["综合"],
+                "url": "",
             })
     
     # 2. 去重

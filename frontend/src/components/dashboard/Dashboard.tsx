@@ -31,6 +31,21 @@ function equitySparklineFromCurve(equity: number[], maxPts = 14): number[] {
   return slice.map((x) => x / 1e6);
 }
 
+/** Gateway 不可用时占位，与后端 get_dashboard stub 口径接近，避免整页仅显示「错误」 */
+const DASHBOARD_STUB: DashboardResponse = {
+  total_equity: 12_340_000,
+  daily_return_pct: 0,
+  sharpe_ratio: null,
+  max_drawdown_pct: null,
+  equity_curve: [10e6, 10.2e6, 10.5e6, 11e6, 11.8e6, 12.34e6],
+  top_strategies: [],
+  ai_generated_today: null,
+  strategies_alive: null,
+  strategies_live: null,
+  equity_proxy_symbol: null,
+  dashboard_notes: ['gateway_unreachable_frontend_stub'],
+};
+
 export function Dashboard() {
   const { t } = useLang();
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -43,6 +58,8 @@ export function Dashboard() {
   const [healthDetailFailed, setHealthDetailFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** 部分接口失败（如 502）时提示，仍展示降级后的首页 */
+  const [partialApiWarning, setPartialApiWarning] = useState<string | null>(null);
   const [dashTab, setDashTab] = useState<'overview' | 'news'>('overview');
   const [newsRefreshBusy, setNewsRefreshBusy] = useState(false);
   const [newsRefreshErr, setNewsRefreshErr] = useState<string | null>(null);
@@ -50,46 +67,68 @@ export function Dashboard() {
   const [sendNewsWebhook, setSendNewsWebhook] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api.dashboard(),
-      api.dataStatus(),
-      api.marketEmotion().then((r) => r.stage ?? r.state ?? null).catch(() => null),
-      api.systemDataOverview().catch(() => null),
-      api.healthDetail().catch(() => null),
-    ])
-      .then(([d, s, e, ov, hd]) => {
-        setData(d);
-        setDataStatus(s);
-        setEmotionState(e);
-        setOverviewPrefetched(ov != null && typeof ov === 'object' ? ov : null);
-        if (hd && typeof hd === 'object' && 'status' in hd) {
-          setHealthDetail(hd as HealthDetailPayload);
-          setHealthDetailFailed(false);
-        } else {
-          setHealthDetail(null);
-          setHealthDetailFailed(true);
-        }
-        const sn =
-          ov && typeof ov === 'object' && ov.ok && ov.counts && typeof ov.counts.sniper_candidates === 'number'
-            ? ov.counts.sniper_candidates
-            : null;
-        setSniperCount(sn);
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.allSettled([
+        api.dashboard(),
+        api.dataStatus(),
+        api.marketEmotion().then((r) => r.stage ?? r.state ?? null).catch(() => null),
+        api.systemDataOverview().catch(() => null),
+        api.healthDetail().catch(() => null),
+      ]);
+      if (cancelled) return;
+      const warn: string[] = [];
+      const d = results[0].status === 'fulfilled' ? results[0].value : null;
+      if (results[0].status === 'rejected') {
+        const r = results[0].reason;
+        warn.push(r instanceof Error ? r.message : String(r));
+      }
+      const s = results[1].status === 'fulfilled' ? results[1].value : null;
+      if (results[1].status === 'rejected') {
+        const r = results[1].reason;
+        warn.push(r instanceof Error ? r.message : String(r));
+      }
+      const e = results[2].status === 'fulfilled' ? results[2].value : null;
+      const ov = results[3].status === 'fulfilled' ? results[3].value : null;
+      const hd = results[4].status === 'fulfilled' ? results[4].value : null;
+
+      setData(d ?? DASHBOARD_STUB);
+      setDataStatus(s);
+      setEmotionState(e);
+      setOverviewPrefetched(ov != null && typeof ov === 'object' ? ov : null);
+      if (hd && typeof hd === 'object' && 'status' in hd) {
+        setHealthDetail(hd as HealthDetailPayload);
+        setHealthDetailFailed(false);
+      } else {
+        setHealthDetail(null);
+        setHealthDetailFailed(true);
+      }
+      const sn =
+        ov && typeof ov === 'object' && ov.ok && ov.counts && typeof ov.counts.sniper_candidates === 'number'
+          ? ov.counts.sniper_candidates
+          : null;
+      setSniperCount(sn);
+      setPartialApiWarning(warn.length ? warn.join(' · ') : null);
+      setError(null);
+    })()
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
-    return (
-      <div className="py-12 text-center" style={{ color: '#A9ABB3' }}>
-        {t('common.loading')}
-      </div>
-    );
+    return <div className="py-12 text-center text-on-surface-variant">{t('common.loading')}</div>;
   }
 
   if (error) {
     return (
-      <div className="py-12 text-center" style={{ color: '#FF7439' }}>
+      <div className="py-12 text-center text-tertiary">
         {t('common.error')}: {error}
       </div>
     );
@@ -111,36 +150,26 @@ export function Dashboard() {
 
   return (
     <div className="max-w-[1200px] space-y-4">
-      <h1
-        className="text-2xl font-bold sm:text-3xl"
-        style={{ color: '#ECEDF6', fontFamily: 'Manrope' }}
-      >
-        Terminal <span style={{ color: '#FF3B30' }}>Overview</span>
+      <h1 className="font-headline text-2xl font-bold text-on-surface sm:text-3xl">
+        Terminal <span className="text-primary-fixed">Overview</span>
       </h1>
 
-      <div
-        className="mb-2 flex flex-wrap gap-2 border-b pb-2"
-        style={{ borderColor: '#2A2E36' }}
-      >
+      <div className="mb-2 flex flex-wrap gap-2 border-b border-card-border pb-2">
         <button
           type="button"
           onClick={() => setDashTab('overview')}
-          className="rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors"
-          style={{
-            backgroundColor: dashTab === 'overview' ? '#2A2E36' : 'transparent',
-            color: dashTab === 'overview' ? '#ECEDF6' : '#94A3B8',
-          }}
+          className={`rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            dashTab === 'overview' ? 'bg-card-border text-on-surface' : 'bg-transparent text-text-secondary'
+          }`}
         >
           {t('dashboard.tabOverview')}
         </button>
         <button
           type="button"
           onClick={() => setDashTab('news')}
-          className="rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors"
-          style={{
-            backgroundColor: dashTab === 'news' ? '#2A2E36' : 'transparent',
-            color: dashTab === 'news' ? '#ECEDF6' : '#94A3B8',
-          }}
+          className={`rounded-t-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            dashTab === 'news' ? 'bg-card-border text-on-surface' : 'bg-transparent text-text-secondary'
+          }`}
         >
           {t('dashboard.tabNews')}
         </button>
@@ -148,6 +177,12 @@ export function Dashboard() {
 
       {dashTab === 'overview' ? (
         <>
+      {partialApiWarning ? (
+        <div className="animate-fadeIn rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <p className="font-medium text-amber-50">{t('dashboard.partialApiWarning')}</p>
+          <p className="mt-1 font-mono text-xs text-amber-200/90">{partialApiWarning}</p>
+        </div>
+      ) : null}
       {/* 数据完整性提醒 - 占满宽度 */}
       {dataStatus && !dataStatus.ok && (
         <div className="animate-fadeIn">
@@ -172,50 +207,43 @@ export function Dashboard() {
       {/* 数据状态 OK 时的简要信息 */}
       {dataStatus?.ok && (
         <div
-          className="animate-fadeIn rounded-2xl border p-4 transition-transform duration-200 hover:scale-[1.01] md:p-5"
-          style={{
-            backgroundColor: '#14171C',
-            borderColor: '#2A2E36',
-            animationDelay: '100ms',
-          }}
+          className="animate-fadeIn rounded-2xl border border-card-border bg-card-bg p-4 shadow-card transition-transform duration-200 hover:scale-[1.01] md:p-5"
+          style={{ animationDelay: '100ms' }}
         >
-          <h2
-            className="mb-3 text-sm font-medium"
-            style={{ color: '#94A3B8', fontFamily: 'Space Grotesk' }}
-          >
+          <h2 className="mb-3 font-label text-sm font-medium text-text-secondary">
             {t('dashboard.dataStatus')}
           </h2>
           <div className="flex flex-wrap gap-4 gap-y-2 text-sm md:gap-6">
-            <span style={{ color: '#A9ABB3' }}>
+            <span className="text-on-surface-variant">
               {t('dashboard.stocks')}{' '}
-              <strong style={{ color: '#ECEDF6' }}>{dataStatus.stocks.toLocaleString()}</strong>
+              <strong className="text-on-surface">{dataStatus.stocks.toLocaleString()}</strong>
             </span>
-            <span style={{ color: '#A9ABB3' }}>
+            <span className="text-on-surface-variant">
               {t('dashboard.dailyBars')}{' '}
-              <strong style={{ color: '#ECEDF6' }}>{dataStatus.daily_bars.toLocaleString()}</strong>
+              <strong className="text-on-surface">{dataStatus.daily_bars.toLocaleString()}</strong>
             </span>
-            <span style={{ color: '#A9ABB3' }}>
+            <span className="text-on-surface-variant">
               {t('dashboard.range')}{' '}
-              <strong style={{ color: '#ECEDF6' }}>
+              <strong className="text-on-surface">
                 {dataStatus.date_min ?? '—'} ~ {dataStatus.date_max ?? '—'}
               </strong>
             </span>
             {emotionState != null && (
-              <span style={{ color: '#A9ABB3' }}>
+              <span className="text-on-surface-variant">
                 {t('dashboard.emotion')}{' '}
-                <strong style={{ color: '#FF3B30' }}>{emotionState}</strong>
+                <strong className="text-primary-fixed">{emotionState}</strong>
               </span>
             )}
             {sniperCount != null && (
-              <span style={{ color: '#A9ABB3' }}>
+              <span className="text-on-surface-variant">
                 {t('dashboard.sniperCandidates')}{' '}
-                <strong style={{ color: '#ECEDF6' }}>{sniperCount}</strong>
+                <strong className="text-on-surface">{sniperCount}</strong>
               </span>
             )}
-            <span style={{ color: '#A9ABB3' }}>
+            <span className="text-on-surface-variant">
               {t('dashboard.source')} {formatDataSourceLabel(dataStatus.source, t)}
             </span>
-            <Link href="/data" className="font-medium hover:underline" style={{ color: '#FF3B30' }}>
+            <Link href="/data" className="font-medium text-primary-fixed hover:underline">
               {t('dashboard.detailAndUpdate')} →
             </Link>
           </div>
@@ -223,7 +251,7 @@ export function Dashboard() {
       )}
 
       {data.dashboard_notes?.length ? (
-        <p className="text-xs leading-relaxed" style={{ color: '#94A3B8' }}>
+        <p className="text-xs leading-relaxed text-text-secondary">
           {t('dashboard.dataBindingHint')}
           {data.equity_proxy_symbol ? (
             <>
@@ -280,27 +308,21 @@ export function Dashboard() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {(emotionState != null || sniperCount != null) && (
           <div
-            className="animate-fadeIn rounded-2xl border p-5 transition-transform duration-200 hover:scale-[1.02]"
-            style={{
-              backgroundColor: '#14171C',
-              borderColor: '#2A2E36',
-              animationDelay: '250ms',
-            }}
+            className="animate-fadeIn rounded-2xl border border-card-border bg-card-bg p-5 shadow-card transition-transform duration-200 hover:scale-[1.02]"
+            style={{ animationDelay: '250ms' }}
           >
-            <h2 className="mb-4 text-sm font-medium" style={{ color: '#94A3B8' }}>
-              {t('dashboard.aiSignal')}
-            </h2>
+            <h2 className="mb-4 text-sm font-medium text-text-secondary">{t('dashboard.aiSignal')}</h2>
             <ul className="space-y-2 text-sm">
               {emotionState != null && (
                 <li className="flex justify-between">
-                  <span style={{ color: '#A9ABB3' }}>{t('dashboard.emotion')}</span>
-                  <span style={{ color: '#FF3B30' }}>{emotionState}</span>
+                  <span className="text-on-surface-variant">{t('dashboard.emotion')}</span>
+                  <span className="text-primary-fixed">{emotionState}</span>
                 </li>
               )}
               {sniperCount != null && (
                 <li className="flex justify-between">
-                  <span style={{ color: '#A9ABB3' }}>{t('dashboard.sniperCandidates')}</span>
-                  <Link href="/ai-trading" className="hover:underline" style={{ color: '#FF3B30' }}>
+                  <span className="text-on-surface-variant">{t('dashboard.sniperCandidates')}</span>
+                  <Link href="/ai-trading" className="text-primary-fixed hover:underline">
                     {sniperCount}
                   </Link>
                 </li>
@@ -309,26 +331,18 @@ export function Dashboard() {
           </div>
         )}
         <div
-          className="animate-fadeIn rounded-2xl border p-5 transition-transform duration-200 hover:scale-[1.02]"
-          style={{
-            backgroundColor: '#14171C',
-            borderColor: '#2A2E36',
-            animationDelay: '280ms',
-          } as React.CSSProperties}
+          className="animate-fadeIn rounded-2xl border border-card-border bg-card-bg p-5 shadow-card transition-transform duration-200 hover:scale-[1.02]"
+          style={{ animationDelay: '280ms' } as React.CSSProperties}
         >
-          <h2 className="mb-4 text-sm font-medium" style={{ color: '#94A3B8' }}>
-            {t('dashboard.leaderboard')}
-          </h2>
+          <h2 className="mb-4 text-sm font-medium text-text-secondary">{t('dashboard.leaderboard')}</h2>
           <ul className="space-y-2">
             {(data.top_strategies || []).length === 0 ? (
-              <li className="text-sm" style={{ color: '#64748B' }}>
-                {t('dashboard.leaderboardEmpty')}
-              </li>
+              <li className="text-sm text-text-dim">{t('dashboard.leaderboardEmpty')}</li>
             ) : (
               (data.top_strategies || []).map((s) => (
                 <li key={s.id} className="flex justify-between text-sm">
-                  <span style={{ color: '#A9ABB3' }}>{s.name}</span>
-                  <span className="font-medium" style={{ color: '#FF3B30' }}>
+                  <span className="text-on-surface-variant">{s.name}</span>
+                  <span className="font-medium text-primary-fixed">
                     {s.return_pct != null && !Number.isNaN(s.return_pct)
                       ? `${s.return_pct >= 0 ? '+' : ''}${Number(s.return_pct).toFixed(2)}%`
                       : '—'}
@@ -339,32 +353,26 @@ export function Dashboard() {
           </ul>
         </div>
         <div
-          className="animate-fadeIn rounded-2xl border p-5 transition-transform duration-200 hover:scale-[1.02]"
-          style={{
-            backgroundColor: '#14171C',
-            borderColor: '#2A2E36',
-            animationDelay: '310ms',
-          } as React.CSSProperties}
+          className="animate-fadeIn rounded-2xl border border-card-border bg-card-bg p-5 shadow-card transition-transform duration-200 hover:scale-[1.02]"
+          style={{ animationDelay: '310ms' } as React.CSSProperties}
         >
-          <h2 className="mb-4 text-sm font-medium" style={{ color: '#94A3B8' }}>
-            {t('dashboard.pipeline')}
-          </h2>
+          <h2 className="mb-4 text-sm font-medium text-text-secondary">{t('dashboard.pipeline')}</h2>
           <ul className="space-y-2 text-sm">
             <li className="flex justify-between">
-              <span style={{ color: '#A9ABB3' }}>{t('dashboard.generatedToday')}</span>
-              <span style={{ color: '#ECEDF6' }}>
+              <span className="text-on-surface-variant">{t('dashboard.generatedToday')}</span>
+              <span className="text-on-surface">
                 {data.ai_generated_today != null ? data.ai_generated_today : '—'}
               </span>
             </li>
             <li className="flex justify-between">
-              <span style={{ color: '#A9ABB3' }}>{t('dashboard.alive')}</span>
-              <span style={{ color: '#ECEDF6' }}>
+              <span className="text-on-surface-variant">{t('dashboard.alive')}</span>
+              <span className="text-on-surface">
                 {data.strategies_alive != null ? data.strategies_alive : '—'}
               </span>
             </li>
             <li className="flex justify-between">
-              <span style={{ color: '#A9ABB3' }}>{t('dashboard.live')}</span>
-              <span style={{ color: '#FF3B30' }}>
+              <span className="text-on-surface-variant">{t('dashboard.live')}</span>
+              <span className="text-primary-fixed">
                 {data.strategies_live != null ? data.strategies_live : '—'}
               </span>
             </li>
@@ -373,22 +381,15 @@ export function Dashboard() {
       </div>
         </>
       ) : (
-        <div
-          className="animate-fadeIn space-y-4 rounded-2xl border p-4 md:p-5"
-          style={{ backgroundColor: '#14171C', borderColor: '#2A2E36' }}
-        >
-          <h2 className="text-sm font-medium" style={{ color: '#94A3B8' }}>
-            {t('dashboard.newsManualTitle')}
-          </h2>
-          <p className="text-xs leading-relaxed" style={{ color: '#64748B' }}>
-            {t('dashboard.newsManualHint')}
-          </p>
-          <label className="flex cursor-pointer items-center gap-2 text-sm" style={{ color: '#A9ABB3' }}>
+        <div className="animate-fadeIn space-y-4 rounded-2xl border border-card-border bg-card-bg p-4 shadow-card md:p-5">
+          <h2 className="text-sm font-medium text-text-secondary">{t('dashboard.newsManualTitle')}</h2>
+          <p className="text-xs leading-relaxed text-text-dim">{t('dashboard.newsManualHint')}</p>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-on-surface-variant">
             <input
               type="checkbox"
               checked={sendNewsWebhook}
               onChange={(e) => setSendNewsWebhook(e.target.checked)}
-              className="rounded border-gray-600 bg-[#1a1d22]"
+              className="rounded border-outline-variant bg-surface-container"
             />
             {t('dashboard.newsManualSendWebhook')}
           </label>
@@ -407,29 +408,30 @@ export function Dashboard() {
                 setNewsRefreshBusy(false);
               }
             }}
-            className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
-            style={{ backgroundColor: '#FF3B30', color: '#fff' }}
+            className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-medium text-on-warm-fill disabled:opacity-50"
           >
             {newsRefreshBusy ? t('common.loading') : t('dashboard.newsManualRefresh')}
           </button>
-          {newsRefreshErr ? (
-            <p className="text-sm" style={{ color: '#FF7439' }}>
-              {newsRefreshErr}
-            </p>
-          ) : null}
+          {newsRefreshErr ? <p className="text-sm text-tertiary">{newsRefreshErr}</p> : null}
           {newsLastResult ? (
-            <div className="space-y-2 text-sm" style={{ color: '#A9ABB3' }}>
+            <div className="space-y-2 text-sm text-on-surface-variant">
+              {newsLastResult.error ? (
+                <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-100">
+                  <span className="font-medium">{t('dashboard.newsManualFetchError')}</span>
+                  <span className="mt-1 block font-mono text-xs text-amber-200/90">{newsLastResult.error}</span>
+                </p>
+              ) : null}
               <div>
                 {t('dashboard.newsManualRssInserted')}:{' '}
-                <strong style={{ color: '#ECEDF6' }}>{newsLastResult.rss_inserted}</strong>
+                <strong className="text-on-surface">{newsLastResult.rss_inserted}</strong>
               </div>
               <div>
                 {t('dashboard.newsManualSummaryLines')}:{' '}
-                <strong style={{ color: '#ECEDF6' }}>{newsLastResult.summary_lines}</strong>
+                <strong className="text-on-surface">{newsLastResult.summary_lines}</strong>
               </div>
               <div>
                 {t('dashboard.newsManualWebhookSent')}:{' '}
-                <strong style={{ color: '#ECEDF6' }}>
+                <strong className="text-on-surface">
                   {newsLastResult.webhook_sent
                     ? t('dashboard.newsManualWebhookYes')
                     : t('dashboard.newsManualWebhookNo')}
@@ -441,17 +443,10 @@ export function Dashboard() {
                   </>
                 ) : null}
               </div>
-              <pre
-                className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-xs"
-                style={{ borderColor: '#2A2E36', color: '#CBD5E1' }}
-              >
+              <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-card-border p-3 text-xs text-text-code">
                 {newsLastResult.summary || '—'}
               </pre>
-              <Link
-                href="/news"
-                className="inline-block text-sm font-medium hover:underline"
-                style={{ color: '#FF3B30' }}
-              >
+              <Link href="/news" className="inline-block text-sm font-medium text-primary-fixed hover:underline">
                 {t('dashboard.newsManualOpenNews')} →
               </Link>
             </div>

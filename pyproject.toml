@@ -6,10 +6,11 @@ requires-python = ">=3.10"
 
 [tool.pytest.ini_options]
 testpaths = [
+    "tests",
     "core/tests",
     "data-engine/tests",
     "evolution-engine/tests",
-    "strategy-engine/tests",
+    "strategy/tests",
     "portfolio-engine/tests",
     "risk-engine/tests",
     "scheduler/tests",

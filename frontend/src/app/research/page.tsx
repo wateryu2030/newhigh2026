@@ -88,24 +88,24 @@ export default function ResearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">{t('research.title')}</h1>
-        <p className="mt-1 text-slate-400 text-sm">{t('research.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-on-surface">{t('research.title')}</h1>
+        <p className="mt-1 text-sm text-text-secondary">{t('research.subtitle')}</p>
       </div>
 
       <div className="card flex flex-wrap items-end gap-4">
         <div>
-          <label className="block text-xs text-slate-500 mb-1">{t('research.symbol')}</label>
+          <label className="mb-1 block text-xs text-text-dim">{t('research.symbol')}</label>
           <input
-            className="rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-white w-36"
+            className="w-36 rounded-lg border border-card-border bg-surface-container-high px-3 py-2 text-on-surface"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
             placeholder="000001"
           />
         </div>
         <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs text-slate-500 mb-1">{t('research.focus')}</label>
+          <label className="mb-1 block text-xs text-text-dim">{t('research.focus')}</label>
           <input
-            className="rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-white w-full max-w-xl"
+            className="w-full max-w-xl rounded-lg border border-card-border bg-surface-container-high px-3 py-2 text-on-surface"
             value={focus}
             onChange={(e) => setFocus(e.target.value)}
             placeholder={t('research.focusPh')}
@@ -115,7 +115,7 @@ export default function ResearchPage() {
           type="button"
           onClick={pullNews}
           disabled={loadingNews}
-          className="rounded-lg bg-slate-600 hover:bg-slate-500 px-4 py-2 text-white text-sm disabled:opacity-50"
+          className="rounded-lg bg-surface-container-highest px-4 py-2 text-sm text-on-surface hover:opacity-90 disabled:opacity-50"
         >
           {loadingNews ? t('common.loading') : t('research.pullNews')}
         </button>
@@ -123,14 +123,14 @@ export default function ResearchPage() {
           type="button"
           onClick={generateSummary}
           disabled={loadingSummary}
-          className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-white text-sm disabled:opacity-50"
+          className="rounded-lg bg-primary-fixed px-4 py-2 text-sm text-on-warm-fill hover:opacity-90 disabled:opacity-50"
         >
           {loadingSummary ? t('research.generating') : t('research.genSummary')}
         </button>
       </div>
 
       {err && (
-        <div className="rounded-lg border border-amber-700/50 bg-amber-900/20 px-4 py-3 text-amber-200 text-sm">
+        <div className="rounded-lg border border-[color:var(--color-warning-banner-border)] bg-[color:var(--color-warning-banner-bg)] px-4 py-3 text-sm text-[color:var(--color-badge-amber-text)]">
           {err}
         </div>
       )}
@@ -138,32 +138,36 @@ export default function ResearchPage() {
       {summary && (
         <div className="card">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold text-white">{t('research.aiSummary')}</h2>
-            {model && <span className="text-xs text-slate-500">model: {model}</span>}
+            <h2 className="text-lg font-semibold text-on-surface">{t('research.aiSummary')}</h2>
+            {model && <span className="text-xs text-text-dim">model: {model}</span>}
           </div>
-          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap text-slate-200 leading-relaxed">
+          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap leading-relaxed text-on-surface">
             {summary}
           </div>
         </div>
       )}
 
       <div className="card">
-        <h2 className="text-lg font-semibold text-white mb-2">
-          {t('research.newsList')} {newsSource && <span className="text-slate-500 text-sm font-normal">({newsSource})</span>}
+        <h2 className="mb-2 text-lg font-semibold text-on-surface">
+          {t('research.newsList')}{' '}
+          {newsSource && <span className="text-sm font-normal text-text-dim">({newsSource})</span>}
         </h2>
         {!news.length && !loadingNews ? (
-          <p className="text-slate-500 text-sm">{t('research.pullHint')}</p>
+          <p className="text-sm text-text-dim">{t('research.pullHint')}</p>
         ) : (
           <ul className="space-y-3 max-h-[480px] overflow-y-auto text-sm">
             {news.map((n, i) => (
-              <li key={n.url || `${n.title ?? ''}-${n.publish_time ?? ''}-${i}`} className="border-b border-slate-700/50 pb-3">
-                <p className="text-white font-medium">
+              <li
+                key={n.url || `${n.title ?? ''}-${n.publish_time ?? ''}-${i}`}
+                className="border-b border-card-border/80 pb-3"
+              >
+                <p className="font-medium text-on-surface">
                   {n.url && /^https?:\/\//i.test(n.url.trim()) ? (
                     <a
                       href={n.url.trim()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:underline text-indigo-300"
+                      className="text-primary-fixed hover:underline"
                     >
                       {n.title || '—'}
                     </a>
@@ -171,11 +175,11 @@ export default function ResearchPage() {
                     n.title || '—'
                   )}
                 </p>
-                <p className="text-slate-500 text-xs mt-1">
+                <p className="mt-1 text-xs text-text-dim">
                   {n.publish_time} {n.source ? `· ${n.source}` : ''}
                 </p>
                 {n.content ? (
-                  <p className="text-slate-400 mt-1 line-clamp-3">{n.content}</p>
+                  <p className="mt-1 line-clamp-3 text-text-secondary">{n.content}</p>
                 ) : null}
               </li>
             ))}
@@ -183,21 +187,21 @@ export default function ResearchPage() {
         )}
       </div>
 
-      <p className="mt-4 text-xs text-slate-500 max-w-2xl">
+      <p className="mt-4 max-w-2xl text-xs text-text-dim">
         当前新闻源为站内东财链（与{' '}
         <a
           href="https://github.com/minsight-ai-info/AI-Search-Hub"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-indigo-400 hover:underline"
+          className="text-primary-fixed hover:underline"
         >
           AI-Search-Hub
         </a>{' '}
         所倡导的「多平台原生搜索」互补：抖音/公众号/X 等需扩展见{' '}
-        <code className="text-slate-400">GET /api/news/coverage</code> 与仓库{' '}
-        <code className="text-slate-400">docs/NEWS_SEARCH_AI_SEARCH_HUB.md</code>。
+        <code className="text-text-secondary">GET /api/news/coverage</code> 与仓库{' '}
+        <code className="text-text-secondary">docs/NEWS_SEARCH_AI_SEARCH_HUB.md</code>。
       </p>
-      <p className="text-xs text-slate-600">{t('research.disclaimer')}</p>
+      <p className="text-xs text-outline-variant">{t('research.disclaimer')}</p>
     </div>
   );
 }

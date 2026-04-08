@@ -7,13 +7,16 @@ def run_fund_flow_scanner() -> int:
     from ._storage import _get_conn, write_signals
 
     conn = _get_conn()
+    if not conn:
+        return write_signals([], "fundflow")
     try:
         df = conn.execute(
             "SELECT code, name, main_net_inflow FROM a_stock_fundflow ORDER BY main_net_inflow DESC NULLS LAST LIMIT 200"
         ).fetchdf()
     except Exception:
         df = None
-    conn.close()
+    finally:
+        conn.close()
     if df is None or df.empty:
         return write_signals([], "fundflow")
     signals = []

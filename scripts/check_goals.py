@@ -102,6 +102,14 @@ def main() -> int:
     ok = status == 200 and isinstance(body, list)
     results.append(("交易信号 /api/strategy/signals", ok, f"status={status}"))
 
+    status, body = get("/api/data/daily-coverage?limit_codes=50")
+    ok = status == 200 and isinstance(body, dict) and body.get("ok") is True
+    results.append(("日线覆盖 /api/data/daily-coverage", ok, f"status={status}"))
+
+    status, body = get("/api/system/data-overview")
+    ok = status == 200 and isinstance(body, dict) and body.get("ok") is True
+    results.append(("系统数据概览 /api/system/data-overview", ok, f"status={status}"))
+
     # 打印
     print("=" * 60)
     print("目标检查结果 (Goals Check)")

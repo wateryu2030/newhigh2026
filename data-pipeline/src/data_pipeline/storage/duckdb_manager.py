@@ -58,10 +58,10 @@ def get_conn(read_only: bool = False):
     """
     连接统一 DuckDB 文件。
 
-    注意：DuckDB 在同一进程内对**同一数据库文件**不能混用 read_only=True 与 False。
-    FastAPI Gateway 因审计中间件会 read_only=False 写入 audit_log，故 Gateway 内其它路由
-    也应使用 read_only=False（只读 SQL 仍可执行），否则会触发
-    \"Can't open a connection to same database file with a different configuration...\".
+    注意：DuckDB 在同一进程内对**同一数据库文件**不能**同时**混用 read_only=True 与 False
+    （须先关闭其一再开另一配置）。Gateway 审计中间件在请求结束后单独开写连接，与路由内
+    短时只读连接可顺序共存。纯统计类路由（如 ``/api/system/data-overview``）用
+    read_only=True，可与**其它进程**的长写连接并发读，避免文件锁冲突。
     """
     path = get_db_path()
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

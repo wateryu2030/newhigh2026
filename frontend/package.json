@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3000",
+    "dev:turbo": "next dev --turbo -H 0.0.0.0 -p 3000",
     "dev:brew": "env PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\" next dev -H 0.0.0.0 -p 3000",
+    "dev:clean": "rm -rf .next && mkdir -p .next/server && printf '%s\\n' '{\"version\":3,\"middleware\":{},\"functions\":{},\"sortedMiddleware\":[]}' > .next/server/middleware-manifest.json && next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "build:clean": "rm -rf .next && next build",
     "start": "next start -H 0.0.0.0 -p 3000",
@@ -16,7 +18,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.17.0",
     "lightweight-charts": "^4.2.3",
-    "next": "14.2.0",
+    "next": "14.2.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.10.0",

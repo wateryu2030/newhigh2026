@@ -176,10 +176,15 @@ def update_rss_macro_news(
     feeds_csv: str | None = None,
     max_per_feed: int | None = None,
     send_breaking_alerts: bool | None = None,
+    feed_timeout: float = 18.0,
+    max_feed_urls: int | None = None,
 ) -> int:
     """
     拉取 RSS → news_items（symbol=__GLOBAL__，tag=国际宏观）。
     返回新插入条数。
+
+    feed_timeout: 单源 HTTP 超时（秒）。
+    max_feed_urls: 仅处理 CSV 中前 N 个源（手动刷新可设小值避免网关/反代超时）。
     """
     feeds = (feeds_csv or os.environ.get("NEWS_RSS_FEEDS") or _DEFAULT_FEEDS).strip()
     lim = max_per_feed if max_per_feed is not None else int(os.environ.get("NEWS_RSS_MAX_PER_FEED", "35"))
@@ -198,17 +203,54 @@ def update_rss_macro_news(
     sent_hashes = _load_sent_hashes(hash_file) if do_push else set()
     patterns = _build_breaking_patterns() if do_push else []
 
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     from ..storage.duckdb_manager import ensure_tables, get_conn
 
-    conn = get_conn()
+    feed_list = [x.strip() for x in feeds.split(",") if x.strip()]
+    if max_feed_urls is not None and max_feed_urls > 0:
+        feed_list = feed_list[: int(max_feed_urls)]
+    if not feed_list:
+        return 0
+
+    raw_by_url: dict[str, bytes] = {}
+    timeout_f = float(feed_timeout) if feed_timeout and feed_timeout > 0 else 18.0
+    tried_parallel = False
+    if len(feed_list) > 1:
+        tried_parallel = True
+        max_workers = min(5, len(feed_list))
+        try:
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                future_map = {
+                    pool.submit(_fetch_rss, u, timeout_f): u for u in feed_list
+                }
+                # 不设 as_completed 总超时：单 URL 已在 _fetch_rss 内超时，避免误判后顺序再拉一遍翻倍耗时
+                for fut in as_completed(future_map):
+                    u = future_map[fut]
+                    try:
+                        data = fut.result()
+                        if data:
+                            raw_by_url[u] = data
+                    except Exception:
+                        pass
+        except Exception as exc:
+            print(f"RSS 并行拉取降级: {exc}")
+            raw_by_url = {}
+    if not raw_by_url and not tried_parallel:
+        for feed_url in feed_list:
+            raw = _fetch_rss(feed_url, timeout=timeout_f)
+            if raw:
+                raw_by_url[feed_url] = raw
+
+    if not raw_by_url:
+        return 0
+
+    conn = get_conn(read_only=False)
     ensure_tables(conn)
     inserted = 0
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    for feed_url in [x.strip() for x in feeds.split(",") if x.strip()]:
-        raw = _fetch_rss(feed_url)
-        if not raw:
-            continue
+    for feed_url, raw in raw_by_url.items():
         items = _parse_rss_feed(raw, lim)
         site = _feed_label_from_url(feed_url)
         for it in items:

@@ -24,14 +24,14 @@ try:
 
     LIB_DATABASE_AVAILABLE = True
     DUCKDB_MANAGER_AVAILABLE = True  # 别名，保持向后兼容
-    get_conn = get_connection  # 别名，保持向后兼容
+    GET_CONN = get_connection  # pylint: disable=invalid-name  # Alias for backward compatibility
 except ImportError:
     get_connection = None  # type: ignore
     get_db_path = None  # type: ignore
     ensure_core_tables = None  # type: ignore
     LIB_DATABASE_AVAILABLE = False
     DUCKDB_MANAGER_AVAILABLE = False
-    get_conn = None  # type: ignore
+    GET_CONN = None  # type: ignore
 
 
 def _get_emotion_state() -> dict:
@@ -61,10 +61,9 @@ def _get_hotmoney_signals() -> list:
         if not db_path or not os.path.isfile(db_path):
             return []
 
-        conn = get_connection(read_only=False)
+        conn = get_connection(read_only=True)
         if not conn:
             return []
-        ensure_core_tables(conn)
         # top_hotmoney_seats: seat_name, win_rate, avg_return
         seats = conn.execute(
             "SELECT seat_name, win_rate, avg_return FROM top_hotmoney_seats"
@@ -101,7 +100,7 @@ def _get_main_theme() -> list:
         if not db_path or not os.path.isfile(db_path):
             return [("全市场", 1)]
 
-        conn = get_conn(read_only=False)
+        conn = GET_CONN(read_only=True)
         df = conn.execute("SELECT sector, rank FROM main_themes ORDER BY rank LIMIT 10").fetchdf()
         conn.close()
         if df is None or df.empty:
@@ -121,7 +120,7 @@ def _trend_score_for_code(code: str) -> float:
         if not db_path or not os.path.isfile(db_path):
             return 0.5
 
-        conn = get_conn(read_only=False)
+        conn = GET_CONN(read_only=True)
         row = conn.execute(
             "SELECT score FROM market_signals WHERE code = ? ORDER BY snapshot_time DESC LIMIT 1",
             [code],
@@ -134,13 +133,76 @@ def _trend_score_for_code(code: str) -> float:
         return 0.5
 
 
+def _regime_config(state: str) -> dict:
+    """
+    情绪档位 → 最低信号分、因子权重、输出条数系数。
+    冰点/退潮抬高门槛、略增技术权；主升更偏资金与数量。
+    """
+    base = {
+        "min_signal_score": 0.4,
+        "emotion_weight": 0.4,
+        "fund_weight": 0.4,
+        "trend_weight": 0.2,
+        "top_n_mult": 1.0,
+    }
+    if state in ("冰点", "退潮"):
+        base.update(
+            min_signal_score=0.52,
+            emotion_weight=0.35,
+            fund_weight=0.35,
+            trend_weight=0.30,
+            top_n_mult=0.55,
+        )
+    elif state == "高潮":
+        base.update(
+            min_signal_score=0.45,
+            emotion_weight=0.45,
+            fund_weight=0.35,
+            trend_weight=0.20,
+            top_n_mult=0.75,
+        )
+    elif state == "主升":
+        base.update(
+            min_signal_score=0.38,
+            emotion_weight=0.35,
+            fund_weight=0.45,
+            trend_weight=0.20,
+            top_n_mult=1.0,
+        )
+    return base
+
+
+def _sniper_priority_codes() -> set:
+    """游资狙击池高分标的，用于融合加分。"""
+    if not DUCKDB_MANAGER_AVAILABLE:
+        return set()
+    try:
+        db_path = get_db_path()
+        if not db_path or not os.path.isfile(db_path):
+            return set()
+        conn = GET_CONN(read_only=True)
+        df = conn.execute(
+            "SELECT code FROM sniper_candidates ORDER BY sniper_score DESC NULLS LAST LIMIT 100"
+        ).fetchdf()
+        conn.close()
+        if df is None or df.empty:
+            return set()
+        return {
+            str(r.get("code", "") or "")
+            for _, r in df.iterrows()
+            if r.get("code")
+        }
+    except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        return set()
+
+
 class AIFusionStrategy:
     """融合情绪、资金、题材，生成带 signal_score 的交易信号。"""
 
     def __init__(self, conn=None):
         self._connection = conn
 
-    def generate_signals(
+    def generate_signals(  # pylint: disable=too-many-positional-arguments
         self,
         top_n: int = 20,
         min_signal_score: float = 0.4,
@@ -155,6 +217,26 @@ class AIFusionStrategy:
         hotmoney = _get_hotmoney_signals()
         emotion_score = emotion["emotion_score"]
         state = emotion["state"]
+
+        if os.environ.get("AI_FUSION_REGIME", "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+            "off",
+        ):
+            rc = _regime_config(state)
+            min_signal_score = rc["min_signal_score"]
+            emotion_weight = rc["emotion_weight"]
+            fund_weight = rc["fund_weight"]
+            trend_weight = rc["trend_weight"]
+            top_n = max(5, int(top_n * rc["top_n_mult"]))
+
+        sniper_codes = _sniper_priority_codes()
+        try:
+            sniper_boost = float(os.environ.get("AI_FUSION_SNIPER_BOOST", "0.07") or 0.07)
+        except ValueError:
+            sniper_boost = 0.07
+        sniper_boost = max(0.0, min(0.2, sniper_boost))
 
         # 主升期才大量出信号；其他阶段也可出但数量收紧
         if state == "主升":
@@ -172,6 +254,8 @@ class AIFusionStrategy:
                 + fund_score * fund_weight
                 + trend_score * trend_weight
             )
+            if code in sniper_codes:
+                signal_score = min(0.99, signal_score + sniper_boost)
             if signal_score < min_signal_score:
                 continue
             confidence = min(0.99, signal_score)
@@ -197,7 +281,7 @@ class AIFusionStrategy:
             if not db_path or not os.path.isfile(db_path):
                 return [c for c in candidate_codes if c]
 
-            conn = get_conn(read_only=False)
+            conn = GET_CONN(read_only=True)
             ms = conn.execute(
                 "SELECT code, score FROM market_signals ORDER BY score DESC NULLS LAST LIMIT 200"
             ).fetchdf()
@@ -226,7 +310,7 @@ class AIFusionStrategy:
             if not db_path or not os.path.isfile(db_path):
                 return candidate_codes
 
-            conn = get_conn(read_only=False)
+            conn = GET_CONN(read_only=True)
             ms = conn.execute(
                 "SELECT code FROM market_signals ORDER BY snapshot_time DESC LIMIT 50"
             ).fetchdf()
@@ -250,7 +334,7 @@ class AIFusionStrategy:
             return 0
 
         try:
-            conn = get_conn(read_only=False)
+            conn = GET_CONN(read_only=False)
             ensure_core_tables(conn)
             # 仅清空本策略，保留 shareholder_chip / market_agg 等其它 strategy_id
             conn.execute("DELETE FROM trade_signals WHERE strategy_id = ?", ["ai_fusion"])

@@ -5,6 +5,7 @@ import { api, type MarketResponse, type NewsItem } from '@/api/client';
 import { eastMoneyIndividualUrl, toAshareKlineSymbol } from '@/lib/ashareSymbol';
 import { useLang } from '@/context/LangContext';
 import { chgClass, fmtPct, fmtPrice } from '@/lib/marketFormat';
+import { lwChartColors } from '@/lib/chartTheme';
 
 export type StockPenetrationRow = {
   code: string;
@@ -76,29 +77,29 @@ export function StockPenetrationPanel({
 
       const chart = createChart(chartRef.current, {
         layout: {
-          background: { type: ColorType.Solid, color: '#14171C' },
-          textColor: '#94A3B8',
+          background: { type: ColorType.Solid, color: lwChartColors.layoutBg },
+          textColor: lwChartColors.text,
         },
         grid: {
-          vertLines: { color: '#2A2E36' },
-          horzLines: { color: '#2A2E36' },
+          vertLines: { color: lwChartColors.grid },
+          horzLines: { color: lwChartColors.grid },
         },
         crosshair: { mode: CrosshairMode.Normal },
-        rightPriceScale: { borderColor: '#2A2E36' },
-        timeScale: { borderColor: '#2A2E36', timeVisible: true, secondsVisible: false },
+        rightPriceScale: { borderColor: lwChartColors.grid },
+        timeScale: { borderColor: lwChartColors.grid, timeVisible: true, secondsVisible: false },
         width: chartRef.current.clientWidth,
         height: 320,
       });
 
       const candle = chart.addCandlestickSeries({
-        upColor: '#22C55E',
-        downColor: '#EF4444',
+        upColor: lwChartColors.candleUp,
+        downColor: lwChartColors.candleDown,
         borderVisible: false,
-        wickUpColor: '#22C55E',
-        wickDownColor: '#EF4444',
+        wickUpColor: lwChartColors.candleUp,
+        wickDownColor: lwChartColors.candleDown,
       });
       const vol = chart.addHistogramSeries({
-        color: '#6366F1',
+        color: lwChartColors.volume,
         priceFormat: { type: 'volume' },
         priceScaleId: 'vol',
       });
@@ -170,7 +171,7 @@ export function StockPenetrationPanel({
           href={emUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto text-sm text-indigo-400 hover:underline"
+          className="ml-auto text-sm text-primary-fixed hover:underline"
         >
           {t('drill.penetrationEastmoney')} ↗
         </a>
@@ -180,10 +181,10 @@ export function StockPenetrationPanel({
 
       {kError && <p className="text-sm text-accent-red">{kError}</p>}
       {!kError && klines && (!klines.data || klines.data.length === 0) && (
-        <p className="text-sm text-amber-200/90">{t('drill.penetrationNoBars')}</p>
+        <p className="text-sm text-[color:var(--color-badge-amber-text)]/90">{t('drill.penetrationNoBars')}</p>
       )}
 
-      <div ref={chartRef} className="h-[320px] w-full min-h-[280px] rounded-lg border border-card-border bg-[#0f1218]" />
+      <div ref={chartRef} className="h-[320px] min-h-[280px] w-full rounded-lg border border-card-border bg-terminal-bg" />
 
       <div>
         <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-text-secondary">
@@ -200,7 +201,7 @@ export function StockPenetrationPanel({
                     href={n.url.trim()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-400 hover:underline"
+                    className="text-primary-fixed hover:underline"
                   >
                     {n.title || '—'}
                   </a>

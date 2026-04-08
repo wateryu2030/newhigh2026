@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 停止占用 8000/3000 的进程并后台重启 Gateway + Next 前端。
 # 用法：
-#   bash scripts/restart_gateway_frontend.sh                    # 开发：next dev
+#   bash scripts/restart_gateway_frontend.sh                    # 开发：next dev（默认先删 .next，避免 HMR chunk 错配）
+#   NEWHIGH_NEXT_SKIP_NEXT_CLEAN=1 bash scripts/restart_gateway_frontend.sh  # 保留 .next 加快重启（再出现 ./NNN.js 勿用）
 #   NEWHIGH_FRONTEND_PROD=1 bash scripts/restart_gateway_frontend.sh   # 部署：next build + standalone node server.js
 set -euo pipefail
 
@@ -84,21 +85,48 @@ if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   echo "[restart] 启动 Next standalone server.js http://0.0.0.0:3000（API_PROXY_TARGET=$API_PROXY_TARGET）…"
   cd .next/standalone
   nohup env HOSTNAME=0.0.0.0 PORT=3000 API_PROXY_TARGET="$API_PROXY_TARGET" node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
+  echo $! >"$ROOT/logs/frontend.pid"
 else
-  # 仅删「半截」.next，或显式 NEWHIGH_NEXT_CLEAN=1（陈旧 chunk：Cannot find module './xxx.js'）
-  if [[ "${NEWHIGH_NEXT_CLEAN:-}" == "1" ]] || [[ -d .next && ! -f .next/server/middleware-manifest.json ]]; then
-    echo "[restart] 清理前端 .next（NEWHIGH_NEXT_CLEAN=1 或缺 middleware-manifest）…"
+  # 默认删 .next：HMR 后常见 Cannot find module './NNN.js'。跳过清缓存用 NEWHIGH_NEXT_SKIP_NEXT_CLEAN=1
+  if [[ "${NEWHIGH_NEXT_SKIP_NEXT_CLEAN:-}" != "1" ]]; then
+    echo "[restart] 清理前端 .next（开发模式，避免陈旧 webpack chunk）…"
+    rm -rf .next
+  elif [[ -d .next && ! -f .next/server/middleware-manifest.json ]]; then
+    echo "[restart] 缺 middleware-manifest，清理 .next …"
     rm -rf .next
   fi
   mkdir -p .next/server
-  # Next 14 dev 冷启动时可能在首包编译完成前 require 此文件；占位避免全站/API 反代 500（随后由 dev 覆盖）
+  # Next 14 dev 冷启动首包编译前可能 require 此文件；占位防 500，随后由 dev 覆盖
   if [[ ! -f .next/server/middleware-manifest.json ]]; then
     printf '%s\n' '{"version":3,"middleware":{},"functions":{},"sortedMiddleware":[]}' >.next/server/middleware-manifest.json
   fi
   echo "[restart] 启动前端 next dev http://127.0.0.1:3000 …"
   nohup npm run dev >>"$ROOT/logs/frontend.out" 2>&1 &
+  echo $! >"$ROOT/logs/frontend.pid"
+  # Next dev 启动阶段会删掉预置的 middleware-manifest；短暂补写，直至 Next 自行生成
+  (
+    MW_STUB='{"version":3,"middleware":{},"functions":{},"sortedMiddleware":[]}'
+    for _ in $(seq 1 120); do
+      mkdir -p "$ROOT/frontend/.next/server"
+      if [[ ! -f "$ROOT/frontend/.next/server/middleware-manifest.json" ]]; then
+        printf '%s\n' "$MW_STUB" >"$ROOT/frontend/.next/server/middleware-manifest.json"
+      fi
+      sleep 0.25
+    done
+  ) &
+  # 等待 / 与 /api/* 首编译完成，降低 Cannot find module './NNN.js' 竞态
+  echo "[restart] 等待 Next 编译就绪（首页 + /api 反代）…"
+  for i in $(seq 1 120); do
+    if curl -sf -o /dev/null "http://127.0.0.1:3000/" 2>/dev/null; then
+      code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000/api/news?limit=1" 2>/dev/null || echo 000)
+      if [[ "$code" == "200" ]]; then
+        echo "[restart] Next 就绪（约 ${i}s）"
+        break
+      fi
+    fi
+    sleep 1
+  done
 fi
-echo $! >"$ROOT/logs/frontend.pid"
 cd "$ROOT"
 echo "[restart] 前端 PID $(cat "$ROOT/logs/frontend.pid")，日志 $ROOT/logs/frontend.out"
 echo "[restart] 完成。"

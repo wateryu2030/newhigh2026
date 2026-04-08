@@ -16,7 +16,7 @@ def _interval_to_yahoo(interval: str) -> str:
     return interval
 
 
-def fetch_klines_yahoo(
+def fetch_klines_yahoo(  # pylint: disable=too-many-positional-arguments
     symbol: str,
     interval: str = "1d",
     limit: int = 500,

@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  政策 news-api :8001 — 必须用仓库 .venv/bin/python（勿用 /usr/bin/python3）。
+  安装: sed 替换 REPLACE_WITH_NEWHIGH_ROOT → cp ~/Library/LaunchAgents/ →
+  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.newhigh.news-api.plist
+-->
 <plist version="1.0">
 <dict>
     <key>Label</key>
     <string>com.newhigh.news-api</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
+        <string>REPLACE_WITH_NEWHIGH_ROOT/.venv/bin/python</string>
         <string>REPLACE_WITH_NEWHIGH_ROOT/integrations/hongshan/policy-news/news_database.py</string>
         <string>api</string>
     </array>

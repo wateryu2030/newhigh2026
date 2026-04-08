@@ -7,6 +7,10 @@ Tushare集成测试
 import os
 import sys
 import unittest
+
+import pytest
+
+pytestmark = pytest.mark.integration
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 
@@ -76,6 +80,8 @@ class TestTushareIntegration(unittest.TestCase):
             ("000001", "000001.SZ"),
             ("600519", "600519.SH"),
             ("830799", "830799.BSE"),
+            ("900901", "900901.SH"),
+            ("920001", "920001.BSE"),
             ("000001.SZ", "000001.SZ"),  # 已经标准化
             ("600519.SH", "600519.SH"),
         ]
@@ -83,6 +89,9 @@ class TestTushareIntegration(unittest.TestCase):
         for input_code, expected in test_cases:
             result = tushare._normalize_symbol(input_code)
             self.assertEqual(result, expected, f"代码 {input_code} 标准化失败")
+
+        self.assertEqual(tushare._to_tushare_ts_code("830799"), "830799.BJ")
+        self.assertEqual(tushare._to_tushare_ts_code("600519"), "600519.SH")
 
         print("✓ 股票代码标准化测试通过")
 

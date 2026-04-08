@@ -21,8 +21,8 @@ export function ConcentrationHeatmap({
   if (displayStocks.length === 0) {
     return (
       <div
-        className="flex items-center justify-center rounded-xl text-sm"
-        style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', height, color: '#64748B' }}
+        className="flex items-center justify-center rounded-xl border border-card-border bg-card-bg text-sm text-text-dim"
+        style={{ height }}
       >
         暂无热力图数据
       </div>
@@ -39,23 +39,19 @@ export function ConcentrationHeatmap({
 
   return (
     <div
-      className="overflow-x-auto overflow-y-auto rounded-xl"
-      style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', minHeight: height }}
+      className="min-h-0 overflow-x-auto overflow-y-auto rounded-xl border border-card-border bg-card-bg"
+      style={{ minHeight: height }}
     >
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr>
-            <th
-              className="sticky left-0 z-10 px-2 py-1.5 text-left font-medium"
-              style={{ backgroundColor: '#0A0C10', color: '#94A3B8', borderBottom: '1px solid #2A2E36' }}
-            >
+            <th className="sticky left-0 z-10 border-b border-card-border bg-terminal-bg px-2 py-1.5 text-left font-medium text-text-secondary">
               股票
             </th>
             {displayQuarters.map((q) => (
               <th
                 key={q}
-                className="px-1 py-1.5 text-center font-medium"
-                style={{ color: '#94A3B8', borderBottom: '1px solid #2A2E36', minWidth: 48 }}
+                className="min-w-[48px] border-b border-card-border px-1 py-1.5 text-center font-medium text-text-secondary"
               >
                 {q}
               </th>
@@ -71,31 +67,25 @@ export function ConcentrationHeatmap({
             return (
               <tr
                 key={row.stock_code}
-                className="hover:bg-white/5"
-                style={{ borderBottom: '1px solid #1E2229' }}
+                className="border-b border-[color:var(--color-border-subtle)] hover:bg-white/5"
               >
-                <td
-                  className="sticky left-0 z-10 px-2 py-1.5 font-mono"
-                  style={{ backgroundColor: '#14171C', color: '#F1F5F9' }}
-                >
+                <td className="sticky left-0 z-10 bg-card-bg px-2 py-1.5 font-mono text-text-primary">
                   {row.stock_code}
                 </td>
                 {values.map((v, i) => (
                   <td key={i} className="px-1 py-1 text-center" title={v != null ? `${v}%` : ''}>
                     {v != null ? (
                       <div
-                        className="mx-auto h-5 w-8 rounded"
+                        className="mx-auto h-5 w-8 rounded text-[10px] leading-5"
                         style={{
                           backgroundColor: getColor(v),
-                          color: v > 50 ? '#FFF' : '#94A3B8',
-                          lineHeight: '20px',
-                          fontSize: 10,
+                          color: v > 50 ? 'var(--color-text-on-warm-fill)' : 'var(--color-text-secondary)',
                         }}
                       >
                         {v}
                       </div>
                     ) : (
-                      <span style={{ color: '#475569' }}>—</span>
+                      <span className="text-outline-variant">—</span>
                     )}
                   </td>
                 ))}

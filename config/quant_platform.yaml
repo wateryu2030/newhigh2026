@@ -1,0 +1,8 @@
+# Auto-fixed by Cursor on 2026-04-02: 回测与数据路径（可被环境变量覆盖）
+backtest:
+  default_commission_per_leg: 0.0002
+  default_slippage_per_leg: 0.001
+  signal_execution_lag_bdays: 1
+data:
+  parquet_root: data/parquet
+  duckdb_path_env: QUANT_SYSTEM_DUCKDB_PATH

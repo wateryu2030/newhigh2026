@@ -7,6 +7,7 @@ name = "data-pipeline"
 version = "0.1.0"
 description = "A-share data pipeline: AkShare collectors, ETL, DuckDB storage, schedulers"
 requires-python = ">=3.10"
+# collectors 使用 core.ashare_symbol；请与仓库根 requirements.txt 一并 pip install -e ./core
 dependencies = [
     "duckdb>=0.9.0",
     "akshare>=1.14.0",

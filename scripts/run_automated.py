@@ -30,21 +30,11 @@ if os.path.isfile(_env):
         pass
 
 SCRIPTS = os.path.join(ROOT, "scripts")
-for _d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-]:
-    _p = os.path.join(ROOT, _d)
-    if os.path.isdir(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(ROOT)
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
-_opt = os.path.join(ROOT, "ai-optimizer/src")
-if os.path.isdir(_opt) and _opt not in sys.path:
-    sys.path.insert(0, _opt)
 
 
 def run_tushare() -> int:

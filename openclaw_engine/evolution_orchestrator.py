@@ -80,6 +80,13 @@ def run_evolution_cycle(
                 p1, p2 = selected[_ % len(selected)], selected[(_ + 1) % len(selected)]
             child = mutate(crossover(p1, p2), mutation_rate=mutation_rate)
             child.strategy_id = f"openclaw_gen1_{_}"
+            # 子代无独立信号表时，继承父代 eval 用的 strategy_id，使回测仍可对齐 trade_signals
+            try:
+                pid = getattr(p1, "strategy_id", "") or ""
+                if pid:
+                    child.params["eval_strategy_id"] = pid
+            except (TypeError, AttributeError):
+                pass
             offspring.append(child)
         best_fitness = max(fitness_scores) if fitness_scores else None
         result["best_fitness"] = best_fitness

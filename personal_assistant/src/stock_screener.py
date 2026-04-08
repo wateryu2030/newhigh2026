@@ -10,12 +10,14 @@ import duckdb
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 
-# 添加项目路径
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for d in ["data-pipeline/src", "core/src", "strategy-engine/src"]:
-    p = os.path.join(ROOT, d)
-    if os.path.isdir(p) and p not in sys.path:
-        sys.path.insert(0, p)
+# 仓库根（personal_assistant 的上一级）+ 与主仓统一的子包 path
+_PA_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = os.path.dirname(_PA_ROOT)
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(REPO_ROOT)
 
 # 固定股票池（优化版 - 行业龙头 + 高流动性）
 DEFAULT_FIXED_STOCKS = [

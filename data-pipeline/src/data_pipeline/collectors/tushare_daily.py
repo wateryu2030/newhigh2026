@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
+from core.ashare_symbol import ashare_symbol_to_tushare_ts_code
+
 from ..storage.duckdb_manager import get_conn, ensure_tables
 
 
@@ -89,19 +91,10 @@ def update_tushare_daily(
 
         # 转换为 Tushare 格式的代码
         for c in batch_codes:
-            c = str(c).strip()
-            if not c:
+            c = str(c).strip().split(".", maxsplit=1)[0]
+            if not c or not c.isdigit() or not (5 <= len(c) <= 8):
                 continue
-            # 标准化代码格式
-            if c.startswith("6"):
-                ts_code = f"{c}.SH"
-            elif c.startswith(("0", "3")):
-                ts_code = f"{c}.SZ"
-            elif c.startswith(("4", "8", "9")) or len(c) == 8:
-                ts_code = f"{c}.BSE"
-            else:
-                continue
-            batch_ts_codes.append(ts_code)
+            batch_ts_codes.append(ashare_symbol_to_tushare_ts_code(c))
 
         if not batch_ts_codes:
             continue
@@ -156,7 +149,9 @@ def update_tushare_daily(
                 close=EXCLUDED.close, volume=EXCLUDED.volume, amount=EXCLUDED.amount
             """)
 
-            rows_updated = result.rowcount
+            rc = getattr(result, "rowcount", None)
+            # DuckDB 对 INSERT..SELECT 常返回 rowcount=-1，用本批行数更可信
+            rows_updated = int(rc) if rc is not None and rc >= 0 else len(df)
             total_rows += rows_updated
 
             print(f"✓ 批次 {i//batch_size + 1} 更新 {rows_updated} 条数据")
@@ -180,25 +175,29 @@ def update_tushare_daily(
     return total_rows
 
 
-def update_all_tushare_daily(days_back: int = 30, adjust: str = "qfq") -> int:
+def update_all_tushare_daily(
+    days_back: int = 30,
+    adjust: str = "qfq",
+    *,
+    codes_limit: int | None = None,
+    verbose: bool = False,
+) -> int:
     """
-    更新所有股票的 Tushare 日 K 线数据
+    更新全市场（或前 N 只）Tushare 日 K。
 
-    Args:
-        days_back: 获取多少天内的数据
-        adjust: 复权类型
-
-    Returns:
-        更新的数据条数
+    已改为委托 ``run_incremental("tushare_daily")``：按**每只股票最后交易日**分组续拉，
+    避免「全局 MAX(date) 被少数股票抬高 → start>end → 整批 0 行」及旧逻辑与调度脱节。
+    ``days_back`` / ``adjust`` 仅保留签名兼容，增量由管道内 fetch 规则决定。
     """
-    end_date = datetime.now().strftime("%Y%m%d")
-    start_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y%m%d")
+    _ = days_back, adjust
+    from .. import run_incremental
 
-    print(f"🔄 开始更新 Tushare 日 K 线数据")
-    print(f"   时间范围: {start_date} 到 {end_date}")
-    print(f"   复权类型: {adjust}")
-
-    return update_tushare_daily(code=None, start_date=start_date, end_date=end_date, adjust=adjust)
+    strip = os.environ.get("TUSHARE_STRIP_PROXY", "1").strip().lower() not in ("0", "false", "no")
+    kw: dict = {"strip_proxy_env": strip, "verbose": verbose}
+    if codes_limit is not None and codes_limit > 0:
+        kw["codes_limit"] = int(codes_limit)
+    print("🔄 Tushare 日 K：用 data_pipeline.run_incremental(tushare_daily) 增量续拉")
+    return int(run_incremental("tushare_daily", force_full=False, **kw))
 
 
 if __name__ == "__main__":

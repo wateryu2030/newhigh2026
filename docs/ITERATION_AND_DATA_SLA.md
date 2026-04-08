@@ -2,6 +2,7 @@
 
 ## 本地迭代（缩短反馈环）
 
+- `python scripts/verify_quant_readiness.py`：不启 Gateway 也可检查 DuckDB 核心表行数与日线最新日期；`--live` 连 `/health` + `/api/data/status`；`--strict` 在**硬** WARN 时非零退出（适合 CI）。`a_stock_fundflow` 空表仅**软** WARN，strict 仍退出 0；稀疏覆盖仍算硬 WARN。可选环境变量 `NEWHIGH_FUND_FLOW_STRICT_MIN`（默认 400）与 `basic÷25` 取 max 作为稀疏下限。
 - `make dev-check`：跑 `scripts/restart_and_check.sh`，快速确认网关与健康检查。
 - `make gateway-restart`：仅重启网关与前端（改 API 时常用）。
 - `make pipeline-editable`：可编辑安装 `data-pipeline`，保证 `tushare` 等与 `pyproject.toml` 一致。

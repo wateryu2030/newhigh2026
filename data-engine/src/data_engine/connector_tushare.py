@@ -12,6 +12,10 @@ import datetime as dt
 from typing import Callable, Any, List
 
 from core import OHLCV
+from core.ashare_symbol import (
+    ashare_symbol_to_tushare_ts_code,
+    normalize_ashare_symbol,
+)
 
 try:
     import tushare as ts
@@ -20,18 +24,9 @@ except ImportError:
     ts = None
     pd = None
 
-
-def _normalize_symbol(code: str) -> str:
-    """A 股/北交所代码转为带交易所后缀：600519->600519.SH, 000001->000001.SZ, 830799->830799.BSE。"""
-    code = str(code).strip().split(".", maxsplit=1)[0]
-    if not code:
-        return code
-    # 北交所：4/8/9 开头或 8 位
-    if code.startswith(("4", "8", "9")) or len(code) == 8:
-        return f"{code}.BSE"
-    if code.startswith("6"):
-        return f"{code}.SH"
-    return f"{code}.SZ"
+# 兼容旧调用与测试
+_normalize_symbol = normalize_ashare_symbol
+_to_tushare_ts_code = ashare_symbol_to_tushare_ts_code
 
 
 def _to_utc(dt_obj: dt.datetime) -> dt.datetime:
@@ -94,8 +89,10 @@ def retry_on_failure(max_retries: int = None, delay: float = None):
                 except Exception as e:  # pylint: disable=broad-exception-caught  # external Tushare API
                     if attempt == retries - 1:
                         raise
-                    print(f"尝试 {
-                        attempt + 1}/{retries} 失败: {e}, {retry_delay}秒后重试...")
+                    print(
+                        f"尝试 {attempt + 1}/{retries} 失败: {e}, "
+                        f"{retry_delay}秒后重试..."
+                    )
                     time.sleep(retry_delay)
             return None
 
@@ -258,15 +255,14 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
     # 初始化pro接口
     pro = ts.pro_api()
 
-    # 标准化代码格式
-    normalized_code = _normalize_symbol(code)
+    ts_code = ashare_symbol_to_tushare_ts_code(code)
 
     try:
         if period == "daily":
             # 日线数据
-            df = pro.daily(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
             if df.empty:
-                raise ValueError(f"未找到{normalized_code}在{start_date}到{end_date}的数据")
+                raise ValueError(f"未找到{ts_code}在{start_date}到{end_date}的数据")
 
             # 重命名列以匹配标准格式
             df = df.rename(
@@ -290,9 +286,9 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
 
         if period == "weekly":
             # 周线数据
-            df = pro.weekly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.weekly(ts_code=ts_code, start_date=start_date, end_date=end_date)
             if df.empty:
-                raise ValueError(f"未找到{normalized_code}周线数据")
+                raise ValueError(f"未找到{ts_code}周线数据")
 
             df = df.rename(
                 columns={
@@ -314,9 +310,9 @@ def _fetch_hist_df(code: str, start_date: str, end_date: str, period: str, adjus
 
         if period == "monthly":  # pylint: disable=no-else-return
             # 月线数据
-            df = pro.monthly(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.monthly(ts_code=ts_code, start_date=start_date, end_date=end_date)
             if df.empty:
-                raise ValueError(f"未找到{normalized_code}月线数据")
+                raise ValueError(f"未找到{ts_code}月线数据")
 
             df = df.rename(
                 columns={
@@ -388,7 +384,7 @@ def fetch_ohlcv(
         else:
             ts_utc = _to_utc(date_val)
         ohlcv = OHLCV(
-            symbol=_normalize_symbol(code),
+            symbol=normalize_ashare_symbol(code),
             timestamp=ts_utc,
             open=float(row["open"]),
             high=float(row["high"]),
@@ -448,7 +444,9 @@ def fetch_realtime_quotes(codes: List[str]) -> pd.DataFrame:
 
     try:
         # 注意：此函数可能需要相应权限
-        normalized_codes = [_normalize_symbol(code).split(".", maxsplit=1)[0] for code in codes]
+        normalized_codes = [
+            normalize_ashare_symbol(code).split(".", maxsplit=1)[0] for code in codes
+        ]
         df = ts.get_realtime_quotes(normalized_codes)
         return df
     except Exception as e:  # pylint: disable=broad-exception-caught  # external Tushare API
@@ -478,15 +476,15 @@ def fetch_financial_data(
         raise RuntimeError("Tushare初始化失败")
 
     pro = ts.pro_api()
-    normalized_code = _normalize_symbol(code)
+    ts_code = ashare_symbol_to_tushare_ts_code(code)
 
     try:
         if report_type == "income":
-            df = pro.income(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.income(ts_code=ts_code, start_date=start_date, end_date=end_date)
         elif report_type == "balancesheet":
-            df = pro.balancesheet(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.balancesheet(ts_code=ts_code, start_date=start_date, end_date=end_date)
         elif report_type == "cashflow":
-            df = pro.cashflow(ts_code=normalized_code, start_date=start_date, end_date=end_date)
+            df = pro.cashflow(ts_code=ts_code, start_date=start_date, end_date=end_date)
         else:
             raise ValueError(f"不支持的报表类型: {report_type}")
 

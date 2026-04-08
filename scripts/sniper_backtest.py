@@ -11,10 +11,11 @@ import sys
 from datetime import datetime, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for d in ["data-pipeline/src", "market-scanner/src"]:
-    p = os.path.join(ROOT, d)
-    if os.path.isdir(p) and p not in sys.path:
-        sys.path.insert(0, p)
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(ROOT)
 
 
 def load_sniper_signals(limit: int = 200) -> list:

@@ -11,18 +11,13 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
-for d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-]:
-    p = os.path.join(ROOT, d)
-    if os.path.isdir(p) and p not in sys.path:
-        sys.path.insert(0, p)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(ROOT)
 
 
 def run_cycle() -> None:

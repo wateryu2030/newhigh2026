@@ -27,7 +27,7 @@ export function fmtAmountWan(v: number | null | undefined): string {
 
 export function chgClass(chg: number | null | undefined): string {
   if (chg == null || Number.isNaN(Number(chg))) return 'text-text-secondary';
-  if (Number(chg) > 0) return 'text-emerald-400';
-  if (Number(chg) < 0) return 'text-rose-400';
+  if (Number(chg) > 0) return 'text-accent-green';
+  if (Number(chg) < 0) return 'text-accent-red';
   return 'text-text-secondary';
 }

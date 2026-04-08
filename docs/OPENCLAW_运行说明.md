@@ -1,5 +1,37 @@
 # 让本机 OpenClaw 正常运转（编程 / 分析 newhigh）
 
+## 0. 本机约定：全局 Agent Skills（非 newhigh 项目内）
+
+**`npx skills add addyosmani/agent-skills --global` 后的实际布局：**
+
+| 用途 | 路径 |
+|------|------|
+| 技能实体（权威） | `~/.agents/skills/<skill-name>/` |
+| OpenClaw 加载 | `~/.openclaw/skills/<skill-name>/`（指向 `~/.agents/skills/…` 的符号链接） |
+| 你自建的技能（可选） | `~/.openclaw/workspace/skills/`（与 addyosmani 并存） |
+
+**安装 [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)（推荐一键）：**
+
+```bash
+cd /Users/apple/Ahope/newhigh
+bash scripts/install_openclaw_addyosmani_skills.sh
+```
+
+或手动（需可用 `npx`，且 **PATH 优先 Homebrew Node**，避免 `~/.local/bin/npx` 指向已删的 node）：
+
+```bash
+mkdir -p ~/.openclaw/workspace
+cd ~/.openclaw/workspace
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+npx --yes skills add addyosmani/agent-skills --yes --global
+```
+
+**`npx` 克隆超时**时，可仅用 git：`OPENCLAW_SKILLS_USE_GIT_ONLY=1 bash scripts/install_openclaw_addyosmani_skills.sh`
+
+装完后请 **完整重启 OpenClaw**（见下文 §1.1）。Cursor：**本机全局**规则 `~/.cursor/rules/openclaw-global-agent-skills.mdc`（`alwaysApply: true`）；本仓库内另见 `.cursor/rules/openclaw-global-skills.mdc`。
+
+---
+
 ## 当前情况简要
 
 - **Gateway**：127.0.0.1:18789 已跑、Health OK。
@@ -66,6 +98,8 @@
 
 - **服务**：`ai.openclaw.gateway`（LaunchAgent）
 - **plist**：`~/Library/LaunchAgents/ai.openclaw.gateway.plist`
+- **环境变量**：`ProgramArguments` 指向 **`~/.openclaw/gateway-launch.sh`**，启动前 `source ~/.openclaw/.env`，使 `openclaw.json` 里 `${DASHSCOPE_API_KEY}` / `${DEEPSEEK_API_KEY}` 等在 Gateway 进程中可用。
+- **重载 plist**（改 plist 后）：`launchctl bootout gui/$(id -u)/ai.openclaw.gateway` → `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.gateway.plist`
 - **启动命令**：`/opt/homebrew/bin/node /Users/apple/ClawdBot/dist/index.js gateway --port 18789`
 - **重启**：`launchctl unload ~/Library/LaunchAgents/ai.openclaw.gateway.plist && launchctl load ~/Library/LaunchAgents/ai.openclaw.gateway.plist`
 - **注意**：`openclaw.json` 不要加当前版本不认识的键（如 `tools.fs`、`meta.note`），否则会报 Config invalid，Gateway 无法启动。需用 `openclaw doctor --fix` 或手动删除未知键。
@@ -109,3 +143,16 @@
 | newhigh 项目路径 | `/Users/apple/Ahope/newhigh`（提问时用绝对路径） |
 
 按上述步骤：**重启 OpenClaw → 新开会话 → 用绝对路径问 newhigh 的 .md**；配合 **Heartbeat 每小时 + Cron 定时任务**，即可让 OpenClaw 正常运转并自主提醒、干活。
+
+## 8. `brew update` 报清华镜像 403
+
+若出现 `mirrors.tuna.tsinghua.edu.cn/... returned error: 403`，说明当前 Homebrew 的 `origin` 仍指向清华且镜像侧拒绝；可**临时改回 GitHub 官方**再更新：
+
+```bash
+git -C "$(brew --repo)" remote -v
+git -C "$(brew --repo)" remote set-url origin https://github.com/Homebrew/brew.git
+git -C "$(brew --repo homebrew/core)" remote set-url origin https://github.com/Homebrew/homebrew-core.git 2>/dev/null || true
+brew update
+```
+
+之后如需再切镜像，以 Homebrew 文档当前推荐方式为准（勿沿用已失效的 tuna git 地址）。

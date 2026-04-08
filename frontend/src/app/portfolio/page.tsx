@@ -7,11 +7,12 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import { EquityCurve } from '@/components/EquityCurve';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/EmptyState';
+import { portfolioPieFills, rechartsTooltipContent } from '@/lib/chartTheme';
 
 const ALLOC = [
-  { name: 'Crypto', value: 40, color: '#6366F1' },
-  { name: 'Stocks', value: 35, color: '#10B981' },
-  { name: 'FX', value: 25, color: '#f59e0b' },
+  { name: 'Crypto', value: 40 },
+  { name: 'Stocks', value: 35 },
+  { name: 'FX', value: 25 },
 ];
 
 export default function PortfolioPage() {
@@ -24,7 +25,11 @@ export default function PortfolioPage() {
   }, []);
   useEffect(() => {
     setEquityLoading(true);
-    api.executionEquityCurve(200).then((r) => setEquityCurve(r.equity_curve || [])).catch(() => setEquityCurve([])).finally(() => setEquityLoading(false));
+    api
+      .executionEquityCurve(200)
+      .then((r) => setEquityCurve(r.equity_curve || []))
+      .catch(() => setEquityCurve([]))
+      .finally(() => setEquityLoading(false));
   }, []);
 
   const capital = data?.capital ?? 12_340_000;
@@ -33,11 +38,11 @@ export default function PortfolioPage() {
   return (
     <div className="min-h-screen space-y-6 pb-24 md:pb-6">
       <div className="card">
-        <p className="text-sm text-slate-400">{t('portfolio.totalAum')}</p>
-        <p className="text-3xl font-bold text-white">{formatMoney(capital)}</p>
+        <p className="text-sm text-text-secondary">{t('portfolio.totalAum')}</p>
+        <p className="text-3xl font-bold text-on-surface">{formatMoney(capital)}</p>
       </div>
       <div className="card">
-        <h2 className="mb-2 text-sm font-medium text-slate-400">{t('dashboard.equityCurve')}（执行层）</h2>
+        <h2 className="mb-2 text-sm font-medium text-text-secondary">{t('dashboard.equityCurve')}（执行层）</h2>
         {equityLoading ? (
           <LoadingSpinner />
         ) : equityCurve.length > 0 ? (
@@ -47,25 +52,42 @@ export default function PortfolioPage() {
         )}
       </div>
       <div className="card">
-        <p className="mb-4 text-sm font-medium text-slate-400">{t('portfolio.allocation')}</p>
+        <p className="mb-4 text-sm font-medium text-text-secondary">{t('portfolio.allocation')}</p>
         <ResponsiveContainer width="100%" height={260}>
           <PieChart>
-            <Pie data={ALLOC} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name} ${value}%`}>
+            <Pie
+              data={ALLOC}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              label={({ name, value }) => `${name} ${value}%`}
+            >
               {ALLOC.map((_, i) => (
-                <Cell key={i} fill={ALLOC[i].color} />
+                <Cell key={i} fill={portfolioPieFills[i]} />
               ))}
             </Pie>
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} />
+            <Tooltip contentStyle={rechartsTooltipContent} />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
       <div className="card md:max-w-2xl">
-        <h2 className="mb-2 text-sm font-medium text-slate-400">{t('portfolio.positions')}</h2>
+        <h2 className="mb-2 text-sm font-medium text-text-secondary">{t('portfolio.positions')}</h2>
         <ul className="space-y-2 text-sm">
-          <li className="flex justify-between"><span className="text-slate-300">BTC</span><span className="text-white">—</span></li>
-          <li className="flex justify-between"><span className="text-slate-300">ETH</span><span className="text-white">—</span></li>
-          <li className="flex justify-between"><span className="text-slate-300">SPY</span><span className="text-white">—</span></li>
+          <li className="flex justify-between">
+            <span className="text-text-secondary">BTC</span>
+            <span className="text-on-surface">—</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-text-secondary">ETH</span>
+            <span className="text-on-surface">—</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-text-secondary">SPY</span>
+            <span className="text-on-surface">—</span>
+          </li>
         </ul>
       </div>
     </div>

@@ -9,8 +9,11 @@ import os
 import sys
 import time
 import uuid
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, List, Optional
+
+from core.ashare_symbol import ashare_symbol_to_tushare_ts_code, strip_ashare_code
 
 from .ashare_daily_kline import _pop_proxy_env_vars, _restore_env
 from .base import BaseDataSource, register_source
@@ -35,17 +38,10 @@ class TushareDailySource(BaseDataSource):
     @staticmethod
     def code_to_ts_code(raw: str) -> Optional[str]:
         """6 位 A 股/北交所代码 → Tushare ts_code。"""
-        c = str(raw).strip().split(".", maxsplit=1)[0]
-        if not c:
+        c = strip_ashare_code(str(raw))
+        if not c or not c.isdigit() or not (5 <= len(c) <= 8):
             return None
-        if c.startswith("6"):
-            return f"{c}.SH"
-        if c.startswith(("0", "3")):
-            return f"{c}.SZ"
-        # 北交所等（与 collectors/tushare_daily 规则一致）
-        if c.startswith(("4", "8", "9")) or len(c) == 8:
-            return f"{c}.BSE"
-        return None
+        return ashare_symbol_to_tushare_ts_code(c)
 
     def get_last_key(self, conn: Any) -> Optional[str]:
         try:
@@ -358,8 +354,18 @@ class TushareDailySource(BaseDataSource):
             _log(f"完成，共写入 {total_written} 行")
             return total_written
 
+        def _date_to_yyyymmdd(d: Any) -> str:
+            if d is None:
+                return ""
+            if hasattr(d, "strftime"):
+                return d.strftime("%Y%m%d")
+            s = str(d).replace("-", "")[:8]
+            return s if len(s) >= 8 and s.isdigit() else ""
+
+        # 续拉必须用「该标的自身」最后交易日，不能用全局 MAX(date)：
+        # 否则个别标的多写一天会导致 fetch 里 start=全局末日的次日 > end，整批 0 行。
         need_full_ts: List[str] = []
-        need_incr_ts: List[str] = []
+        per_code_last: dict[str, str] = {}
         for tc in ts_codes:
             pure = tc.split(".")[0]
             try:
@@ -370,19 +376,34 @@ class TushareDailySource(BaseDataSource):
                 if not row or row[0] is None:
                     need_full_ts.append(tc)
                 else:
-                    need_incr_ts.append(tc)
+                    lk = _date_to_yyyymmdd(row[0])
+                    if lk:
+                        per_code_last[tc] = lk
+                    else:
+                        need_full_ts.append(tc)
             except Exception:
                 need_full_ts.append(tc)
 
+        incr_by_last: dict[str, List[str]] = defaultdict(list)
+        for tc, lk in per_code_last.items():
+            incr_by_last[lk].append(tc)
+
         nf = (len(need_full_ts) + chunk_size - 1) // chunk_size
-        ni = (len(need_incr_ts) + chunk_size - 1) // chunk_size
-        total_batches = max(1, nf + ni)
+        ni_total = sum(
+            (len(lst) + chunk_size - 1) // chunk_size for lst in incr_by_last.values()
+        )
+        total_batches = max(1, nf + ni_total)
         _log(
             f"开始增量：ts {len(ts_codes)} → 历史 {len(need_full_ts)}（{nf} 批）"
-            f"，续拉 {len(need_incr_ts)}（{ni} 批）；全局最新日 {global_last}"
+            f"，续拉 {len(per_code_last)}（按末交易日分 {len(incr_by_last)} 组，约 {ni_total} 批）；"
+            f"全局最新日 {global_last}"
         )
         _run_batches("历史回填", None, need_full_ts, 1, total_batches)
-        _run_batches("增量续拉", global_last, need_incr_ts, nf + 1, total_batches)
+        bnum = nf + 1
+        for last_k in sorted(incr_by_last.keys()):
+            lst = incr_by_last[last_k]
+            _run_batches(f"增量(末{last_k})", last_k, lst, bnum, total_batches)
+            bnum += (len(lst) + chunk_size - 1) // chunk_size
         _log(f"完成，共写入 {total_written} 行")
         return total_written
 

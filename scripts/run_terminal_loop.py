@@ -10,20 +10,11 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-]:
-    p = os.path.join(ROOT, d)
-    if os.path.isdir(p) and p not in sys.path:
-        sys.path.insert(0, p)
-# ai-optimizer 可选
-_opt = os.path.join(ROOT, "ai-optimizer/src")
-if os.path.isdir(_opt) and _opt not in sys.path:
-    sys.path.insert(0, _opt)
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(ROOT)
 
 
 def main() -> int:
@@ -70,26 +61,33 @@ def main() -> int:
 
             if _os.path.isfile(get_db_path()):
                 conn = get_conn(read_only=False)
-                df = conn.execute("SELECT code, signal_type, score FROM market_signals").fetchdf()
-                conn.close()
-                if df is not None and not df.empty:
-                    from strategy_engine.trade_signal_aggregator import (
-                        aggregate_market_signals_to_trade_signals,
-                    )
-
-                    signals = df.to_dict(orient="records")
-                    trades = aggregate_market_signals_to_trade_signals(signals, top_n=20)
-                    conn = get_conn(read_only=False)
-                    conn.execute("DELETE FROM trade_signals WHERE strategy_id = ?", ["market_agg"])
-                    for code, sig, conf, tp, sl in trades:
-                        conn.execute(
-                            """INSERT INTO trade_signals
-                               (code, signal, confidence, target_price, stop_loss, strategy_id, signal_score)
-                               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                            [code, sig, conf, tp, sl, "market_agg", 0.5],
-                        )
+                if conn:
+                    df = conn.execute(
+                        "SELECT code, signal_type, score FROM market_signals"
+                    ).fetchdf()
                     conn.close()
-                    print(f"Trade signals (fallback): {len(trades)}")
+                    if df is not None and not df.empty:
+                        from strategy_engine.trade_signal_aggregator import (
+                            aggregate_market_signals_to_trade_signals,
+                        )
+
+                        signals = df.to_dict(orient="records")
+                        trades = aggregate_market_signals_to_trade_signals(signals, top_n=20)
+                        conn2 = get_conn(read_only=False)
+                        if conn2:
+                            conn2.execute(
+                                "DELETE FROM trade_signals WHERE strategy_id = ?",
+                                ["market_agg"],
+                            )
+                            for code, sig, conf, tp, sl in trades:
+                                conn2.execute(
+                                    """INSERT INTO trade_signals
+                                       (code, signal, confidence, target_price, stop_loss, strategy_id, signal_score)
+                                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                                    [code, sig, conf, tp, sl, "market_agg", 0.5],
+                                )
+                            conn2.close()
+                            print(f"Trade signals (fallback): {len(trades)}")
     except Exception as e:
         print("Trade signals error:", e)
 

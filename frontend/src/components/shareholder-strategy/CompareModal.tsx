@@ -15,6 +15,7 @@ import type { Shareholder, Holding } from '@/data/mockShareholder';
 import { getIndustryRadarData } from '@/data/mockShareholder';
 import { INDUSTRIES } from '@/data/mockShareholder';
 import { api } from '@/api/client';
+import { rechartsTooltipContent, rechartsTooltipLabel, rechartsTickSecondary11, rechartsTickDim } from '@/lib/chartTheme';
 
 interface CompareModalProps {
   open: boolean;
@@ -73,36 +74,36 @@ export function CompareModal({
   }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl border border-slate-600 bg-slate-800 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--color-overlay-scrim)] p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-xl border border-card-border bg-card-bg p-6 shadow-modal">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">股东对比分析</h2>
+          <h2 className="text-lg font-semibold text-on-surface">股东对比分析</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-2 text-slate-400 hover:bg-slate-700 hover:text-white"
+            className="rounded p-2 text-text-secondary hover:bg-white/10 hover:text-on-surface"
           >
             ✕
           </button>
         </div>
         <div className="mb-4">
-          <label className="mb-2 block text-sm text-slate-400">
+          <label className="mb-2 block text-sm text-text-secondary">
             输入第二个股东名称（从下方列表选择）
           </label>
           <input
             type="text"
             placeholder="如：高瓴投资"
-            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-white"
+            className="w-full rounded-lg border border-card-border bg-terminal-bg px-4 py-2 text-on-surface"
             value={queryB}
             onChange={(e) => setQueryB(e.target.value)}
           />
           {matchesB.length > 0 && (
-            <ul className="mt-1 rounded border border-slate-600 bg-slate-800">
+            <ul className="mt-1 rounded border border-card-border bg-terminal-bg">
               {matchesB.map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-slate-700"
+                    className="w-full px-4 py-2 text-left text-sm text-on-surface hover:bg-white/10"
                     onClick={() => {
                       setSelectedB(s);
                       setQueryB(s.name);
@@ -118,14 +119,14 @@ export function CompareModal({
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <RechartsRadar data={chartData}>
-              <PolarGrid stroke="#475569" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748b' }} />
+              <PolarGrid stroke="var(--color-outline-variant)" />
+              <PolarAngleAxis dataKey="subject" tick={rechartsTickSecondary11} />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={rechartsTickDim} />
               <Radar
                 name={shareholderA?.name ?? 'A'}
                 dataKey="A"
-                stroke="#FF3B30"
-                fill="#FF3B30"
+                stroke="var(--color-primary)"
+                fill="var(--color-primary)"
                 fillOpacity={0.2}
                 strokeWidth={2}
               />
@@ -133,17 +134,14 @@ export function CompareModal({
                 <Radar
                   name={selectedB.name}
                   dataKey="B"
-                  stroke="#10b981"
-                  fill="#10b981"
+                  stroke="var(--color-chart-emerald)"
+                  fill="var(--color-chart-emerald)"
                   fillOpacity={0.2}
                   strokeWidth={2}
                 />
               )}
               <Legend />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: 8 }}
-                labelStyle={{ color: '#94a3b8' }}
-              />
+              <Tooltip contentStyle={rechartsTooltipContent} labelStyle={rechartsTooltipLabel} />
             </RechartsRadar>
           </ResponsiveContainer>
         </div>

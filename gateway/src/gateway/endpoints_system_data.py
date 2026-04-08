@@ -1,8 +1,33 @@
 """System data overview endpoint: 涨停池、狙击候选、交易信号、新闻等数据统计。"""
 
+import time
+
 from fastapi import APIRouter
 
 router = APIRouter()
+
+_OVERVIEW_CONN_RETRIES = 4
+_OVERVIEW_LOCK_SUBSTR = ("could not set lock", "conflicting lock")
+
+
+def _connect_overview():
+    """
+    只读连接：与其它进程（Tushare 增量、回补脚本等）的写连接可并发读 DuckDB；
+    write 模式的 get_conn 会与独占锁冲突导致「Could not set lock」。
+    """
+    from data_pipeline.storage.duckdb_manager import get_conn
+
+    for attempt in range(_OVERVIEW_CONN_RETRIES):
+        try:
+            return get_conn(read_only=True)
+        except Exception as e:
+            msg = str(e).lower()
+            if attempt + 1 < _OVERVIEW_CONN_RETRIES and any(
+                s in msg for s in _OVERVIEW_LOCK_SUBSTR
+            ):
+                time.sleep(0.2 * (attempt + 1))
+                continue
+            raise
 
 
 @router.get("/system/data-overview")
@@ -20,11 +45,9 @@ def get_system_data_overview() -> dict:
     - 情绪状态：market_emotion 最新 state
     - 游资席位：top_hotmoney_seats 条数
     """
-    from data_pipeline.storage.duckdb_manager import get_conn
-
     conn = None
     try:
-        conn = get_conn()
+        conn = _connect_overview()
         if not conn:
             return {
                 "ok": False,
@@ -136,9 +159,34 @@ def get_system_data_overview() -> dict:
         except Exception:
             counts["hotmoney_seats"] = 0
 
+        freshness: dict = {}
+        try:
+            row = conn.execute(
+                "SELECT MAX(snapshot_time) FROM a_stock_realtime"
+            ).fetchone()
+            v = row[0] if row else None
+            if v is not None and hasattr(v, "isoformat"):
+                freshness["realtime_snapshot_time"] = v.isoformat()
+            elif v is not None:
+                freshness["realtime_snapshot_time"] = str(v)
+        except Exception:
+            pass
+        try:
+            row = conn.execute(
+                "SELECT MAX(snapshot_time) FROM a_stock_limitup"
+            ).fetchone()
+            v = row[0] if row else None
+            if v is not None and hasattr(v, "isoformat"):
+                freshness["limitup_snapshot_time"] = v.isoformat()
+            elif v is not None:
+                freshness["limitup_snapshot_time"] = str(v)
+        except Exception:
+            pass
+
         return {
             "ok": True,
             "counts": counts,
+            "freshness": freshness,
             "summary": {
                 "limitup_pool": counts.get("limitup_pool", 0),
                 "sniper_candidates": counts.get("sniper_candidates", 0),

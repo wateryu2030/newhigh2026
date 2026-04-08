@@ -7,24 +7,11 @@ from __future__ import annotations
 
 import os
 
-_ROOT = os.path.dirname(os.path.abspath(__file__))
-_NEWHIGH = os.path.dirname(_ROOT)
 import sys
 
-if _NEWHIGH not in sys.path:
-    sys.path.insert(0, _NEWHIGH)
-for _d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-    "backtest-engine/src",
-    "openclaw_engine",
-]:
-    _p = os.path.join(_NEWHIGH, _d)
-    if os.path.isdir(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
+from system_core.repo_paths import prepend_repo_sources
+
+prepend_repo_sources()
 
 broker = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
 backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")

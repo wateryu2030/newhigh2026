@@ -4,7 +4,10 @@
 测试整个系统的协同工作能力
 """
 
+import pytest
 import unittest
+
+pytestmark = pytest.mark.integration
 import os
 import tempfile
 import time

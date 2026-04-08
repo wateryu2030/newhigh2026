@@ -91,8 +91,8 @@ export default function StocksPage() {
   if (loading && !timeoutHit) {
     return (
       <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-        <h1 className="text-2xl font-bold text-white">{t('stocks.title')}</h1>
-        <div className="flex items-center gap-3 text-slate-400">
+        <h1 className="text-2xl font-bold text-on-surface">{t('stocks.title')}</h1>
+        <div className="flex items-center gap-3 text-text-secondary">
           <LoadingSpinner />
           <span>加载股票列表…</span>
         </div>
@@ -103,7 +103,7 @@ export default function StocksPage() {
   if (error) {
     return (
       <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-        <h1 className="text-2xl font-bold text-white">{t('stocks.title')}</h1>
+        <h1 className="text-2xl font-bold text-on-surface">{t('stocks.title')}</h1>
         <ErrorMessage message={error} onRetry={fetchStocks} />
       </div>
     );
@@ -111,16 +111,16 @@ export default function StocksPage() {
 
   return (
     <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-white">{t('stocks.title')}</h1>
-      <p className="text-slate-400 text-sm">{t('stocks.hint')}</p>
+      <h1 className="text-2xl font-bold text-on-surface">{t('stocks.title')}</h1>
+      <p className="text-sm text-text-secondary">{t('stocks.hint')}</p>
 
       {emptyHint && stocks.length === 0 ? (
-        <div className="card text-slate-400">
+        <div className="card text-text-secondary">
           <p>{emptyHint}</p>
           <button
             type="button"
             onClick={fetchStocks}
-            className="mt-3 px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-white text-sm"
+            className="mt-3 rounded bg-surface-container-highest px-4 py-2 text-sm text-on-surface hover:opacity-90"
           >
             重新加载
           </button>
@@ -130,7 +130,7 @@ export default function StocksPage() {
           <div className="card overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="text-slate-400 border-b border-slate-600">
+                <tr className="border-b border-card-border text-text-secondary">
                   <th className="py-2 pr-4">{t('stocks.code')}</th>
                   <th className="py-2 pr-4">{t('stocks.name')}</th>
                   <th className="py-2 pr-4">{t('stocks.industry')}</th>
@@ -139,12 +139,15 @@ export default function StocksPage() {
               </thead>
               <tbody>
                 {stocks.map((s) => (
-                  <tr key={s.ts_code} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                    <td className="py-2 pr-4 font-mono text-slate-300">{s.ts_code}</td>
-                    <td className="py-2 pr-4 text-slate-300">{s.name || '—'}</td>
-                    <td className="py-2 pr-4 text-slate-400">{s.industry || '—'}</td>
+                  <tr key={s.ts_code} className="border-b border-card-border/80 hover:bg-surface-container-high/30">
+                    <td className="py-2 pr-4 font-mono text-text-primary">{s.ts_code}</td>
+                    <td className="py-2 pr-4 text-text-primary">{s.name || '—'}</td>
+                    <td className="py-2 pr-4 text-text-secondary">{s.industry || '—'}</td>
                     <td className="py-2">
-                      <Link href={`/market?symbol=${encodeURIComponent(s.ts_code)}`} className="text-indigo-400 hover:underline">
+                      <Link
+                        href={`/market?symbol=${encodeURIComponent(s.ts_code)}`}
+                        className="text-primary-fixed hover:underline"
+                      >
                         {t('stocks.viewChart')}
                       </Link>
                     </td>
@@ -152,9 +155,11 @@ export default function StocksPage() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-slate-500 text-xs">{stocks.length} {t('stocks.rows')}</p>
+            <p className="mt-2 text-xs text-text-dim">
+              {stocks.length} {t('stocks.rows')}
+            </p>
           </div>
-          <p className="text-sm text-slate-500">{t('stocks.dataFrom')}</p>
+          <p className="text-sm text-text-dim">{t('stocks.dataFrom')}</p>
         </>
       )}
     </div>

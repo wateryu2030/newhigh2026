@@ -7,13 +7,16 @@ def run_trend_scanner() -> int:
     from ._storage import _get_conn, write_signals
 
     conn = _get_conn()
+    if not conn:
+        return write_signals([], "trend")
     try:
         df = conn.execute(
             "SELECT code, name, change_pct FROM a_stock_realtime WHERE change_pct > 0 ORDER BY change_pct DESC NULLS LAST LIMIT 100"
         ).fetchdf()
     except Exception:
         df = None
-    conn.close()
+    finally:
+        conn.close()
     if df is None or df.empty:
         return write_signals([], "trend")
     signals = []

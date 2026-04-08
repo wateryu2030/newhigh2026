@@ -32,13 +32,15 @@ for _ in $(seq 1 120); do
 done
 
 cd "$ROOT/frontend"
-# Next 需要完整 production build（含 .next/BUILD_ID），否则 next start 会立即退出导致 502
+export API_PROXY_TARGET="${API_PROXY_TARGET:-http://127.0.0.1:8000}"
+# output: 'standalone' 时应用 `start:standalone`（复制 .next/static + public 再 node server.js），
+# 避免 `next start` 与 standalone 产物不一致导致公网 /_next/static 404。
 if [ ! -f .next/BUILD_ID ]; then
   echo "[$(date -Iseconds)] building frontend (missing .next/BUILD_ID)..." >> "$ROOT/logs/tunnel_stack.log"
   npm run build >> "$ROOT/logs/frontend_build_boot.log" 2>&1
 fi
 
-npm run start -- -p 3000 -H 127.0.0.1 >> "$ROOT/logs/next_boot.log" 2>&1 &
+npm run start:standalone >> "$ROOT/logs/next_boot.log" 2>&1 &
 NWPID=$!
 
 echo "[$(date -Iseconds)] gw=$GWPID next=$NWPID" >> "$ROOT/logs/tunnel_stack.log"

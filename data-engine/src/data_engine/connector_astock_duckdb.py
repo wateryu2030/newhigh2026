@@ -9,6 +9,10 @@ import datetime as dt
 from typing import Any, Dict, List, Tuple
 
 from core import OHLCV
+from core.ashare_symbol import (
+    order_book_id_to_newhigh_symbol,
+    symbol_to_order_book_id,
+)
 from core.data_service.db import get_astock_duckdb_available as check_astock_available
 
 try:
@@ -18,30 +22,13 @@ except ImportError:
 
 
 def _order_book_id_to_symbol(order_book_id: str) -> str:
-    """astock order_book_id -> newhigh 统一 symbol。600519.XSHG -> 600519.SH, 000001.XSHE -> 000001.SZ."""
-    ob = (order_book_id or "").strip()
-    if "." in ob:
-        code, market = ob.split(".", 1)
-        if market.upper() == "XSHG":
-            return f"{code}.SH"
-        if market.upper() == "XSHE":
-            return f"{code}.SZ"
-        if market.upper() == "BSE":
-            return f"{code}.BSE"
-        return f"{code}.{market}"
-    return ob
+    """astock order_book_id -> newhigh 统一 symbol（实现见 core.ashare_symbol）。"""
+    return order_book_id_to_newhigh_symbol(order_book_id)
 
 
 def _symbol_to_order_book_id(symbol: str) -> str:
-    """newhigh symbol 或 6/8 位代码 -> astock order_book_id。600519.SH->600519.XSHG，830799.BSE->830799.BSE。"""
-    s = (symbol or "").strip().split(".", maxsplit=1)[0]
-    if not s or len(s) < 5 or len(s) > 8:
-        return symbol or ""
-    if s.startswith("6"):
-        return f"{s}.XSHG"
-    if s.startswith(("4", "8", "9")) or len(s) == 8:
-        return f"{s}.BSE"
-    return f"{s}.XSHE"
+    """newhigh symbol 或 6/8 位代码 -> astock order_book_id。"""
+    return symbol_to_order_book_id(symbol)
 
 
 def _get_conn(read_only: bool = False):

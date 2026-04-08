@@ -5,20 +5,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* DESIGN.md — 唯一颜色真理来源；Tailwind theme 引用 var(--color-*) */
 :root {
-  --kt-bg: #0B0E14;
-  --kt-surface-low: #10131A;
-  --kt-surface-high: #1C2028;
-  --kt-primary: #FF3B30;
-  --kt-primary-soft: #FF6B6B;
-  --kt-tertiary: #FF7439;
-  --kt-on-surface: #ECEDF6;
-  --kt-on-variant: #A9ABB3;
+  --color-primary: #ff3b30;
+  --color-primary-soft: #ff6b6b;
+  --color-tertiary: #ff7439;
+  --color-bg-terminal: #0a0c10;
+  --color-bg-app: #0b0e14;
+  --color-surface-low: #10131a;
+  --color-surface-mid: #14171c;
+  --color-surface-high: #1c2028;
+  --color-surface-highest: #22262f;
+  --color-surface-container: #161a21;
+  --color-border: #2a2e36;
+  --color-outline: #73757d;
+  --color-outline-variant: #45484f;
+  --color-text-primary: #ecedf6;
+  --color-text-primary-alt: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #a9abb3;
+  --color-text-dim: #64748b;
+  --color-text-code: #cbd5e1;
+  --color-text-on-warm-fill: #ffffff;
+  --color-success: #22c55e;
+  --color-danger: #ff3b30;
+  --color-warning: #ff7439;
+  --color-glass-bg: rgba(28, 32, 40, 0.6);
+  --color-primary-alpha-15: rgba(255, 59, 48, 0.15);
+  --color-hot-ticker-bar: rgba(16, 19, 26, 0.95);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-glass: 0px 24px 48px rgba(0, 0, 0, 0.4);
+  --shadow-primary-glow: 0 0 20px rgba(255, 59, 48, 0.3);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --color-overlay-scrim: rgba(0, 0, 0, 0.75);
+  --color-border-subtle: #1e2229;
+  --color-data-cyan: #22d3ee;
+  --color-chart-indigo: #6366f1;
+  --color-chart-purple: #8b5cf6;
+  --color-chart-emerald: #10b981;
+  --color-chart-emerald-dark: #059669;
+  --color-chart-amber: #f59e0b;
+  --color-chart-slate-stroke: #e2e8f0;
+  --color-warning-banner-bg: rgba(255, 116, 57, 0.08);
+  --color-warning-banner-border: rgba(255, 116, 57, 0.3);
+  --color-error-banner-bg: rgba(255, 59, 48, 0.1);
+  --color-error-banner-border: rgba(255, 59, 48, 0.3);
+  --color-nav-mobile-bg: rgba(20, 23, 28, 0.95);
+  --color-nav-mobile-active-bg: rgba(42, 46, 54, 0.8);
+  --color-badge-amber-bg: rgba(245, 158, 11, 0.12);
+  --color-badge-amber-text: #fbbf24;
+  --color-header-glass: rgba(10, 12, 16, 0.8);
+  --color-tag-primary-bg: rgba(255, 59, 48, 0.2);
+  --color-success-alpha-15: rgba(34, 197, 94, 0.15);
+  --color-icon-canvas: #0f172a;
+
+  /* 兼容旧名 */
+  --kt-bg: var(--color-bg-app);
+  --kt-surface-low: var(--color-surface-low);
+  --kt-surface-high: var(--color-surface-high);
+  --kt-primary: var(--color-primary);
+  --kt-primary-soft: var(--color-primary-soft);
+  --kt-tertiary: var(--color-tertiary);
+  --kt-on-surface: var(--color-text-primary);
+  --kt-on-variant: var(--color-text-muted);
 }
 
 body {
-  background-color: #0B0E14 !important;
-  color: #ECEDF6 !important;
+  background-color: var(--color-bg-app) !important;
+  color: var(--color-text-primary) !important;
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -35,18 +89,18 @@ body {
   @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4;
 }
 
-/* Kinetic Card - 无边框，背景分层 */
+/* Kinetic Card */
 .card {
-  background-color: #1C2028;
+  background-color: var(--color-surface-high);
   border-radius: 0.75rem;
   padding: 1rem 1.5rem;
   border: none;
   box-shadow: none;
 }
 
-/* Glass Card - 毛玻璃效果 */
+/* Glass Card */
 .glass-card {
-  background: rgba(28, 32, 40, 0.6);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -60,6 +114,13 @@ body {
   @apply bg-surface-container-high text-primary-fixed border-b-2 border-primary-fixed;
 }
 
+/* 面板：卡片表面 + 边框 + 阴影（与 KPI / Dashboard 卡片一致） */
+.panel-surface {
+  background-color: var(--color-surface-mid);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 4px;
@@ -67,22 +128,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0E14;
+  background: var(--color-bg-app);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1C2028;
+  background: var(--color-surface-high);
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #22262F;
+  background: var(--color-surface-highest);
 }
 
-/* 全局侧边栏 / 侧滑菜单：4px，与 card-bg、card-border 一致 */
 .sidebar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2a2e36 #14171c;
+  scrollbar-color: var(--color-border) var(--color-surface-mid);
 }
 
 .sidebar-scroll::-webkit-scrollbar {
@@ -90,11 +150,11 @@ body {
 }
 
 .sidebar-scroll::-webkit-scrollbar-track {
-  background: #14171c;
+  background: var(--color-surface-mid);
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #2a2e36;
+  background: var(--color-border);
   border-radius: 2px;
 }
 
@@ -102,18 +162,15 @@ body {
   background: #3d424d;
 }
 
-/* 选中高亮 - 红色主题 */
 ::selection {
   background-color: rgba(255, 59, 48, 0.3);
-  color: #ECEDF6;
+  color: var(--color-text-primary);
 }
 
-/* 移动端底部安全区（底部导航栏） */
 .safe-area-pb {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-/* 热点滚动 */
 @keyframes hot-ticker-scroll {
   from {
     transform: translateX(0);
@@ -131,19 +188,29 @@ body {
   animation: hot-ticker-scroll 90s linear infinite;
 }
 
-/* 抽屉滑入动画 */
 @keyframes drawer-in {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 .animate-drawer-in {
   animation: drawer-in 0.25s ease-out forwards;
 }
 
-/* 卡片淡入动画 */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-fadeIn {
   animation: fadeIn 0.35s ease-out forwards;

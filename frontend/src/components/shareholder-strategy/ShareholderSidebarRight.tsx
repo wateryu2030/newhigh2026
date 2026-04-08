@@ -4,6 +4,7 @@ import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, ResponsiveContaine
 import type { ChangeRecord, Holding } from '@/data/mockShareholder';
 import type { CoShareholderItem } from '@/api/client';
 import { IndustryRadarChart, type IndustryRadarPoint } from './IndustryRadarChart';
+import { rechartsTooltipContent, rechartsTickSecondary, rechartsCursorStroke } from '@/lib/chartTheme';
 
 interface BubblePoint {
   value: [number, number, number];
@@ -40,36 +41,41 @@ function BubbleChart({ data }: { data: BubblePoint[] }) {
           type="number"
           dataKey="x"
           name="收盘"
-          tick={{ fill: '#94a3b8', fontSize: 10 }}
-          label={{ value: '最新收(元)', position: 'bottom', fill: '#64748b' }}
+          tick={rechartsTickSecondary}
+          label={{ value: '最新收(元)', position: 'bottom', fill: 'var(--color-text-dim)' }}
         />
         <YAxis
           type="number"
           dataKey="y"
           name="log成交额"
-          tick={{ fill: '#94a3b8', fontSize: 10 }}
-          label={{ value: 'log10(日成交额·亿+0.01)', angle: -90, position: 'insideLeft', fill: '#64748b' }}
+          tick={rechartsTickSecondary}
+          label={{
+            value: 'log10(日成交额·亿+0.01)',
+            angle: -90,
+            position: 'insideLeft',
+            fill: 'var(--color-text-dim)',
+          }}
         />
         <ZAxis type="number" dataKey="z" range={[50, 400]} />
         <Tooltip
-          cursor={{ strokeDasharray: '3 3', stroke: '#475569' }}
-          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: 8 }}
+          cursor={rechartsCursorStroke}
+          contentStyle={rechartsTooltipContent}
           content={({ active, payload }) => {
             if (!active || !payload?.[0]?.payload) return null;
             const p = payload[0].payload as { x: number; y: number; z: number; name: string; code: string };
             return (
-              <div className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm">
-                <div className="font-medium text-white">
-                  {p.name} <span className="font-mono text-slate-400">{p.code}</span>
+              <div className="rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm">
+                <div className="font-medium text-on-surface">
+                  {p.name} <span className="font-mono text-text-secondary">{p.code}</span>
                 </div>
-                <div className="text-slate-400">
+                <div className="text-text-secondary">
                   收: {p.x > 0 ? p.x.toFixed(3) : '—'} · Y: {p.y.toFixed(2)}
                 </div>
               </div>
             );
           }}
         />
-        <Scatter data={chartData} fill="#FF3B30" fillOpacity={0.8} />
+        <Scatter data={chartData} fill="var(--color-primary)" fillOpacity={0.8} />
       </ScatterChart>
     </ResponsiveContainer>
   );
@@ -111,20 +117,20 @@ export function ShareholderSidebarRight({
   return (
     <div className="space-y-4">
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-white">行业分布（持仓市值 + 频次）</h3>
-        <p className="mb-2 text-xs text-slate-500">基于当前报告期切片内持仓，与申万一级示例行业轴对齐（数据来自 Gateway，非演示脚本）。</p>
+        <h3 className="mb-2 text-sm font-semibold text-on-surface">行业分布（持仓市值 + 频次）</h3>
+        <p className="mb-2 text-xs text-text-dim">基于当前报告期切片内持仓，与申万一级示例行业轴对齐（数据来自 Gateway，非演示脚本）。</p>
         <IndustryRadarChart data={radarData} height={280} />
       </div>
 
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-white">价格 · 成交额（气泡）</h3>
-        <p className="mb-2 text-xs text-slate-500">
+        <h3 className="mb-2 text-sm font-semibold text-on-surface">价格 · 成交额（气泡）</h3>
+        <p className="mb-2 text-xs text-text-dim">
           X/Y 取自 a_stock_daily 最新一根 K 线（收盘价、成交额）；若库中无日线则点会叠在原点附近。
         </p>
         {hasBubbleSeries ? (
           <BubbleChart data={bubbleData} />
         ) : (
-          <div className="flex h-[200px] items-center justify-center text-sm text-slate-500">
+          <div className="flex h-[200px] items-center justify-center text-sm text-text-dim">
             暂无有效日线数据，无法绘制气泡图（请先回填 a_stock_daily）。
           </div>
         )}
@@ -132,36 +138,39 @@ export function ShareholderSidebarRight({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card">
-          <div className="text-xs text-slate-400">持仓集中度</div>
-          <div className="mt-1 text-xl font-bold text-white">{concentration}%</div>
-          <div className="mt-1 text-xs text-slate-500">前三大重仓（按估算市值）</div>
+          <div className="text-xs text-text-secondary">持仓集中度</div>
+          <div className="mt-1 text-xl font-bold text-on-surface">{concentration}%</div>
+          <div className="mt-1 text-xs text-text-dim">前三大重仓（按估算市值）</div>
         </div>
         <div className="card">
-          <div className="text-xs text-slate-400">变动流水</div>
-          <div className="mt-1 text-xl font-bold text-white">{changes.length}</div>
-          <div className="mt-1 text-xs text-slate-500">条（新进/增减持/退出，接口片段）</div>
+          <div className="text-xs text-text-secondary">变动流水</div>
+          <div className="mt-1 text-xl font-bold text-on-surface">{changes.length}</div>
+          <div className="mt-1 text-xs text-text-dim">条（新进/增减持/退出，接口片段）</div>
         </div>
         <div className="card sm:col-span-1">
-          <div className="text-xs text-slate-400">协同股东（同榜 Top10）</div>
-          <p className="mt-1 text-[11px] leading-snug text-slate-600">
-            与被查询股东出现在同一 <span className="text-slate-500">股票代码 + 报告日</span> 的前十股东榜中的其他股东，按共现次数排序。
+          <div className="text-xs text-text-secondary">协同股东（同榜 Top10）</div>
+          <p className="mt-1 text-[11px] leading-snug text-outline-variant">
+            与被查询股东出现在同一 <span className="text-text-dim">股票代码 + 报告日</span> 的前十股东榜中的其他股东，按共现次数排序。
           </p>
           {coShareholders.length === 0 ? (
-            <div className="mt-2 text-sm text-slate-500">暂无或仅自身上榜</div>
+            <div className="mt-2 text-sm text-text-dim">暂无或仅自身上榜</div>
           ) : (
             <ul className="mt-2 max-h-[140px] space-y-1.5 overflow-y-auto text-sm">
               {coShareholders.map((c) => (
-                <li key={c.name} className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-700/40 pb-1.5 last:border-0">
+                <li
+                  key={c.name}
+                  className="flex flex-wrap items-baseline gap-x-2 border-b border-card-border/40 pb-1.5 last:border-0"
+                >
                   <button
                     type="button"
-                    className="max-w-[11rem] truncate text-left font-medium text-sky-300 hover:underline"
+                    className="max-w-[11rem] truncate text-left font-medium text-[color:var(--color-data-cyan)] hover:underline"
                     title={c.name}
                     onClick={() => onCoShareholderClick?.(c.name)}
                   >
                     {c.name}
                   </button>
-                  <span className="text-xs text-slate-500">{c.shareholder_type || '—'}</span>
-                  <span className="ml-auto shrink-0 font-mono text-xs text-slate-400">
+                  <span className="text-xs text-text-dim">{c.shareholder_type || '—'}</span>
+                  <span className="ml-auto shrink-0 font-mono text-xs text-text-secondary">
                     同榜×{c.co_slot_count} · {c.co_stock_count}只
                   </span>
                 </li>
@@ -172,8 +181,8 @@ export function ShareholderSidebarRight({
       </div>
 
       <div className="card">
-        <h3 className="mb-1 text-sm font-semibold text-white">持股全景</h3>
-        <p className="mb-3 text-xs text-slate-500">点击标签查看 K 线与快讯（与行情 API 一致）</p>
+        <h3 className="mb-1 text-sm font-semibold text-on-surface">持股全景</h3>
+        <p className="mb-3 text-xs text-text-dim">点击标签查看 K 线与快讯（与行情 API 一致）</p>
         <div className="flex flex-wrap gap-2">
           {holdings.map((h) => {
             const isCurrent = h.status === 'current';
@@ -188,8 +197,8 @@ export function ShareholderSidebarRight({
                 type="button"
                 className={`cursor-pointer rounded-lg px-3 py-2 text-left text-sm transition ${
                   isCurrent
-                    ? 'bg-red-500/30 text-red-200'
-                    : 'bg-slate-600/50 text-slate-400'
+                    ? 'bg-accent-red/20 text-on-surface'
+                    : 'bg-surface-container-high/50 text-text-secondary'
                 } ${isHighlight ? 'ring-2 ring-fund-indigo' : ''}`}
                 onMouseEnter={() => onStockHover(h.stockCode)}
                 onMouseLeave={() => onStockHover(null)}
@@ -199,8 +208,8 @@ export function ShareholderSidebarRight({
                 }}
                 title={trail}
               >
-                <span className="font-medium text-white/95">{h.stockName}</span>
-                <span className="mt-0.5 block font-mono text-xs text-slate-400">{h.stockCode}</span>
+                <span className="font-medium text-on-surface/95">{h.stockName}</span>
+                <span className="mt-0.5 block font-mono text-xs text-text-secondary">{h.stockCode}</span>
               </button>
             );
           })}

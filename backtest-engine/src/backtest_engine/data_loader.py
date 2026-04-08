@@ -1,11 +1,16 @@
+# Auto-fixed by Cursor on 2026-04-02: 信号执行滞后默认 T+1、logging、异常记录。
 """从 quant_system.duckdb 加载日 K 与信号，供回测使用。"""
 
 from __future__ import annotations
 
+import logging
+import os
 from datetime import datetime, timezone
 from typing import Any, List, Optional, Tuple
 
 import pandas as pd
+
+_log = logging.getLogger(__name__)
 
 
 def _norm_code(symbol: str) -> str:
@@ -64,8 +69,29 @@ def _try_close_conn(conn: Any) -> None:
     if conn is not None:
         try:
             conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            _log.debug("duckdb close: %s", e)
+
+
+def _execution_lag_bdays() -> int:
+    raw = os.environ.get("BACKTEST_SIGNAL_EXECUTION_LAG_BDAYS", "1").strip()
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return 1
+
+
+def _shift_signal_date_key(date_key: str, lag_bdays: int) -> str:
+    """将信号生效日顺延 N 个交易日，减轻收盘后信息当日成交的前视偏差。"""
+    if lag_bdays <= 0:
+        return date_key
+    try:
+        ts = pd.Timestamp(date_key)
+        shifted = ts + pd.tseries.offsets.BDay(lag_bdays)
+        return shifted.strftime("%Y-%m-%d")
+    except Exception as e:
+        _log.warning("shift_signal_date_key failed %s: %s", date_key, e)
+        return date_key
 
 
 def load_ohlcv_from_db(
@@ -87,7 +113,8 @@ def load_ohlcv_from_db(
             from data_pipeline.storage.duckdb_manager import get_conn
             conn = get_conn(read_only=False)
             close_conn = True
-        except Exception:
+        except Exception as e:
+            _log.warning("load_ohlcv_from_db: no db: %s", e)
             return pd.DataFrame(), []
 
     start = start_date.replace("-", "")[:8]
@@ -112,8 +139,8 @@ def load_ohlcv_from_db(
         out_df = df[["date", "open", "high", "low", "close", "volume"]].copy()
         ohlcv_list = _build_ohlcv_list(df, symbol, code)
 
-    except Exception:
-        pass
+    except Exception as e:
+        _log.exception("load_ohlcv_from_db failed: %s", symbol)
     finally:
         if close_conn:
             _try_close_conn(conn)
@@ -172,6 +199,7 @@ def load_signals_from_db(
     signal_source: str = "trade_signals",
     strategy_id: Optional[str] = None,
     conn: Any = None,
+    execution_lag_bdays: Optional[int] = None,
 ) -> Tuple[dict, dict]:
     """
     从 trade_signals 或 market_signals 加载该标的在区间内的信号。
@@ -179,6 +207,8 @@ def load_signals_from_db(
     strategy_id: 仅当 signal_source='trade_signals' 时过滤策略。
     约定：signal 含 'buy'/'long'/'买入' -> entry=True；'sell'/'short'/'卖出' -> exit=True。
     返回 (entries_by_date, exits_by_date) 为 date_str -> True 的 dict。
+    execution_lag_bdays: 默认读环境变量 BACKTEST_SIGNAL_EXECUTION_LAG_BDAYS（默认 1），
+    将信号映射到之后第 N 个交易日，降低「收盘后信号当日成交」类前视偏差。
     """
     code = _norm_code(symbol)
     close_conn = False
@@ -188,13 +218,15 @@ def load_signals_from_db(
             from data_pipeline.storage.duckdb_manager import get_conn
             conn = get_conn(read_only=False)
             close_conn = True
-        except Exception:
+        except Exception as e:
+            _log.warning("load_signals_from_db: no db: %s", e)
             return {}, {}
 
     start = start_date.replace("-", "")[:8]
     end = end_date.replace("-", "")[:8]
     entries: dict = {}
     exits: dict = {}
+    lag = int(execution_lag_bdays) if execution_lag_bdays is not None else _execution_lag_bdays()
 
     try:
         df = _query_signals(conn, code, start, end, signal_source, strategy_id)
@@ -205,15 +237,15 @@ def load_signals_from_db(
             ts = row.get("snapshot_time")
             if ts is None:
                 continue
-            date_key = _format_date_key(ts)
+            date_key = _shift_signal_date_key(_format_date_key(ts), lag)
             sig = str(row.get("signal") or row.get("signal_type") or "").lower()
             if _is_entry_signal(sig):
                 entries[date_key] = True
             if _is_exit_signal(sig):
                 exits[date_key] = True
 
-    except Exception:
-        pass
+    except Exception as e:
+        _log.exception("load_signals_from_db failed: %s", symbol)
     finally:
         if close_conn:
             _try_close_conn(conn)

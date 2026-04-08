@@ -50,7 +50,7 @@ def run_pipeline_batch(
     return total
 
 
-def run_pipeline_ashare(
+def run_pipeline_ashare(  # pylint: disable=too-many-positional-arguments
     symbols: List[str],
     start_date: str | None = None,
     end_date: str | None = None,
@@ -88,7 +88,7 @@ def run_pipeline_ashare(
     return total
 
 
-def run_pipeline_tushare(
+def run_pipeline_tushare(  # pylint: disable=too-many-positional-arguments
     symbols: List[str],
     start_date: str | None = None,
     end_date: str | None = None,

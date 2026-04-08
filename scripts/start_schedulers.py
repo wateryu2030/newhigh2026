@@ -39,9 +39,10 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "lib"))
 try:
-    from newhigh_env import load_dotenv_if_present
+    from newhigh_env import hydrate_tushare_token_from_dotenv, load_dotenv_if_present
 
     load_dotenv_if_present(project_root)
+    hydrate_tushare_token_from_dotenv(project_root)
 except ImportError:
     pass
 
@@ -340,9 +341,8 @@ class SchedulerManager:
             ak_limit = int(os.environ.get("DAILY_AKSHARE_KLINE_LIMIT", str(default_ak)))
 
             logger.info(
-                "每日调度策略: tushare=%s days_back=%s akshare_kline_limit=%s",
+                "每日调度策略: tushare_incremental=%s (TUSHARE_DAILY_DAYS_BACK 仅兼容) akshare_kline_limit=%s",
                 use_tushare,
-                ts_days if use_tushare else "-",
                 ak_limit,
             )
             if use_tushare and ts_days > 21:

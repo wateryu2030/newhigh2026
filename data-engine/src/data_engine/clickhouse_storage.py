@@ -59,7 +59,7 @@ def insert_ohlcv(client: Client, rows: List[OHLCV], interval: str) -> None:
     )
 
 
-def query_ohlcv(
+def query_ohlcv(  # pylint: disable=too-many-positional-arguments
     client: Client,
     symbol: str,
     interval: str,

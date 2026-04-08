@@ -56,6 +56,8 @@ class SniperScoreEngine:
         from .limitup_behavior_detector import LimitUpBehaviorDetector
 
         conn = self._get_conn()
+        if not conn:
+            return pd.DataFrame(columns=["code", "theme", "sniper_score", "confidence"])
         themes = ThemeDetector(conn).detect_hot_themes()
         spikes = FundSpikeDetector(conn).detect_spikes(volume_ratio_min=2.0)
         pattern = VolumePatternDetector(conn).detect_pattern(ratio_min=1.8)
@@ -137,6 +139,8 @@ def run_sniper(min_score: float = 0.7, top_n: int = 50) -> int:
     if df is None or df.empty:
         return 0
     conn = engine._get_conn()
+    if not conn:
+        return 0
     try:
         from data_pipeline.storage.duckdb_manager import ensure_tables
 

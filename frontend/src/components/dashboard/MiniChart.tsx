@@ -16,7 +16,7 @@ interface MiniChartProps {
  */
 export function MiniChart({
   data,
-  color = '#FF3B30',
+  color = 'var(--color-primary)',
   height = 30,
   emptyLabel,
 }: MiniChartProps) {
@@ -25,8 +25,8 @@ export function MiniChart({
   if (chartData.length < 2) {
     return (
       <div
-        className="flex items-center justify-center rounded text-[10px]"
-        style={{ height, backgroundColor: '#0A0C10', color: '#64748B' }}
+        className="flex items-center justify-center rounded bg-terminal-bg text-[10px] text-text-dim"
+        style={{ height }}
       >
         {emptyLabel ?? '—'}
       </div>

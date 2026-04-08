@@ -248,31 +248,28 @@ export function ShareholderStrategyLayout() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#0A0C10' }}>
+    <div className="min-h-screen bg-terminal-bg">
       <div className="mx-auto max-w-[1600px] px-4 py-6 md:px-6">
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* 左侧边栏 - 桌面端 260px */}
-          <aside
-            className="hidden w-full shrink-0 lg:block lg:w-[260px]"
-            style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', borderRadius: 16, alignSelf: 'flex-start' }}
-          >
+          <aside className="hidden w-full shrink-0 self-start rounded-2xl border border-card-border bg-card-bg lg:block lg:w-[260px]">
             <div className="space-y-4 p-4">
-              <h3 className="text-sm font-semibold" style={{ color: '#94A3B8' }}>系统状态</h3>
+              <h3 className="text-sm font-semibold text-text-secondary">系统状态</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span style={{ color: '#64748B' }}>延迟</span>
-                  <span style={{ color: '#22C55E' }}>12ms</span>
+                  <span className="text-text-dim">延迟</span>
+                  <span className="text-accent-green">12ms</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: '#64748B' }}>运行时间</span>
-                  <span style={{ color: '#F1F5F9' }}>2d 4h</span>
+                  <span className="text-text-dim">运行时间</span>
+                  <span className="text-text-primary">2d 4h</span>
                 </div>
               </div>
-              <div className="border-t pt-4" style={{ borderColor: '#2A2E36' }}>
-                <h3 className="mb-2 text-sm font-semibold" style={{ color: '#94A3B8' }}>快捷导航</h3>
+              <div className="border-t border-card-border pt-4">
+                <h3 className="mb-2 text-sm font-semibold text-text-secondary">快捷导航</h3>
                 <nav className="space-y-1">
                   {['Dashboard', 'Strategy Lab', 'Market', 'Portfolio'].map((label) => (
-                    <a key={label} href="#" className="block rounded-lg px-3 py-2 text-sm transition hover:bg-white/5" style={{ color: '#94A3B8' }}>
+                    <a key={label} href="#" className="block rounded-lg px-3 py-2 text-sm text-text-secondary transition hover:bg-white/5">
                       {label}
                     </a>
                   ))}
@@ -284,8 +281,7 @@ export function ShareholderStrategyLayout() {
           {/* 右侧主内容 */}
           <main className="min-w-0 flex-1 space-y-6">
             <div
-              className="flex flex-wrap gap-2 rounded-2xl p-1.5"
-              style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36' }}
+              className="flex flex-wrap gap-2 rounded-2xl border border-card-border bg-card-bg p-1.5"
               role="tablist"
               aria-label="股东策略"
             >
@@ -296,11 +292,9 @@ export function ShareholderStrategyLayout() {
                   role="tab"
                   aria-selected={mainTab === tab}
                   onClick={() => setMainTab(tab)}
-                  className="min-w-[104px] flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition sm:flex-initial"
-                  style={{
-                    backgroundColor: mainTab === tab ? '#FF3B30' : 'transparent',
-                    color: mainTab === tab ? '#FFF' : '#94A3B8',
-                  }}
+                  className={`min-w-[104px] flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition sm:flex-initial ${
+                    mainTab === tab ? 'bg-primary-fixed text-on-warm-fill' : 'bg-transparent text-text-secondary'
+                  }`}
                 >
                   {tab === 'pool' ? '筹码池' : '股东画像'}
                 </button>
@@ -308,21 +302,18 @@ export function ShareholderStrategyLayout() {
             </div>
 
             {error && (
-              <div className="rounded-xl px-4 py-2 text-sm" style={{ backgroundColor: 'rgba(255,59,48,0.1)', border: '1px solid rgba(255,59,48,0.3)', color: '#FF3B30' }}>
+              <div className="rounded-xl border border-[color:var(--color-error-banner-border)] bg-[color:var(--color-error-banner-bg)] px-4 py-2 text-sm text-primary-fixed">
                 {error}
               </div>
             )}
 
             {mainTab === 'pool' && (
               <>
-                <div
-                  className="rounded-2xl px-4 py-3 text-xs leading-relaxed"
-                  style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', color: '#64748B' }}
-                >
-                  全市场反量化筹码候选（<code className="text-[11px]" style={{ color: '#94A3B8' }}>/financial/anti-quant-pool</code>
-                  ）。个股详情点击表格行；股东持仓与<strong style={{ color: '#94A3B8' }}>行业分布雷达</strong>在「股东画像」。
+                <div className="rounded-2xl border border-card-border bg-card-bg px-4 py-3 text-xs leading-relaxed text-text-dim">
+                  全市场反量化筹码候选（<code className="text-[11px] text-text-secondary">/financial/anti-quant-pool</code>
+                  ）。个股详情点击表格行；股东持仓与<strong className="text-text-secondary">行业分布雷达</strong>在「股东画像」。
                 </div>
-                <div className="text-xs" style={{ color: '#64748B' }}>
+                <div className="text-xs text-text-dim">
                   {poolStatusLine}
                 </div>
 
@@ -333,23 +324,20 @@ export function ShareholderStrategyLayout() {
                   <KPICard title="平均机构数" value={summary.avg_institution_count ?? '—'} />
                   <KPICard title="平均筹码得分" value={summary.avg_chip_score ?? '—'} />
                 </div>
-                <p className="text-xs" style={{ color: '#475569' }}>
+                <p className="text-xs text-outline-variant">
                   上列为筹码池接口 summary，不含环比/走势图。
                 </p>
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                   <div className="overflow-hidden xl:col-span-7">
-                    <div
-                      className="rounded-2xl overflow-hidden"
-                      style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
-                    >
-                      <div className="border-b px-4 py-3" style={{ borderColor: '#2A2E36' }}>
-                        <h3 className="font-semibold" style={{ color: '#F1F5F9' }}>候选股票列表</h3>
+                    <div className="overflow-hidden rounded-2xl border border-card-border bg-card-bg shadow-card">
+                      <div className="border-b border-card-border px-4 py-3">
+                        <h3 className="font-semibold text-text-primary">候选股票列表</h3>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr style={{ backgroundColor: '#0A0C10', color: '#94A3B8' }}>
+                            <tr className="bg-terminal-bg text-text-secondary">
                               <th className="cursor-pointer px-4 py-3 text-left hover:opacity-80" onClick={() => handleSort('stock_code')}>股票</th>
                               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => handleSort('chip_score')}>筹码分</th>
                               <th className="cursor-pointer px-4 py-3 text-left" onClick={() => handleSort('hhi_top10')}>HHI</th>
@@ -364,7 +352,7 @@ export function ShareholderStrategyLayout() {
                           <tbody>
                             {poolLoading && (
                               <tr>
-                                <td colSpan={9} className="px-4 py-12 text-center" style={{ color: '#64748B' }}>
+                                <td colSpan={9} className="px-4 py-12 text-center text-text-dim">
                                   加载候选列表…
                                 </td>
                               </tr>
@@ -373,13 +361,13 @@ export function ShareholderStrategyLayout() {
                               sortedPool.length === 0 &&
                               (poolFetchError ? (
                                 <tr>
-                                  <td colSpan={9} className="px-4 py-8 text-center text-sm" style={{ color: '#FF3B30' }}>
+                                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-primary-fixed">
                                     无法加载候选池：{poolFetchError}
                                   </td>
                                 </tr>
                               ) : (
                                 <tr>
-                                  <td colSpan={9} className="px-4 py-8 text-center text-sm" style={{ color: '#64748B' }}>
+                                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-text-dim">
                                     暂无候选数据（接口已成功但列表为空）。
                                   </td>
                                 </tr>
@@ -388,26 +376,25 @@ export function ShareholderStrategyLayout() {
                               sortedPool.slice(0, 30).map((row) => (
                                 <tr
                                   key={row.stock_code}
-                                  className="cursor-pointer transition hover:bg-white/5"
-                                  style={{ borderBottom: '1px solid #1E2229' }}
+                                  className="cursor-pointer border-b border-[color:var(--color-border-subtle)] transition hover:bg-white/5"
                                   onClick={() => setDrawerStock(row)}
                                 >
                                   <td className="px-4 py-3">
-                                    <span className="font-medium" style={{ color: '#F1F5F9' }}>{row.stock_name}</span>
-                                    <span className="ml-1 font-mono text-xs" style={{ color: '#64748B' }}>{row.stock_code}</span>
+                                    <span className="font-medium text-text-primary">{row.stock_name}</span>
+                                    <span className="ml-1 font-mono text-xs text-text-dim">{row.stock_code}</span>
                                   </td>
-                                  <td className="px-4 py-3 font-medium" style={{ color: '#22D3EE' }}>{row.chip_score != null ? row.chip_score : '—'}</td>
-                                  <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{row.hhi_top10 != null ? row.hhi_top10 : '—'}</td>
-                                  <td className="px-4 py-3" style={{ color: '#94A3B8' }}>
+                                  <td className="px-4 py-3 font-medium text-[color:var(--color-data-cyan)]">{row.chip_score != null ? row.chip_score : '—'}</td>
+                                  <td className="px-4 py-3 text-text-secondary">{row.hhi_top10 != null ? row.hhi_top10 : '—'}</td>
+                                  <td className="px-4 py-3 text-text-secondary">
                                     {row.top10_delta_pp != null ? (row.top10_delta_pp > 0 ? `+${row.top10_delta_pp}` : row.top10_delta_pp) : '—'}
                                   </td>
-                                  <td className="px-4 py-3" style={{ color: row.top10_ratio >= 70 ? '#22C55E' : '#F1F5F9' }}>{row.top10_ratio}%</td>
-                                  <td className="px-4 py-3" style={{ color: '#F1F5F9' }}>{row.institution_count_current}</td>
-                                  <td className="px-4 py-3" style={{ color: '#94A3B8' }}>{row.turnover_avg != null ? row.turnover_avg.toFixed(2) : '—'}</td>
-                                  <td className="px-4 py-3" style={{ color: '#FF3B30' }}>
+                                  <td className={`px-4 py-3 ${row.top10_ratio >= 70 ? 'text-accent-green' : 'text-text-primary'}`}>{row.top10_ratio}%</td>
+                                  <td className="px-4 py-3 text-text-primary">{row.institution_count_current}</td>
+                                  <td className="px-4 py-3 text-text-secondary">{row.turnover_avg != null ? row.turnover_avg.toFixed(2) : '—'}</td>
+                                  <td className="px-4 py-3 text-primary-fixed">
                                     <InstitutionStars count={row.institution_count_current} />
                                   </td>
-                                  <td className="px-4 py-3" style={{ color: '#64748B' }}>{row.latest_report_date ?? '—'}</td>
+                                  <td className="px-4 py-3 text-text-dim">{row.latest_report_date ?? '—'}</td>
                                 </tr>
                               ))}
                           </tbody>
@@ -417,13 +404,10 @@ export function ShareholderStrategyLayout() {
                   </div>
 
                   <div className="xl:col-span-5">
-                    <div
-                      className="rounded-2xl overflow-hidden"
-                      style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
-                    >
-                      <div className="border-b px-4 py-3" style={{ borderColor: '#2A2E36' }}>
-                        <h3 className="font-semibold" style={{ color: '#F1F5F9' }}>筹码稳定性热力图</h3>
-                        <p className="mt-1 text-xs" style={{ color: '#64748B' }}>基于当前候选池前 10 只</p>
+                    <div className="overflow-hidden rounded-2xl border border-card-border bg-card-bg shadow-card">
+                      <div className="border-b border-card-border px-4 py-3">
+                        <h3 className="font-semibold text-text-primary">筹码稳定性热力图</h3>
+                        <p className="mt-1 text-xs text-text-dim">基于当前候选池前 10 只</p>
                       </div>
                       <div className="p-4">
                         <ConcentrationHeatmap stocks={sortedPool.slice(0, 10)} quarters={QUARTERS.slice(-8)} height={180} />
@@ -436,10 +420,7 @@ export function ShareholderStrategyLayout() {
 
             {mainTab === 'portrait' && (
               <>
-                <div
-                  className="rounded-2xl p-6 transition hover:shadow-lg"
-                  style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
-                >
+                <div className="rounded-2xl border border-card-border bg-card-bg p-6 shadow-card transition hover:shadow-lg">
                   <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <ShareholderHeader
                       searchResults={searchResults}
@@ -454,23 +435,21 @@ export function ShareholderStrategyLayout() {
                   </div>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-3">
-                      <label className="text-sm" style={{ color: '#94A3B8' }}>报告期</label>
+                      <label className="text-sm text-text-secondary">报告期</label>
                       <select
                         value={startQuarter}
                         onChange={(e) => setStartQuarter(e.target.value)}
-                        className="rounded-lg px-3 py-2 text-sm"
-                        style={{ backgroundColor: '#0A0C10', border: '1px solid #2A2E36', color: '#F1F5F9' }}
+                        className="rounded-lg border border-card-border bg-terminal-bg px-3 py-2 text-sm text-text-primary"
                       >
                         {QUARTERS.map((q) => (
                           <option key={q} value={q}>{q}</option>
                         ))}
                       </select>
-                      <span style={{ color: '#64748B' }}>至</span>
+                      <span className="text-text-dim">至</span>
                       <select
                         value={endQuarter}
                         onChange={(e) => setEndQuarter(e.target.value)}
-                        className="rounded-lg px-3 py-2 text-sm"
-                        style={{ backgroundColor: '#0A0C10', border: '1px solid #2A2E36', color: '#F1F5F9' }}
+                        className="rounded-lg border border-card-border bg-terminal-bg px-3 py-2 text-sm text-text-primary"
                       >
                         {QUARTERS.map((q) => (
                           <option key={q} value={q}>{q}</option>
@@ -479,34 +458,30 @@ export function ShareholderStrategyLayout() {
                       <button
                         type="button"
                         onClick={handleApplyQuarterToPortrait}
-                        className="rounded-lg px-4 py-2 text-sm font-medium transition hover:opacity-90"
-                        style={{ backgroundColor: '#FF3B30', color: '#FFF' }}
+                        className="rounded-lg bg-primary-fixed px-4 py-2 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
                       >
                         应用至画像
                       </button>
                     </div>
-                    <div className="max-w-md text-right text-xs leading-relaxed md:max-w-lg" style={{ color: '#64748B' }}>
+                    <div className="max-w-md text-right text-xs leading-relaxed text-text-dim md:max-w-lg">
                       {poolStatusLine}
                     </div>
                   </div>
-                  <p className="mt-2 text-xs" style={{ color: '#475569' }}>
+                  <p className="mt-2 text-xs text-outline-variant">
                     报告期用于持仓/流水/行业雷达时间切片；「应用至画像」将视图季设为当前结束季。行业雷达数据来自持仓明细中的行业字段与
-                    <code className="text-[11px]" style={{ color: '#64748B' }}> getIndustryRadarData</code>。
+                    <code className="text-[11px] text-text-dim"> getIndustryRadarData</code>。
                   </p>
                 </div>
 
                 {strategyLoading && (
-                  <div className="rounded-xl px-4 py-3 text-sm" style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', color: '#94A3B8' }}>
+                  <div className="rounded-xl border border-card-border bg-card-bg px-4 py-3 text-sm text-text-secondary">
                     正在加载股东策略数据…
                   </div>
                 )}
 
                 {!selectedShareholder && !strategyLoading && (
-                  <div
-                    className="rounded-2xl px-6 py-14 text-center text-sm"
-                    style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', color: '#94A3B8' }}
-                  >
-                    在上方搜索并选择股东后，可查看持仓、变动流水、<strong style={{ color: '#F1F5F9' }}>行业分布雷达</strong>与市值-估值气泡图。
+                  <div className="rounded-2xl border border-card-border bg-card-bg px-6 py-14 text-center text-sm text-text-secondary">
+                    在上方搜索并选择股东后，可查看持仓、变动流水、<strong className="text-text-primary">行业分布雷达</strong>与市值-估值气泡图。
                   </div>
                 )}
 
@@ -561,14 +536,12 @@ export function ShareholderStrategyLayout() {
 
       {klineStock && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[color:var(--color-overlay-scrim)] p-4"
           onClick={() => setKlineStock(null)}
           role="presentation"
         >
           <div
-            className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl p-4 md:p-6"
-            style={{ backgroundColor: '#14171C', border: '1px solid #2A2E36', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+            className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-card-border bg-card-bg p-4 shadow-modal md:p-6"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal

@@ -82,8 +82,8 @@ export default function StrategiesPage() {
 
   return (
     <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-white">{t('strategies.title')}</h1>
-      <p className="text-slate-400 text-sm">{t('strategies.marketHint')}</p>
+      <h1 className="text-2xl font-bold text-on-surface">{t('strategies.title')}</h1>
+      <p className="text-sm text-text-secondary">{t('strategies.marketHint')}</p>
 
       <AsyncState<StrategyMarketItem[]>
         loading={loading}
@@ -99,23 +99,23 @@ export default function StrategiesPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-600 text-slate-400">
+                <tr className="border-b border-card-border text-text-secondary">
                   <th className="p-3 font-medium">{t('strategies.id')}</th>
                   <th className="p-3 font-medium">{t('strategies.name')}</th>
                   <th
-                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    className="cursor-pointer p-3 font-medium hover:text-on-surface"
                     onClick={() => toggleSort('return_pct')}
                   >
                     {t('strategies.returnPct')} {sortBy === 'return_pct' && (sortDesc ? '↓' : '↑')}
                   </th>
                   <th
-                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    className="cursor-pointer p-3 font-medium hover:text-on-surface"
                     onClick={() => toggleSort('sharpe_ratio')}
                   >
                     {t('strategies.sharpe')} {sortBy === 'sharpe_ratio' && (sortDesc ? '↓' : '↑')}
                   </th>
                   <th
-                    className="p-3 font-medium cursor-pointer hover:text-white"
+                    className="cursor-pointer p-3 font-medium hover:text-on-surface"
                     onClick={() => toggleSort('max_drawdown')}
                   >
                     {t('strategies.drawdown')} {sortBy === 'max_drawdown' && (sortDesc ? '↓' : '↑')}
@@ -125,20 +125,20 @@ export default function StrategiesPage() {
               </thead>
               <tbody>
                 {rows.map((s) => (
-                  <tr key={s.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
-                    <td className="p-3 font-mono text-white">{s.id}</td>
-                    <td className="p-3 text-slate-200">{s.name}</td>
-                    <td className="p-3 text-emerald-400">{formatPct(s.return_pct)}</td>
-                    <td className="p-3 text-slate-300">{formatNum(s.sharpe_ratio)}</td>
-                    <td className="p-3 text-slate-300">
+                  <tr key={s.id} className="border-b border-card-border/80 hover:bg-surface-container-high/50">
+                    <td className="p-3 font-mono text-on-surface">{s.id}</td>
+                    <td className="p-3 text-on-surface">{s.name}</td>
+                    <td className="p-3 text-accent-green">{formatPct(s.return_pct)}</td>
+                    <td className="p-3 text-text-primary">{formatNum(s.sharpe_ratio)}</td>
+                    <td className="p-3 text-text-primary">
                       {s.max_drawdown != null ? `${s.max_drawdown}%` : '—'}
                     </td>
                     <td className="p-3">
                       <span
                         className={
                           s.status === 'live' || s.status === 'active'
-                            ? 'text-emerald-400'
-                            : 'text-amber-400'
+                            ? 'text-accent-green'
+                            : 'text-[color:var(--color-chart-amber)]'
                         }
                       >
                         {s.status}
@@ -153,42 +153,42 @@ export default function StrategiesPage() {
       </AsyncState>
 
       <section className="card">
-        <h2 className="text-lg font-semibold text-white mb-2">{t('strategies.backtestTitle')}</h2>
-        <p className="text-slate-400 text-sm mb-4">{t('strategies.backtestHint')}</p>
-        <div className="flex flex-wrap items-end gap-3 mb-4">
+        <h2 className="mb-2 text-lg font-semibold text-on-surface">{t('strategies.backtestTitle')}</h2>
+        <p className="mb-4 text-sm text-text-secondary">{t('strategies.backtestHint')}</p>
+        <div className="mb-4 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-slate-500 text-xs">{t('strategies.symbol')}</span>
+            <span className="text-xs text-text-dim">{t('strategies.symbol')}</span>
             <input
               type="text"
               value={backtestSymbol}
               onChange={(e) => setBacktestSymbol(e.target.value)}
-              className="rounded bg-slate-800 border border-slate-600 px-3 py-2 text-white text-sm w-32"
+              className="w-32 rounded border border-card-border bg-surface-container-high px-3 py-2 text-sm text-on-surface"
               placeholder="000001.SZ"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-slate-500 text-xs">{t('strategies.startDate')}</span>
+            <span className="text-xs text-text-dim">{t('strategies.startDate')}</span>
             <input
               type="date"
               value={backtestStart}
               onChange={(e) => setBacktestStart(e.target.value)}
-              className="rounded bg-slate-800 border border-slate-600 px-3 py-2 text-white text-sm"
+              className="rounded border border-card-border bg-surface-container-high px-3 py-2 text-sm text-on-surface"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-slate-500 text-xs">{t('strategies.endDate')}</span>
+            <span className="text-xs text-text-dim">{t('strategies.endDate')}</span>
             <input
               type="date"
               value={backtestEnd}
               onChange={(e) => setBacktestEnd(e.target.value)}
-              className="rounded bg-slate-800 border border-slate-600 px-3 py-2 text-white text-sm"
+              className="rounded border border-card-border bg-surface-container-high px-3 py-2 text-sm text-on-surface"
             />
           </label>
           <button
             type="button"
             onClick={runBacktest}
             disabled={backtestLoading}
-            className="rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 text-white text-sm font-medium"
+            className="rounded bg-accent-green px-4 py-2 text-sm font-medium text-on-surface hover:opacity-90 disabled:opacity-50"
           >
             {backtestLoading ? t('common.loading') : t('strategies.runBacktest')}
           </button>
@@ -196,26 +196,26 @@ export default function StrategiesPage() {
         {backtestResult && (
           <>
             {backtestResult.error && (
-              <p className="text-amber-400 text-sm mb-2">{backtestResult.error}</p>
+              <p className="mb-2 text-sm text-[color:var(--color-chart-amber)]">{backtestResult.error}</p>
             )}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-4">
+            <div className="mb-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
               <div>
-                <span className="text-slate-500">Sharpe</span>
-                <p className="text-white font-medium">{formatNum(backtestResult.sharpe_ratio)}</p>
+                <span className="text-text-dim">Sharpe</span>
+                <p className="font-medium text-on-surface">{formatNum(backtestResult.sharpe_ratio)}</p>
               </div>
               <div>
-                <span className="text-slate-500">{t('strategies.drawdown')}</span>
-                <p className="text-white font-medium">
+                <span className="text-text-dim">{t('strategies.drawdown')}</span>
+                <p className="font-medium text-on-surface">
                   {backtestResult.max_drawdown != null ? `${backtestResult.max_drawdown}%` : '—'}
                 </p>
               </div>
               <div>
-                <span className="text-slate-500">{t('strategies.returnPct')}</span>
-                <p className="text-white font-medium">{formatPct(backtestResult.total_return)}</p>
+                <span className="text-text-dim">{t('strategies.returnPct')}</span>
+                <p className="font-medium text-on-surface">{formatPct(backtestResult.total_return)}</p>
               </div>
               <div>
-                <span className="text-slate-500">Trades</span>
-                <p className="text-white font-medium">{backtestResult.trade_count ?? '—'}</p>
+                <span className="text-text-dim">Trades</span>
+                <p className="font-medium text-on-surface">{backtestResult.trade_count ?? '—'}</p>
               </div>
             </div>
             {backtestResult.equity_curve?.length > 0 && (
@@ -226,7 +226,7 @@ export default function StrategiesPage() {
               />
             )}
             {backtestResult.equity_curve?.length === 0 && !backtestResult.error && (
-              <p className="text-slate-500 text-sm">无资金曲线数据（可能无日 K 或信号）</p>
+              <p className="text-sm text-text-dim">无资金曲线数据（可能无日 K 或信号）</p>
             )}
           </>
         )}

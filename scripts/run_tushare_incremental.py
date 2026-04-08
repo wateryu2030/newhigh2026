@@ -25,6 +25,32 @@ if os.path.isfile(_env):
         load_dotenv(_env)
     except ImportError:
         pass
+try:
+    from pathlib import Path
+
+    from newhigh_env import hydrate_tushare_token_from_dotenv
+
+    hydrate_tushare_token_from_dotenv(Path(ROOT))
+except ImportError:
+    pass
+
+
+def _maybe_strip_proxy() -> None:
+    """避免本机错误 HTTP(S)_PROXY 导致 Tushare 请求失败；需走代理时设 TUSHARE_STRIP_PROXY=0。"""
+    if os.environ.get("TUSHARE_STRIP_PROXY", "1").strip().lower() in ("0", "false", "no"):
+        return
+    for k in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "ALL_PROXY",
+        "all_proxy",
+    ):
+        os.environ.pop(k, None)
+
+
+_maybe_strip_proxy()
 
 for _d in ["data-pipeline/src", "core/src"]:
     _p = os.path.join(ROOT, _d)

@@ -87,7 +87,7 @@ def run_intraday_refresh(slot_label: str = "") -> None:
             print(f"[{label}] RSS 宏观采集失败: {e}")
 
     token = (os.environ.get("TUSHARE_TOKEN") or "").strip()
-    tb = int(os.environ.get("INTRADAY_TUSHARE_DAYS_BACK", "3"))
+    tb = int(os.environ.get("INTRADAY_TUSHARE_DAYS_BACK", "5"))
     if token and os.environ.get("INTRADAY_TUSHARE_REFRESH", "1").strip().lower() not in (
         "0",
         "false",
@@ -124,11 +124,11 @@ def run_intraday_refresh(slot_label: str = "") -> None:
     except Exception as e:
         print(f"[{label}] 东财新闻采集失败: {e}")
 
-    klim = int(os.environ.get("INTRADAY_KLINE_CODES_LIMIT", "80"))
+    klim = int(os.environ.get("INTRADAY_KLINE_CODES_LIMIT", "150"))
     if klim > 0:
         from ..collectors.daily_kline import update_daily_kline
 
-        k_days = int(os.environ.get("INTRADAY_KLINE_DAYS_BACK", "150"))
+        k_days = int(os.environ.get("INTRADAY_KLINE_DAYS_BACK", "240"))
         end_d = datetime.now().strftime("%Y%m%d")
         start_d = (datetime.now() - timedelta(days=max(30, k_days))).strftime("%Y%m%d")
         seen_k: set[str] = set()
@@ -204,8 +204,15 @@ def run_daily(
         try:
             from ..collectors.tushare_daily import update_all_tushare_daily
 
-            n_tushare = update_all_tushare_daily(days_back=tushare_days_back)
-            print(f"Tushare 日 K 线更新: {n_tushare} 条")
+            dcl = os.environ.get("TUSHARE_DAILY_CODES_LIMIT", "").strip()
+            dlim = int(dcl) if dcl.isdigit() else None
+            n_tushare = update_all_tushare_daily(
+                days_back=tushare_days_back,
+                codes_limit=dlim,
+                verbose=os.environ.get("TUSHARE_INCREMENTAL_VERBOSE", "0").strip()
+                in ("1", "true", "yes"),
+            )
+            print(f"Tushare 日 K（增量管道）: {n_tushare} 行（codes_limit={dlim or 'all'}）")
         except ImportError as e:
             print(f"Tushare 收集器未找到: {e}")
             print("请确保已安装 tushare: pip install tushare")

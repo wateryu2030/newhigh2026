@@ -1,0 +1,14 @@
+---
+description: 本机 OpenClaw 与 Cursor 协作时的全局 Skills 约定（非项目内 .cursor/skills）
+alwaysApply: true
+---
+
+# OpenClaw 本机 Skills 约定
+
+- **addyosmani/agent-skills（推荐）**：`npx skills add addyosmani/agent-skills --yes --global` → 实体 **`~/.agents/skills/`**，OpenClaw 使用 **`~/.openclaw/skills/`** 下符号链接（非仅 `workspace/skills`）。
+- **自定义技能**：仍可放 **`~/.openclaw/workspace/skills/`**，与全局包并存。
+- **一键脚本**（PATH 已含 Homebrew）：`bash scripts/install_openclaw_addyosmani_skills.sh`
+- **Node**：优先 Homebrew 的 `node`/`npx`；若 `~/.local/bin/npx` 报 node 不存在，把 `/opt/homebrew/bin` 放到 PATH 前面。
+- **技能分层（去重）**：通用规格/UI/拆任务/ADR 等 → **`~/.cursor/rules/openclaw-global-agent-skills.mdc`** + **`~/.agents/skills/<主题>/SKILL.md`**。**本仓库 A 股数据与投研** 四技能如何分工、是否与 x-tweet-fetcher 重叠 → **`.cursor/skills/README.md`**（与前者互补，勿混为同一 skill）。
+- **生效**：安装或更新后**重启 OpenClaw**。详见 `docs/OPENCLAW_运行说明.md`。
+- **验证**：`openclaw skills list`（若 CLI 可用）。

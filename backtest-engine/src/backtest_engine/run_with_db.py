@@ -1,14 +1,20 @@
+# Auto-fixed by Cursor on 2026-04-02: 默认万二手续费+千一滑点、可选止损止盈、logging。
 """基于 DuckDB 数据与信号运行回测，返回资金曲线与风险指标。"""
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from .cost_models import CommissionModel, SlippageModel, effective_fee_per_order
 from .data_loader import load_ohlcv_from_db, load_signals_from_db
 from .metrics import compute_metrics
+from .position_manager import apply_stop_take_series
 from .runner import run_backtest, run_backtest_from_ohlcv
+
+_log = logging.getLogger(__name__)
 
 
 def _align_signals_to_dates(
@@ -59,9 +65,12 @@ def run_backtest_from_db(
     signal_source: str = "trade_signals",
     strategy_id: Optional[str] = None,
     init_cash: float = 10000.0,
-    fees: float = 0.001,
-    slippage: float = 0.0,
+    fees: float = 0.0002,
+    slippage: float = 0.001,
     conn: Any = None,
+    stop_loss_pct: Optional[float] = None,
+    take_profit_pct: Optional[float] = None,
+    use_legacy_fee_combine: bool = False,
 ) -> Dict[str, Any]:
     """
     从 quant_system.duckdb 读取日 K 与信号，跑回测，返回资金曲线与风险指标。
@@ -69,8 +78,10 @@ def run_backtest_from_db(
       symbol: 标的代码（6 位或 600519.SH）
       start_date, end_date: YYYY-MM-DD
       signal_source: 'trade_signals' | 'market_signals'
-      fees: 手续费率（按成交额比例，如 0.001 = 0.1%）
-      slippage: 滑点率（买卖各一次近似为 2*slippage 的额外成本，如 0.001 = 0.1%）
+      fees: 单边手续费占成交额（默认 0.0002 = 万二）
+      slippage: 单边滑点占价（默认 0.001 = 千一）；与 fees 合并为 vectorbt 单参数时默认 per_order=fees+slippage
+      stop_loss_pct / take_profit_pct: 可选，如 0.08 表示 8% 止损（简化日频模型）
+      use_legacy_fee_combine: True 时使用旧式 fees + 2*slippage
     输出：
       equity_curve: [{"date": "YYYY-MM-DD", "value": float}, ...]
       sharpe_ratio, max_drawdown, total_return, win_rate_pct, ...
@@ -111,11 +122,26 @@ def run_backtest_from_db(
             result["error"] = "invalid_prices"
             return result
 
-        effective_fees = fees + 2.0 * float(slippage)
+        ent = entries.reindex(close.index).fillna(False)
+        ex = exits.reindex(close.index).fillna(False)
+        if stop_loss_pct is not None or take_profit_pct is not None:
+            ent, ex = apply_stop_take_series(
+                close, ent, ex,
+                stop_loss_pct=stop_loss_pct,
+                take_profit_pct=take_profit_pct,
+            )
+
+        if use_legacy_fee_combine:
+            effective_fees = float(fees) + 2.0 * float(slippage)
+        else:
+            effective_fees = effective_fee_per_order(
+                CommissionModel(rate_per_leg=float(fees)),
+                SlippageModel(rate_per_leg=float(slippage)),
+            )
         pf = run_backtest(
             close,
-            entries.reindex(close.index).fillna(False),
-            exits.reindex(close.index).fillna(False),
+            ent,
+            ex,
             init_cash=init_cash,
             fees=effective_fees,
             freq="1D",
@@ -135,6 +161,7 @@ def run_backtest_from_db(
         _extract_trade_count(pf, result)
 
     except Exception as e:
+        _log.exception("run_backtest_from_db failed: %s", symbol)
         result["error"] = str(e)
 
     return result
@@ -171,9 +198,12 @@ def run_backtest_multi_from_db(
     signal_source: str = "trade_signals",
     strategy_id: Optional[str] = None,
     init_cash: float = 10000.0,
-    fees: float = 0.001,
-    slippage: float = 0.0,
+    fees: float = 0.0002,
+    slippage: float = 0.001,
     conn: Any = None,
+    stop_loss_pct: Optional[float] = None,
+    take_profit_pct: Optional[float] = None,
+    use_legacy_fee_combine: bool = False,
 ) -> Dict[str, Any]:
     """
     多标的组合回测：等权分配初始资金，分别回测后合并资金曲线与指标。
@@ -207,6 +237,9 @@ def run_backtest_multi_from_db(
             fees=fees,
             slippage=slippage,
             conn=conn,
+            stop_loss_pct=stop_loss_pct,
+            take_profit_pct=take_profit_pct,
+            use_legacy_fee_combine=use_legacy_fee_combine,
         )
         if r.get("error"):
             continue

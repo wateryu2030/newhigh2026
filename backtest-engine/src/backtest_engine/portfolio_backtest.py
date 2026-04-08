@@ -1,12 +1,16 @@
+# Auto-fixed by Cursor on 2026-04-02: align default fees/slippage with run_with_db.
 """
 多策略组合回测：按策略分配权重，各策略独立回测后按权重合并资金曲线与指标。
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from .run_with_db import run_backtest_multi_from_db, _metrics_from_equity_curve
+
+_log = logging.getLogger(__name__)
 from .strategy_allocator import allocate_weights, get_symbols_for_strategy
 
 
@@ -17,8 +21,8 @@ def run_portfolio_backtest(
     weights: Optional[List[float]] = None,
     signal_source: str = "trade_signals",
     init_cash: float = 10000.0,
-    fees: float = 0.001,
-    slippage: float = 0.0,
+    fees: float = 0.0002,
+    slippage: float = 0.001,
     conn: Any = None,
 ) -> Dict[str, Any]:
     """
@@ -56,7 +60,8 @@ def run_portfolio_backtest(
             from data_pipeline.storage.duckdb_manager import get_conn
 
             conn = get_conn(read_only=False)
-        except Exception:
+        except Exception as e:
+            _log.warning("run_portfolio_backtest: no db: %s", e)
             result["error"] = "no_db"
             return result
 

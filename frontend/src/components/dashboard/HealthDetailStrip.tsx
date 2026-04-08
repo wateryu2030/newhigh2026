@@ -22,7 +22,7 @@ export function HealthDetailStrip({
   if (loadFailed) {
     return (
       <div
-        className="rounded-lg border border-amber-600/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-200/90"
+        className="rounded-lg border border-[color:var(--color-warning-banner-border)] bg-[color:var(--color-warning-banner-bg)] px-3 py-2 text-sm text-[color:var(--color-badge-amber-text)]/90"
         role="status"
       >
         {t('dashboard.healthDetailFailed')}
@@ -38,41 +38,41 @@ export function HealthDetailStrip({
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-lg border border-slate-600/50 bg-slate-900/40 px-3 py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:text-sm"
+      className="flex flex-col gap-2 rounded-lg border border-card-border/50 bg-terminal-bg/40 px-3 py-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:text-sm"
       role="region"
       aria-label={t('dashboard.healthDetailTitle')}
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-300">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-text-primary">
         <span>
-          <span className="text-slate-500">{t('dashboard.healthOverall')}</span>{' '}
+          <span className="text-text-dim">{t('dashboard.healthOverall')}</span>{' '}
           <span
             className={
               data.status === 'ok'
-                ? 'font-medium text-emerald-400'
-                : 'font-medium text-amber-400'
+                ? 'font-medium text-accent-green'
+                : 'font-medium text-[color:var(--color-chart-amber)]'
             }
           >
             {data.status}
           </span>
         </span>
         <span>
-          <span className="text-slate-500">{t('dashboard.healthCelery')}</span>{' '}
-          <span className="text-slate-200">{celeryLabel(data.celery)}</span>
+          <span className="text-text-dim">{t('dashboard.healthCelery')}</span>{' '}
+          <span className="text-on-surface">{celeryLabel(data.celery)}</span>
         </span>
         <span className="hidden sm:inline">
-          <span className="text-slate-500">{t('dashboard.healthPipeline')}</span>{' '}
-          <span className="max-w-[220px] truncate font-mono text-slate-400" title={meta?.v || ''}>
+          <span className="text-text-dim">{t('dashboard.healthPipeline')}</span>{' '}
+          <span className="max-w-[220px] truncate font-mono text-text-secondary" title={meta?.v || ''}>
             {metaHint}
           </span>
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-3 text-slate-500">
+      <div className="flex flex-wrap items-center gap-3 text-text-dim">
         <span>
           {t('dashboard.healthMetrics')}{' '}
-          <code className="rounded bg-slate-800 px-1 text-slate-300">{data.prometheus_metrics_path}</code>
+          <code className="rounded bg-surface-container-high px-1 text-text-primary">{data.prometheus_metrics_path}</code>
         </span>
         {data.alert_webhook_configured ? (
-          <span className="text-emerald-500/90">{t('dashboard.healthWebhookOn')}</span>
+          <span className="text-accent-green/90">{t('dashboard.healthWebhookOn')}</span>
         ) : (
           <span>{t('dashboard.healthWebhookOff')}</span>
         )}

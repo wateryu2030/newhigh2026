@@ -1,5 +1,6 @@
 """API endpoints: market, strategy, backtest, portfolio, risk, trade, ai-lab."""
 
+import asyncio
 import json
 import logging
 import os
@@ -7,6 +8,8 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from pydantic import BaseModel, Field
+
+from core.ashare_symbol import normalize_ashare_symbol
 
 from .response_utils import json_fail, json_ok
 
@@ -51,10 +54,11 @@ def _pipeline_code_variants(symbol: str) -> List[str]:
     base = raw.split(".", maxsplit=1)[0]
     if len(base) >= 5 and base.isdigit():
         add(base)
-        if base.startswith("6"):
+        ns = normalize_ashare_symbol(base)
+        if ns.endswith(".SH"):
             add(f"{base}.SH")
             add(f"{base}.XSHG")
-        elif base.startswith(("4", "8", "9")) or len(base) == 8:
+        elif ns.endswith(".BSE"):
             add(f"{base}.BJ")
             add(f"{base}.BSE")
         else:
@@ -90,11 +94,10 @@ def _normalize_sym_show(code_used: str) -> str:
         return f"{sym_show[:8]}.BJ"
     if len(sym_show) >= 6:
         six = sym_show[:6]
-        if six.startswith("6"):
-            return f"{six}.SH"
-        if six.startswith(("4", "8", "9")):
+        ns = normalize_ashare_symbol(six)
+        if ns.endswith(".BSE"):
             return f"{six}.BJ"
-        return f"{six}.SZ"
+        return ns
     return sym_show
 
 
@@ -558,7 +561,7 @@ def get_daily_coverage(limit_codes: int = 200) -> dict:
 
         if not os.path.isfile(get_db_path()):
             return {"ok": False, "error": "database_not_found", "top_codes": []}
-        conn = get_conn(read_only=False)
+        conn = get_conn(read_only=True)
         try:
             lim = max(10, min(int(limit_codes or 200), 500))
             agg = conn.execute(
@@ -1251,15 +1254,31 @@ def get_market_emotion() -> dict:
 
 
 @router.get("/market/sentiment-7d")
-def get_market_sentiment_7d() -> dict:
+async def get_market_sentiment_7d() -> dict:
     """
     全市场 7 维情绪评分（对齐 ClawHub A Stock Monitor 思路，本仓库安全实现）。
-    数据：优先 a_stock_realtime，否则 akshare 现货。
+    数据：优先 a_stock_realtime / 日 K；弱网 AkShare 可能极慢，本路由带硬超时以免客户端 0 字节挂死。
     """
-    try:
-        from data_pipeline.sentiment_7d import get_market_sentiment_7d
+    from data_pipeline.sentiment_7d import get_market_sentiment_7d as _compute
 
-        return get_market_sentiment_7d(prefer_db=True)
+    sec = float(os.environ.get("SENTIMENT_7D_ENDPOINT_TIMEOUT_SEC", "45"))
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(_compute, True),
+            timeout=max(5.0, sec),
+        )
+    except asyncio.TimeoutError:
+        _log.warning("sentiment-7d exceeded %.1fs (SENTIMENT_7D_ENDPOINT_TIMEOUT_SEC)", sec)
+        return {
+            "error": "gateway_timeout",
+            "detail": (
+                f"情绪计算超过 {sec:.0f}s 已中断；请关 SENTIMENT_7D_AKSHARE_ENABLE、确认 DuckDB 路径一致，"
+                "或增大 SENTIMENT_7D_ENDPOINT_TIMEOUT_SEC。"
+            ),
+            "score": 0,
+            "level": "未知",
+            "emoji": "❓",
+        }
     except Exception as e:
         return {"error": str(e), "score": 0, "level": "未知", "emoji": "❓"}
 
@@ -1828,6 +1847,7 @@ def _news_fallback_akshare(symbol: Optional[str] = None, limit: int = 50) -> Lis
         df = ak.stock_news_em(symbol=code)
         if df is None or df.empty:
             return []
+        lim = max(1, min(int(limit or 10), 30))
         out = []
         cols = [str(c) for c in df.columns.tolist()]
         title_col = next((c for c in ["新闻标题", "title"] if c in cols), cols[0] if cols else None)
@@ -1835,7 +1855,7 @@ def _news_fallback_akshare(symbol: Optional[str] = None, limit: int = 50) -> Lis
         time_col = next((c for c in ["发布时间", "publish_time"] if c in cols), None)
         url_col = next((c for c in ["新闻链接", "链接", "url", "link"] if c in cols), None)
         source_col = next((c for c in ["文章来源", "source"] if c in cols), None)
-        for _, row in df.head(limit).iterrows():
+        for _, row in df.head(lim).iterrows():
             url_raw = str(row.get(url_col, "")) if url_col else ""
             item = {
                 "symbol": code,
@@ -1854,49 +1874,75 @@ def _news_fallback_akshare(symbol: Optional[str] = None, limit: int = 50) -> Lis
         return []
 
 
+def _news_fallback_akshare_multi_symbol(codes: tuple[str, ...], total_cap: int) -> List[dict]:
+    """
+    东财 ``stock_news_em`` 单次约 10 条/股；留空个股代码查询时用多股合并凑够列表（去重 title+时间）。
+    """
+    cap = max(1, min(int(total_cap or 100), 200))
+    seen: set[tuple[str, str]] = set()
+    out: List[dict] = []
+    for code in codes:
+        if len(out) >= cap:
+            break
+        chunk = _news_fallback_akshare(symbol=code, limit=12)
+        for it in chunk:
+            title = (it.get("title") or "").strip()
+            pub = (it.get("publish_time") or "").strip()
+            key = (title, pub)
+            if not title or key in seen:
+                continue
+            seen.add(key)
+            out.append(it)
+            if len(out) >= cap:
+                break
+    return out
+
+
 @router.get("/news")
-def get_news(symbol: Optional[str] = None, limit: int = 100) -> dict:
-    """新闻列表：优先 DuckDB news_items；为空时从 akshare 东方财富补充。"""
+def get_news(
+    symbol: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=200),
+) -> dict:
+    """新闻列表：优先 DuckDB news_items；为空时从 akshare 东方财富补充（单股接口约 10 条，无代码时合并多只旗舰股）。"""
     items: List[dict] = []
     source: Optional[str] = None
+    lim = max(1, min(int(limit or 100), 200))
     try:
         from data_engine import get_astock_duckdb_available, get_news_from_astock_duckdb
 
         if get_astock_duckdb_available():
-            items = get_news_from_astock_duckdb(symbol=symbol, limit=limit)
+            items = get_news_from_astock_duckdb(symbol=symbol, limit=lim)
             if items:
                 source = "duckdb"
     except Exception:
         pass
     if not items:
-        items = _news_fallback_akshare(symbol=symbol, limit=min(limit, 50))
+        sym = (symbol or "").strip()
+        if sym:
+            items = _news_fallback_akshare(symbol=sym, limit=lim)
+        else:
+            # 无代码：多股聚合，缓解「整页只有 10 条」
+            items = _news_fallback_akshare_multi_symbol(
+                ("000001", "600519", "300750", "601318", "600036", "688981"),
+                total_cap=lim,
+            )
         if items:
             source = "akshare"
     sentiment = _news_sentiment_summary(items)
-    return {"news": items, "source": source, "sentiment": sentiment}
+    # 与 /api/system/data-overview 卡片「新闻数据」同一表行数，避免用户误以为列表即全库
+    news_items_total: Optional[int] = None
+    try:
+        from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn
 
-
-def _repo_root_from_gateway() -> str:
-    """gateway/src/gateway/endpoints.py → 仓库根。"""
-    return os.path.abspath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
-    )
-
-
-def _policy_news_sqlite_path() -> Optional[str]:
-    """policy-news 采集库；可用环境变量 POLICY_NEWS_DB_PATH 覆盖。"""
-    custom = (os.environ.get("POLICY_NEWS_DB_PATH") or "").strip()
-    if custom:
-        return custom if os.path.isfile(custom) else None
-    default = os.path.join(
-        _repo_root_from_gateway(),
-        "integrations",
-        "hongshan",
-        "policy-news",
-        "sqlite",
-        "news.db",
-    )
-    return default if os.path.isfile(default) else None
+        _c = get_conn(read_only=False)
+        ensure_tables(_c)
+        news_items_total = int(_c.execute("SELECT COUNT(*) FROM news_items").fetchone()[0])
+    except Exception:
+        pass
+    out: dict = {"news": items, "source": source, "sentiment": sentiment}
+    if news_items_total is not None:
+        out["news_items_total"] = news_items_total
+    return out
 
 
 def _policy_sentiment_label(score: Any) -> Optional[str]:
@@ -1911,6 +1957,53 @@ def _policy_sentiment_label(score: Any) -> Optional[str]:
     return "中性"
 
 
+def _policy_news_from_duckdb(
+    category: Optional[str], limit: int, offset: int
+) -> tuple[List[dict], bool]:
+    """从主库 ``news_items`` 读政策采集（symbol=__POLICY__）。返回 (items, ok)；ok=False 表示读库失败。"""
+    from data_pipeline.collectors.policy_news_duckdb import POLICY_SYMBOL
+    from data_pipeline.storage.duckdb_manager import ensure_tables, get_conn
+
+    items: List[dict] = []
+    try:
+        conn = get_conn(read_only=False)
+        ensure_tables(conn)
+        q = (
+            "SELECT title, source, tag, content, url, keyword, publish_time, "
+            "sentiment_score, sentiment_label "
+            "FROM news_items WHERE symbol = ? AND (? IS NULL OR tag = ?) "
+            "ORDER BY COALESCE(publish_time, '') DESC, ts DESC LIMIT ? OFFSET ?"
+        )
+        cur = conn.execute(q, [POLICY_SYMBOL, category, category, limit, offset])
+        for row in cur.fetchall():
+            title = row[0] or ""
+            source = row[1] or ""
+            tag = row[2] or ""
+            content = (row[3] or "")[:2000]
+            url = row[4] or None
+            keyword = (row[5] or "")[:200] if row[5] else None
+            pub = (row[6] or "")[:19] if row[6] else ""
+            sc = row[7]
+            lbl = row[8]
+            items.append(
+                {
+                    "title": title,
+                    "content": content,
+                    "url": url,
+                    "source": source,
+                    "publish_time": pub,
+                    "tag": tag,
+                    "keyword": keyword,
+                    "sentiment_score": float(sc) if sc is not None else None,
+                    "sentiment_label": lbl or _policy_sentiment_label(sc),
+                }
+            )
+        return items, True
+    except Exception as e:
+        _log.warning("policy news duckdb read failed: %s", e)
+        return [], False
+
+
 @router.get("/news/collector")
 def get_news_collector(
     category: Optional[str] = None,
@@ -1918,57 +2011,21 @@ def get_news_collector(
     offset: int = Query(0, ge=0),
 ) -> dict:
     """
-    政策采集入库（SQLite）：与 OpenClaw/policy-news 脚本同一数据源，供主站 /news「政策采集」Tab。
-    不依赖第三方 Awesome Finance Skills；库不存在时返回空列表。
+    政策采集：读主库 DuckDB ``news_items``（symbol=__POLICY__，与 RSS/东财同库）。
+    供 /news「政策采集」Tab。
     """
-    db_path = _policy_news_sqlite_path()
-    if not db_path:
-        return {
-            "news": [],
-            "source": None,
-            "sentiment": {"count": 0, "avg_score": None, "positive_ratio": None},
-            "detail": "policy_news_db_not_found",
-        }
-    import sqlite3
+    duck_items, duck_ok = _policy_news_from_duckdb(category, limit, offset)
+    if duck_items:
+        sentiment = _news_sentiment_summary(duck_items)
+        return {"news": duck_items, "source": "duckdb_policy", "sentiment": sentiment}
 
-    items: List[dict] = []
-    try:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        try:
-            q = (
-                "SELECT title, source, category, content, url, publish_date, sentiment, domains "
-                "FROM news WHERE (? IS NULL OR category = ?) "
-                "ORDER BY COALESCE(publish_date, '') DESC, created_at DESC LIMIT ? OFFSET ?"
-            )
-            cur = conn.execute(q, (category, category, limit, offset))
-            for row in cur.fetchall():
-                sc = row["sentiment"]
-                items.append(
-                    {
-                        "title": row["title"] or "",
-                        "content": (row["content"] or "")[:2000],
-                        "url": row["url"] or None,
-                        "source": row["source"] or "",
-                        "publish_time": (row["publish_date"] or "")[:19],
-                        "tag": row["category"] or "",
-                        "keyword": (row["domains"] or "")[:200] if row["domains"] else None,
-                        "sentiment_score": float(sc) if sc is not None else None,
-                        "sentiment_label": _policy_sentiment_label(sc),
-                    }
-                )
-        finally:
-            conn.close()
-    except Exception as e:
-        _log.warning("policy news sqlite read failed: %s", e)
-        return {
-            "news": [],
-            "source": None,
-            "sentiment": None,
-            "detail": "policy_news_read_error",
-        }
-    sentiment = _news_sentiment_summary(items)
-    return {"news": items, "source": "policy_sqlite", "sentiment": sentiment}
+    empty_detail = "policy_news_empty" if duck_ok else "policy_news_read_error"
+    return {
+        "news": [],
+        "source": None,
+        "sentiment": {"count": 0, "avg_score": None, "positive_ratio": None},
+        "detail": empty_detail,
+    }
 
 
 @router.get("/news/coverage")
@@ -1979,9 +2036,10 @@ def get_news_coverage() -> dict:
     """
     return {
         "tier1_in_repo": {
-            "description": "站内默认：DuckDB news_items + akshare 东方财富",
+            "description": "站内默认：DuckDB news_items（含 RSS 宏观、东财个股、政策采集 __POLICY__）+ akshare 东方财富",
             "api": "GET /api/news",
             "summary_api": "POST /api/research/news-summary",
+            "policy_collector_api": "GET /api/news/collector",
         },
         "tier2_extended_philosophy": {
             "description": "社媒/公众号/X/全球网页等多源舆情，借力各平台原生搜索",
@@ -2104,27 +2162,43 @@ class NewsManualRefreshBody(BaseModel):
     send_webhook: bool = False
 
 
+# 首页「新闻手刷」专用：少量源 + 较短超时，避免反代/浏览器在完整默认 RSS 列表上超时或 500
+_MANUAL_RSS_FEEDS_DEFAULT = (
+    "http://feeds.bbci.co.uk/news/world/rss.xml,"
+    "http://feeds.bbci.co.uk/news/business/rss.xml,"
+    "http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml"
+)
+
+
 def _duckdb_global_macro_news_summary(limit: int = 20) -> tuple[str, int]:
     """自 DuckDB 取最近国际宏观 / __GLOBAL__ 标题列表，用于汇总正文。"""
-    from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
-
-    if not os.path.isfile(get_db_path()):
-        return "", 0
-    lim = max(1, min(50, int(limit)))
-    conn = get_conn(read_only=True)
     try:
-        rows = conn.execute(
-            """
-            SELECT title, url, source_site
-            FROM news_items
-            WHERE symbol = '__GLOBAL__' OR TRIM(COALESCE(tag, '')) = '国际宏观'
-            ORDER BY ts DESC NULLS LAST
-            LIMIT ?
-            """,
-            [lim],
-        ).fetchall()
-    finally:
-        conn.close()
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+
+        if not os.path.isfile(get_db_path()):
+            return "", 0
+        lim = max(1, min(50, int(limit)))
+        conn = get_conn(read_only=True)
+        if conn is None:
+            return "", 0
+        try:
+            rows = conn.execute(
+                """
+                SELECT title, url, source_site
+                FROM news_items
+                WHERE symbol = '__GLOBAL__' OR TRIM(COALESCE(tag, '')) = '国际宏观'
+                ORDER BY ts DESC NULLS LAST
+                LIMIT ?
+                """,
+                [lim],
+            ).fetchall()
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Exception:
+        return "", 0
     lines: List[str] = []
     for title, url, site in rows or []:
         ti = str(title or "").strip()[:180]
@@ -2142,7 +2216,31 @@ def _run_manual_news_refresh(send_webhook: bool) -> dict:
     """RSS 拉取（关闭逐条突发推送）→ 汇总文案 → 可选一条 Webhook。"""
     from data_pipeline.collectors.rss_macro_news import _send_feishu_text, update_rss_macro_news
 
-    n_inserted = int(update_rss_macro_news(send_breaking_alerts=False))
+    feeds_manual = (os.environ.get("NEWS_RSS_FEEDS_MANUAL") or "").strip() or _MANUAL_RSS_FEEDS_DEFAULT
+    n_inserted = 0
+    rss_fetch_error: Optional[str] = None
+    try:
+        _to = float(str(os.environ.get("NEWS_RSS_MANUAL_TIMEOUT_SEC", "12")).strip() or "12")
+    except (TypeError, ValueError):
+        _to = 12.0
+    try:
+        _mf = int(str(os.environ.get("NEWS_RSS_MANUAL_MAX_FEEDS", "4")).strip() or "4")
+    except (TypeError, ValueError):
+        _mf = 4
+    try:
+        n_inserted = int(
+            update_rss_macro_news(
+                feeds_csv=feeds_manual,
+                send_breaking_alerts=False,
+                max_per_feed=25,
+                feed_timeout=max(5.0, min(45.0, _to)),
+                max_feed_urls=max(1, min(12, _mf)),
+            )
+        )
+    except Exception as e:
+        rss_fetch_error = str(e)[:500]
+        _log.warning("manual RSS refresh insert failed: %s", rss_fetch_error)
+
     summary, n_lines = _duckdb_global_macro_news_summary(20)
     front = (os.environ.get("FRONTEND_BASE_URL") or "https://htma.newhigh.com.cn").rstrip("/")
     head = f"【新闻汇总｜手动刷新】RSS 新写入 {n_inserted} 条。全文: {front}/news\n\n"
@@ -2162,13 +2260,19 @@ def _run_manual_news_refresh(send_webhook: bool) -> dict:
     else:
         webhook_skipped_reason = "send_webhook_false"
 
-    return {
+    out = {
         "rss_inserted": n_inserted,
         "summary": summary,
         "summary_lines": n_lines,
         "webhook_sent": webhook_sent,
         "webhook_skipped_reason": webhook_skipped_reason,
     }
+    if rss_fetch_error:
+        out["error"] = rss_fetch_error
+        out["rss_fetch_ok"] = False
+    else:
+        out["rss_fetch_ok"] = True
+    return out
 
 
 @router.post("/news/manual-refresh")
@@ -2178,13 +2282,25 @@ def post_news_manual_refresh(
     """
     手动触发 RSS 宏观入库，并返回最近条目摘要；可选 POST 一条汇总到 NEWS_BREAKING_WEBHOOK_URL。
     需登录：JWT_AUTH_REQUIRED=1 时由中间件校验 Bearer（本路由不在白名单）。
+    失败时仍返回 200 + data.error，避免前端仅见 HTTP 500。
     """
     try:
         payload = _run_manual_news_refresh(bool(body.send_webhook))
         return json_ok(payload, source="news_manual_refresh")
     except Exception as e:
         _log.exception("news manual-refresh failed")
-        return json_fail(str(e)[:400], status_code=500)
+        return json_ok(
+            {
+                "rss_inserted": 0,
+                "summary": "",
+                "summary_lines": 0,
+                "webhook_sent": False,
+                "webhook_skipped_reason": "fatal",
+                "error": str(e)[:500],
+                "rss_fetch_ok": False,
+            },
+            source="news_manual_refresh_degraded",
+        )
 
 
 @router.post("/news/web-insight")
@@ -2291,19 +2407,27 @@ def post_news_web_insight(payload: dict = Body(default_factory=dict)) -> dict:
 
 def _fetch_news_for_research(symbol: Optional[str], limit: int) -> tuple[List[dict], Optional[str]]:
     """与 GET /news 一致的新闻拉取，供投研摘要复用。"""
+    lim = max(1, min(int(limit or 100), 200))
     items: List[dict] = []
     source: Optional[str] = None
     try:
         from data_engine import get_astock_duckdb_available, get_news_from_astock_duckdb
 
         if get_astock_duckdb_available():
-            items = get_news_from_astock_duckdb(symbol=symbol, limit=limit)
+            items = get_news_from_astock_duckdb(symbol=symbol, limit=lim)
             if items:
                 source = "duckdb"
     except Exception:
         pass
     if not items:
-        items = _news_fallback_akshare(symbol=symbol, limit=min(limit, 50))
+        sym = (symbol or "").strip()
+        if sym:
+            items = _news_fallback_akshare(symbol=sym, limit=lim)
+        else:
+            items = _news_fallback_akshare_multi_symbol(
+                ("000001", "600519", "300750", "601318", "600036", "688981"),
+                total_cap=lim,
+            )
         if items:
             source = "akshare"
     return items, source
@@ -3141,7 +3265,9 @@ def _dashboard_top_strategies_from_db(limit: int = 3) -> List[dict]:
 
         if not os.path.isfile(get_db_path()):
             return out
-        conn = get_conn(read_only=False)
+        conn = get_conn(read_only=True)
+        if not conn:
+            return out
         try:
             df = conn.execute(
                 """SELECT strategy_id, name, return_pct FROM strategy_market
@@ -3163,7 +3289,10 @@ def _dashboard_top_strategies_from_db(limit: int = 3) -> List[dict]:
                     }
                 )
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
     except Exception:
         pass
     return out
@@ -3183,10 +3312,10 @@ def _dashboard_from_duckdb() -> Optional[dict]:
         stocks = get_stocks_for_api()
         if not stocks:
             return None
-        # 选一只有日线数据的标的（首只可能无 bar，如 60081.SH）
+        # 选一只有日线数据的标的（首只可能无 bar）；限制探测只数，避免 /dashboard 过慢触发反代 502
         rows = []
         sym = None
-        for s in stocks[:50]:
+        for s in stocks[:20]:
             sym = s["symbol"]
             rows = fetch_klines_from_astock_duckdb(sym, limit=60)
             if len(rows) >= 2:
@@ -3226,9 +3355,12 @@ def _dashboard_from_duckdb() -> Optional[dict]:
 @router.get("/dashboard")
 def get_dashboard() -> dict:
     """Dashboard：有 DuckDB 时用日线推导权益曲线与日涨跌；夏普/回撤由曲线估算；策略榜仅 DB 真实记录。"""
-    out = _dashboard_from_duckdb()
-    if out is not None:
-        return out
+    try:
+        out = _dashboard_from_duckdb()
+        if out is not None:
+            return out
+    except Exception:
+        pass
     stub_equity = [10e6, 10.2e6, 10.5e6, 11e6, 11.8e6, 12.34e6]
     sh, md = _metrics_from_equity_curve(stub_equity)
     return {

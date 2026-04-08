@@ -34,34 +34,34 @@ function LoginForm() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 rounded-xl border border-slate-700 bg-slate-900/80 p-8">
-      <h1 className="text-xl font-semibold text-white">登录</h1>
-      <p className="text-sm text-slate-400">生产环境启用 JWT 后需先登录再访问 API。</p>
+    <div className="mx-auto max-w-md space-y-6 rounded-xl border border-card-border bg-terminal-bg/80 p-8">
+      <h1 className="text-xl font-semibold text-on-surface">登录</h1>
+      <p className="text-sm text-text-secondary">生产环境启用 JWT 后需先登录再访问 API。</p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm text-slate-400">用户名</label>
+          <label className="mb-1 block text-sm text-text-secondary">用户名</label>
           <input
-            className="w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-white"
+            className="w-full rounded border border-card-border bg-surface-container-high px-3 py-2 text-on-surface"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-slate-400">密码（可占位）</label>
+          <label className="mb-1 block text-sm text-text-secondary">密码（可占位）</label>
           <input
             type="password"
-            className="w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-white"
+            className="w-full rounded border border-card-border bg-surface-container-high px-3 py-2 text-on-surface"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
           />
         </div>
-        {err && <p className="text-sm text-amber-400">{err}</p>}
+        {err && <p className="text-sm text-[color:var(--color-chart-amber)]">{err}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-indigo-600 py-2 text-white hover:bg-indigo-500 disabled:opacity-50"
+          className="w-full rounded bg-primary-fixed py-2 text-on-warm-fill hover:opacity-90 disabled:opacity-50"
         >
           {loading ? '登录中…' : '登录'}
         </button>
@@ -73,7 +73,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
-      <Suspense fallback={<p className="text-slate-400">加载中…</p>}>
+      <Suspense fallback={<p className="text-text-secondary">加载中…</p>}>
         <LoginForm />
       </Suspense>
     </div>

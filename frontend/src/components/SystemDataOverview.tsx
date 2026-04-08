@@ -47,7 +47,7 @@ type OverviewDrillKey =
   | 'emotion_state';
 
 type DrillPayload =
-  | { kind: 'rows'; rows: Record<string, unknown>[]; titleLinksToUrl?: boolean }
+  | { kind: 'rows'; rows: Record<string, unknown>[]; titleLinksToUrl?: boolean; caption?: string }
   | { kind: 'trade_signals'; rows: TradeSignalItem[] }
   | { kind: 'sniper'; rows: SniperCandidateItem[] }
   | { kind: 'limitup'; rows: LimitupDrillItem[] }
@@ -79,7 +79,7 @@ function renderRowsCell(
         href={String(row.url).trim()}
         target="_blank"
         rel="noopener noreferrer"
-        className="max-w-[min(28rem,55vw)] truncate text-indigo-400 hover:underline"
+        className="max-w-[min(28rem,55vw)] truncate text-primary-fixed hover:underline"
         title={label}
       >
         {label}
@@ -177,7 +177,7 @@ function DailyCoveragePanel({
           {t('data.dateMin')} {data.date_min ?? '—'} → {t('data.dateMax')} {data.date_max ?? '—'}
         </li>
       </ul>
-      <p className="text-xs text-amber-200/90">{t('systemData.drill.dailyHint')}</p>
+      <p className="text-xs text-[color:var(--color-badge-amber-text)]/90">{t('systemData.drill.dailyHint')}</p>
       <p className="text-xs font-medium text-text-secondary">{t('systemData.drill.topByBars')}</p>
       <RowsTable rows={rows} emptyMessage={emptyMessage} />
     </div>
@@ -300,11 +300,25 @@ export function SystemDataOverview({
             break;
           }
           case 'news_items': {
-            const r = await api.news(undefined, 120);
+            const r = await api.news(undefined, 500);
             const news = r.news ?? [];
+            const total = r.news_items_total;
+            const src =
+              r.source === 'duckdb'
+                ? 'DuckDB news_items'
+                : r.source === 'akshare'
+                  ? 'Eastmoney live (fallback)'
+                  : (r.source ?? '—');
+            const caption =
+              total != null
+                ? lang === 'en'
+                  ? `DuckDB table news_items: ${total.toLocaleString()} rows (same as overview card). Below: up to ${news.length} rows after title+time dedup. Source: ${src}.`
+                  : `与概览卡片同源：DuckDB 表 news_items 共 ${total.toLocaleString()} 条。下列最多 ${news.length} 条（标题+时间去重）。数据加载：${src}。`
+                : undefined;
             payload = {
               kind: 'rows',
               titleLinksToUrl: true,
+              caption,
               rows: news.map((n) => ({
                 symbol: n.symbol ?? '',
                 title: n.title ?? '',
@@ -360,7 +374,7 @@ export function SystemDataOverview({
     return () => {
       cancelled = true;
     };
-  }, [drill, t]);
+  }, [drill, t, lang]);
 
   const openDrill = (key: OverviewDrillKey, title: string, emotion?: string) => {
     setDrillStockDetail(null);
@@ -393,7 +407,7 @@ export function SystemDataOverview({
           {t('common.error')}: {error}
         </p>
         {isDbConfig ? (
-          <p className="mt-2 text-xs text-amber-200/90">
+          <p className="mt-2 text-xs text-[color:var(--color-badge-amber-text)]/90">
             此为 DuckDB 连接模式冲突（同一进程内混用了只读/读写）。请<strong>重启 Gateway</strong> 以加载最新后端代码。
             若仍出现，请确认 <code className="text-[10px]">QUANT_SYSTEM_DUCKDB_PATH</code> 与{' '}
             <code className="text-[10px]">lib.database</code> 指向同一库文件。
@@ -401,10 +415,7 @@ export function SystemDataOverview({
         ) : (
           <p className="mt-1 text-xs text-text-secondary">
             {t('common.dataNotReady')}，请运行：
-            <code
-              className="mt-2 block rounded p-2 text-[10px] text-accent-red"
-              style={{ backgroundColor: '#0A0C10' }}
-            >
+            <code className="mt-2 block rounded bg-terminal-bg p-2 text-[10px] text-accent-red">
               python scripts/ensure_market_data.py
             </code>
             <span className="mt-1 block">或：python scripts/ensure_ashare_data_completeness.py</span>
@@ -571,7 +582,7 @@ export function SystemDataOverview({
           onClick={closeDrill}
         >
           <div
-            className="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-card-border bg-[#14171C] shadow-xl"
+            className="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-card-border bg-card-bg shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between border-b border-card-border px-4 py-3">
@@ -693,11 +704,18 @@ export function SystemDataOverview({
                 </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'rows' && (
-                <RowsTable
-                  rows={drillPayload.rows}
-                  emptyMessage={t('systemData.drill.tableEmpty')}
-                  titleLinksToUrl={drillPayload.titleLinksToUrl}
-                />
+                <>
+                  {drillPayload.caption ? (
+                    <p className="mb-3 rounded-lg border border-card-border bg-white/[0.03] px-3 py-2 text-[11px] leading-snug text-text-secondary">
+                      {drillPayload.caption}
+                    </p>
+                  ) : null}
+                  <RowsTable
+                    rows={drillPayload.rows}
+                    emptyMessage={t('systemData.drill.tableEmpty')}
+                    titleLinksToUrl={drillPayload.titleLinksToUrl}
+                  />
+                </>
               )}
               {!drillLoading && !drillError && drillPayload?.kind === 'daily' && (
                 <DailyCoveragePanel

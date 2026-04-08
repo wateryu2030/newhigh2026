@@ -30,7 +30,7 @@ export default function EvolutionPage() {
 
   return (
     <div className="space-y-6 min-h-screen pb-24 md:pb-6">
-      <h1 className="text-2xl font-bold text-white">{t('evolution.title')}</h1>
+      <h1 className="text-2xl font-bold text-on-surface">{t('evolution.title')}</h1>
       <AsyncState<EvolutionResponse>
         loading={loading}
         error={error}
@@ -44,29 +44,29 @@ export default function EvolutionPage() {
         {(d) => (
           <>
             <div className="card flex flex-col gap-4">
-              <p className="text-sm text-slate-400">Generations</p>
+              <p className="text-sm text-text-secondary">Generations</p>
               <div className="flex flex-wrap items-center gap-2">
                 {(d.generations ?? []).map((g, i) => (
-                  <span key={i} className="rounded bg-slate-700 px-3 py-1 font-mono text-sm text-white">
+                  <span key={i} className="rounded bg-surface-container-high px-3 py-1 font-mono text-sm text-on-surface">
                     Gen {g.gen}
                   </span>
                 ))}
-                {(d.generations ?? []).length > 1 && <span className="text-slate-500">↓</span>}
+                {(d.generations ?? []).length > 1 && <span className="text-text-dim">↓</span>}
               </div>
             </div>
             <div className="card">
-              <h2 className="mb-2 text-sm font-medium text-slate-400">Best strategy (current)</h2>
+              <h2 className="mb-2 text-sm font-medium text-text-secondary">Best strategy (current)</h2>
               {d.best_strategy ? (
                 <div className="flex flex-wrap gap-4 text-lg">
-                  <span className="font-mono text-white">{d.best_strategy.id}</span>
-                  <span className="text-emerald-400">Sharpe {d.best_strategy.sharpe}</span>
-                  <span className="text-emerald-400">Return {d.best_strategy.return_pct}%</span>
+                  <span className="font-mono text-on-surface">{d.best_strategy.id}</span>
+                  <span className="text-accent-green">Sharpe {d.best_strategy.sharpe}</span>
+                  <span className="text-accent-green">Return {d.best_strategy.return_pct}%</span>
                 </div>
               ) : (
-                <p className="text-slate-500">—</p>
+                <p className="text-text-dim">—</p>
               )}
             </div>
-            <p className="text-sm text-slate-500">Evolution tree — wire to strategy-evolution / meta-fund-manager.</p>
+            <p className="text-sm text-text-dim">Evolution tree — wire to strategy-evolution / meta-fund-manager.</p>
           </>
         )}
       </AsyncState>

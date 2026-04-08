@@ -12,21 +12,13 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
-for d in [
-    "data-pipeline/src",
-    "market-scanner/src",
-    "ai-models/src",
-    "strategy-engine/src",
-    "core/src",
-]:
-    p = os.path.join(ROOT, d)
-    if os.path.isdir(p) and p not in sys.path:
-        sys.path.insert(0, p)
-_opt = os.path.join(ROOT, "ai-optimizer/src")
-if os.path.isdir(_opt) and _opt not in sys.path:
-    sys.path.insert(0, _opt)
+from system_core.repo_paths import prepend_repo_sources  # noqa: E402
+
+prepend_repo_sources(ROOT)
 
 
 def main() -> int:
@@ -73,7 +65,19 @@ def main() -> int:
     # Terminal loop: scanner → AI → fusion signals
     from run_terminal_loop import main as terminal_main
 
-    return terminal_main()
+    rc = terminal_main()
+    try:
+        from system_core.system_monitor import write_status
+
+        write_status(
+            "ok:script_full_cycle",
+            "ok:script_full_cycle",
+            "ok:script_full_cycle",
+            "ok:script_full_cycle",
+        )
+    except Exception as exc:
+        print("system_status 写入跳过（可忽略若 DuckDB 被占用）:", exc)
+    return rc
 
 
 if __name__ == "__main__":

@@ -38,27 +38,27 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">{t('settings.title')}</h1>
+      <h1 className="text-2xl font-bold text-on-surface">{t('settings.title')}</h1>
 
       <div className="card max-w-2xl space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300">{t('settings.apiGateway')}</label>
-          <p className="mt-1 text-slate-500 text-sm leading-relaxed">{t('settings.apiGatewayHint')}</p>
+          <label className="block text-sm font-medium text-text-primary">{t('settings.apiGateway')}</label>
+          <p className="mt-1 text-sm leading-relaxed text-text-dim">{t('settings.apiGatewayHint')}</p>
           <input
-            className="mt-2 w-full rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 font-mono text-sm text-white"
+            className="mt-2 w-full rounded-lg border border-card-border bg-surface-container-high px-3 py-2 font-mono text-sm text-on-surface"
             placeholder="http://192.168.1.5:8000"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          <p className="mt-1 text-xs text-slate-600">
-            {t('settings.currentEffective')}: <span className="text-slate-400">{current}</span>
+          <p className="mt-1 text-xs text-outline-variant">
+            {t('settings.currentEffective')}: <span className="text-text-secondary">{current}</span>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-white text-sm"
+            className="rounded-lg bg-primary-fixed px-4 py-2 text-sm text-on-warm-fill hover:opacity-90"
           >
             {t('settings.saveApi')}
           </button>
@@ -73,16 +73,16 @@ export default function SettingsPage() {
                 /* ignore */
               }
             }}
-            className="rounded-lg bg-slate-600 hover:bg-slate-500 px-4 py-2 text-white text-sm"
+            className="rounded-lg bg-surface-container-highest px-4 py-2 text-sm text-on-surface hover:opacity-90"
           >
             {t('settings.clearApi')}
           </button>
         </div>
-        {saved && <p className="text-sm text-emerald-400">{t('settings.savedReload')}</p>}
+        {saved && <p className="text-sm text-accent-green">{t('settings.savedReload')}</p>}
 
-        <div className="border-t border-slate-700 pt-4 text-sm text-slate-500 space-y-2">
-          <p className="font-medium text-slate-400">{t('settings.lanSteps')}</p>
-          <ol className="list-decimal list-inside space-y-1 text-slate-400">
+        <div className="space-y-2 border-t border-card-border pt-4 text-sm text-text-dim">
+          <p className="font-medium text-text-secondary">{t('settings.lanSteps')}</p>
+          <ol className="list-inside list-decimal space-y-1 text-text-secondary">
             <li>{t('settings.lanStep1')}</li>
             <li>{t('settings.lanStep2')}</li>
             <li>{t('settings.lanStep3')}</li>
@@ -91,8 +91,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="card max-w-xl">
-        <label className="block text-sm font-medium text-slate-400">Theme</label>
-        <p className="mt-1 text-slate-300">Dark (default)</p>
+        <label className="block text-sm font-medium text-text-secondary">Theme</label>
+        <p className="mt-1 text-text-primary">Dark (default)</p>
       </div>
     </div>
   );

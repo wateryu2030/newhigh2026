@@ -21,6 +21,8 @@ def test_symbol_to_order_book_id():
     assert _symbol_to_order_book_id("600519.SH") == "600519.XSHG"
     assert _symbol_to_order_book_id("000001") == "000001.XSHE"
     assert _symbol_to_order_book_id("000001.SZ") == "000001.XSHE"
+    assert _symbol_to_order_book_id("900901") == "900901.XSHG"
+    assert _symbol_to_order_book_id("920001") == "920001.BSE"
 
 
 @patch("data_engine.connector_astock_duckdb._get_conn")
