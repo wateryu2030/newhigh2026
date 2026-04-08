@@ -38,7 +38,7 @@ def _get_conn(read_only: bool = False):
     """
     if _pipeline_get_conn is not None:
         return _pipeline_get_conn(read_only=read_only)
-    from core.data_service.db import get_conn as get_db_conn
+    from core.data_service.db import get_conn as get_db_conn  # pylint: disable=import-outside-toplevel  # Lazy import to avoid circular dependency
 
     return get_db_conn(read_only=read_only)
 

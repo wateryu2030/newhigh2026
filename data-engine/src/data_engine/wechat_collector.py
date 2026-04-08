@@ -303,7 +303,7 @@ class WeChatCollector:
                 articles = self._fetch_album_with_wespy(album_url, max_articles, save_to_file)
             else:
                 logger.warning("WeSpy 不可用，尝试逐篇抓取专辑文章")
-                # TODO: 实现降级模式
+                # TODO: 实现降级模式  # pylint: disable=fixme  # Feature enhancement, not a code quality issue
                 articles = []
 
         except (RuntimeError, OSError, ValueError) as e:

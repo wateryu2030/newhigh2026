@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from core import Signal
+from core import Signal  # pylint: disable=wrong-import-order  # Core is first-party, import order is intentional
 from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
 
 
