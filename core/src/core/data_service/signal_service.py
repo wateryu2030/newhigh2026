@@ -13,6 +13,11 @@ from .base import BaseService
 class SignalService(BaseService):
     """信号数据服务"""
 
+    def get_signal_count(self) -> int:
+        """获取 trade_signals 表中的记录总数。"""
+        row = self.fetchone("SELECT COUNT(*) FROM trade_signals")
+        return row[0] if row else 0
+
     def get_signals(self, code: str, signal_type: str, limit: int = 10) -> List[Dict[str, Any]]:
         """获取指定股票的信号"""
         rows = self.fetchall(
