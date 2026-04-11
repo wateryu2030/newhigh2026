@@ -1076,3 +1076,73 @@ export interface SystemDataOverviewResponse {
 export interface PositionsResponse {
   positions: unknown[];
 }
+
+/** 股票问答 MVP：POST /api/stock-qa/analyze */
+export interface StockQAEntity {
+  mention: string;
+  symbol: string;
+  confidence?: number;
+  source?: string;
+}
+
+export interface StockQAShareholderRow {
+  name: string;
+  ratio: number | null;
+}
+
+export interface StockQASymbolBlock {
+  symbol: string;
+  name?: string;
+  sector?: string;
+  errors?: string[];
+  quote?: {
+    last_price?: number;
+    change_pct?: number;
+    volume?: number;
+    amount?: number;
+    snapshot_time?: string | null;
+  };
+  financial?: {
+    report_date?: string | null;
+    total_revenue?: number | null;
+    net_profit?: number | null;
+    gross_margin?: number | null;
+    net_margin?: number | null;
+    operating_cash_flow?: number | null;
+  } | null;
+  shareholders?: {
+    report_date?: string | null;
+    top_holders?: StockQAShareholderRow[];
+  };
+  sniper?: {
+    sniper_score?: number | null;
+    confidence?: number | null;
+    theme?: string;
+  } | null;
+  trend?: {
+    bias?: string;
+    summary?: string;
+    model?: string;
+  };
+}
+
+export interface StockQAAnalyzeData {
+  entities: StockQAEntity[];
+  symbols: StockQASymbolBlock[];
+  summary: string;
+}
+
+export async function postStockQAAnalyze(
+  body: { text: string; max_symbols?: number },
+): Promise<StockQAAnalyzeData> {
+  const json = await apiPostJson<{ ok?: boolean; data?: StockQAAnalyzeData; error?: string }>(
+    '/stock-qa/analyze',
+    body,
+  );
+  if (json && typeof json === 'object' && 'ok' in json && json.ok === false) {
+    throw new Error((json as { error?: string }).error || 'stock_qa failed');
+  }
+  const data = (json as { data?: StockQAAnalyzeData }).data;
+  if (!data) throw new Error('stock_qa: empty data');
+  return data;
+}

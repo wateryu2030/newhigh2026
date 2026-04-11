@@ -29,6 +29,7 @@ export const menuItems: MenuItem[] = [
   { name: '数据', key: 'nav.data', icon: 'storage', path: '/data' },
   { name: '系统监控', key: 'nav.systemMonitor', icon: 'monitor_heart', path: '/system-monitor' },
   { name: '新闻', key: 'nav.news', icon: 'newspaper', path: '/news' },
+  { name: '股票问答', key: 'nav.stockQA', icon: 'chat_spark', path: '/stock-qa' },
   { name: '设置', key: 'nav.settings', icon: 'settings', path: '/settings' },
 ];
 

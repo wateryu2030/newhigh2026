@@ -4007,3 +4007,10 @@ try:
     router.include_router(build_unified_positions_router())
 except Exception as e:
     _log.warning("unified Hongshan routers not mounted: %s", e)
+
+try:
+    from .endpoints_stock_qa import build_stock_qa_router
+
+    router.include_router(build_stock_qa_router())
+except Exception as e:
+    _log.warning("stock_qa router not mounted: %s", e)
