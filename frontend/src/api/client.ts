@@ -1123,6 +1123,7 @@ export interface StockQASymbolBlock {
     bias?: string;
     summary?: string;
     model?: string;
+    lstm?: Record<string, unknown>;
   };
 }
 
@@ -1130,19 +1131,82 @@ export interface StockQAAnalyzeData {
   entities: StockQAEntity[];
   symbols: StockQASymbolBlock[];
   summary: string;
+  llm_ner_error?: string | null;
+  ner_mode?: string;
 }
 
+export interface StockQAAnalyzeRequest {
+  text?: string;
+  max_symbols?: number;
+  async_mode?: boolean;
+  use_llm_ner?: boolean;
+  ner_mode?: 'hybrid' | 'rules_only' | 'llm_only';
+  symbols_override?: string[];
+  include_lstm?: boolean;
+}
+
+export interface StockQAJobPayload {
+  job_id: string;
+  async: boolean;
+}
+
+export interface StockQAJobStatus {
+  job_id: string;
+  status: string;
+  progress?: number;
+  error?: string | null;
+  result?: StockQAAnalyzeData | null;
+}
+
+/** 同步返回完整分析；async_mode 时返回 { job_id, async } */
 export async function postStockQAAnalyze(
-  body: { text: string; max_symbols?: number },
-): Promise<StockQAAnalyzeData> {
-  const json = await apiPostJson<{ ok?: boolean; data?: StockQAAnalyzeData; error?: string }>(
+  body: StockQAAnalyzeRequest,
+): Promise<StockQAAnalyzeData | StockQAJobPayload> {
+  const json = await apiPostJson<{ ok?: boolean; data?: unknown; error?: string }>(
     '/stock-qa/analyze',
     body,
   );
   if (json && typeof json === 'object' && 'ok' in json && json.ok === false) {
     throw new Error((json as { error?: string }).error || 'stock_qa failed');
   }
-  const data = (json as { data?: StockQAAnalyzeData }).data;
+  const data = (json as { data?: StockQAAnalyzeData & StockQAJobPayload }).data;
   if (!data) throw new Error('stock_qa: empty data');
-  return data;
+  if ('job_id' in data && (data as StockQAJobPayload).async === true) {
+    return data as StockQAJobPayload;
+  }
+  return data as StockQAAnalyzeData;
+}
+
+export async function getStockQAJob(jobId: string): Promise<StockQAJobStatus> {
+  return apiGet<StockQAJobStatus>(`/stock-qa/jobs/${jobId}`, { unwrapEnvelope: true });
+}
+
+/** Markdown 正文 */
+export async function postStockQAReportMarkdown(data: StockQAAnalyzeData): Promise<string> {
+  const base = getApiBase();
+  const url = base ? `${base}/api/stock-qa/report` : `/api/stock-qa/report`;
+  const res = await fetch(url, {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ data }),
+  });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`stock_qa report: ${res.status}`);
+  return res.text();
+}
+
+export async function getStockQAJobReportMarkdown(jobId: string): Promise<string> {
+  const base = getApiBase();
+  const url = base ? `${base}/api/stock-qa/jobs/${jobId}/report.md` : `/api/stock-qa/jobs/${jobId}/report.md`;
+  const res = await fetch(url, { cache: 'no-store', headers: { ...getAuthHeaders() } });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`stock_qa job report: ${res.status}`);
+  return res.text();
 }

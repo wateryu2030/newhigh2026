@@ -53,7 +53,7 @@ pkill -f "next start" 2>/dev/null || true
 sleep 1
 
 # 与 Gateway 启动所需 import 路径一致（按需可再扩充）
-export PYTHONPATH="${ROOT}/gateway/src:${ROOT}/data-pipeline/src:${ROOT}/core/src:${ROOT}/data-engine/src:${ROOT}/execution-engine/src:${ROOT}/backtest-engine/src:${ROOT}/risk-engine/src:${ROOT}/strategy/src:${ROOT}/openclaw_engine:${ROOT}/data/src:${ROOT}:${ROOT}/lib"
+export PYTHONPATH="${ROOT}/gateway/src:${ROOT}/ai-models/src:${ROOT}/data-pipeline/src:${ROOT}/core/src:${ROOT}/data-engine/src:${ROOT}/execution-engine/src:${ROOT}/backtest-engine/src:${ROOT}/risk-engine/src:${ROOT}/strategy/src:${ROOT}/openclaw_engine:${ROOT}/data/src:${ROOT}:${ROOT}/lib"
 
 UV="${ROOT}/.venv/bin/uvicorn"
 if [ ! -x "$UV" ]; then

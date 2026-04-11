@@ -40,8 +40,6 @@ _SKIP_PATHS = {
     "/api/system/health-detail",
     "/api/system/backtest-errors",
     "/api/market/emotion",
-    # 股票问答 MVP：同步分析（与控制台只读同源 DuckDB；生产若需鉴权可移除此项）
-    "/api/stock-qa/analyze",
 }
 
 
