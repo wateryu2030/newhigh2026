@@ -140,6 +140,8 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.newhigh.cloudflared.
 
 部署后若仍异常，可**强制重建前端**再拉起 Tunnel 栈：`NEWHIGH_FORCE_FRONTEND_REBUILD=1` 后重启 `com.newhigh.tunnel-stack`（会先 `rm -rf frontend/.next` 再 `npm run build`）。
 
+**macOS 特例**：系统环境变量 **`HOSTNAME`** 常为计算机名（非 `0.0.0.0`）。若启动 Next standalone 时把该值传给 `server.js`，可能只监听 IPv6/`localhost`，导致 **`http://127.0.0.1:3000` 不通**、Tunnel 指向 `127.0.0.1:3000` 时出现 **静态资源 500/失败**。本仓库 **`frontend/scripts/run-standalone-server.sh`** 已改为使用 **`HOSTNAME="${NEXT_BIND_ADDR:-0.0.0.0}"`**，不再误用系统 `HOSTNAME`。
+
 ---
 
 ## 7. 合规与备案提示

@@ -87,7 +87,8 @@ if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   fi
   echo "[restart] 启动 Next standalone server.js http://0.0.0.0:3000（API_PROXY_TARGET=$API_PROXY_TARGET）…"
   cd .next/standalone
-  nohup env HOSTNAME=0.0.0.0 PORT=3000 API_PROXY_TARGET="$API_PROXY_TARGET" node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
+  # 勿用未限定的 $HOSTNAME：macOS 可能为计算机名，导致只监听 IPv6 / localhost
+  nohup env NODE_ENV=production HOSTNAME="${NEXT_BIND_ADDR:-0.0.0.0}" PORT=3000 API_PROXY_TARGET="$API_PROXY_TARGET" node server.js >>"$ROOT/logs/frontend.out" 2>&1 &
   echo $! >"$ROOT/logs/frontend.pid"
 else
   # 默认删 .next：HMR 后常见 Cannot find module './NNN.js'。跳过清缓存用 NEWHIGH_NEXT_SKIP_NEXT_CLEAN=1
