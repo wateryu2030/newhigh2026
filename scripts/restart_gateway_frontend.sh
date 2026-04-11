@@ -77,7 +77,10 @@ if [ "${NEWHIGH_FRONTEND_PROD:-}" = "1" ]; then
   echo "[restart] 同步 static/public → .next/standalone（next.config output=standalone 必需）…"
   mkdir -p .next/standalone/.next
   rm -rf .next/standalone/.next/static
-  cp -R .next/static .next/standalone/.next/static
+  mkdir -p .next/standalone/.next/static
+  # 必须用「源/. → 目标/」，避免目标目录已存在时嵌套成 static/static → 全站 /_next/static 404
+  cp -R .next/static/. .next/standalone/.next/static/
+  cp -f .next/BUILD_ID .next/standalone/.next/BUILD_ID 2>/dev/null || true
   if [ -d public ]; then
     rm -rf .next/standalone/public
     cp -R public .next/standalone/public

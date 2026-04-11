@@ -35,6 +35,10 @@ cd "$ROOT/frontend"
 export API_PROXY_TARGET="${API_PROXY_TARGET:-http://127.0.0.1:8000}"
 # output: 'standalone' 时应用 `start:standalone`（复制 .next/static + public 再 node server.js），
 # 避免 `next start` 与 standalone 产物不一致导致公网 /_next/static 404。
+if [ "${NEWHIGH_FORCE_FRONTEND_REBUILD:-}" = "1" ]; then
+  echo "[$(date -Iseconds)] NEWHIGH_FORCE_FRONTEND_REBUILD=1 → rm .next" >> "$ROOT/logs/tunnel_stack.log"
+  rm -rf .next
+fi
 if [ ! -f .next/BUILD_ID ]; then
   echo "[$(date -Iseconds)] building frontend (missing .next/BUILD_ID)..." >> "$ROOT/logs/tunnel_stack.log"
   npm run build >> "$ROOT/logs/frontend_build_boot.log" 2>&1
