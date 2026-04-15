@@ -1,0 +1,20 @@
+<view class="page-root">
+  <rh-nav title="股票问答" showBell="{{false}}" showSettings="{{false}}" showBack="{{true}}" bind:back="onBack" />
+  <view class="quota" wx:if="{{quotaText}}">{{quotaText}}</view>
+  <textarea
+    class="ta"
+    placeholder="粘贴新闻/研报片段，或输入股票代码（如 600519）"
+    value="{{text}}"
+    maxlength="{{2000}}"
+    bindinput="onInp"
+    disabled="{{submitDisabled}}"
+  />
+  <button class="btn" loading="{{loading}}" disabled="{{submitDisabled}}" bindtap="onAsk">分析</button>
+  <view wx:if="{{result}}" class="result">
+    <view class="fold-hd" bindtap="toggleFold">
+      <text>分析结果 {{folded ? '（点击展开）' : ''}}</text>
+    </view>
+    <text class="result-txt {{folded ? 'folded' : ''}}">{{result}}</text>
+  </view>
+  <text class="hint">调用 Gateway /api/stock-qa/analyze；配额用完后当日不可再提交。</text>
+</view>

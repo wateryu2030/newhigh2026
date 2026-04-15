@@ -1,0 +1,53 @@
+.page-root {
+  min-height: 100vh;
+  background: #0a0f14;
+  color: #e8ecf0;
+}
+.scroll {
+  max-height: 90vh;
+  padding: 0 16rpx 40rpx;
+}
+.pad {
+  padding: 24rpx;
+}
+.muted {
+  color: #889098;
+  font-size: 24rpx;
+}
+.err {
+  color: #ff6b6b;
+}
+.card {
+  background: #141a21;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+}
+.row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.code {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.sig {
+  font-size: 26rpx;
+  color: #ff4444;
+}
+.name {
+  font-size: 26rpx;
+  color: #c5ccd3;
+  margin-top: 8rpx;
+  display: block;
+}
+.row2 {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+.pct {
+  font-size: 24rpx;
+  color: #2ecc71;
+}

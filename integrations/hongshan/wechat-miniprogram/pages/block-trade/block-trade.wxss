@@ -1,0 +1,122 @@
+@import '../../styles/tokens.wxss';
+
+.page-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.page-scroll {
+  flex: 1;
+  height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tip-box {
+  margin: 16rpx 24rpx 0;
+  padding: 16rpx 20rpx;
+  background: rgba(80, 140, 200, 0.08);
+  border: 1rpx solid rgba(120, 180, 255, 0.22);
+  border-radius: 12rpx;
+}
+
+.tip-txt {
+  font-size: 22rpx;
+  color: #a8b4c0;
+  line-height: 1.45;
+}
+
+.toolbar {
+  margin: 20rpx 24rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.btn-run {
+  background: rgba(255, 68, 68, 0.2) !important;
+  color: #ff6b6b !important;
+  border: 1rpx solid rgba(255, 68, 68, 0.4) !important;
+}
+
+.muted {
+  font-size: 22rpx;
+  color: #6b7785;
+  flex: 1;
+}
+
+.err-box {
+  margin: 0 24rpx 16rpx;
+  padding: 16rpx;
+  background: rgba(180, 60, 60, 0.2);
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #ffb4b4;
+}
+
+.note-box {
+  margin: 0 24rpx 16rpx;
+  padding: 16rpx;
+  font-size: 24rpx;
+  color: #c8b86c;
+}
+
+.empty-box {
+  margin: 40rpx 24rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #6b7785;
+}
+
+.table {
+  margin: 0 24rpx 24rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.tr {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
+  font-size: 24rpx;
+  color: #e8ecf0;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.th {
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  color: #a8b4c0;
+}
+
+.td {
+  padding: 16rpx 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td.c {
+  width: 22%;
+}
+.td.n {
+  width: 30%;
+}
+.td.w {
+  width: 24%;
+}
+.td.r {
+  width: 24%;
+  text-align: right;
+}
+
+.page-bottom-space {
+  height: 48rpx;
+}

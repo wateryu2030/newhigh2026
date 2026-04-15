@@ -1,0 +1,19 @@
+<view class="page-root">
+  <rh-nav title="策略信号" showBell="{{false}}" showSettings="{{false}}" showBack="{{true}}" bind:back="onBack" />
+  <view wx:if="{{loading}}" class="muted pad">加载中…</view>
+  <view wx:elif="{{error}}" class="err pad">{{error}}</view>
+  <scroll-view wx:else scroll-y class="scroll">
+    <view class="card" wx:for="{{items}}" wx:key="k">
+      <view class="row1">
+        <text class="code">{{item.code}}</text>
+        <text class="sig">{{item.signal}}</text>
+      </view>
+      <text class="name">{{item.stock_name}}</text>
+      <view class="row2">
+        <text class="muted">{{item.updated_at}} · {{item.strategy_id}}</text>
+        <text class="pct" wx:if="{{item.change_pct != null}}">{{item.pctStr}}</text>
+      </view>
+    </view>
+    <view wx:if="{{items.length===0}}" class="muted pad">暂无信号</view>
+  </scroll-view>
+</view>

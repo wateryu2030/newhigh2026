@@ -1,0 +1,112 @@
+<view class="page-root">
+  <rh-nav title="首页" bind:settings="onNavSettings" bind:bell="onNavBell" />
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="guest-tip info-tip" wx:if="{{publicBrowse}}">
+      <text class="guest-tip-text">{{openTip}}</text>
+    </view>
+    <view class="guest-tip" wx:elif="{{guest}}">
+      <text class="guest-tip-text">登录后可使用账户权益与更多能力。</text>
+      <button class="guest-tip-btn" size="mini" bindtap="goMineLogin">去登录</button>
+    </view>
+    <view class="quick-actions">
+      <view class="qa-item" bindtap="goQuotes">行情</view>
+      <view class="qa-item" bindtap="goStockQA">问答</view>
+      <view class="qa-item" bindtap="goSignals">信号</view>
+    </view>
+    <view class="quick-actions qa-row2">
+      <view class="qa-item" bindtap="goBlockTrade">徘徊大宗</view>
+      <view class="qa-item" bindtap="goNewsTab">新闻</view>
+    </view>
+    <!-- 系统提示条 -->
+    <view class="alert-banner" wx:if="{{alertText}}">
+      <view class="alert-ico">!</view>
+      <text class="alert-text">{{alertText}}</text>
+    </view>
+
+    <!-- 核心指标 -->
+    <view class="card-metric">
+      <view class="metric-head">
+        <text class="metric-label">TOTAL ASSETS</text>
+        <view class="metric-pill {{dailyPct >= 0 ? 'pill-up' : 'pill-down'}}">
+          <text>{{dailyPctStr}}</text>
+        </view>
+      </view>
+      <text class="metric-main">{{totalAssetsStr}}</text>
+      <view class="metric-subrow">
+        <view class="metric-sub">
+          <text class="sub-label">SHARP RATIO</text>
+          <text class="sub-val brand">{{sharpeStr}}</text>
+        </view>
+        <view class="metric-sub">
+          <text class="sub-label">MAX DRAWDOWN</text>
+          <text class="sub-val {{maxDdPct < 0 ? 'down' : ''}}">{{maxDdStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Performance Matrix -->
+    <view class="section-head">
+      <text class="section-title">Performance Matrix</text>
+      <view class="tabs">
+        <text class="tab {{perfTab==='1d'?'tab-on':''}}" data-t="1d" bindtap="onPerfTab">1D</text>
+        <text class="tab {{perfTab==='1w'?'tab-on':''}}" data-t="1w" bindtap="onPerfTab">1W</text>
+        <text class="tab {{perfTab==='1m'?'tab-on':''}}" data-t="1m" bindtap="onPerfTab">1M</text>
+      </view>
+    </view>
+    <view class="card-chart">
+      <canvas type="2d" id="equityCanvas" class="equity-canvas"></canvas>
+      <view class="chart-axis">
+        <text wx:for="{{axisLabels}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- AI Terminal Hub -->
+    <view class="section-head">
+      <text class="section-title">AI Terminal Hub</text>
+      <text class="section-link" bindtap="noop">Advanced Config</text>
+    </view>
+    <view class="hub-row">
+      <view class="hub-card hub-left">
+        <text class="hub-tag">MARKET CYCLE</text>
+        <text class="hub-cycle">{{emotionTitle}}</text>
+        <text class="hub-desc">{{emotionDesc}}</text>
+        <view class="hub-foot">
+          <text>REACTION: {{emotionReaction}}</text>
+          <text class="hub-arrow">›</text>
+        </view>
+      </view>
+      <view class="hub-card hub-right">
+        <text class="hub-tag">ALPHA RANKING</text>
+        <view class="rank-list">
+          <view class="rank-row" wx:for="{{alphaList}}" wx:key="id">
+            <text class="rank-idx">{{index + 1}}</text>
+            <text class="rank-name">{{item.name}}</text>
+            <text class="rank-pct up">{{item.pctStr}}</text>
+          </view>
+        </view>
+        <text class="hub-more" bindtap="goStrategy">VIEW ALL</text>
+      </view>
+    </view>
+
+    <!-- Signal Stream -->
+    <view class="section-head">
+      <text class="section-title">Signal Stream</text>
+    </view>
+    <view wx:for="{{signals}}" wx:key="idx" class="signal-card">
+      <view
+        class="signal-icon {{item.side === 'SELL' ? 'icon-sell' : item.side === 'HOLD' ? 'icon-hold' : 'icon-buy'}}"
+      ></view>
+      <view class="signal-body">
+        <text class="signal-title">{{item.title}}</text>
+        <text class="signal-meta">{{item.meta}}</text>
+      </view>
+      <view class="signal-side">
+        <text class="signal-dir">{{item.dir}}</text>
+        <text class="signal-price" wx:if="{{item.price}}">{{item.price}}</text>
+      </view>
+    </view>
+    <view wx:if="{{signals.length===0}}" class="muted-box">暂无信号数据</view>
+
+    <view class="page-bottom-space"></view>
+  </scroll-view>
+</view>

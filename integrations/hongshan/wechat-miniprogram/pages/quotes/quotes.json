@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "行情",
+  "backgroundColor": "#0A0F14",
+  "usingComponents": {
+    "rh-nav": "/components/rh-nav/rh-nav"
+  }
+}

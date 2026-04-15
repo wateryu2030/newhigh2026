@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#0A0F14",
+  "usingComponents": {
+    "rh-nav": "/components/rh-nav/rh-nav"
+  }
+}

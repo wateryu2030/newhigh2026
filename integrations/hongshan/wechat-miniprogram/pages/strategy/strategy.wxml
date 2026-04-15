@@ -1,0 +1,138 @@
+<view class="page-root">
+  <rh-nav title="策略" bind:settings="onSettings" bind:bell="onBell" />
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="guest-tip info-tip" wx:if="{{publicBrowse}}">
+      <text class="guest-tip-text">以下为平台能力展示，数据仅供了解；正式上架后可登录同步账户权益。</text>
+    </view>
+    <view class="guest-tip" wx:elif="{{guest}}">
+      <text class="guest-tip-text">登录后可同步 Web 端策略权益与实盘能力。</text>
+      <button class="guest-tip-btn" size="mini" bindtap="goMine">登录</button>
+    </view>
+    <view class="hero-card">
+      <view class="hero-top">
+        <text class="hero-kicker">QUANTITATIVE STRATEGY</text>
+        <view class="pill-active">ACTIVE</view>
+      </view>
+      <text class="hero-title">Alpha 工坊</text>
+      <view class="hero-tags">
+        <text class="tag-risk">中高风险 (R4)</text>
+        <text class="tag-run">运行 1,280 天</text>
+      </view>
+    </view>
+
+    <view class="metrics-grid">
+      <view class="metric-cell">
+        <text class="mc-label">历史年化收益</text>
+        <text class="mc-val up">+42.85%</text>
+      </view>
+      <view class="metric-cell">
+        <text class="mc-label">历史最大回撤</text>
+        <text class="mc-val down">-12.4%</text>
+      </view>
+      <view class="metric-cell">
+        <text class="mc-label">夏普比率</text>
+        <text class="mc-val">2.14</text>
+      </view>
+      <view class="metric-cell">
+        <text class="mc-label">平均胜率</text>
+        <text class="mc-val">68.2%</text>
+      </view>
+    </view>
+
+    <view class="section-bar">
+      <view class="bar-accent"></view>
+      <text class="section-tit">订阅方案</text>
+    </view>
+
+    <scroll-view class="plan-scroll" scroll-x>
+      <view class="plan-card plan-free">
+        <text class="plan-name">免费版</text>
+        <text class="plan-desc">基础数据浏览与分析</text>
+        <text class="plan-price">¥0 / 永久</text>
+        <view class="plan-feat">
+          <text class="ok">历史回测报告</text>
+          <text class="ok">基础指标监控</text>
+          <text class="no">实时信号推送</text>
+        </view>
+        <button class="plan-btn disabled" disabled>当前计划</button>
+      </view>
+      <view class="plan-card plan-pro">
+        <text class="plan-name">专业版</text>
+        <text class="plan-desc">低延迟信号与深度研报</text>
+        <text class="plan-price pro">¥29 / 月起</text>
+        <view class="plan-feat light">
+          <text class="ok">全部免费版能力</text>
+          <text class="ok">实时信号推送</text>
+          <text class="ok">优先队列执行</text>
+        </view>
+        <button class="plan-btn primary" bindtap="onUpgrade">升级专业版</button>
+      </view>
+      <view class="plan-card plan-org">
+        <text class="plan-name">机构版</text>
+        <text class="plan-desc">多账户与定制风控</text>
+        <text class="plan-price">询价</text>
+        <view class="plan-feat">
+          <text class="ok">专属客户经理</text>
+          <text class="ok">API 与机房托管</text>
+        </view>
+        <button class="plan-btn ghost" bindtap="onContact">联系商务</button>
+      </view>
+    </scroll-view>
+
+    <view class="section-bar">
+      <view class="bar-accent"></view>
+      <text class="section-tit">功能对比</text>
+    </view>
+
+    <scroll-view class="table-scroll" scroll-x>
+      <view class="cmp-table">
+        <view class="cmp-row cmp-head">
+          <text class="cmp-c0">核心功能</text>
+          <text class="cmp-c">专业版</text>
+          <text class="cmp-c">机构版</text>
+        </view>
+        <view class="cmp-group">数据与时延</view>
+        <view class="cmp-row">
+          <text class="cmp-c0">信号时延</text>
+          <text class="cmp-c up">10ms 级</text>
+          <text class="cmp-c up">1ms 级</text>
+        </view>
+        <view class="cmp-row">
+          <text class="cmp-c0">多账户同步</text>
+          <text class="cmp-c">3 个</text>
+          <text class="cmp-c up">不限</text>
+        </view>
+        <view class="cmp-group">策略与执行</view>
+        <view class="cmp-row">
+          <text class="cmp-c0">自定义策略接入</text>
+          <text class="cmp-c">部分</text>
+          <text class="cmp-c up">全量</text>
+        </view>
+        <view class="cmp-group">风险管理</view>
+        <view class="cmp-row">
+          <text class="cmp-c0">实时风控告警</text>
+          <text class="cmp-c ok">✓</text>
+          <text class="cmp-c ok">✓</text>
+        </view>
+        <view class="cmp-group">投研与支持</view>
+        <view class="cmp-row">
+          <text class="cmp-c0">深度研报</text>
+          <text class="cmp-c">周更</text>
+          <text class="cmp-c">定制</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="locked-box">
+      <view class="lock-icon"></view>
+      <text class="lock-txt">解锁专业版以查看完整实时图表</text>
+    </view>
+
+    <view class="cta-row">
+      <button class="cta-side" bindtap="onContact">咨询</button>
+      <button class="cta-main" bindtap="onStart">立即开启量化旅程 ›</button>
+    </view>
+
+    <view class="page-bottom-space"></view>
+  </scroll-view>
+</view>

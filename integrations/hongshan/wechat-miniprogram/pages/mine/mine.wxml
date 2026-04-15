@@ -1,0 +1,137 @@
+<view class="page-root">
+  <rh-nav title="我的" showBell="{{false}}" bind:settings="onSettings" />
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="open-mode-banner" wx:if="{{publicBrowse}}">
+      <text class="open-mode-txt">开放浏览：首页与行情可先体验；账户登录与权益区分将在小程序正式上架后启用。</text>
+    </view>
+    <view class="profile-card">
+      <view class="avatar-wrap">
+        <image wx:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar-ph"></view>
+      </view>
+      <view class="profile-text">
+        <text class="profile-name">{{displayLabel}}</text>
+        <view class="profile-badges" wx:if="{{!loggedIn}}">
+          <text class="badge guest">GUEST</text>
+          <text class="badge soft">普通会员</text>
+        </view>
+        <view class="profile-badges" wx:else>
+          <text class="badge soft">{{roleLabel}}</text>
+          <text class="badge soft">{{userLevelLabel}}</text>
+        </view>
+        <text class="quota-line" wx:if="{{loggedIn && quotaHint}}">{{quotaHint}}</text>
+        <button
+          wx:if="{{loggedIn && userLevelLabel === 'trial'}}"
+          class="btn-upgrade"
+          size="mini"
+          bindtap="onUpgrade"
+        >
+          升级权益
+        </button>
+      </view>
+
+      <button
+        wx:if="{{!loggedIn}}"
+        class="btn-wx"
+        disabled="{{!agreed}}"
+        bindtap="onWxLogin"
+      >
+        微信一键快捷登录
+      </button>
+      <button wx:else class="btn-wx outline" bindtap="onLogout">退出登录</button>
+
+      <view class="agree-row" wx:if="{{!loggedIn}}">
+        <checkbox-group bindchange="onAgreeChange">
+          <label class="agree-label">
+            <checkbox value="1" checked="{{agreed}}" color="#FF4444" />
+            <text>登录即代表您同意《服务协议》与《隐私政策》</text>
+          </label>
+        </checkbox-group>
+      </view>
+    </view>
+
+    <view class="feature-row" wx:if="{{loggedIn}}">
+      <view class="feat" bindtap="goQuotes">行情</view>
+      <view class="feat" bindtap="goStockQA">问答</view>
+      <view class="feat" bindtap="goSignals">信号</view>
+    </view>
+    <view class="feature-row muted-row" wx:if="{{loggedIn}}">
+      <text wx:if="{{showAiPick}}" class="feat ghost">AI 选股</text>
+      <text wx:if="{{showDeepFinance}}" class="feat ghost">深度财务</text>
+      <text wx:if="{{!showAiPick && !showDeepFinance}}" class="feat ghost">更多权益请升级</text>
+    </view>
+
+    <view class="grid-2">
+      <view class="grid-big" bindtap="goStrategy">
+        <view class="g-ico g-chart"></view>
+        <text class="g-tit">我的策略</text>
+        <text class="g-sub">{{strategyHint}}</text>
+      </view>
+      <view class="grid-right">
+        <view class="grid-sm" bindtap="onSoon">
+          <view class="g-ico sm wallet"></view>
+          <text class="g-tit">我的持仓</text>
+        </view>
+        <view class="grid-sm" bindtap="onSoon">
+          <view class="g-ico sm bill"></view>
+          <text class="g-tit">账务明细</text>
+        </view>
+      </view>
+    </view>
+    <view class="grid-2 row2">
+      <view class="grid-sm half" bindtap="onBell">
+        <view class="g-ico sm bell2"></view>
+        <text class="g-tit">消息中心</text>
+      </view>
+      <view class="grid-sm half" bindtap="onSoon">
+        <view class="g-ico sm srv"></view>
+        <text class="g-tit">系统监控</text>
+      </view>
+    </view>
+
+    <view class="section-head desktop-head">
+      <text class="section-title">与 Web 端菜单一致</text>
+      <text class="section-hint">Web 将复制链接</text>
+    </view>
+    <view class="desktop-menu">
+      <view
+        class="dm-row"
+        wx:for="{{desktopMenu}}"
+        wx:key="label"
+        bindtap="onDesktopMenu"
+        data-index="{{index}}"
+      >
+        <text class="dm-label">{{item.label}}</text>
+        <text class="dm-tag" wx:if="{{item.t === 'web'}}">Web</text>
+        <text class="dm-arr">›</text>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">量化研报</text>
+      <text class="section-more" bindtap="goNews">查看更多</text>
+    </view>
+    <scroll-view class="report-scroll" scroll-x>
+      <view class="report-card report-{{item.theme}}" wx:for="{{reports}}" wx:key="id" bindtap="goNews">
+        <text class="report-tag">{{item.tag}}</text>
+        <text class="report-tit">{{item.title}}</text>
+      </view>
+    </scroll-view>
+
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goAbout">
+        <view class="menu-ico i-info"></view>
+        <text class="menu-txt">关于我们</text>
+        <text class="menu-arr">›</text>
+      </view>
+      <view class="menu-item" bindtap="onContact">
+        <view class="menu-ico i-help"></view>
+        <text class="menu-txt">联系客服</text>
+        <text class="menu-arr">›</text>
+      </view>
+    </view>
+
+    <text class="ver">REDHILL QUANTITATIVE INTELLIGENCE V2.4.0</text>
+    <view class="page-bottom-space"></view>
+  </scroll-view>
+</view>

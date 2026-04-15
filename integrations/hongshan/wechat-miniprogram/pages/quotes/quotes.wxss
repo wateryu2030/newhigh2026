@@ -1,0 +1,65 @@
+.page-root {
+  min-height: 100vh;
+  background: #0a0f14;
+  color: #e8ecf0;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+}
+.tab-pill {
+  background: #141a21;
+  padding: 12rpx 24rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #ff4444;
+}
+.search {
+  flex: 1;
+  background: #141a21;
+  border-radius: 8rpx;
+  padding: 12rpx 20rpx;
+  font-size: 26rpx;
+  color: #e8ecf0;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-bottom: 1px solid #141a21;
+}
+.name {
+  font-size: 30rpx;
+  display: block;
+}
+.code {
+  font-size: 22rpx;
+  color: #889098;
+}
+.ar {
+  text-align: right;
+}
+.price {
+  font-size: 30rpx;
+  display: block;
+}
+.pct {
+  font-size: 24rpx;
+}
+.up {
+  color: #ff4444;
+}
+.down {
+  color: #2ecc71;
+}
+.muted {
+  color: #889098;
+}
+.err {
+  color: #ff6b6b;
+}
+.pad {
+  padding: 24rpx;
+}

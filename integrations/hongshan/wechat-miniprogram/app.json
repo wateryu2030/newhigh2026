@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/strategy/strategy",
+    "pages/news/news",
+    "pages/mine/mine",
+    "pages/about/about",
+    "pages/quotes/quotes",
+    "pages/quote-detail/quote-detail",
+    "pages/stock-qa/stock-qa",
+    "pages/block-trade/block-trade",
+    "pages/signals/signals",
+    "pages/news-detail/news-detail"
+  ],
+  "window": {
+    "navigationBarTitleText": "红山量化",
+    "navigationBarBackgroundColor": "#0A0F14",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0A0F14",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#889098",
+    "selectedColor": "#FF4444",
+    "backgroundColor": "#0D1218",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-sel.png"
+      },
+      {
+        "pagePath": "pages/strategy/strategy",
+        "text": "策略",
+        "iconPath": "assets/tabbar/strategy.png",
+        "selectedIconPath": "assets/tabbar/strategy-sel.png"
+      },
+      {
+        "pagePath": "pages/news/news",
+        "text": "新闻",
+        "iconPath": "assets/tabbar/news.png",
+        "selectedIconPath": "assets/tabbar/news-sel.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "assets/tabbar/mine.png",
+        "selectedIconPath": "assets/tabbar/mine-sel.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

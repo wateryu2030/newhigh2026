@@ -1,0 +1,9 @@
+{
+  "desc": "红山资讯",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

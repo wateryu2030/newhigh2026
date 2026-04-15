@@ -1,0 +1,90 @@
+.rh-nav-outer {
+  background: rgba(10, 15, 20, 0.92);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.rh-nav-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+
+.rh-nav-left {
+  width: 64rpx;
+}
+
+.rh-nav-back {
+  font-size: 48rpx;
+  color: #e5e2e1;
+  line-height: 1;
+}
+
+.rh-nav-brand {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.rh-nav-logo {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 8rpx;
+  background: linear-gradient(135deg, #ff4444 0%, #cc2222 100%);
+  box-shadow: 0 0 16rpx rgba(255, 68, 68, 0.35);
+}
+
+.rh-nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #ff4444;
+  letter-spacing: 1rpx;
+}
+
+.rh-nav-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 120rpx;
+  justify-content: flex-end;
+}
+
+.rh-nav-icon-wrap {
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.92;
+}
+
+/* 铃铛：双竖条 + 弧顶 */
+.rh-bell {
+  border: 3rpx solid #c8cdd3;
+  border-radius: 12rpx 12rpx 4rpx 4rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.rh-bell::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10rpx;
+  width: 8rpx;
+  height: 8rpx;
+  margin-left: -4rpx;
+  background: #c8cdd3;
+  border-radius: 50%;
+}
+
+/* 齿轮：简化为六角形框 */
+.rh-gear {
+  border: 3rpx solid #c8cdd3;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+  transform: rotate(15deg);
+}

@@ -1,0 +1,32 @@
+.wrap {
+  padding: 32rpx;
+  min-height: 100vh;
+  background: #0a0f14;
+  color: #e8ecf0;
+  box-sizing: border-box;
+}
+.tit {
+  font-size: 36rpx;
+  font-weight: 700;
+  display: block;
+  line-height: 1.35;
+}
+.meta {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #889098;
+  display: block;
+}
+.body {
+  margin-top: 28rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  display: block;
+}
+.link {
+  margin-top: 40rpx;
+  background: #141a21 !important;
+  color: #ff4444 !important;
+  font-size: 26rpx;
+}

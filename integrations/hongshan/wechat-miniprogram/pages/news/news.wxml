@@ -1,0 +1,29 @@
+<view class="page-root">
+  <rh-nav title="新闻" showSettings="{{false}}" bind:bell="onBell" />
+  <view class="page-body">
+    <view class="toolbar">
+      <text class="muted">来源：{{source || '—'}}</text>
+      <text class="muted" wx:if="{{totalHint}}"> · {{totalHint}}</text>
+    </view>
+
+    <view wx:if="{{skeleton}}" class="skel">
+      <view class="sk-row" wx:for="{{[1,2,3,4,5]}}" wx:key="*this">
+        <view class="sk-line lg"></view>
+        <view class="sk-line sm"></view>
+      </view>
+    </view>
+    <view wx:elif="{{error}}" class="card error">{{error}}</view>
+
+    <block wx:for="{{news}}" wx:key="index">
+      <view class="card item" data-index="{{index}}" bindtap="onOpenItem">
+        <text class="item-title">{{item.title || '（无标题）'}}</text>
+        <text class="muted item-meta">{{item.publish_time || ''}} {{item.symbol ? ' · ' + item.symbol : ''}}</text>
+        <text class="item-body" wx:if="{{item.content}}">{{item.content}}</text>
+      </view>
+    </block>
+
+    <view wx:if="{{loadingMore}}" class="card muted">加载更多…</view>
+    <view wx:if="{{!loading && !skeleton && !error && news.length === 0}}" class="card muted">暂无资讯，请稍后下拉刷新。</view>
+    <view class="page-bottom-space"></view>
+  </view>
+</view>

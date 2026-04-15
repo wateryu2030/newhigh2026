@@ -1,0 +1,49 @@
+@import '../../styles/tokens.wxss';
+
+.container {
+  padding: 32rpx;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.card {
+  background: #141a21;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.title-lg {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #ff4444;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.body {
+  font-size: 26rpx;
+  color: #c8cdd3;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.body.warn {
+  margin-top: 16rpx;
+  color: #889098;
+  font-size: 24rpx;
+}
+
+.section-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  color: var(--text);
+}
+
+.list {
+  font-size: 24rpx;
+  color: var(--muted);
+}

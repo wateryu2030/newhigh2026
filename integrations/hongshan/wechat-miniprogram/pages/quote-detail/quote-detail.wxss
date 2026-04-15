@@ -1,0 +1,41 @@
+.page-root {
+  min-height: 100vh;
+  background: #0a0f14;
+  color: #e8ecf0;
+}
+.pad {
+  padding: 16rpx 28rpx;
+}
+.muted {
+  color: #889098;
+  font-size: 24rpx;
+}
+.err {
+  color: #ff6b6b;
+}
+.tbl-wrap {
+  max-height: 80vh;
+  padding: 0 16rpx 40rpx;
+}
+.row {
+  display: flex;
+  padding: 16rpx 12rpx;
+  border-bottom: 1px solid #141a21;
+  font-size: 26rpx;
+}
+.tbl-head {
+  font-weight: 600;
+  color: #889098;
+}
+.c1 {
+  flex: 2;
+}
+.c2 {
+  flex: 1;
+}
+.c3 {
+  flex: 1;
+}
+.ar {
+  text-align: right;
+}

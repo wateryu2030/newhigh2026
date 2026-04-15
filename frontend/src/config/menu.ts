@@ -2,6 +2,8 @@
  * 红山量化平台 - 统一菜单配置
  * 供 Layout/Sidebar/MobileBottomNav/MobileDrawer 使用
  * 图标使用 Material Symbols Outlined（与现有项目一致）
+ *
+ * 微信小程序侧栏顺序对齐：`integrations/hongshan/wechat-miniprogram/config/menu.js`（DESKTOP_SYNC）
  */
 
 export interface MenuItem {
@@ -30,6 +32,8 @@ export const menuItems: MenuItem[] = [
   { name: '系统监控', key: 'nav.systemMonitor', icon: 'monitor_heart', path: '/system-monitor' },
   { name: '新闻', key: 'nav.news', icon: 'newspaper', path: '/news' },
   { name: '股票问答', key: 'nav.stockQA', icon: 'chat_spark', path: '/stock-qa' },
+  { name: '徘徊大宗', key: 'nav.blockTradeScreen', icon: 'swap_horiz', path: '/screen/block-trade' },
+  { name: '账户', key: 'nav.profile', icon: 'person', path: '/profile' },
   { name: '设置', key: 'nav.settings', icon: 'settings', path: '/settings' },
 ];
 
@@ -53,3 +57,39 @@ const mobilePrimaryPaths = ['/', '/market', '/ai-trading', '/strategies', '/port
 export const mobilePrimaryItems: MenuItem[] = menuItems.filter((m) =>
   mobilePrimaryPaths.includes(m.path)
 );
+
+/** 未登录用户：侧栏底部「登录」入口 */
+export const loginMenuItem: MenuItem = {
+  name: '登录',
+  key: 'auth.login',
+  icon: 'login',
+  path: '/login',
+};
+
+/** 快捷导航：未登录仅展示资讯 */
+export function getQuickNavForUser(isAuthed: boolean): MenuItem[] {
+  if (isAuthed) return quickNavItems;
+  const news = menuItems.find((m) => m.path === '/news');
+  return news ? [news] : [];
+}
+
+/** 全部菜单区：未登录仅展示「登录」 */
+export function getFullMenuForUser(isAuthed: boolean): MenuItem[] {
+  if (isAuthed) return fullMenuItems;
+  return [loginMenuItem];
+}
+
+/** 移动端底栏：未登录为 资讯 + 登录 */
+export function getMobilePrimaryForUser(isAuthed: boolean): MenuItem[] {
+  if (isAuthed) return mobilePrimaryItems;
+  const news = menuItems.find((m) => m.path === '/news');
+  if (!news) return [loginMenuItem];
+  return [news, loginMenuItem];
+}
+
+/** 侧滑抽屉：未登录仅资讯 + 登录 */
+export function getDrawerMenuForUser(isAuthed: boolean): MenuItem[] {
+  if (isAuthed) return menuItems;
+  const news = menuItems.find((m) => m.path === '/news');
+  return news ? [news, loginMenuItem] : [loginMenuItem];
+}

@@ -1,0 +1,6 @@
+<view class="wrap">
+  <text class="tit">{{title}}</text>
+  <text class="meta">{{meta}}</text>
+  <text class="body" wx:if="{{content}}">{{content}}</text>
+  <button wx:if="{{url}}" class="link" bindtap="openUrl">浏览器打开原文</button>
+</view>

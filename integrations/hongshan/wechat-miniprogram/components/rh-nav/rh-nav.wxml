@@ -1,0 +1,15 @@
+<view class="rh-nav-outer" style="padding-top: {{statusBarHeight}}px;">
+  <view class="rh-nav-inner" style="height: {{navBarHeight}}px;">
+    <view class="rh-nav-left" wx:if="{{showBack}}" bindtap="onBack">
+      <text class="rh-nav-back">‹</text>
+    </view>
+    <view class="rh-nav-brand">
+      <view class="rh-nav-logo"></view>
+      <text class="rh-nav-title">{{title}}</text>
+    </view>
+    <view class="rh-nav-actions">
+      <view wx:if="{{showBell}}" class="rh-nav-icon-wrap rh-bell" bindtap="onBell"></view>
+      <view wx:if="{{showSettings}}" class="rh-nav-icon-wrap rh-gear" bindtap="onSettings"></view>
+    </view>
+  </view>
+</view>

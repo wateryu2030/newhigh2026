@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "backgroundColor": "#0A0F14",
+  "usingComponents": {
+    "rh-nav": "/components/rh-nav/rh-nav"
+  }
+}

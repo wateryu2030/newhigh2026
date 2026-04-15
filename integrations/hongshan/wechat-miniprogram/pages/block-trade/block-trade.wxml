@@ -1,0 +1,36 @@
+<view class="page-root">
+  <rh-nav
+    title="徘徊大宗"
+    showBack="{{true}}"
+    showBell="{{false}}"
+    showSettings="{{false}}"
+    bind:back="onBack"
+  />
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="tip-box">
+      <text class="tip-txt">与 Web 端「徘徊大宗」同一接口：大宗成交 × 日线区间震荡筛选。数据仅供参考。</text>
+    </view>
+    <view class="toolbar">
+      <button class="btn-run" size="mini" loading="{{loading}}" bindtap="onRun">重新筛选</button>
+      <text class="muted" wx:if="{{rangeHint}}">{{rangeHint}}</text>
+    </view>
+    <view wx:if="{{error}}" class="err-box">{{error}}</view>
+    <view wx:if="{{note}}" class="note-box">{{note}}</view>
+    <view wx:if="{{items.length === 0 && !loading && !error}}" class="empty-box">暂无符合条件的标的，可稍后在 Web 端放宽参数重试。</view>
+    <view class="table" wx:if="{{items.length > 0}}">
+      <view class="tr th">
+        <text class="td c">代码</text>
+        <text class="td n">名称</text>
+        <text class="td w">大宗(万)</text>
+        <text class="td r">区间比</text>
+      </view>
+      <view class="tr" wx:for="{{items}}" wx:key="code">
+        <text class="td c">{{item.code}}</text>
+        <text class="td n">{{item.name || '—'}}</text>
+        <text class="td w">{{item.block_amount_wan}}</text>
+        <text class="td r">{{item.range_ratio}}</text>
+      </view>
+    </view>
+    <view class="page-bottom-space"></view>
+  </scroll-view>
+</view>
