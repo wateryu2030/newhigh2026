@@ -28,8 +28,9 @@ if [[ -f "$ROOT/.env" ]]; then
 fi
 
 PLAN_REL="evolution/openclaw_cursor_last_plan.md"
-PLAN="$ROOT/$PLAN_REL"
-mkdir -p "$(dirname "$PLAN")"
+# 勿用变量名 PLAN：用户 .env 可能含同名项，source 后会覆盖/清空导致 set -u 报错
+OPENCLAW_PLAN_ABS="$ROOT/$PLAN_REL"
+mkdir -p "$(dirname "$OPENCLAW_PLAN_ABS")"
 
 if ! command -v openclaw >/dev/null 2>&1; then
   echo "未找到 openclaw（PATH 需含 Homebrew）" >&2
@@ -63,11 +64,11 @@ if [[ ! -s "$TMP_PLAN" ]]; then
   rm -f "$TMP_PLAN"
   exit 1
 fi
-mv "$TMP_PLAN" "$PLAN"
+mv "$TMP_PLAN" "$OPENCLAW_PLAN_ABS"
 
 if [[ -n "${OPENCLAW_CURSOR_PLAN_ONLY:-}" ]]; then
-  echo "已写入 $PLAN（跳过 Cursor）。可手动：cursor agent -p -f --workspace $ROOT \"阅读 $PLAN_REL 并按其中步骤执行\"" >&2
-  echo "$PLAN"
+  echo "已写入 ${OPENCLAW_PLAN_ABS}（跳过 Cursor）。可手动：cursor agent -p -f --workspace ${ROOT} \"阅读 ${PLAN_REL} 并按其中步骤执行\"" >&2
+  echo "${OPENCLAW_PLAN_ABS}"
   exit 0
 fi
 
@@ -104,6 +105,6 @@ if ! cursor agent -p "${FORCE[@]}" --workspace "$ROOT" "$PROMPT"; then
   echo "" >&2
   echo "Cursor agent 失败。常见原因：未登录。请在本机执行一次:" >&2
   echo "  cursor agent login" >&2
-  echo "或设置环境变量 CURSOR_API_KEY（见 Cursor 文档）。规划文件已生成: $PLAN" >&2
+  echo "或设置环境变量 CURSOR_API_KEY（见 Cursor 文档）。规划文件已生成: ${OPENCLAW_PLAN_ABS}" >&2
   exit 1
 fi
