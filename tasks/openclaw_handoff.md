@@ -47,6 +47,8 @@ make openclaw-iteration-once
 
 **续跑/接力（E2E + pytest 验收后让 OpenClaw 继续完善）**：复制 **`tasks/openclaw_followup_prompt.md`** 全文到会话。
 
+**良性闭环（推荐，避免 Web 里 DeepSeek + read 复读）**：终端执行 **`bash scripts/openclaw_benign_loop.sh`** 或 **`make openclaw-cursor-iterate`**（OpenClaw local 规划 → `cursor agent` 改仓库）。说明见 **`docs/OPENCLAW_PLUS_CURSOR_LOOP.md`** §四。
+
 ## 贴给 OpenClaw 会话的短提示（调度用）
 
 ```

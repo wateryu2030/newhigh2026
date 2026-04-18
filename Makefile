@@ -1,7 +1,7 @@
 # 缩短本地迭代闭环：常用入口集中在此（需在仓库根目录执行 make <target>）
 ROOT := $(abspath .)
 
-.PHONY: help dev-check gateway-restart pipeline-editable quant-readiness data-daily-ashare scheduler-backfill-restart sync-nav openclaw-iterate-ready openclaw-status openclaw-iteration-once openclaw-cursor-iterate test-python-smoke
+.PHONY: help dev-check gateway-restart pipeline-editable quant-readiness data-daily-ashare scheduler-backfill-restart sync-nav openclaw-iterate-ready openclaw-status openclaw-iteration-once openclaw-cursor-iterate openclaw-benign-loop test-python-smoke
 
 help:
 	@echo "Targets:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make openclaw-status      - 本机 Gateway/CLI/symlink 快速探活（见 docs/OPENCLAW_REALITY_CHECK_AND_IMPROVEMENTS.md）"
 	@echo "  make openclaw-iteration-once - 本机跑一轮迭代提示（内联 current_task+§2，默认 --local）"
 	@echo "  make openclaw-cursor-iterate - OpenClaw 规划 + Cursor agent 执行（见 docs/OPENCLAW_PLUS_CURSOR_LOOP.md §C）"
+	@echo "  make openclaw-benign-loop - 同上（脚本别名 openclaw_benign_loop.sh，§四 防循环）"
 	@echo "  make test-python-smoke - 根目录 pytest：data_pipeline + strategy_engine + execution_engine（9 项）"
 
 dev-check:
@@ -50,6 +51,9 @@ openclaw-iteration-once:
 
 openclaw-cursor-iterate:
 	bash "$(ROOT)/scripts/openclaw_cursor_iterate.sh"
+
+openclaw-benign-loop:
+	bash "$(ROOT)/scripts/openclaw_benign_loop.sh"
 
 test-python-smoke:
 	@if [ -x "$(ROOT)/.venv/bin/python" ]; then \
