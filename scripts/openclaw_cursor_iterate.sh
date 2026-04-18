@@ -74,20 +74,28 @@ else
   echo "=== [2/2] Cursor agent：按规划改仓库（--print，无 -f）===" >&2
 fi
 
-# 使用 cat heredoc（read -d '' 在 bash 3.2 下遇 EOF 会返回 1，触发 set -e 退出）
-PROMPT=$(cat <<EOF
-你是本仓库的自动化执行代理。工作区目录即仓库根。
+# 在主 shell 内拼接 PROMPT（避免 $(cat <<EOF) 子 shell + set -u 在 bash 3.2 下误报 PLAN_REL?）
+printf -v PROMPT '%s\n' \
+  '你是本仓库的自动化执行代理。工作区目录即仓库根。' \
+  '' \
+  "请阅读相对路径「${PLAN_REL}」全文（相对当前工作区根）。其中是 OpenClaw 给出的迭代规划。" \
+  '' \
+  '要求：' \
+  '1. 只落实其中 **1 条**最小可验证 P0/P1；若有多条建议，选风险最低、改动最小的一条。' \
+  '2. 直接修改代码/配置（不要只写计划）；遵守仓库风格；禁止把 token、私钥写入仓库。' \
+  '3. 若规划里写了「验证命令」，在仓库根尝试执行（失败则说明原因，不要无限重试）。' \
+  '4. 最后用中文简要说明：改了哪些文件、验证结果、是否还需人类在 Cursor 里收尾。' \
+  '' \
+  '若某文件路径不存在，先列出目录再决定替代方案，不要臆造路径。'
 
-请阅读相对路径「${PLAN_REL}」全文（相对当前工作区根）。其中是 OpenClaw 给出的迭代规划。
+if [[ -z "${CURSOR_API_KEY:-}" ]]; then
+  echo "提示：未检测到 CURSOR_API_KEY。若下一步报错 Authentication，请先执行: cursor agent login" >&2
+fi
 
-要求：
-1. 只落实其中 **1 条**最小可验证 P0/P1；若有多条建议，选风险最低、改动最小的一条。
-2. 直接修改代码/配置（不要只写计划）；遵守仓库风格；禁止把 token、私钥写入仓库。
-3. 若规划里写了「验证命令」，在仓库根尝试执行（失败则说明原因，不要无限重试）。
-4. 最后用中文简要说明：改了哪些文件、验证结果、是否还需人类在 Cursor 里收尾。
-
-若某文件路径不存在，先列出目录再决定替代方案，不要臆造路径。
-EOF
-)
-
-exec cursor agent -p "${FORCE[@]}" --workspace "$ROOT" "$PROMPT"
+if ! cursor agent -p "${FORCE[@]}" --workspace "$ROOT" "$PROMPT"; then
+  echo "" >&2
+  echo "Cursor agent 失败。常见原因：未登录。请在本机执行一次:" >&2
+  echo "  cursor agent login" >&2
+  echo "或设置环境变量 CURSOR_API_KEY（见 Cursor 文档）。规划文件已生成: $PLAN" >&2
+  exit 1
+fi
