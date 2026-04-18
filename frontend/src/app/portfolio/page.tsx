@@ -37,6 +37,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="min-h-screen space-y-6 pb-24 md:pb-6">
+      <h1 className="text-2xl font-semibold tracking-tight text-on-surface">{t('portfolio.title')}</h1>
       <div className="card">
         <p className="text-sm text-text-secondary">{t('portfolio.totalAum')}</p>
         <p className="text-3xl font-bold text-on-surface">{formatMoney(capital)}</p>
