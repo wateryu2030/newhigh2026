@@ -19,6 +19,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH:-}"
 
+# 加载仓库根 .env（本地存在时），使 CURSOR_API_KEY 等对「无需交互」的 CLI 生效；勿将 .env 提交到 git。
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env" 2>/dev/null || true
+  set +a
+fi
+
 PLAN_REL="evolution/openclaw_cursor_last_plan.md"
 PLAN="$ROOT/$PLAN_REL"
 mkdir -p "$(dirname "$PLAN")"

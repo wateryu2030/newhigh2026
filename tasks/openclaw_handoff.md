@@ -37,7 +37,8 @@ make openclaw-iteration-once
 
 ## OpenClaw + Cursor CLI 全自动串联
 
-1. 一次性：**`cursor agent login`**（或配置 **`CURSOR_API_KEY`**）；未登录时 `make openclaw-benign-loop` 会在第 2 步失败并提示。  
+1. 一次性：**`cursor agent login`**，或在仓库根 **`.env`** 中设置 **`CURSOR_API_KEY=`**（与 login 二选一；脚本会自动 `source .env`）。未认证时第 2 步会失败并提示。  
+1b. 自检：`make check-openclaw-cursor-loop`（检查 CLI + 冒烟生成 `evolution/openclaw_cursor_last_plan.md`）。  
 2. 仓库根执行：`make openclaw-cursor-iterate` 或 `bash scripts/openclaw_cursor_iterate.sh`。  
 3. 流程：**OpenClaw（local）** 写出 `evolution/openclaw_cursor_last_plan.md` → **`cursor agent -p -f`** 按该文件在仓库内落地改动。  
 
