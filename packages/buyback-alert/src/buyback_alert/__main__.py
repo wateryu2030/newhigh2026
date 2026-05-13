@@ -26,18 +26,22 @@ from buyback_alert.detector import detect_consecutive_drops
 from buyback_alert.alerter import cross_reference
 
 
-def _get_connection(db_path: Optional[str] = None) -> duckdb.DuckDBPyConnection:
-    """Get a DuckDB connection. Use explicit db_path or fall back to duckdb_manager."""
+def _get_connection(db_path: Optional[str] = None, *, read_only: bool = False) -> duckdb.DuckDBPyConnection:
+    """Get a DuckDB connection. Use explicit db_path or fall back to duckdb_manager.
+
+    :param read_only: True for dry-run / read queries to avoid write-lock conflicts.
+    """
     if db_path:
         p = Path(db_path).expanduser().resolve()
         if not p.parent.exists():
             p.parent.mkdir(parents=True, exist_ok=True)
-        conn = duckdb.connect(str(p))
-        # Ensure tables exist
-        from buyback_alert.collector import _ensure_buyback_table
-        from buyback_alert.alerter import _ensure_alerts_table
-        _ensure_buyback_table(conn)
-        _ensure_alerts_table(conn)
+        conn = duckdb.connect(str(p), read_only=read_only)
+        if not read_only:
+            # Ensure tables exist (only needed for write mode)
+            from buyback_alert.collector import _ensure_buyback_table
+            from buyback_alert.alerter import _ensure_alerts_table
+            _ensure_buyback_table(conn)
+            _ensure_alerts_table(conn)
         return conn
 
     # Try to use duckdb_manager — avoid importing data_pipeline.__init__ (triggers broken tushare_source import)
@@ -56,8 +60,9 @@ def _get_connection(db_path: Optional[str] = None) -> duckdb.DuckDBPyConnection:
             ddb_mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(ddb_mod)
             db_path_resolved = ddb_mod.get_db_path()
-            conn = duckdb.connect(str(db_path_resolved))
-            ddb_mod.ensure_tables(conn)
+            conn = duckdb.connect(str(db_path_resolved), read_only=read_only)
+            if not read_only:
+                ddb_mod.ensure_tables(conn)
             return conn
     except Exception as e:
         print(f"[buyback_alert] duckdb_manager import failed: {e}", file=sys.stderr)
@@ -70,7 +75,7 @@ def _get_connection(db_path: Optional[str] = None) -> duckdb.DuckDBPyConnection:
     fallback = root / "data" / "quant_system.duckdb"
     print(f"[buyback_alert] 尝试 fallback: {fallback}", file=sys.stderr)
     if fallback.exists():
-        conn = duckdb.connect(str(fallback))
+        conn = duckdb.connect(str(fallback), read_only=read_only)
         return conn
 
     raise FileNotFoundError(f"无法找到 DuckDB 数据库。请使用 --db-path 指定路径，或确保 {fallback} 存在。")
@@ -159,8 +164,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         args.detect = True
         args.alert = True
 
-    # Get connection (with write lock for write operations)
-    conn = _get_connection(args.db_path)
+    # Get connection (read-only for dry-run to avoid lock conflicts)
+    conn = _get_connection(args.db_path, read_only=args.dry_run)
     print(f"[buyback_alert] 数据库: {conn.execute('SELECT current_database()').fetchone()[0]}")
 
     try:
