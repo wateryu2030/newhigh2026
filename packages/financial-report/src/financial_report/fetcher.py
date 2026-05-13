@@ -64,13 +64,17 @@ MONTH_TO_REPORT_TYPE: Dict[int, str] = {
 
 
 def determine_report_type(report_date_str: str) -> str:
-    """根据报告日期字符串 (YYYYMMDD) 推测报告类型。"""
+    """根据报告日期字符串 (YYYYMMDD 或 YYYY-MM-DD) 推测报告类型。"""
     if not report_date_str or len(report_date_str) < 6:
         return "年报"
+    # 兼容 YYYY-MM-DD / YYYYMMDD / YYYY/MM/DD
+    cleaned = report_date_str.replace("-", "").replace("/", "").strip()
+    if len(cleaned) < 8:
+        return "年报"
     try:
-        y = int(report_date_str[:4])
-        m = int(report_date_str[4:6])
-        d = int(report_date_str[6:8]) if len(report_date_str) >= 8 else 1
+        y = int(cleaned[:4])
+        m = int(cleaned[4:6])
+        d = int(cleaned[6:8])
     except ValueError:
         return "年报"
     # 12-31 强制为年报
