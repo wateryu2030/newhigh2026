@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from core.ashare_symbol import normalize_ashare_symbol
@@ -1789,6 +1789,17 @@ def get_system_health_detail() -> dict:
         return json_fail(str(e)[:200], status_code=503)
 
 
+@router.get("/health/detailed")
+def get_health_detailed_alias() -> dict:
+    """与 /system/health-detail 等价，便于监控与小程序统一路径。"""
+    try:
+        from .endpoints_health import build_health_detail_payload
+
+        return json_ok(build_health_detail_payload(), source="health")
+    except Exception as e:
+        return json_fail(str(e)[:200], status_code=503)
+
+
 @router.get("/system/backtest-errors")
 def get_system_backtest_errors(limit: int = 20) -> dict:
     """Celery / 回测任务最近错误（backtest_task_errors），供排障。"""
@@ -2607,7 +2618,8 @@ def _save_backtest_to_strategy_market(strategy_id: str, name: str, result: dict)
 def get_strategies_market(limit: int = 50) -> dict:
     """
     策略市场列表：id、名称、收益、Sharpe、回撤、状态。
-    优先从 strategy_market 表读（回测结果写入）；再补 trade_signals 中 distinct strategy_id；最后补 stub。
+    优先从 strategy_market 表读（回测结果写入）；再补 trade_signals 中 distinct strategy_id。
+    无数据时返回空列表，不注入演示用假收益。
     """
     items: List[dict] = []
     seen: set = set()
@@ -2677,35 +2689,6 @@ def get_strategies_market(limit: int = 50) -> dict:
                 conn.close()
     except Exception:
         pass
-    stub = [
-        {
-            "id": "trend_following",
-            "name": "Trend Following",
-            "return_pct": 12.5,
-            "sharpe_ratio": 2.1,
-            "max_drawdown": 5.0,
-            "status": "live",
-        },
-        {
-            "id": "mean_reversion",
-            "name": "Mean Reversion",
-            "return_pct": 8.2,
-            "sharpe_ratio": 1.8,
-            "max_drawdown": 6.0,
-            "status": "test",
-        },
-        {
-            "id": "breakout",
-            "name": "Breakout",
-            "return_pct": 15.0,
-            "sharpe_ratio": 1.9,
-            "max_drawdown": 5.5,
-            "status": "live",
-        },
-    ]
-    for s in stub:
-        if s["id"] not in seen:
-            items.append(s)
     return {"items": items}
 
 
@@ -2780,6 +2763,7 @@ def _run_backtest_internal(
 
 @router.post("/backtest/run")
 def run_backtest_api(
+    request: Request,
     symbol: str = "000001.SZ",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -2796,6 +2780,29 @@ def run_backtest_api(
     若提供 strategy_id（及可选 strategy_name），回测成功后写入 strategy_market 表，供策略市场页展示。
     """
     try:
+        from .auth.jwt_auth import verify_token
+        from .quota_limits import check_and_increment
+
+        auth = request.headers.get("Authorization") or ""
+        ulev: str | None = None
+        if auth.startswith("Bearer "):
+            pl = verify_token(auth[7:].strip())
+            if pl:
+                ukey = str(pl.get("sub") or "").strip() or "anonymous"
+                raw_lv = pl.get("user_level")
+                ulev = (
+                    str(raw_lv).strip()
+                    if raw_lv is not None and str(raw_lv).strip()
+                    else "trial"
+                )
+            else:
+                ukey = request.client.host if request.client else "anonymous"
+        else:
+            ukey = request.client.host if request.client else "anonymous"
+        ok_b, msg_b, _, _ = check_and_increment(ukey, "backtest", ulev)
+        if not ok_b:
+            return {"symbol": symbol, "error": msg_b, "quota_exceeded": True}
+
         out = _run_backtest_internal(
             symbol,
             start_date,
@@ -3040,8 +3047,9 @@ def get_data_quality() -> Any:
             source="duckdb",
         )
     except Exception as e:
+        # 返回 200 + data:null，避免浏览器控制台对「只读巡检」刷 503；运维仍可从日志看到异常
         _log.exception("get_data_quality failed")
-        return json_fail(str(e)[:200], status_code=503, source="error")
+        return json_ok(None, source="unavailable")
 
 
 @router.get("/audit/logs")
@@ -4014,3 +4022,29 @@ try:
     router.include_router(build_stock_qa_router())
 except Exception as e:
     _log.warning("stock_qa router not mounted: %s", e)
+
+try:
+    from .endpoints_user import build_user_router
+    from .feishu_auth_routes import build_feishu_auth_router
+    from .wechat_auth_routes import build_wechat_auth_routes
+
+    router.include_router(build_user_router())
+    router.include_router(build_wechat_auth_routes())
+    router.include_router(build_feishu_auth_router())
+except Exception as e:
+    _log.warning("user/wechat/feishu routers not mounted: %s", e)
+
+# 导入新数据端点（endpoints_api/new_data.py）
+try:
+    from .endpoints_api.new_data import router as new_data_router
+
+    router.include_router(new_data_router)
+except Exception as e:
+    _log.warning("new_data router not mounted: %s", e)
+
+try:
+    from .endpoints_screening import build_screening_router
+
+    router.include_router(build_screening_router())
+except Exception as e:
+    _log.warning("screening router not mounted: %s", e)

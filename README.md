@@ -89,6 +89,28 @@ Enable AI development agent for continuous improvement.
 10. gateway  
 11. frontend  
 
+## 数据增量包 — 财报/传闻/连跌+回购告警
+
+新增三个可独立运行的增量数据包（`packages/` 目录），用于：
+- **财报下载**：通过 akshare 按股票拉取三大报表 → 写入 DuckDB `financial_reports` 表
+- **公司传闻**：雪球/东方财富股吧/news_items 多源采集 → 分类标记入库 `company_rumors` 表
+- **连跌+回购/收购告警**：daily_bars 连跌检测 × buyback_events（回购/增持/要约收购）→ 写入 `alerts` 表
+
+详细说明：`docs/NEW_DATA_PACKAGES.md`
+
+```bash
+# 统一 PYTHONPATH
+export PYTHONPATH="packages/financial-report/src:packages/rumor-capture/src:packages/buyback-alert/src:."
+python -m financial_report --help
+python -m rumor_capture --help
+python -m buyback_alert --help
+# Gateway 新增只读端点（启动后）：
+# GET /api/new-data/financial-reports?stock_code=600519
+# GET /api/new-data/rumors?stock_code=600519
+# GET /api/new-data/alerts
+pytest (PYTHONPATH=...)
+```
+
 ## 在 Cursor 中执行
 
 ```
