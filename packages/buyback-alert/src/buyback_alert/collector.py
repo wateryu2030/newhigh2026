@@ -386,7 +386,9 @@ def collect_from_news(
         if not stock_code:
             continue
 
-        ann_date = ts.date().isoformat() if hasattr(ts, "date") else str(ts)[:10]
+        ann_date = ts.date().isoformat() if ts is not None and hasattr(ts, "date") else (str(ts)[:10] if ts else None)
+        if not ann_date:
+            continue
 
         summary = title or ""
         if content:
@@ -451,20 +453,35 @@ def run_collect(
     symbol: Optional[str] = None,
 ) -> Dict[str, int]:
     """Run all collection sources and return counts per source."""
-    _ensure_buyback_table(conn)
+    # Skip DDL in dry-run / read-only mode if table already exists
+    if not dry_run:
+        _ensure_buyback_table(conn)
+    else:
+        try:
+            conn.execute("SELECT COUNT(*) FROM buyback_events")
+        except Exception:
+            _ensure_buyback_table(conn)
 
     counts: Dict[str, int] = {}
 
     print("=" * 50)
     print("收集回购数据 (akshare stock_repurchase_em)...")
-    c = collect_repurchase(conn, dry_run=dry_run, symbol=symbol)
+    try:
+        c = collect_repurchase(conn, dry_run=dry_run, symbol=symbol)
+    except Exception as e:
+        print(f"  ⚠ 回购API失败（网络/东方财富接口问题）: {e}")
+        c = 0
     counts["repurchase"] = c
-    print(f"  -> {c} 条记录")
+    print(f"  -> {c} 条记录" if c else "  -> 0 条记录（已跳过）")
 
     print("收集大宗交易溢价数据 (akshare stock_dzjy_mrmx)...")
-    c = collect_block_trades(conn, dry_run=dry_run, symbol=symbol)
+    try:
+        c = collect_block_trades(conn, dry_run=dry_run, symbol=symbol)
+    except Exception as e:
+        print(f"  ⚠ 大宗交易API失败: {e}")
+        c = 0
     counts["block_trades"] = c
-    print(f"  -> {c} 条记录")
+    print(f"  -> {c} 条记录" if c else "  -> 0 条记录（已跳过）")
 
     print("分析历史新闻关键词匹配...")
     c = collect_from_news(conn, dry_run=dry_run, symbol=symbol)
