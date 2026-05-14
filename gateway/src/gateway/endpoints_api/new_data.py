@@ -132,7 +132,7 @@ def get_rumors(
 
 @router.get("/alerts")
 def get_alerts(
-    stock_code: str = Query(..., description="股票代码"),
+    stock_code: Optional[str] = Query(None, description="股票代码（可选，不传则返回全部）"),
     limit: int = Query(20, ge=1, le=100, description="返回数量"),
     alert_type: Optional[str] = Query(None, description="预警类型过滤"),
 ):
@@ -176,9 +176,13 @@ def get_alerts(
                 b.summary AS buyback_summary
             FROM alerts a
             LEFT JOIN buyback_events b ON a.related_event_id = b.id
-            WHERE a.stock_code = ?
+            WHERE 1=1
         """
-        params = [stock_code]
+        params: list = []
+
+        if stock_code:
+            query += " AND a.stock_code = ?"
+            params.append(stock_code)
 
         if alert_type:
             query += " AND a.alert_type = ?"
