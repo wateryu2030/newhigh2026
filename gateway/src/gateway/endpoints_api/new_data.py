@@ -36,7 +36,7 @@ def get_financial_reports(
     try:
         from lib.database import get_connection
 
-        conn = get_connection(read_only=False)
+        conn = get_connection(read_only=True)  # 读端点用只读连接，避免写锁冲突
         if conn is None:
             return {"ok": False, "error": "数据库连接失败"}
 
@@ -91,7 +91,7 @@ def get_rumors(
     try:
         from lib.database import get_connection
 
-        conn = get_connection(read_only=False)
+        conn = get_connection(read_only=True)  # 读端点用只读连接，避免写锁冲突
         if conn is None:
             return {"ok": False, "error": "数据库连接失败"}
 
@@ -148,7 +148,7 @@ def get_alerts(
     try:
         from lib.database import get_connection
 
-        conn = get_connection(read_only=False)
+        conn = get_connection(read_only=True)  # 读端点用只读连接，避免写锁冲突
         if conn is None:
             return {"ok": False, "error": "数据库连接失败"}
 
