@@ -17,7 +17,7 @@ _log = logging.getLogger(__name__)
 
 # --- shared helpers imported from endpoints.py (keep signature compatible) ---
 
-from .endpoints import (  # noqa: E402
+from .endpoints_helpers import (  # noqa: E402
     _is_ashare_symbol,
     _pipeline_code_variants,
     _row_date_to_utc_iso,

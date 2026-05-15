@@ -19,7 +19,7 @@ _log = logging.getLogger(__name__)
 
 # --- shared helpers imported from endpoints.py ---
 
-from .endpoints import (  # noqa: E402
+from .endpoints_helpers import (  # noqa: E402
     _status_to_state,
     _metrics_from_equity_curve,
     _dashboard_top_strategies_from_db,

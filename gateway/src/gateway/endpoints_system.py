@@ -17,7 +17,7 @@ _log = logging.getLogger(__name__)
 
 # --- shared helpers imported from endpoints.py ---
 
-from .endpoints import (  # noqa: E402
+from .endpoints_helpers import (  # noqa: E402
     _pipeline_quant_data_status,
     _status_to_state,
 )

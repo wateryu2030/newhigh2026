@@ -16,7 +16,7 @@ _log = logging.getLogger(__name__)
 
 # --- shared helpers imported from endpoints.py ---
 
-from .endpoints import (  # noqa: E402
+from .endpoints_helpers import (  # noqa: E402
     _short_ts_for_signal,
     _optional_price,
     _optional_pct,
