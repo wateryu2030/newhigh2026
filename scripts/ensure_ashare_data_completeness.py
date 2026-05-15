@@ -8,6 +8,8 @@ A 股/北交所数据完整性：检测 DuckDB 缺失区间，从 akshare/东方
   python scripts/ensure_ashare_data_completeness.py
   python scripts/ensure_ashare_data_completeness.py --symbols 600519,000001 --days 60
   python scripts/ensure_ashare_data_completeness.py --from-akshare-only   # 仅从 akshare 拉列表，不读 DuckDB
+
+写库前 flock；NEWHIGH_SKIP_DUCKDB_FLOCK=1 跳过。
 """
 
 from __future__ import annotations
@@ -18,8 +20,16 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "lib"))
 sys.path.insert(0, os.path.join(ROOT, "data-engine", "src"))
 sys.path.insert(0, os.path.join(ROOT, "core", "src"))
+
+try:
+    from lib.duckdb_write_lock import DuckDbFlockBusy, DuckDbFlockTimeout, duckdb_write_lock
+except ImportError:
+    DuckDbFlockBusy = Exception  # type: ignore
+    DuckDbFlockTimeout = Exception  # type: ignore
+    duckdb_write_lock = None  # type: ignore
 
 
 def _duckdb_path() -> str:
@@ -179,13 +189,28 @@ def main() -> int:
     args = parser.parse_args()
 
     symbols = args.symbols.split(",") if args.symbols else None
-    result = run(
-        symbols=symbols,
-        days_back=args.days,
-        duckdb_path=args.duckdb,
-        from_akshare_only=args.from_akshare_only,
-        max_symbols=args.max_symbols,
-    )
+
+    def _run() -> dict:
+        return run(
+            symbols=symbols,
+            days_back=args.days,
+            duckdb_path=args.duckdb,
+            from_akshare_only=args.from_akshare_only,
+            max_symbols=args.max_symbols,
+        )
+
+    if duckdb_write_lock is None:
+        result = _run()
+    else:
+        try:
+            with duckdb_write_lock(db_path=args.duckdb):
+                result = _run()
+        except DuckDbFlockBusy as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        except DuckDbFlockTimeout as e:
+            print(str(e), file=sys.stderr)
+            return 3
     print("Filled:", result["filled"], "Skipped:", result["skipped"], "Errors:", result["errors"])
     for d in result["details"][:20]:
         print(" ", d)

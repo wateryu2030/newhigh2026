@@ -21,7 +21,7 @@ try:
     from .endpoints_system_data import get_system_data_overview
     router.get("/system/data-overview")(get_system_data_overview)
 except Exception:
-    pass
+    _log.warning("Import failed, using fallback", exc_info=True)
 
 # 导入财报分析端点（endpoints_api 避免与 endpoints.py 命名冲突）
 try:
@@ -158,7 +158,7 @@ def _fetch_klines_from_a_stock_daily(symbol: str, limit: int = 120) -> Optional[
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
     except Exception:
         _log.exception("a_stock_daily klines fallback failed: %s", symbol)
     return None
@@ -486,7 +486,7 @@ def _pipeline_quant_data_status() -> Optional[dict]:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
     except Exception:
         return None
 
@@ -501,7 +501,7 @@ def get_data_status() -> dict:
         if get_astock_duckdb_available():
             astock_st = get_duckdb_data_status()
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
 
     pipeline_st = _pipeline_quant_data_status()
 
@@ -599,7 +599,7 @@ def get_daily_coverage(limit_codes: int = 200) -> dict:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
         avg = (total_rows / distinct_codes) if distinct_codes else 0.0
         return {
             "ok": True,
@@ -625,7 +625,7 @@ def get_ashare_stocks() -> dict:
             stocks = get_stocks_for_api()
             return {"stocks": stocks, "source": "duckdb"}
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
     return {"stocks": [], "source": None}
 
 
@@ -642,7 +642,7 @@ def get_stocks(limit: int = 200) -> list:
         if out:
             return out
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
     try:
         from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
         import os
@@ -666,7 +666,7 @@ def get_stocks(limit: int = 200) -> list:
             finally:
                 conn.close()
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return []
 
 
@@ -736,13 +736,13 @@ def _record_skill_call() -> None:
                     "INSERT INTO skill_stats (call_count, last_call_time) VALUES (0, NULL)"
                 )
         except Exception:
-            pass
+            _log.error("File system operation failed", exc_info=True)
         conn.execute(
             "UPDATE skill_stats SET call_count = call_count + 1, last_call_time = CURRENT_TIMESTAMP"
         )
         conn.close()
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
 
 
 @router.get("/skill/ashare/stock-basic")
@@ -880,7 +880,7 @@ def _short_ts_for_signal(val: Any) -> str:
         try:
             return val.strftime("%m-%d %H:%M")
         except Exception:
-            pass
+            _log.error("Failed to close database connection", exc_info=True)
     s = str(val).replace("T", " ")
     if len(s) >= 16 and s[4] == "-":
         return s[5:16]
@@ -1022,7 +1022,7 @@ def _safe_lhb_date_str(val: Any) -> Optional[str]:
         if pd.isna(val):
             return None
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     s = str(val).strip()
     if not s or s.lower() in ("nat", "none"):
         return None
@@ -1040,7 +1040,7 @@ def _safe_net_buy(val: Any) -> Any:
         if pd.isna(val):
             return None
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     try:
         x = float(val)
         if x != x:  # NaN
@@ -1241,7 +1241,7 @@ def get_market_emotion() -> dict:
                 "market_volume": 0,
             }
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return {
         "state": "unknown",
         "stage": "—",
@@ -1617,7 +1617,7 @@ def get_sniper_candidates(limit: int = 50) -> list:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
     except Exception:
         return []
 
@@ -1926,7 +1926,7 @@ def get_news(
             if items:
                 source = "duckdb"
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
     if not items:
         sym = (symbol or "").strip()
         if sym:
@@ -1949,7 +1949,7 @@ def get_news(
         ensure_tables(_c)
         news_items_total = int(_c.execute("SELECT COUNT(*) FROM news_items").fetchone()[0])
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
     out: dict = {"news": items, "source": source, "sentiment": sentiment}
     if news_items_total is not None:
         out["news_items_total"] = news_items_total
@@ -2091,7 +2091,7 @@ def _hot_ticker_from_duckdb_news(limit: int = 16) -> List[dict]:
             code6 = code[-6:] if len(code) >= 6 and code[-6:].isdigit() else None
             out.append({"type": "news_db", "text": t, "code": code6})
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return out
 
 
@@ -2125,7 +2125,7 @@ def _fetch_hot_ticker_payload() -> dict:
                     }
                 )
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
 
     if len(lines) < 6:
         try:
@@ -2135,7 +2135,7 @@ def _fetch_hot_ticker_payload() -> dict:
                 if t and len(t) > 8:
                     lines.append({"type": "news", "text": t[:60], "code": None})
         except Exception:
-            pass
+            _log.error("Failed to close database connection", exc_info=True)
 
     if len(lines) < 6:
         for x in _hot_ticker_from_duckdb_news(18):
@@ -2207,7 +2207,7 @@ def _duckdb_global_macro_news_summary(limit: int = 20) -> tuple[str, int]:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
     except Exception:
         return "", 0
     lines: List[str] = []
@@ -2429,7 +2429,7 @@ def _fetch_news_for_research(symbol: Optional[str], limit: int) -> tuple[List[di
             if items:
                 source = "duckdb"
     except Exception:
-        pass
+        _log.error("Import failed", exc_info=True)
     if not items:
         sym = (symbol or "").strip()
         if sym:
@@ -2688,7 +2688,7 @@ def get_strategies_market(limit: int = 50) -> dict:
             finally:
                 conn.close()
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return {"items": items}
 
 
@@ -3034,7 +3034,7 @@ def get_data_quality() -> Any:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
         if not row:
             return json_ok(None, source="duckdb")
         raw = row[1]
@@ -3300,9 +3300,9 @@ def _dashboard_top_strategies_from_db(limit: int = 3) -> List[dict]:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return out
 
 
@@ -3368,7 +3368,7 @@ def get_dashboard() -> dict:
         if out is not None:
             return out
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     stub_equity = [10e6, 10.2e6, 10.5e6, 11e6, 11.8e6, 12.34e6]
     sh, md = _metrics_from_equity_curve(stub_equity)
     return {
@@ -3443,7 +3443,7 @@ def get_evolution() -> dict:
                         "source": "duckdb",
                     }
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     return {
         "current_generation": 3,
         "best_strategy": {"id": "STR_0034", "sharpe": 2.6, "return_pct": 41},
@@ -3508,7 +3508,7 @@ def _run_evolution_background(task_id: str, population_limit: int, symbol: str) 
             )
             conn.close()
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
 
 
 @router.post("/evolution/trigger")
@@ -3534,7 +3534,7 @@ def post_evolution_trigger(
             )
             conn.close()
     except Exception:
-        pass
+        _log.error("Failed to close database connection", exc_info=True)
     t = threading.Thread(
         target=_run_evolution_background,
         args=(task_id, population_limit, symbol),
@@ -4048,3 +4048,23 @@ try:
     router.include_router(build_screening_router())
 except Exception as e:
     _log.warning("screening router not mounted: %s", e)
+
+# P1-2: 领域拆分子文件 — 7 个领域路由
+try:
+    from .endpoints_market import router as _market_router
+    from .endpoints_news import router as _news_router
+    from .endpoints_strategy import router as _strategy_router
+    from .endpoints_system import router as _system_router
+    from .endpoints_execution import router as _execution_router
+    from .endpoints_frontend import router as _frontend_router
+    from .endpoints_skills import router as _skills_router
+
+    router.include_router(_market_router)
+    router.include_router(_news_router)
+    router.include_router(_strategy_router)
+    router.include_router(_system_router)
+    router.include_router(_execution_router)
+    router.include_router(_frontend_router)
+    router.include_router(_skills_router)
+except Exception as e:
+    _log.warning("domain-split routers not mounted: %s", e)

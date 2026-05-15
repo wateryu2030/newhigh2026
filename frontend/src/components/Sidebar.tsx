@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/context/LangContext';
-import { quickNavItems, fullMenuItems } from '@/config/menu';
+import { getQuickNavForUser, getFullMenuForUser } from '@/config/menu';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   /** 是否隐藏（如股东策略页自有侧栏） */
@@ -21,6 +22,10 @@ const navItemBase =
 export function Sidebar({ hidden }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useLang();
+  const { ready, isAuthenticated } = useAuth();
+  const showMember = ready && isAuthenticated;
+  const quickNavItems = getQuickNavForUser(showMember);
+  const fullMenuItems = getFullMenuForUser(showMember);
 
   if (hidden) return null;
 
@@ -30,6 +35,11 @@ export function Sidebar({ hidden }: SidebarProps) {
   return (
     <aside className="sidebar-scroll fixed bottom-3 left-3 top-[calc(4rem+0.75rem)] z-40 hidden w-[260px] flex-col overflow-y-auto rounded-2xl border border-card-border bg-card-bg shadow-card md:flex">
       <div className="flex flex-col gap-4 p-4">
+        {!showMember && (
+          <p className="rounded-lg border border-card-border bg-surface-container-high/50 px-3 py-2 text-xs leading-relaxed text-text-dim">
+            {t('auth.sidebarGuestHint')}
+          </p>
+        )}
         {/* 快捷导航 */}
         <div>
           <h3 className="mb-2 text-sm font-semibold text-text-secondary">快捷导航</h3>
@@ -68,14 +78,16 @@ export function Sidebar({ hidden }: SidebarProps) {
           </nav>
         </div>
 
-        <div className="pt-2">
-          <Link
-            href="/ai-trading"
-            className="flex w-full items-center justify-center rounded-lg bg-primary-fixed py-2.5 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
-          >
-            启动策略
-          </Link>
-        </div>
+        {showMember && (
+          <div className="pt-2">
+            <Link
+              href="/ai-trading"
+              className="flex w-full items-center justify-center rounded-lg bg-primary-fixed py-2.5 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
+            >
+              启动策略
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   );

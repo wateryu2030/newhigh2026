@@ -1,0 +1,19 @@
+.wrap {
+  padding: 48rpx 32rpx;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  background: #0a0f14;
+}
+.err-txt {
+  font-size: 26rpx;
+  color: #c8a86c;
+  text-align: center;
+  line-height: 1.5;
+}
+.btn-copy {
+  margin-top: 16rpx;
+}

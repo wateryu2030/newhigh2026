@@ -34,4 +34,7 @@ cp -f .next/BUILD_ID .next/standalone/.next/BUILD_ID 2>/dev/null || true
 cnt="$(find .next/standalone/.next/static -type f 2>/dev/null | wc -l | tr -d ' ')"
 echo "[standalone] 已同步静态文件 ${cnt} 个 → .next/standalone/.next/static"
 
-exec env PORT="${PORT:-3000}" HOSTNAME="${HOSTNAME:-0.0.0.0}" node .next/standalone/server.js
+# 必须在 .next/standalone 目录下启动 server.js（官方要求），否则易出现 /_next/static 404/500
+# 切勿使用 ${HOSTNAME:-0.0.0.0}：macOS 常把 HOSTNAME 设成计算机名，Next 会只监听错误地址 → 127.0.0.1 不通、公网 500。
+cd "$ROOT/.next/standalone"
+exec env NODE_ENV="${NODE_ENV:-production}" PORT="${PORT:-3000}" HOSTNAME="${NEXT_BIND_ADDR:-0.0.0.0}" node server.js

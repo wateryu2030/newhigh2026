@@ -1,11 +1,529 @@
 {
-  "timestamp": "2026-04-05T18:05:27.676128+00:00",
+  "timestamp": "2026-05-12T18:05:09.198205+00:00",
   "checks": [
     {
       "name": "shareholder_top10",
       "result": {
-        "ok": false,
-        "error": "无法连接数据库"
+        "ok": true,
+        "database_path": "/Users/apple/Ahope/newhigh/data/quant_system.duckdb",
+        "check": "top_10_shareholders",
+        "total_rows": 2855515,
+        "distinct_stocks_with_data": 5517,
+        "distinct_report_dates": 6622,
+        "report_date_min": "1900-01-01",
+        "report_date_max": "2026-05-12",
+        "latest_report_date": "2026-05-12",
+        "stocks_on_latest_report_date": 1,
+        "period_distribution": [
+          {
+            "periods": 1,
+            "stocks": 6
+          },
+          {
+            "periods": 4,
+            "stocks": 1
+          },
+          {
+            "periods": 6,
+            "stocks": 5
+          },
+          {
+            "periods": 7,
+            "stocks": 10
+          },
+          {
+            "periods": 8,
+            "stocks": 17
+          },
+          {
+            "periods": 9,
+            "stocks": 19
+          },
+          {
+            "periods": 10,
+            "stocks": 16
+          },
+          {
+            "periods": 11,
+            "stocks": 28
+          },
+          {
+            "periods": 12,
+            "stocks": 37
+          },
+          {
+            "periods": 13,
+            "stocks": 43
+          },
+          {
+            "periods": 14,
+            "stocks": 69
+          },
+          {
+            "periods": 15,
+            "stocks": 49
+          },
+          {
+            "periods": 16,
+            "stocks": 76
+          },
+          {
+            "periods": 17,
+            "stocks": 59
+          },
+          {
+            "periods": 18,
+            "stocks": 58
+          },
+          {
+            "periods": 19,
+            "stocks": 59
+          },
+          {
+            "periods": 20,
+            "stocks": 74
+          },
+          {
+            "periods": 21,
+            "stocks": 88
+          },
+          {
+            "periods": 22,
+            "stocks": 93
+          },
+          {
+            "periods": 23,
+            "stocks": 90
+          },
+          {
+            "periods": 24,
+            "stocks": 100
+          },
+          {
+            "periods": 25,
+            "stocks": 76
+          },
+          {
+            "periods": 26,
+            "stocks": 83
+          },
+          {
+            "periods": 27,
+            "stocks": 102
+          },
+          {
+            "periods": 28,
+            "stocks": 82
+          },
+          {
+            "periods": 29,
+            "stocks": 84
+          },
+          {
+            "periods": 30,
+            "stocks": 63
+          },
+          {
+            "periods": 31,
+            "stocks": 80
+          },
+          {
+            "periods": 32,
+            "stocks": 62
+          },
+          {
+            "periods": 33,
+            "stocks": 72
+          },
+          {
+            "periods": 34,
+            "stocks": 74
+          },
+          {
+            "periods": 35,
+            "stocks": 65
+          },
+          {
+            "periods": 36,
+            "stocks": 60
+          },
+          {
+            "periods": 37,
+            "stocks": 72
+          },
+          {
+            "periods": 38,
+            "stocks": 78
+          },
+          {
+            "periods": 39,
+            "stocks": 77
+          },
+          {
+            "periods": 40,
+            "stocks": 93
+          },
+          {
+            "periods": 41,
+            "stocks": 101
+          },
+          {
+            "periods": 42,
+            "stocks": 105
+          },
+          {
+            "periods": 43,
+            "stocks": 119
+          },
+          {
+            "periods": 44,
+            "stocks": 77
+          },
+          {
+            "periods": 45,
+            "stocks": 84
+          },
+          {
+            "periods": 46,
+            "stocks": 55
+          },
+          {
+            "periods": 47,
+            "stocks": 61
+          },
+          {
+            "periods": 48,
+            "stocks": 46
+          },
+          {
+            "periods": 49,
+            "stocks": 50
+          },
+          {
+            "periods": 50,
+            "stocks": 49
+          },
+          {
+            "periods": 51,
+            "stocks": 39
+          },
+          {
+            "periods": 52,
+            "stocks": 35
+          },
+          {
+            "periods": 53,
+            "stocks": 35
+          },
+          {
+            "periods": 54,
+            "stocks": 38
+          },
+          {
+            "periods": 55,
+            "stocks": 23
+          },
+          {
+            "periods": 56,
+            "stocks": 26
+          },
+          {
+            "periods": 57,
+            "stocks": 19
+          },
+          {
+            "periods": 58,
+            "stocks": 30
+          },
+          {
+            "periods": 59,
+            "stocks": 25
+          },
+          {
+            "periods": 60,
+            "stocks": 18
+          },
+          {
+            "periods": 61,
+            "stocks": 31
+          },
+          {
+            "periods": 62,
+            "stocks": 34
+          },
+          {
+            "periods": 63,
+            "stocks": 49
+          },
+          {
+            "periods": 64,
+            "stocks": 51
+          },
+          {
+            "periods": 65,
+            "stocks": 51
+          },
+          {
+            "periods": 66,
+            "stocks": 51
+          },
+          {
+            "periods": 67,
+            "stocks": 71
+          },
+          {
+            "periods": 68,
+            "stocks": 65
+          },
+          {
+            "periods": 69,
+            "stocks": 53
+          },
+          {
+            "periods": 70,
+            "stocks": 67
+          },
+          {
+            "periods": 71,
+            "stocks": 47
+          },
+          {
+            "periods": 72,
+            "stocks": 59
+          },
+          {
+            "periods": 73,
+            "stocks": 44
+          },
+          {
+            "periods": 74,
+            "stocks": 43
+          },
+          {
+            "periods": 75,
+            "stocks": 44
+          },
+          {
+            "periods": 76,
+            "stocks": 44
+          },
+          {
+            "periods": 77,
+            "stocks": 44
+          },
+          {
+            "periods": 78,
+            "stocks": 40
+          },
+          {
+            "periods": 79,
+            "stocks": 41
+          },
+          {
+            "periods": 80,
+            "stocks": 37
+          },
+          {
+            "periods": 81,
+            "stocks": 36
+          },
+          {
+            "periods": 82,
+            "stocks": 25
+          },
+          {
+            "periods": 83,
+            "stocks": 37
+          },
+          {
+            "periods": 84,
+            "stocks": 31
+          },
+          {
+            "periods": 85,
+            "stocks": 25
+          },
+          {
+            "periods": 86,
+            "stocks": 37
+          },
+          {
+            "periods": 87,
+            "stocks": 40
+          },
+          {
+            "periods": 88,
+            "stocks": 45
+          },
+          {
+            "periods": 89,
+            "stocks": 51
+          },
+          {
+            "periods": 90,
+            "stocks": 68
+          },
+          {
+            "periods": 91,
+            "stocks": 40
+          },
+          {
+            "periods": 92,
+            "stocks": 63
+          },
+          {
+            "periods": 93,
+            "stocks": 62
+          },
+          {
+            "periods": 94,
+            "stocks": 55
+          },
+          {
+            "periods": 95,
+            "stocks": 66
+          },
+          {
+            "periods": 96,
+            "stocks": 60
+          },
+          {
+            "periods": 97,
+            "stocks": 57
+          },
+          {
+            "periods": 98,
+            "stocks": 46
+          },
+          {
+            "periods": 99,
+            "stocks": 47
+          },
+          {
+            "periods": 100,
+            "stocks": 40
+          },
+          {
+            "periods": 101,
+            "stocks": 53
+          },
+          {
+            "periods": 102,
+            "stocks": 38
+          },
+          {
+            "periods": 103,
+            "stocks": 29
+          },
+          {
+            "periods": 104,
+            "stocks": 31
+          },
+          {
+            "periods": 105,
+            "stocks": 27
+          },
+          {
+            "periods": 106,
+            "stocks": 28
+          },
+          {
+            "periods": 107,
+            "stocks": 15
+          },
+          {
+            "periods": 108,
+            "stocks": 18
+          },
+          {
+            "periods": 109,
+            "stocks": 15
+          },
+          {
+            "periods": 110,
+            "stocks": 14
+          },
+          {
+            "periods": 111,
+            "stocks": 20
+          },
+          {
+            "periods": 112,
+            "stocks": 12
+          },
+          {
+            "periods": 113,
+            "stocks": 9
+          },
+          {
+            "periods": 114,
+            "stocks": 14
+          },
+          {
+            "periods": 115,
+            "stocks": 5
+          },
+          {
+            "periods": 116,
+            "stocks": 2
+          },
+          {
+            "periods": 117,
+            "stocks": 7
+          },
+          {
+            "periods": 118,
+            "stocks": 4
+          },
+          {
+            "periods": 119,
+            "stocks": 4
+          },
+          {
+            "periods": 120,
+            "stocks": 2
+          },
+          {
+            "periods": 121,
+            "stocks": 6
+          },
+          {
+            "periods": 122,
+            "stocks": 1
+          },
+          {
+            "periods": 125,
+            "stocks": 5
+          },
+          {
+            "periods": 126,
+            "stocks": 2
+          },
+          {
+            "periods": 127,
+            "stocks": 1
+          },
+          {
+            "periods": 128,
+            "stocks": 1
+          },
+          {
+            "periods": 133,
+            "stocks": 1
+          },
+          {
+            "periods": 136,
+            "stocks": 1
+          }
+        ],
+        "incomplete_on_latest_sample": [],
+        "a_stock_basic_count": 5513,
+        "missing_stocks_count": 1,
+        "coverage_rate_pct": 99.98,
+        "missing_sample_codes": [],
+        "missing_list_truncated": false,
+        "missing_stocks_file": "/Users/apple/Ahope/newhigh/reports/missing_stocks.txt",
+        "missing_stocks_file_count": 1
       }
     }
   ]

@@ -1,0 +1,83 @@
+@import '../../styles/tokens.wxss';
+
+.page-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.page-scroll {
+  flex: 1;
+  height: 0;
+  width: 100%;
+}
+
+.intro {
+  margin: 20rpx 24rpx 8rpx;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  background: rgba(80, 140, 200, 0.08);
+  border: 1rpx solid rgba(120, 180, 255, 0.2);
+}
+
+.intro-tit {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8rpx;
+}
+
+.intro-sub {
+  font-size: 22rpx;
+  color: #8a9aac;
+  line-height: 1.45;
+}
+
+.grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 12rpx 16rpx 32rpx;
+  gap: 16rpx;
+  box-sizing: border-box;
+}
+
+.cell {
+  width: calc(50% - 24rpx);
+  box-sizing: border-box;
+  padding: 24rpx 20rpx;
+  border-radius: 16rpx;
+  background: rgba(20, 26, 33, 0.95);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  min-height: 120rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.cell-tag {
+  font-size: 20rpx;
+  color: #7eb0ff;
+  align-self: flex-start;
+  padding: 2rpx 10rpx;
+  border: 1rpx solid rgba(126, 176, 255, 0.35);
+  border-radius: 8rpx;
+}
+
+.cell-tag.native {
+  color: #5cdba4;
+  border-color: rgba(92, 219, 164, 0.35);
+}
+
+.cell-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #e8ecf0;
+}
+
+.page-bottom-space {
+  height: 48rpx;
+}

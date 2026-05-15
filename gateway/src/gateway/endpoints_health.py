@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
+_log = logger
 
 
 def _ensure_repo_paths_for_health() -> None:
@@ -92,7 +93,7 @@ def build_health_payload() -> Dict[str, Any]:
                         r2 = conn.execute("SELECT MAX(date) FROM a_stock_daily").fetchone()
                         last_d = str(r2[0]) if r2 and r2[0] is not None else None
                     except Exception:
-                        pass
+                        _log.error("Database query failed", exc_info=True)
                     # 文档中的 market_ohlcv 在本仓库对应 a_stock_daily 日线表
                     data_availability["a_stock_daily"] = {
                         "row_count": n_daily,
@@ -111,7 +112,7 @@ def build_health_payload() -> Dict[str, Any]:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    _log.error("Failed to close database connection", exc_info=True)
     except Exception as e:
         logger.exception("DuckDB import or path failed")
         services["duckdb"] = {"status": "error", "error": str(e)[:200]}

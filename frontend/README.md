@@ -40,6 +40,21 @@ npm run build
 npm run start
 ```
 
+**生产构建前彻底清缓存**（解决 `standalone` 导致 `rm -rf .next` 删不干净、`pages-manifest.json` ENOENT）：
+
+```bash
+npm run build:clean
+```
+
+## Troubleshooting
+
+| 现象 | 处理 |
+|------|------|
+| `ENOENT` … `pages-manifest.json` / 构建读不到 `.next` | `npm run build:clean`，勿只手写 `.next` 里单个 json |
+| `rm: .next/... Directory not empty` | 同上；脚本会先 `chmod -R u+w .next` 再删（`scripts/clean-next.sh`） |
+| `EADDRINUSE` … `:3000` | 已有 `next dev`；`lsof -i :3000` 或从仓库根 `bash scripts/restart_gateway_frontend.sh`，勿重复 `npm run dev` |
+| 在 `frontend/` 里找不到 `scripts/restart_gateway_frontend.sh` | 该脚本在**仓库根** `scripts/`，先 `cd` 到仓库根再执行 |
+
 ## Structure
 
 ```

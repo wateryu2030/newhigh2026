@@ -25,10 +25,12 @@ fi
 echo "=== 2. Cursor 认证（二选一）==="
 if [[ -n "${CURSOR_API_KEY:-}" ]]; then
   echo "  OK: 已设置 CURSOR_API_KEY（来自环境或 .env）"
+elif [[ -d "${HOME}/Library/Application Support/Cursor" ]] || [[ -d "${HOME}/.cursor" ]]; then
+  echo "  OK: 检测到 Cursor 本机数据目录（通常已 cursor agent login 即可跑 make openclaw-benign-loop，无需 CURSOR_API_KEY）"
 else
-  echo "  未设置 CURSOR_API_KEY。请任选其一："
-  echo "    (1) 在仓库根 .env 增加一行: CURSOR_API_KEY=你的密钥"
-  echo "    (2) 终端执行: cursor agent login"
+  echo "  建议任选其一："
+  echo "    (1) 仓库根 .env: CURSOR_API_KEY=…"
+  echo "    (2) 终端: cursor agent login"
 fi
 
 echo "=== 3. OpenClaw 规划（冒烟，约 1～3 分钟）==="
@@ -40,6 +42,16 @@ else
   echo "  失败: 规划步骤异常" >&2
   exit 1
 fi
+
+PLAN_FILE="$ROOT/evolution/openclaw_cursor_last_plan.md"
+if grep -q 'openclaw_iteration_prompt_once 退出码:' "$PLAN_FILE" 2>/dev/null; then
+  _rc="$(grep 'openclaw_iteration_prompt_once 退出码:' "$PLAN_FILE" | head -1 | sed -n 's/.*退出码: \([0-9][0-9]*\).*/\1/p')"
+  if [[ -n "${_rc:-}" && "$_rc" != "0" ]]; then
+    echo "  失败: OpenClaw 规划子进程返回非零 ($_rc)，见 evolution/openclaw_cursor_last_plan.md 内诊断与兜底说明" >&2
+    exit 1
+  fi
+fi
+echo "  OK: 规划正文由 OpenClaw 成功生成（非兜底分支）"
 
 echo "=== 4. 下一步 ==="
 echo "  若已 login 或已配置 CURSOR_API_KEY，执行:"

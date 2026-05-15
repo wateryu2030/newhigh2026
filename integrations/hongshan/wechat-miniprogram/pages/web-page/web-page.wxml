@@ -1,0 +1,5 @@
+<view class="wrap" wx:if="{{err}}">
+  <text class="err-txt">{{err}}</text>
+  <button class="btn-copy" size="mini" bindtap="onCopy">复制链接到浏览器打开</button>
+</view>
+<web-view wx:elif="{{url}}" src="{{url}}" binderror="onWebError"></web-view>

@@ -54,6 +54,38 @@
 .quick-actions.qa-row2 {
   margin-top: 12rpx;
 }
+
+.hub-entry {
+  margin: 16rpx 24rpx 0;
+  padding: 22rpx 24rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(125deg, rgba(55, 110, 180, 0.2), rgba(20, 32, 48, 0.65));
+  border: 1rpx solid rgba(100, 160, 230, 0.28);
+  position: relative;
+}
+.hub-entry-tit {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #e8eef4;
+  margin-bottom: 6rpx;
+}
+.hub-entry-sub {
+  display: block;
+  font-size: 22rpx;
+  color: #8a9aac;
+  line-height: 1.35;
+  padding-right: 48rpx;
+}
+.hub-entry-arr {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 38rpx;
+  color: rgba(255, 255, 255, 0.3);
+}
+
 .qa-item {
   flex: 1;
   text-align: center;

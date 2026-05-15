@@ -42,7 +42,11 @@ class RegisterBody(BaseModel):
 
 
 def _login_response_dict(
-    token: str, user_id: str, username: str, role: str = "viewer"
+    token: str,
+    user_id: str,
+    username: str,
+    role: str = "viewer",
+    user_level: str = "trial",
 ) -> dict[str, Any]:
     return {
         "token": token,
@@ -52,6 +56,7 @@ def _login_response_dict(
         "username": username,
         "user": username,
         "role": role,
+        "user_level": user_level,
     }
 
 
@@ -80,7 +85,7 @@ def build_unified_auth_router() -> APIRouter:
             if conn:
                 row = conn.execute(
                     """
-                    SELECT user_id, username, password_hash, role
+                    SELECT user_id, username, password_hash, role, COALESCE(user_level, 'trial')
                     FROM hongshan_users
                     WHERE username = ? AND status = 'active'
                     """,
@@ -89,26 +94,31 @@ def build_unified_auth_router() -> APIRouter:
                 if row:
                     uid, uname, ph = str(row[0]), str(row[1]), str(row[2] or "")
                     urole = str(row[3]).strip().lower() if len(row) > 3 and row[3] else "viewer"
+                    ulvl = str(row[4] or "trial").strip() if len(row) > 4 else "trial"
                     if urole not in ("viewer", "operator", "admin"):
                         urole = "viewer"
                     if not verify_password(password, ph):
                         raise HTTPException(status_code=401, detail="用户名或密码错误")
-                    token = create_access_token(subject=uid, extra_claims={"role": urole})
-                    return _login_response_dict(token, uid, uname, urole)
+                    token = create_access_token(
+                        subject=uid, extra_claims={"role": urole, "user_level": ulvl}
+                    )
+                    return _login_response_dict(token, uid, uname, urole, ulvl)
         finally:
             if conn:
                 try:
                     conn.close()
                 except Exception:
-                    pass
+                    _log.error("Failed to close database connection", exc_info=True)
 
         if password:
             raise HTTPException(status_code=401, detail="用户名或密码错误")
         try:
-            token = create_access_token(subject=username, extra_claims={"role": "viewer"})
+            token = create_access_token(
+                subject=username, extra_claims={"role": "viewer", "user_level": "trial"}
+            )
         except Exception:
             token = "stub_token_placeholder"
-        return _login_response_dict(token, "demo-user", username, "viewer")
+        return _login_response_dict(token, "demo-user", username, "viewer", "trial")
 
     @r.post("/register")
     def post_register(body: RegisterBody) -> dict:
@@ -130,8 +140,9 @@ def build_unified_auth_router() -> APIRouter:
             now = datetime.now(timezone.utc)
             conn.execute(
                 """
-                INSERT INTO hongshan_users (user_id, username, email, phone, password_hash, status, created_at)
-                VALUES (?, ?, ?, ?, ?, 'active', ?)
+                INSERT INTO hongshan_users
+                (user_id, username, email, phone, password_hash, status, role, user_level, created_at)
+                VALUES (?, ?, ?, ?, ?, 'active', 'viewer', 'trial', ?)
                 """,
                 [
                     uid,
@@ -149,6 +160,9 @@ def build_unified_auth_router() -> APIRouter:
                 """,
                 [uid, now],
             )
+            token = create_access_token(
+                subject=uid, extra_claims={"role": "viewer", "user_level": "trial"}
+            )
             return {
                 "id": uid,
                 "username": body.username,
@@ -156,6 +170,12 @@ def build_unified_auth_router() -> APIRouter:
                 "phone": body.phone or "",
                 "status": "active",
                 "created_at": now.isoformat(),
+                "token": token,
+                "access_token": token,
+                "token_type": "bearer",
+                "user_id": uid,
+                "role": "viewer",
+                "user_level": "trial",
             }
         except HTTPException:
             raise
@@ -166,6 +186,6 @@ def build_unified_auth_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
 
     return r

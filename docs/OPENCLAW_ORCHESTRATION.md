@@ -68,6 +68,15 @@ make openclaw-iterate-ready
 
 ## 4. 验证命令（Agent 与人类共用）
 
+**与 `tasks/current_task.md`（OpenClaw + Cursor 闭环）一致时**，仓库根优先：
+
+```bash
+cd /Users/apple/Ahope/newhigh && make test-python-smoke
+cd /Users/apple/Ahope/newhigh && make gateway-test
+```
+
+等价的手动 pytest（未用 Makefile 时）：
+
 ```bash
 cd /Users/apple/Ahope/newhigh && source .venv/bin/activate
 PYTHONPATH=gateway/src:core/src:data-pipeline/src python3 -m pytest gateway/tests/ -q

@@ -16,6 +16,9 @@ ingress:
   # 控制台子域（与 DNS 一致；缺此条时访问 htma.* 会落到末尾 404）
   - hostname: htma.newhigh.com.cn
     service: http://127.0.0.1:3000
+  # 小安智服（与本项目并行：同一命名隧道内增加 hostname；token 隧道在 Zero Trust 里同样加一条 Public Hostname）
+  # - hostname: xiaoan.newhigh.com.cn
+  #   service: http://127.0.0.1:8765
   # 可选：www 子域
   # - hostname: www.newhigh.com.cn
   #   service: http://127.0.0.1:4173

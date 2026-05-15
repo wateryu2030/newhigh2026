@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
 拉取 Tushare 日 K：加载 .env 后执行 data_pipeline.run_incremental("tushare_daily")。
+
+- 写入表 ``a_stock_daily``，按每只股票已有 ``MAX(date)`` 续拉到最近交易日，保持日 K 口径与交易所同步（调度/手工均可）。
+- 与 Gateway、情绪脚本共用 ``QUANT_SYSTEM_DUCKDB_PATH``（默认 ``data/quant_system.duckdb``）；路径须一致。
+- 若报错「DuckDB 文件正被其他进程占用」：先停本机其它占用该文件的进程（常见为重复启动的 uvicorn Gateway），再跑增量。
+
 用法（在仓库根目录）：
   python scripts/run_tushare_incremental.py
   python scripts/run_tushare_incremental.py --full   # 全量

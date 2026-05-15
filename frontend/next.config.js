@@ -8,13 +8,16 @@ const gatewayOrigin = (
 const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig = {
+  /** 避免 localhost 与 127.0.0.1 混用页面与 /_next 资源时的跨源告警与偶发异常 */
+  ...(isProd ? {} : { allowedDevOrigins: ['127.0.0.1', 'localhost'] }),
   output: 'standalone',
   reactStrictMode: true,
-  /** 开发环境关闭持久化缓存，减轻 vendor-chunks / flight 错配导致的页面 Internal Server Error */
-  webpack: (config, { dev }) => {
-    if (dev) config.cache = false;
-    return config;
-  },
+  swcMinify: true,
+  /**
+   * 勿在 dev 中 `config.cache = false`：会导致 webpack 模块图不完整，
+   * 已观测到首页 RSC 报错 `Cannot read properties of undefined (reading 'clientModules')`。
+   * 若遇 chunk 错配，请 `rm -rf .next` 后重启 dev。
+   */
   /**
    * `/api/*` 由 Next 内置反代到 Gateway（同 dev/start 进程可读到的环境变量）。
    * 不再使用 `app/api/[...path]/route.ts`：webpack dev 对 catch-all Route Handler 易产生
@@ -43,6 +46,13 @@ const nextConfig = {
       {
         source: '/_next/static/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
       },
     ];
   },

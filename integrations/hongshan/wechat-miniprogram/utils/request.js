@@ -3,6 +3,7 @@
  * 合法域名须在微信公众平台配置为 HTTPS（不可用 localhost）。
  */
 const AUTH_TOKEN_KEY = 'newhigh_jwt_token';
+const { resolveRequestBase } = require('./api-base.js');
 
 function getStoredToken() {
   try {
@@ -32,8 +33,7 @@ function request(opts) {
     redirectOn401 = true,
     timeout = 30000,
   } = opts || {};
-  const app = getApp();
-  const base = (app && app.globalData && app.globalData.apiBase) || '';
+  const base = resolveRequestBase();
   const full = url.startsWith('http') ? url : `${base}${url}`;
   const token = getStoredToken();
   const header = {
@@ -90,7 +90,16 @@ function request(opts) {
         reject(new Error(msg));
       },
       fail(err) {
-        reject(err || new Error('网络请求失败'));
+        const em = (err && err.errMsg) || '';
+        if (/CONNECTION_REFUSED|connection refused|ERR_CONNECTION_REFUSED/i.test(em)) {
+          reject(
+            new Error(
+              '无法连接服务器（连接被拒绝）。若曾在开发者工具写入 API 地址，请在登录页点「恢复默认线路」后重试。',
+            ),
+          );
+          return;
+        }
+        reject(err instanceof Error ? err : new Error(em || '网络请求失败'));
       },
     });
   });

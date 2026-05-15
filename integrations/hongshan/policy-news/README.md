@@ -36,6 +36,8 @@ bash scripts/run_policy_news_collect_retry.sh
 
 ## 定时任务示例（勿用系统 Python 直跑脚本）
 
+OpenClaw 若提示 `~/.openclaw/workspace/scripts/news_collector.py` 等路径，**以主仓为准**，见 **`docs/OPENCLAW_CRON_POLICY_COLLECTOR.md`**；自检：`bash scripts/policy_collect_env_check.sh`（仓库根）。
+
 ```cron
 30 8 * * * cd /Users/apple/Ahope/newhigh && /bin/bash scripts/run_policy_news_collect_retry.sh >> logs/policy_cron.log 2>&1
 ```

@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/feature-hub/feature-hub",
+    "pages/web-page/web-page",
     "pages/login/login",
     "pages/strategy/strategy",
     "pages/news/news",

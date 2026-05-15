@@ -48,9 +48,18 @@
           </label>
         </checkbox-group>
       </view>
+      <view class="net-reset" wx:if="{{!loggedIn}}" bindtap="onResetApiBase">
+        <text class="net-reset-txt">网络异常？恢复默认线路</text>
+      </view>
     </view>
 
-    <view class="feature-row" wx:if="{{loggedIn}}">
+    <view class="hub-banner" bindtap="goFeatureHub">
+      <text class="hub-tit">全部功能</text>
+      <text class="hub-sub">与桌面端同一套菜单 · 原生 + 内嵌 Web</text>
+      <text class="hub-arr">›</text>
+    </view>
+
+    <view class="feature-row">
       <view class="feat" bindtap="goQuotes">行情</view>
       <view class="feat" bindtap="goStockQA">问答</view>
       <view class="feat" bindtap="goSignals">信号</view>
@@ -68,13 +77,13 @@
         <text class="g-sub">{{strategyHint}}</text>
       </view>
       <view class="grid-right">
-        <view class="grid-sm" bindtap="onSoon">
+        <view class="grid-sm" bindtap="openPortfolioWeb">
           <view class="g-ico sm wallet"></view>
-          <text class="g-tit">我的持仓</text>
+          <text class="g-tit">组合</text>
         </view>
-        <view class="grid-sm" bindtap="onSoon">
+        <view class="grid-sm" bindtap="openDataWeb">
           <view class="g-ico sm bill"></view>
-          <text class="g-tit">账务明细</text>
+          <text class="g-tit">数据</text>
         </view>
       </view>
     </view>
@@ -83,15 +92,15 @@
         <view class="g-ico sm bell2"></view>
         <text class="g-tit">消息中心</text>
       </view>
-      <view class="grid-sm half" bindtap="onSoon">
+      <view class="grid-sm half" bindtap="openSystemMonitorWeb">
         <view class="g-ico sm srv"></view>
         <text class="g-tit">系统监控</text>
       </view>
     </view>
 
     <view class="section-head desktop-head">
-      <text class="section-title">与 Web 端菜单一致</text>
-      <text class="section-hint">Web 将复制链接</text>
+      <text class="section-title">功能列表</text>
+      <text class="section-hint">Web 项内嵌打开</text>
     </view>
     <view class="desktop-menu">
       <view

@@ -11,12 +11,17 @@
 from __future__ import annotations
 
 import os
+import time
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PIPELINE_ROOT = os.path.dirname(os.path.dirname(_THIS_DIR))  # data_pipeline
 _DATA_PIPELINE_ROOT = os.path.dirname(_PIPELINE_ROOT)  # data-pipeline
 _NEWHIGH_ROOT = os.path.dirname(_DATA_PIPELINE_ROOT)  # newhigh
 DEFAULT_DB_PATH = os.path.join(_NEWHIGH_ROOT, "data", "quant_system.duckdb")
+
+
+class DuckDbFileBusy(RuntimeError):
+    """只读连接在多次重试后仍无法获取 DuckDB 文件锁（通常另一进程正独占写库）。"""
 
 
 def _db_path_from_environ() -> str:
@@ -61,13 +66,50 @@ def get_conn(read_only: bool = False):
     注意：DuckDB 在同一进程内对**同一数据库文件**不能**同时**混用 read_only=True 与 False
     （须先关闭其一再开另一配置）。Gateway 审计中间件在请求结束后单独开写连接，与路由内
     短时只读连接可顺序共存。纯统计类路由（如 ``/api/system/data-overview``）用
-    read_only=True，可与**其它进程**的长写连接并发读，避免文件锁冲突。
+    read_only=True，可与**其它进程**的长写连接并发读；若对方短时独占写锁，只读连接会
+    自动退避重试（环境变量 ``NEWHIGH_DUCKDB_RO_LOCK_RETRIES`` / ``NEWHIGH_DUCKDB_RO_LOCK_WAIT_SEC``）。
     """
     path = get_db_path()
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     import duckdb
 
-    return duckdb.connect(path, read_only=read_only)
+    ro_retries = 1
+    ro_wait = 0.35
+    if read_only:
+        ro_retries = max(1, int(os.environ.get("NEWHIGH_DUCKDB_RO_LOCK_RETRIES", "40")))
+        ro_wait = max(0.05, float(os.environ.get("NEWHIGH_DUCKDB_RO_LOCK_WAIT_SEC", "0.5")))
+
+    last_exc: BaseException | None = None
+    for attempt in range(ro_retries):
+        try:
+            return duckdb.connect(path, read_only=read_only)
+        except Exception as e:
+            last_exc = e
+            err = str(e).lower()
+            is_lock = (
+                "lock" in err
+                or "conflicting" in err
+                or "could not set lock" in err
+                or "unable to obtain" in err
+            )
+            if read_only and attempt + 1 < ro_retries and is_lock:
+                time.sleep(ro_wait)
+                continue
+            break
+
+    e = last_exc if last_exc is not None else RuntimeError("duckdb.connect failed")
+    err = str(e).lower()
+    if "lock" in err or "conflicting" in err or "could not set lock" in err:
+        if read_only and ro_retries > 1:
+            raise DuckDbFileBusy(
+                f"DuckDB 繁忙（已重试 {ro_retries} 次）: {path}。"
+                f"另一进程可能正在写入；请稍后重试或结束占用该库的 python/调度任务。原始错误: {e}"
+            ) from e
+        raise RuntimeError(
+            f"DuckDB 文件正被其他进程占用: {path}。请先停止 Gateway、"
+            f"另一终端的 python/调度任务，或稍后重试。原始错误: {e}"
+        ) from e
+    raise e
 
 
 def ensure_tables(conn) -> None:
@@ -478,7 +520,17 @@ def ensure_tables(conn) -> None:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    for _user_col in ("ALTER TABLE hongshan_users ADD COLUMN role VARCHAR DEFAULT 'viewer'",):
+    for _user_col in (
+        "ALTER TABLE hongshan_users ADD COLUMN role VARCHAR DEFAULT 'viewer'",
+        "ALTER TABLE hongshan_users ADD COLUMN quota_json VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN wechat_openid VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN wechat_unionid VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN feishu_open_id VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN display_name VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN avatar_url VARCHAR",
+        "ALTER TABLE hongshan_users ADD COLUMN updated_at TIMESTAMP",
+        "ALTER TABLE hongshan_users ADD COLUMN user_level VARCHAR DEFAULT 'trial'",
+    ):
         try:
             conn.execute(_user_col)
         except Exception:
@@ -511,3 +563,67 @@ def ensure_tables(conn) -> None:
         conn.execute("ALTER TABLE hongshan_paper_orders ADD COLUMN filled_at TIMESTAMP")
     except Exception:
         pass
+    # 财务报告表（财报采集器写入）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS financial_reports (
+            stock_code VARCHAR,
+            report_date DATE,
+            report_type VARCHAR,
+            statement_type VARCHAR,
+            period_end VARCHAR,
+            data_json JSON,
+            currency VARCHAR DEFAULT 'CNY',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # 公司传闻/谣言表（舆情采集器写入）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS company_rumors (
+            id INTEGER PRIMARY KEY,
+            stock_code VARCHAR,
+            title VARCHAR,
+            content VARCHAR,
+            source VARCHAR,
+            source_url VARCHAR,
+            rumor_type VARCHAR,
+            publish_time VARCHAR,
+            keywords VARCHAR,
+            sentiment_score DOUBLE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # 回购/增持/要约收购事件表（事件采集器写入）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS buyback_events (
+            id INTEGER PRIMARY KEY,
+            stock_code VARCHAR,
+            event_type VARCHAR,
+            announcement_date DATE,
+            total_amount DOUBLE,
+            price_low DOUBLE,
+            price_high DOUBLE,
+            planned_shares DOUBLE,
+            actual_shares DOUBLE,
+            status VARCHAR,
+            source VARCHAR,
+            source_url VARCHAR,
+            summary VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # 预警/提醒表（策略引擎写入）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS alerts (
+            id INTEGER PRIMARY KEY,
+            alert_type VARCHAR,
+            stock_code VARCHAR,
+            stock_name VARCHAR,
+            trigger_reason VARCHAR,
+            consecutive_drop_days INTEGER,
+            total_drop_pct DOUBLE,
+            related_event_id INTEGER,
+            related_event_type VARCHAR,
+            details VARCHAR,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)

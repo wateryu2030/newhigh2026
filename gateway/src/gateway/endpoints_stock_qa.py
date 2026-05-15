@@ -15,19 +15,23 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, BackgroundTasks
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from core.ashare_symbol import normalize_ashare_symbol
 
 from .response_utils import json_fail, json_ok
+from .quota_limits import check_and_increment
+from .auth.jwt_auth import verify_token
 
 _log = logging.getLogger(__name__)
 
 _MAX_TEXT_LEN = 32_000
-_MAX_SYMBOLS = 12
+# 单次分析标的数上限（可通过环境变量调大；异步任务建议长列表用 async）
+_MAX_SYMBOLS = int(os.environ.get("STOCK_QA_MAX_SYMBOLS", "128"))
 _MIN_NAME_LEN = 3
+_LLM_TREND_CHUNK = int(os.environ.get("STOCK_QA_LLM_TREND_CHUNK", "12"))
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -142,7 +146,7 @@ def _parse_llm_json_array(raw: str) -> List[Dict[str, Any]]:
         if isinstance(data, list):
             return [x for x in data if isinstance(x, dict)]
     except json.JSONDecodeError:
-        pass
+        _log.warning("JSON decode failed", exc_info=True)
     m2 = re.search(r"\[[\s\S]*\]", s)
     if m2:
         try:
@@ -150,7 +154,7 @@ def _parse_llm_json_array(raw: str) -> List[Dict[str, Any]]:
             if isinstance(data, list):
                 return [x for x in data if isinstance(x, dict)]
         except json.JSONDecodeError:
-            pass
+            _log.warning("JSON decode failed", exc_info=True)
     return []
 
 
@@ -166,7 +170,7 @@ def _llm_extract_stock_entities(text: str) -> Tuple[List[Dict[str, Any]], Option
         "你是 A 股证券信息抽取助手。从用户文本中识别提到的中国上市公司（沪深北），"
         "输出**仅** JSON 数组，不要其它说明。每项格式："
         '{"mention":"文本中出现的称呼或公司名","code":"6位数字代码或空字符串"}。'
-        "code 仅在你能确定时使用；不确定则空字符串。最多 24 条，按出现顺序。"
+        "code 仅在你能确定时使用；不确定则空字符串。最多 200 条，按出现顺序。"
     )
     user_prompt = "文本：\n" + snippet
 
@@ -186,7 +190,7 @@ def _llm_extract_stock_entities(text: str) -> Tuple[List[Dict[str, Any]], Option
                         {"role": "system", "content": sys_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    "max_tokens": 2000,
+                    "max_tokens": 8000,
                 },
             )
             data = r.json()
@@ -233,7 +237,7 @@ def _llm_extract_stock_entities(text: str) -> Tuple[List[Dict[str, Any]], Option
                         {"role": "system", "content": sys_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    "max_tokens": 2000,
+                    "max_tokens": 8000,
                 },
             )
             data = r.json()
@@ -309,7 +313,7 @@ def _open_duckdb():
     try:
         ensure_tables(c)
     except Exception:
-        pass
+        _log.error("File system operation failed", exc_info=True)
     return c
 
 
@@ -329,10 +333,57 @@ def _fetch_basic(conn: Any, code6: str) -> Dict[str, Any]:
 
 
 def _fetch_quote(conn: Any, code6: str) -> Dict[str, Any]:
+    """
+    优先用 **日线最近两笔收盘** 计算涨跌幅（对应「上一交易日 vs 上上一交易日」），
+    避免非交易日仍用「实时快照 0%」误导；无日线时再退回实时表。
+    """
     sym = normalize_ashare_symbol(code6)
     ex = sym
     if sym.endswith(".BSE"):
         ex = f"{code6}.BJ"
+
+    daily_rows = conn.execute(
+        """
+        SELECT date, close, volume, amount
+        FROM a_stock_daily
+        WHERE split_part(upper(trim(CAST(code AS VARCHAR))), '.', 1) = ?
+           OR code = ? OR code = ?
+        ORDER BY date DESC
+        LIMIT 2
+        """,
+        [code6, code6, ex],
+    ).fetchall()
+
+    if daily_rows and len(daily_rows) >= 2:
+        d0, d1 = daily_rows[0], daily_rows[1]
+        c0 = float(d0[1] or 0)
+        c1 = float(d1[1] or 0)
+        chg = ((c0 - c1) / c1 * 100.0) if c1 > 0 else None
+        return {
+            "last_price": c0,
+            "change_pct": float(chg) if chg is not None else None,
+            "volume": int(d0[2] or 0),
+            "amount": float(d0[3] or 0),
+            "trade_date": str(d0[0]) if d0[0] is not None else None,
+            "prev_trade_date": str(d1[0]) if d1[0] is not None else None,
+            "snapshot_time": str(d0[0]) if d0[0] is not None else None,
+            "basis": "daily_close",
+            "note": "涨跌为最近两笔日线收盘对比",
+        }
+    if daily_rows and len(daily_rows) == 1:
+        d0 = daily_rows[0]
+        c0 = float(d0[1] or 0)
+        return {
+            "last_price": c0,
+            "change_pct": None,
+            "volume": int(d0[2] or 0),
+            "amount": float(d0[3] or 0),
+            "trade_date": str(d0[0]) if d0[0] is not None else None,
+            "snapshot_time": str(d0[0]) if d0[0] is not None else None,
+            "basis": "daily_single",
+            "note": "仅一日 K 线，无法计算区间涨跌",
+        }
+
     row = conn.execute(
         """
         SELECT code, name, latest_price, change_pct, volume, amount, snapshot_time
@@ -346,33 +397,15 @@ def _fetch_quote(conn: Any, code6: str) -> Dict[str, Any]:
     ).fetchone()
     if row:
         price = float(row[2] or 0)
-        chg = float(row[3]) if row[3] is not None else 0.0
+        chg = float(row[3]) if row[3] is not None else None
         return {
             "last_price": price,
             "change_pct": chg,
             "volume": int(row[4] or 0),
             "amount": float(row[5] or 0),
             "snapshot_time": str(row[6]) if row[6] else None,
-        }
-    drow = conn.execute(
-        """
-        SELECT code, close, volume, amount, date
-        FROM a_stock_daily
-        WHERE split_part(upper(trim(CAST(code AS VARCHAR))), '.', 1) = ?
-           OR code = ?
-        ORDER BY date DESC
-        LIMIT 1
-        """,
-        [code6, ex],
-    ).fetchone()
-    if drow:
-        price = float(drow[1] or 0)
-        return {
-            "last_price": price,
-            "change_pct": 0.0,
-            "volume": int(drow[2] or 0),
-            "amount": float(drow[3] or 0),
-            "snapshot_time": str(drow[4]) if drow[4] else None,
+            "basis": "realtime",
+            "note": "无日线入库，使用实时快照（非交易时段可能为昨收）",
         }
     return {}
 
@@ -488,23 +521,34 @@ def _rules_trend(
     sniper: Optional[Dict[str, Any]],
     fin: Optional[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    chg = float(quote.get("change_pct") or 0)
+    raw_chg = quote.get("change_pct")
+    chg: Optional[float] = float(raw_chg) if raw_chg is not None else None
     parts: List[str] = []
     bias = "中性"
-    if chg >= 5:
+    td = quote.get("trade_date") or (str(quote.get("snapshot_time") or "")[:10] or None)
+    if chg is None:
+        bias = "观望"
+        parts.append(
+            "缺少连续日线涨跌样本，已以最近可见价格/财务与股东结构为主；"
+            + (f"行情基准日约 {td}。" if td else "")
+        )
+    elif chg >= 5:
         bias = "短线偏强"
-        parts.append(f"当日涨幅约 {chg:.2f}%，短线动能偏强，注意追高风险。")
+        parts.append(f"最近收盘涨跌约 {chg:.2f}%（日线对比），短线动能偏强，注意追高风险。")
     elif chg >= 2:
         bias = "温和偏强"
-        parts.append(f"当日涨幅约 {chg:.2f}%，交投相对活跃。")
+        parts.append(f"最近收盘涨跌约 {chg:.2f}%，交投相对活跃。")
     elif chg <= -5:
         bias = "短线偏弱"
-        parts.append(f"当日跌幅约 {abs(chg):.2f}%，注意波动与止损纪律。")
+        parts.append(f"最近收盘涨跌约 {abs(chg):.2f}%，注意波动与止损纪律。")
     elif chg <= -2:
         bias = "温和偏弱"
-        parts.append(f"当日调整约 {abs(chg):.2f}%，宜结合基本面与仓位管理。")
+        parts.append(f"最近收盘调整约 {abs(chg):.2f}%，宜结合基本面与仓位管理。")
     else:
-        parts.append("当日波动不大，可更多参考基本面与资金结构。")
+        parts.append(
+            "最近收盘波动不大，可更多参考基本面与资金结构"
+            + (f"（基准日 {td}）。" if td else "。")
+        )
     if fin and fin.get("net_margin") is not None:
         parts.append(f"最近披露净利率约 {fin['net_margin']:.2f}%。")
     if sniper and sniper.get("sniper_score") is not None:
@@ -536,6 +580,142 @@ def _merge_trend_outlook(
     }
 
 
+def _parse_llm_trend_json(raw: str) -> Dict[str, Dict[str, str]]:
+    """解析 LLM 输出的 [{symbol,bias,summary}, ...]。"""
+    arr = _parse_llm_json_array(raw)
+    out: Dict[str, Dict[str, str]] = {}
+    for item in arr:
+        if not isinstance(item, dict):
+            continue
+        sym = str(item.get("symbol") or "").strip()
+        if not sym:
+            continue
+        bias = str(item.get("bias") or "").strip() or "中性"
+        summary = str(item.get("summary") or "").strip()
+        if summary:
+            out[sym] = {"bias": bias[:32], "summary": summary[:1200]}
+    return out
+
+
+def _llm_call_trend_batch(facts: List[Dict[str, Any]], *, dashscope: bool) -> Dict[str, Dict[str, str]]:
+    import os as _os
+
+    sys_prompt = (
+        "你是资深 A 股研究员。下面 JSON 数组中每只股票都有结构化事实（来自本地数据库）。\n"
+        "请对**每一只**股票分别写短评（2～5 句中文），必须结合该股**各自**的涨跌、价格基准日、"
+        "净利率/营收（若有）、狙击分或前三大股东（若有）展开，**禁止**所有股票复用同一句套话。\n"
+        "若涨跌缺失，说明依据为财务或股东结构。\n"
+        "输出**仅** JSON 数组，不要其它文字。每项字段："
+        '{"symbol":"与输入完全一致如600519.SH","bias":"四字内","summary":"正文"}'
+    )
+    user_prompt = "股票事实：\n" + json.dumps(facts, ensure_ascii=False)
+
+    if dashscope:
+        key = _os.environ.get("DASHSCOPE_API_KEY") or _os.environ.get("BAILIAN_API_KEY")
+        if not key:
+            return {}
+        model = _os.environ.get("STOCK_QA_LLM_ANALYSIS_MODEL", _os.environ.get("STOCK_QA_LLM_MODEL", "qwen-plus"))
+        try:
+            import requests
+
+            r = requests.post(
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                timeout=120,
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": sys_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "max_tokens": 6000,
+                },
+            )
+            data = r.json()
+            if r.status_code != 200:
+                _log.warning("llm trend batch dashscope %s: %s", r.status_code, str(data)[:300])
+                return {}
+            content = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+            return _parse_llm_trend_json(content)
+        except Exception as e:
+            _log.warning("llm trend batch failed: %s", e)
+            return {}
+
+    key_oai = _os.environ.get("OPENAI_API_KEY")
+    if not key_oai:
+        return {}
+    model = _os.environ.get("STOCK_QA_OPENAI_ANALYSIS_MODEL", "gpt-4o-mini")
+    try:
+        import requests
+
+        r = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key_oai}", "Content-Type": "application/json"},
+            timeout=120,
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "max_tokens": 6000,
+            },
+        )
+        data = r.json()
+        if r.status_code != 200:
+            return {}
+        content = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+        return _parse_llm_trend_json(content)
+    except Exception as e:
+        _log.warning("llm trend openai failed: %s", e)
+        return {}
+
+
+def _llm_fetch_trend_opinions(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, str]]:
+    """分批调用 LLM 生成差异化结论；无 API Key 时返回空 dict（前端回退规则+LSTM）。"""
+    import os as _os
+    import time
+
+    if not rows:
+        return {}
+    use_ds = bool(_os.environ.get("DASHSCOPE_API_KEY") or _os.environ.get("BAILIAN_API_KEY"))
+    use_oai = bool(_os.environ.get("OPENAI_API_KEY"))
+    if not use_ds and not use_oai:
+        return {}
+
+    out: Dict[str, Dict[str, str]] = {}
+    chunk_n = max(4, min(_LLM_TREND_CHUNK, 20))
+    for i in range(0, len(rows), chunk_n):
+        chunk = rows[i : i + chunk_n]
+        facts: List[Dict[str, Any]] = []
+        for one in chunk:
+            q = one.get("quote") or {}
+            f = one.get("financial") or {}
+            sn = one.get("sniper") or {}
+            sh = one.get("shareholders") or {}
+            th = sh.get("top_holders") or []
+            facts.append(
+                {
+                    "symbol": one.get("symbol"),
+                    "name": one.get("name") or "",
+                    "daily_change_pct": q.get("change_pct"),
+                    "last_price": q.get("last_price"),
+                    "as_of": q.get("trade_date") or (str(q.get("snapshot_time") or "")[:19]),
+                    "quote_basis": q.get("basis"),
+                    "net_margin_pct": f.get("net_margin"),
+                    "revenue": f.get("total_revenue"),
+                    "net_profit": f.get("net_profit"),
+                    "sniper_score": sn.get("sniper_score"),
+                    "sniper_theme": sn.get("theme"),
+                    "top_shareholders": [str(h.get("name") or "") for h in th[:3]],
+                }
+            )
+        part = _llm_call_trend_batch(facts, dashscope=use_ds)
+        out.update(part)
+        time.sleep(0.2)
+    return out
+
+
 def _build_valid_codes(conn: Any, name_pairs: List[Tuple[str, str]]) -> set:
     valid_codes: set[str] = set()
     for _, c6 in name_pairs:
@@ -552,7 +732,7 @@ def _build_valid_codes(conn: Any, name_pairs: List[Tuple[str, str]]) -> set:
                 if len(d) == 8:
                     valid_codes.add(d)
     except Exception:
-        pass
+        _log.error("File system operation failed", exc_info=True)
     return valid_codes
 
 
@@ -610,7 +790,20 @@ def _build_entities_rule(
         entities.append(
             {"mention": c6, "symbol": sym, "confidence": 0.95, "source": "code_match"}
         )
-    return entities, order[:_MAX_SYMBOLS]
+    return entities, order
+
+
+def _lookup_llm_opinion(
+    opinions: Dict[str, Dict[str, str]],
+    sym: str,
+) -> Optional[Dict[str, str]]:
+    if sym in opinions:
+        return opinions[sym]
+    base = sym.split(".", 1)[0]
+    for k, v in opinions.items():
+        if str(k).split(".", 1)[0] == base:
+            return v
+    return None
 
 
 def run_stock_qa_analysis(
@@ -620,9 +813,11 @@ def run_stock_qa_analysis(
     symbols_override: Optional[List[str]],
     include_lstm: bool,
     ner_mode: str = "hybrid",
+    use_llm_analysis: bool = True,
 ) -> Dict[str, Any]:
     """
     ner_mode: hybrid | rules_only | llm_only
+    use_llm_analysis: 在规则+LSTM 基础上再调用 LLM 分批写差异化结论（需 API Key）。
     """
     max_n = min(max_symbols, _MAX_SYMBOLS)
     conn = _open_duckdb()
@@ -704,16 +899,52 @@ def run_stock_qa_analysis(
                 one["financial"] = _fetch_financial_latest(conn, ckey)
                 one["shareholders"] = _fetch_shareholder_summary(conn, ckey)
                 one["sniper"] = _fetch_sniper(conn, ckey)
-                rules = _rules_trend(one.get("quote") or {}, one.get("sniper"), one.get("financial"))
-                lstm = _try_lstm_predict(ckey) if include_lstm else None
-                one["trend"] = _merge_trend_outlook(rules, lstm)
             except Exception as ex:
                 one["errors"].append(str(ex)[:200])
             symbols_out.append(one)
 
-        summary_parts = [
-            f"共识别 {len(entities)} 处标的提及，本次分析 {len(symbols_out)} 只。"
-        ]
+        llm_opinions: Dict[str, Dict[str, str]] = {}
+        if use_llm_analysis and symbols_out:
+            try:
+                llm_opinions = _llm_fetch_trend_opinions(symbols_out)
+            except Exception as e:
+                _log.warning("llm trend opinions skipped: %s", e)
+
+        for idx, one in enumerate(symbols_out):
+            try:
+                c6 = order[idx] if idx < len(order) else one.get("symbol", "")
+                ckey = c6[:6] if len(str(c6)) >= 6 else str(c6)
+                rules = _rules_trend(one.get("quote") or {}, one.get("sniper"), one.get("financial"))
+                lstm = _try_lstm_predict(ckey) if include_lstm else None
+                merged = _merge_trend_outlook(rules, lstm)
+                op = _lookup_llm_opinion(llm_opinions, str(one.get("symbol") or "")) if llm_opinions else None
+                if op:
+                    lstm_note = ""
+                    if lstm:
+                        lstm_note = (
+                            f" LSTM：{lstm.get('trend_label', '')}"
+                            f"（置信约 {float(lstm.get('confidence') or 0):.2f}）。"
+                        )
+                    merged = {
+                        "bias": op.get("bias") or merged.get("bias"),
+                        "summary": (op.get("summary") or "") + lstm_note,
+                        "model": "llm_analysis+lstm" if lstm else "llm_analysis",
+                        "rules": rules,
+                        "lstm": lstm,
+                    }
+                one["trend"] = merged
+            except Exception as ex:
+                one.setdefault("errors", []).append(str(ex)[:200])
+
+        if use_llm_analysis:
+            tag = (
+                "（含 LLM 差异化研判）"
+                if llm_opinions
+                else "（已请求 LLM 研判；未返回或缺少 API Key，已回退规则+LSTM）"
+            )
+        else:
+            tag = "（未启用 LLM 研判，仅规则+LSTM）"
+        summary_parts = [f"共识别 {len(entities)} 处标的提及，本次分析 {len(symbols_out)} 只{tag}。"]
         if llm_err and use_llm_ner and ner_mode != "rules_only":
             summary_parts.append(f"（LLM 提示：{llm_err}，已回退或合并规则结果。）")
         if not entities:
@@ -732,7 +963,7 @@ def run_stock_qa_analysis(
         try:
             conn.close()
         except Exception:
-            pass
+            _log.error("File system operation failed", exc_info=True)
 
 
 def build_markdown_report(payload: Dict[str, Any]) -> str:
@@ -802,6 +1033,7 @@ def _run_job_async(job_id: str, params: Dict[str, Any]) -> None:
             symbols_override=params.get("symbols_override"),
             include_lstm=bool(params.get("include_lstm", True)),
             ner_mode=str(params.get("ner_mode") or "hybrid"),
+            use_llm_analysis=bool(params.get("use_llm_analysis", True)),
         )
         if out.get("error"):
             _job_set(
@@ -829,22 +1061,49 @@ class StockQARequest(BaseModel):
     )
     symbols_override: Optional[List[str]] = Field(default=None, description="用户纠偏：仅分析这些代码/带后缀")
     include_lstm: bool = Field(default=True, description="是否调用 LSTM 走势模型")
+    use_llm_analysis: bool = Field(
+        default=True,
+        description="对每只股票调用 LLM 写差异化走势结论（需 DASHSCOPE/OPENAI Key；大量标的时较慢，可关）",
+    )
 
 
 class StockQAReportBody(BaseModel):
     data: Dict[str, Any] = Field(..., description="与 /analyze 返回的 data 结构相同")
 
 
+def _quota_context(request: Request) -> tuple[str, Optional[str]]:
+    """返回 (user_key, user_level)；匿名请求 user_level 为 None，沿用 FREE_* 上限。"""
+    auth = request.headers.get("Authorization") or ""
+    if auth.startswith("Bearer "):
+        pl = verify_token(auth[7:].strip())
+        if pl:
+            ukey = str(pl.get("sub") or "").strip() or "anonymous"
+            raw = pl.get("user_level")
+            ulvl = (
+                str(raw).strip()
+                if raw is not None and str(raw).strip()
+                else "trial"
+            )
+            return ukey, ulvl
+    ukey = request.client.host if request.client else "anonymous"
+    return ukey, None
+
+
 def build_stock_qa_router() -> APIRouter:
     r = APIRouter(prefix="/stock-qa", tags=["stock-qa"])
 
     @r.post("/analyze")
-    def analyze(body: StockQARequest, background_tasks: BackgroundTasks) -> Any:
+    def analyze(body: StockQARequest, background_tasks: BackgroundTasks, request: Request) -> Any:
         raw = body.text.strip()
         if len(raw) > _MAX_TEXT_LEN:
             return json_fail(f"文本过长（上限 {_MAX_TEXT_LEN} 字）", status_code=400)
         if not raw and not (body.symbols_override and len(body.symbols_override) > 0):
             return json_fail("请提供 text 或 symbols_override", status_code=400)
+
+        ukey, ulvl = _quota_context(request)
+        ok_q, msg_q, _, _ = check_and_increment(ukey, "stock_qa", ulvl)
+        if not ok_q:
+            return JSONResponse(status_code=429, content={"ok": False, "error": msg_q, "source": "quota"})
 
         if body.async_mode:
             job_id = _new_job_id()
@@ -866,6 +1125,7 @@ def build_stock_qa_router() -> APIRouter:
                     "symbols_override": body.symbols_override,
                     "include_lstm": body.include_lstm,
                     "ner_mode": body.ner_mode,
+                    "use_llm_analysis": body.use_llm_analysis,
                 },
             )
             return json_ok({"job_id": job_id, "async": True}, source="stock_qa")
@@ -877,9 +1137,18 @@ def build_stock_qa_router() -> APIRouter:
             symbols_override=body.symbols_override,
             include_lstm=body.include_lstm,
             ner_mode=body.ner_mode,
+            use_llm_analysis=body.use_llm_analysis,
         )
         if out.get("error"):
-            return json_fail(str(out["error"]), status_code=int(out.get("code") or 503))
+            code = int(out.get("code") or 503)
+            msg = str(out["error"])
+            # 数据库不可用等：用 200 + ok:false，避免 Network 面板刷 503；前端 postStockQAAnalyze 已解包 ok
+            if code == 503:
+                return JSONResponse(
+                    status_code=200,
+                    content={"ok": False, "error": msg, "source": "stock_qa"},
+                )
+            return json_fail(msg, status_code=code)
         return json_ok(out, source="stock_qa")
 
     @r.get("/jobs/{job_id}")

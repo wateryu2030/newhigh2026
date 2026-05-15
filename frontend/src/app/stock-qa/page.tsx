@@ -11,6 +11,7 @@ import {
   type StockQAJobPayload,
   type StockQASymbolBlock,
 } from '@/api/client';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 function formatNum(n: number | null | undefined, digits = 2): string {
   if (n == null || Number.isNaN(n)) return '—';
@@ -32,6 +33,7 @@ function SymbolCard({ row, labels }: { row: StockQASymbolBlock; labels: Record<s
   const sh = row.shareholders;
   const tr = row.trend;
   const lstm = tr?.lstm as Record<string, unknown> | undefined;
+  const chgOk = q.change_pct != null && !Number.isNaN(Number(q.change_pct));
 
   return (
     <div className="card space-y-3 border border-card-border p-4">
@@ -56,9 +58,14 @@ function SymbolCard({ row, labels }: { row: StockQASymbolBlock; labels: Record<s
         <p className="text-sm text-on-surface">
           {q.last_price != null ? (
             <>
-              最新约 {q.last_price.toFixed(3)} ，涨跌 {q.change_pct != null ? `${q.change_pct.toFixed(2)}%` : '—'}
-              {q.snapshot_time ? (
+              最新约 {q.last_price.toFixed(3)} ，涨跌 {chgOk ? `${Number(q.change_pct).toFixed(2)}%` : '—'}
+              {q.trade_date ? (
+                <span className="text-text-secondary"> · 日线截至 {q.trade_date}</span>
+              ) : q.snapshot_time ? (
                 <span className="text-text-secondary"> · {q.snapshot_time}</span>
+              ) : null}
+              {q.note ? (
+                <span className="mt-1 block text-xs text-text-dim">{q.note}</span>
               ) : null}
             </>
           ) : (
@@ -128,9 +135,12 @@ function SymbolCard({ row, labels }: { row: StockQASymbolBlock; labels: Record<s
 export default function StockQAPage() {
   const { t } = useLang();
   const [text, setText] = useState('');
-  const [maxSym, setMaxSym] = useState(8);
+  const [maxSym, setMaxSym] = useState(96);
+  /** 结果区每次展示条数（首屏 20，可「加载更多」递增） */
+  const [visibleCount, setVisibleCount] = useState(20);
   const [asyncMode, setAsyncMode] = useState(false);
   const [useLlm, setUseLlm] = useState(true);
+  const [useLlmAnalysis, setUseLlmAnalysis] = useState(true);
   const [nerMode, setNerMode] = useState<'hybrid' | 'rules_only' | 'llm_only'>('hybrid');
   const [includeLstm, setIncludeLstm] = useState(true);
   const [overrideLine, setOverrideLine] = useState('');
@@ -148,6 +158,7 @@ export default function StockQAPage() {
 
   const applyResult = useCallback((data: StockQAAnalyzeData) => {
     setResult(data);
+    setVisibleCount(20);
     setJobStatus(null);
     setJobId(null);
   }, []);
@@ -189,6 +200,7 @@ export default function StockQAPage() {
       use_llm_ner: useLlm,
       ner_mode: nerMode,
       include_lstm: includeLstm,
+      use_llm_analysis: useLlmAnalysis,
       symbols_override: ov.length ? ov : undefined,
     };
   };
@@ -237,6 +249,7 @@ export default function StockQAPage() {
         use_llm_ner: false,
         ner_mode: 'rules_only',
         include_lstm: includeLstm,
+        use_llm_analysis: useLlmAnalysis,
         symbols_override: ov,
       });
       if ('job_id' in out && (out as StockQAJobPayload).async) {
@@ -327,6 +340,15 @@ export default function StockQAPage() {
             />
             {t('stockQA.includeLstm')}
           </label>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={useLlmAnalysis}
+              onChange={(e) => setUseLlmAnalysis(e.target.checked)}
+              disabled={loading}
+            />
+            {t('stockQA.useLlmAnalysis')}
+          </label>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -348,10 +370,10 @@ export default function StockQAPage() {
             <input
               type="number"
               min={1}
-              max={12}
+              max={128}
               className="ml-2 w-16 rounded border border-card-border bg-surface-container-high px-2 py-1 text-on-surface"
               value={maxSym}
-              onChange={(e) => setMaxSym(Number(e.target.value) || 8)}
+              onChange={(e) => setMaxSym(Number(e.target.value) || 96)}
               disabled={loading}
             />
           </label>
@@ -374,7 +396,7 @@ export default function StockQAPage() {
             type="button"
             onClick={() => void run()}
             disabled={loading}
-            className="rounded-lg bg-primary-fixed px-5 py-2 text-sm font-medium text-on-warm-fill transition hover:opacity-90 disabled:opacity-50"
+            className="min-h-touch min-w-touch rounded-lg bg-primary-fixed px-5 py-2 text-sm font-medium text-on-warm-fill transition hover:opacity-90 disabled:opacity-50"
           >
             {loading && !asyncMode ? t('common.loading') : t('stockQA.analyze')}
           </button>
@@ -419,6 +441,13 @@ export default function StockQAPage() {
         </div>
       ) : null}
 
+      {loading && !result ? (
+        <div className="space-y-2">
+          <p className="text-sm text-text-secondary">{t('common.loading')}</p>
+          <PageSkeleton rows={4} />
+        </div>
+      ) : null}
+
       {result ? (
         <div className="space-y-4">
           {result.llm_ner_error ? (
@@ -427,12 +456,17 @@ export default function StockQAPage() {
           <div className="card p-4">
             <h2 className="mb-2 text-sm font-semibold text-text-secondary">{t('stockQA.summary')}</h2>
             <p className="text-sm leading-relaxed text-on-surface">{result.summary}</p>
+            <p className="mt-2 text-xs text-text-dim">
+              识别 {result.entities.length} 条 · 已分析 {result.symbols.length} 只
+            </p>
           </div>
 
           {result.entities.length > 0 ? (
             <div className="card p-4">
-              <h2 className="mb-2 text-sm font-semibold text-text-secondary">{t('stockQA.entities')}</h2>
-              <ul className="flex flex-wrap gap-2">
+              <h2 className="mb-2 text-sm font-semibold text-text-secondary">
+                {t('stockQA.entities')}（{result.entities.length}） · {t('stockQA.entitiesScroll')}
+              </h2>
+              <ul className="flex max-h-48 flex-wrap gap-2 overflow-y-auto pr-1">
                 {result.entities.map((e, i) => (
                   <li
                     key={`${e.symbol}-${i}`}
@@ -446,11 +480,34 @@ export default function StockQAPage() {
             </div>
           ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            {result.symbols.map((row) => (
-              <SymbolCard key={row.symbol} row={row} labels={labels} />
-            ))}
-          </div>
+          {(() => {
+            const total = result.symbols.length;
+            const n = Math.min(visibleCount, total);
+            const slice = result.symbols.slice(0, n);
+            return (
+              <>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-text-dim">
+                  <span>
+                    {t('stockQA.showing').replace('{n}', String(n)).replace('{total}', String(total))}
+                  </span>
+                </div>
+                {visibleCount < total ? (
+                  <button
+                    type="button"
+                    className="min-h-touch w-full rounded-lg border border-card-border bg-surface-container-high py-2 text-sm text-on-surface hover:bg-white/5 md:max-w-md"
+                    onClick={() => setVisibleCount((c) => Math.min(c + 20, total))}
+                  >
+                    {t('stockQA.loadMore')}
+                  </button>
+                ) : null}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {slice.map((row, i) => (
+                    <SymbolCard key={`${row.symbol}-${i}`} row={row} labels={labels} />
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       ) : null}
 

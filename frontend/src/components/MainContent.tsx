@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { AuthGate } from '@/components/AuthGate';
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ export function MainContent({ children }: MainContentProps) {
     <main
       className={`min-h-screen bg-surface px-4 pb-24 pt-20 md:pr-6 md:pb-8 md:pt-20 ${mainPl}`}
     >
-      {children}
+      <AuthGate>{children}</AuthGate>
     </main>
   );
 }

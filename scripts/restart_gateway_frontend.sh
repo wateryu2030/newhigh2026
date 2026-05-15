@@ -50,7 +50,8 @@ pkill -f "uvicorn gateway.app" 2>/dev/null || true
 pkill -f "uvicorn.*gateway" 2>/dev/null || true
 pkill -f "next dev" 2>/dev/null || true
 pkill -f "next start" 2>/dev/null || true
-sleep 1
+# 释放端口后多等一会，避免 bind 尚未完全释放导致 next 起不来、或误伤刚起的进程
+sleep 2
 
 # 与 Gateway 启动所需 import 路径一致（按需可再扩充）
 export PYTHONPATH="${ROOT}/gateway/src:${ROOT}/ai-models/src:${ROOT}/data-pipeline/src:${ROOT}/core/src:${ROOT}/data-engine/src:${ROOT}/execution-engine/src:${ROOT}/backtest-engine/src:${ROOT}/risk-engine/src:${ROOT}/strategy/src:${ROOT}/openclaw_engine:${ROOT}/data/src:${ROOT}:${ROOT}/lib"
@@ -94,30 +95,24 @@ else
   # 默认删 .next：HMR 后常见 Cannot find module './NNN.js'。跳过清缓存用 NEWHIGH_NEXT_SKIP_NEXT_CLEAN=1
   if [[ "${NEWHIGH_NEXT_SKIP_NEXT_CLEAN:-}" != "1" ]]; then
     echo "[restart] 清理前端 .next（开发模式，避免陈旧 webpack chunk）…"
-    rm -rf .next
+    if [[ -x scripts/clean-next.sh ]]; then
+      bash scripts/clean-next.sh
+    else
+      chmod -R u+w .next 2>/dev/null || true
+      rm -rf .next
+    fi
   elif [[ -d .next && ! -f .next/server/middleware-manifest.json ]]; then
     echo "[restart] 缺 middleware-manifest，清理 .next …"
     rm -rf .next
   fi
   mkdir -p .next/server
-  # Next 14 dev 冷启动首包编译前可能 require 此文件；占位防 500，随后由 dev 覆盖
+  # 冷启动时 Next 会立即 require 此路径；缺文件则全站 500。仅写空 middleware 占位，dev 编译 src/middleware.ts 后会覆盖。
   if [[ ! -f .next/server/middleware-manifest.json ]]; then
     printf '%s\n' '{"version":3,"middleware":{},"functions":{},"sortedMiddleware":[]}' >.next/server/middleware-manifest.json
   fi
   echo "[restart] 启动前端 next dev http://127.0.0.1:3000 …"
   nohup npm run dev >>"$ROOT/logs/frontend.out" 2>&1 &
   echo $! >"$ROOT/logs/frontend.pid"
-  # Next dev 启动阶段会删掉预置的 middleware-manifest；短暂补写，直至 Next 自行生成
-  (
-    MW_STUB='{"version":3,"middleware":{},"functions":{},"sortedMiddleware":[]}'
-    for _ in $(seq 1 120); do
-      mkdir -p "$ROOT/frontend/.next/server"
-      if [[ ! -f "$ROOT/frontend/.next/server/middleware-manifest.json" ]]; then
-        printf '%s\n' "$MW_STUB" >"$ROOT/frontend/.next/server/middleware-manifest.json"
-      fi
-      sleep 0.25
-    done
-  ) &
   # 等待 / 与 /api/* 首编译完成，降低 Cannot find module './NNN.js' 竞态
   echo "[restart] 等待 Next 编译就绪（首页 + /api 反代）…"
   for i in $(seq 1 120); do

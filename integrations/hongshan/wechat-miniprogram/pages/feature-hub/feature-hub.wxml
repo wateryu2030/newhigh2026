@@ -1,0 +1,29 @@
+<view class="page-root">
+  <rh-nav
+    title="全部功能"
+    showBack="{{true}}"
+    showBell="{{false}}"
+    showSettings="{{false}}"
+    bind:back="onBack"
+  />
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="intro">
+      <text class="intro-tit">与桌面端一致 + 扩展页</text>
+      <text class="intro-sub">前段为侧栏同源菜单；其后为桌面常用页（仅 Web 内嵌）。「Web」需在公众平台配置业务域名 htma.newhigh.com.cn。</text>
+    </view>
+    <view class="grid">
+      <view
+        class="cell"
+        wx:for="{{items}}"
+        wx:key="label"
+        bindtap="onTapItem"
+        data-index="{{index}}"
+      >
+        <text class="cell-tag" wx:if="{{item.t === 'web'}}">Web</text>
+        <text class="cell-tag native" wx:else>小程序</text>
+        <text class="cell-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="page-bottom-space"></view>
+  </scroll-view>
+</view>

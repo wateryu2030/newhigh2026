@@ -215,3 +215,13 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.35s ease-out forwards;
 }
+
+/* 移动端触控目标（约 44pt） */
+@layer utilities {
+  .min-h-touch {
+    min-height: 44px;
+  }
+  .min-w-touch {
+    min-width: 44px;
+  }
+}

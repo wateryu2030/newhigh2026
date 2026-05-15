@@ -247,7 +247,7 @@ def _run_pipeline_job(job_id: str) -> None:
             )
             conn.close()
         except Exception:
-            pass
+            _log.error("JSON decode failed", exc_info=True)
 
 
 def build_pipeline_router() -> APIRouter:
@@ -295,7 +295,7 @@ def build_pipeline_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
             return json_fail(str(e)[:200], status_code=500)
 
         t = threading.Thread(target=_run_pipeline_job, args=(job_id,), daemon=True)
@@ -339,7 +339,7 @@ def build_pipeline_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
             return json_fail(str(e)[:200], status_code=500)
 
     @r.get("/jobs/{job_id}")
@@ -487,7 +487,7 @@ def build_pipeline_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Pipeline stage failed", exc_info=True)
             return json_fail(str(e)[:200], status_code=500)
         return json_ok({"job_id": job_id, "promoted": promoted, "status": "completed"}, source="pipeline")
 

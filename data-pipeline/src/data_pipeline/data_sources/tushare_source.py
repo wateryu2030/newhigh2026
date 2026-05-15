@@ -15,8 +15,9 @@ from typing import Any, List, Optional
 
 from core.ashare_symbol import ashare_symbol_to_tushare_ts_code, strip_ashare_code
 
-from .ashare_daily_kline import _pop_proxy_env_vars, _restore_env
+from .ashare_daily_kline import _direct_http_guard
 from .base import BaseDataSource, register_source
+from .cn_trading_calendar import cn_ashare_increment_end_yyyymmdd, incremental_range_empty
 
 
 def _tushare_token_from_env() -> str:
@@ -34,6 +35,10 @@ class TushareDailySource(BaseDataSource):
     @property
     def source_id(self) -> str:
         return "tushare_daily"
+
+    def default_end_key(self) -> str:
+        """与东财一致：周末用周五作增量截止，减少与交易日边界不一致的困惑。"""
+        return cn_ashare_increment_end_yyyymmdd()
 
     @staticmethod
     def code_to_ts_code(raw: str) -> Optional[str]:
@@ -96,8 +101,7 @@ class TushareDailySource(BaseDataSource):
                 f"TUSHARE_TOKEN 长度过短({len(token)})，疑似占位符或未粘贴完整；"
                 "文档里的「你的token」需换成 tushare.pro 个人中心的真实 token"
             )
-        saved = _pop_proxy_env_vars() if strip_proxy else {}
-        try:
+        with _direct_http_guard(strip_proxy):
             try:
                 import tushare as ts
             except ImportError:
@@ -124,8 +128,6 @@ class TushareDailySource(BaseDataSource):
                     f"有返回但规范化后为空；trade_date 样例 {df['trade_date'].head(3).tolist()}，列={list(df.columns)}"
                 )
             return f"单只探测成功（{len(norm)} 行），若批量仍 0 行可尝试减小批量或看接口限流"
-        finally:
-            _restore_env(saved)
 
     def fetch(
         self,
@@ -140,56 +142,53 @@ class TushareDailySource(BaseDataSource):
         if not token:
             return None
         strip_proxy = bool(kwargs.get("strip_proxy_env", False))
-        saved_proxy = _pop_proxy_env_vars() if strip_proxy else {}
         try:
+            import tushare as ts
+        except ImportError:
+            return None
+        ts.set_token(token)
+        pro = ts.pro_api()
+        end = end_key or self.default_end_key()
+        if not start_key:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+        else:
             try:
-                import tushare as ts
-            except ImportError:
-                return None
-            ts.set_token(token)
-            pro = ts.pro_api()
-            end = end_key or self.default_end_key()
-            if not start_key:
-                start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
-            else:
-                try:
-                    from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
-                    start = from_d.strftime("%Y%m%d")
-                except Exception:
-                    start = end
-            if start > end:
-                return pd.DataFrame()
-            codes = [str(x).strip() for x in (ts_codes or []) if str(x).strip()]
-            if not codes:
-                return pd.DataFrame()
-            sleep_sec = float(kwargs.get("request_sleep_sec") or 0)
+                from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
+                start = from_d.strftime("%Y%m%d")
+            except Exception:
+                start = end
+        if start > end:
+            return pd.DataFrame()
+        codes = [str(x).strip() for x in (ts_codes or []) if str(x).strip()]
+        if not codes:
+            return pd.DataFrame()
+        sleep_sec = float(kwargs.get("request_sleep_sec") or 0)
 
-            def _pull_batch(ts_list: List[str]) -> Any:
+        def _pull_batch(ts_list: List[str]) -> Any:
+            try:
+                big = pro.daily(ts_code=",".join(ts_list), start_date=start, end_date=end)
+                norm = self._normalize_pro_daily_df(big, pd)
+                if norm is not None and not norm.empty:
+                    return norm
+            except Exception:
+                pass
+            parts = []
+            for tc in ts_list:
                 try:
-                    big = pro.daily(ts_code=",".join(ts_list), start_date=start, end_date=end)
-                    norm = self._normalize_pro_daily_df(big, pd)
+                    one = pro.daily(ts_code=tc, start_date=start, end_date=end)
+                    norm = self._normalize_pro_daily_df(one, pd)
                     if norm is not None and not norm.empty:
-                        return norm
+                        parts.append(norm)
                 except Exception:
-                    pass
-                parts = []
-                for tc in ts_list:
-                    try:
-                        one = pro.daily(ts_code=tc, start_date=start, end_date=end)
-                        norm = self._normalize_pro_daily_df(one, pd)
-                        if norm is not None and not norm.empty:
-                            parts.append(norm)
-                    except Exception:
-                        continue
-                    if sleep_sec > 0:
-                        time.sleep(sleep_sec)
-                if not parts:
-                    return pd.DataFrame()
-                return pd.concat(parts, ignore_index=True)
+                    continue
+                if sleep_sec > 0:
+                    time.sleep(sleep_sec)
+            if not parts:
+                return pd.DataFrame()
+            return pd.concat(parts, ignore_index=True)
 
+        with _direct_http_guard(strip_proxy):
             return _pull_batch(codes)
-        finally:
-            _restore_env(saved_proxy)
 
     def write(self, conn: Any, data: Any) -> int:
         if data is None or (hasattr(data, "empty") and data.empty):
@@ -303,6 +302,8 @@ class TushareDailySource(BaseDataSource):
         def _write_chunk(start_key: Optional[str], chunk: List[str]) -> int:
             if not chunk:
                 return 0
+            if start_key and incremental_range_empty(start_key, end):
+                return 0
             data = self.fetch(start_key=start_key, end_key=end, ts_codes=chunk, **kwargs)
             if data is None or (hasattr(data, "empty") and data.empty):
                 return 0
@@ -330,8 +331,14 @@ class TushareDailySource(BaseDataSource):
                         f"({c0}…{c1}) → +{n} 行，累计 {total_written} 行"
                     )
                     if n == 0 and chunk and empty_diag_left > 0:
-                        if "增量" in label:
-                            _log("  本批增量 0 行：多为全局最新日后尚无新交易日，一般属正常")
+                        if start_key and incremental_range_empty(start_key, end):
+                            _log(
+                                f"  跳过：无待拉取区间（截止 {end}，末交易日已对齐）"
+                            )
+                        elif "增量" in label:
+                            _log(
+                                "  本批增量 0 行：接口无数据/限流/token；非「已对齐」时请检查网络与积分"
+                            )
                         else:
                             _log(f"  抽样诊断: {self._diagnose_tushare(end, strip_proxy_env)}")
                         empty_diag_left -= 1

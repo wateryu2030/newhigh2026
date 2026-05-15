@@ -8,10 +8,12 @@ import os
 import sys
 import time
 from collections import defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from .base import BaseDataSource, register_source
+from .cn_trading_calendar import cn_ashare_increment_end_yyyymmdd, incremental_range_empty
 
 
 def _pop_proxy_env_vars() -> Dict[str, str]:
@@ -31,12 +33,98 @@ def _restore_env(saved: Dict[str, str]) -> None:
         os.environ.update(saved)
 
 
+@contextmanager
+def _direct_http_guard(strip_proxy_env: bool):
+    """
+    --no-proxy 时：除清空 *proxy* 环境变量外，临时屏蔽 urllib / requests 的代理发现，
+    避免 macOS 仍走系统或坏掉的 HTTP 代理（仅清空环境变量不够，requests 仍会 trust_env）。
+    """
+    saved_proxy: Dict[str, str] = {}
+    saved_getproxies = None
+    saved_requests_gep = None
+    try:
+        if strip_proxy_env:
+            saved_proxy = _pop_proxy_env_vars()
+            import urllib.request as urllib_request
+
+            saved_getproxies = urllib_request.getproxies
+
+            def _no_system_proxy() -> Dict[str, str]:
+                return {}
+
+            urllib_request.getproxies = _no_system_proxy  # type: ignore[assignment]
+            try:
+                import requests.utils as requests_utils
+
+                saved_requests_gep = requests_utils.get_environ_proxies
+
+                def _no_req_proxy(*_a: object, **_k: object) -> dict[str, str]:
+                    return {}
+
+                requests_utils.get_environ_proxies = _no_req_proxy  # type: ignore[assignment]
+            except ImportError:
+                pass
+        yield
+    finally:
+        if strip_proxy_env:
+            if saved_requests_gep is not None:
+                import requests.utils as requests_utils
+
+                requests_utils.get_environ_proxies = saved_requests_gep  # type: ignore[assignment]
+            if saved_getproxies is not None:
+                import urllib.request as urllib_request
+
+                urllib_request.getproxies = saved_getproxies  # type: ignore[assignment]
+            _restore_env(saved_proxy)
+
+
+def _try_tushare_when_ashare_empty(
+    conn: Any,
+    chunk: List[str],
+    end: str,
+    strip_proxy_env: bool,
+    kwargs: Dict[str, Any],
+) -> int:
+    """
+    东财批次写入 0 行时，可选改用 Tushare 拉同一批 code（需 TUSHARE_TOKEN）。
+
+    环境变量：ASHARE_ON_EMPTY_TRY_TUSHARE=1|true|yes|on
+    """
+    flag = (os.environ.get("ASHARE_ON_EMPTY_TRY_TUSHARE") or "").strip().lower()
+    if flag not in ("1", "true", "yes", "on"):
+        return 0
+    try:
+        from .tushare_source import TushareDailySource, _tushare_token_from_env
+    except ImportError:
+        return 0
+    if not _tushare_token_from_env():
+        return 0
+    kw2: Dict[str, Any] = {
+        "verbose": False,
+        "end_key": end,
+        "strip_proxy_env": strip_proxy_env,
+    }
+    rs = kwargs.get("request_sleep_sec")
+    if rs is not None:
+        kw2["request_sleep_sec"] = rs
+    tcs = kwargs.get("tushare_chunk_size")
+    if tcs is not None:
+        kw2["tushare_chunk_size"] = tcs
+    return int(
+        TushareDailySource().run_incremental(conn, codes=list(chunk), **kw2) or 0
+    )
+
+
 class AShareDailyKlineSource(BaseDataSource):
     """A 股日 K（前复权），增量 key 为日期 YYYYMMDD。"""
 
     @property
     def source_id(self) -> str:
         return "ashare_daily_kline"
+
+    def default_end_key(self) -> str:
+        """默认结束日：周末回退至周五，避免东财在 end 为周六/日时整段空表。"""
+        return cn_ashare_increment_end_yyyymmdd()
 
     def get_last_key(self, conn: Any) -> Optional[str]:
         try:
@@ -110,26 +198,24 @@ class AShareDailyKlineSource(BaseDataSource):
             return None
         try:
             import pandas as pd
+            import akshare as ak
         except ImportError:
             return None
         strip_proxy_env = bool(kwargs.get("strip_proxy_env", False))
-        saved_proxy = _pop_proxy_env_vars() if strip_proxy_env else {}
-        try:
+
+        end = end_key or self.default_end_key()
+        if not start_key:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+        else:
             try:
-                import akshare as ak
-            except ImportError:
-                return None
-            end = end_key or self.default_end_key()
-            if not start_key:
-                start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
-            else:
-                try:
-                    from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
-                    start = from_d.strftime("%Y%m%d")
-                except Exception:
-                    start = end
-            if start > end:
-                return pd.DataFrame()
+                from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
+                start = from_d.strftime("%Y%m%d")
+            except Exception:
+                start = end
+        if start > end:
+            return pd.DataFrame()
+
+        with _direct_http_guard(strip_proxy_env):
             # 勿用 pop：run_incremental 会对多批重复传入同一 kwargs
             request_sleep_sec = float(kwargs.get("request_sleep_sec") or 0)
             out = []
@@ -161,8 +247,6 @@ class AShareDailyKlineSource(BaseDataSource):
             if not out:
                 return pd.DataFrame()
             return pd.concat(out, ignore_index=True)
-        finally:
-            _restore_env(saved_proxy)
 
     def _diagnose_one_code(
         self,
@@ -173,21 +257,25 @@ class AShareDailyKlineSource(BaseDataSource):
         strip_proxy_env: bool = False,
     ) -> str:
         """抽样说明单标的拉取失败原因（网络/代理/空表/列名）。"""
-        saved_proxy = _pop_proxy_env_vars() if strip_proxy_env else {}
         try:
+            import akshare as ak
+        except ImportError as e:
+            return f"未安装 akshare: {e}"
+        end = end_key or self.default_end_key()
+        if not start_key:
+            start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
+        else:
             try:
-                import akshare as ak
-            except ImportError as e:
-                return f"未安装 akshare: {e}"
-            end = end_key or self.default_end_key()
-            if not start_key:
-                start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
-            else:
-                try:
-                    from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
-                    start = from_d.strftime("%Y%m%d")
-                except Exception:
-                    start = end
+                from_d = datetime.strptime(start_key[:8], "%Y%m%d") + timedelta(days=1)
+                start = from_d.strftime("%Y%m%d")
+            except Exception:
+                start = end
+        if start > end:
+            return (
+                f"无待拉取区间（增量起点 {start} 已晚于截止日 {end}，库内已对齐；非网络故障）"
+            )
+
+        with _direct_http_guard(strip_proxy_env):
             parts: List[str] = []
             df_em = None
             if getattr(ak, "stock_zh_a_hist_em", None):
@@ -207,12 +295,10 @@ class AShareDailyKlineSource(BaseDataSource):
                     parts.append(f"备用 stock_zh_a_hist 异常: {e!r}")
             raw = df_em if df_em is not None and not df_em.empty else df_alt
             if raw is None or raw.empty:
-                parts.append(f"接口返回空表（区间 {start}~{end}）")
+                parts.append(f"接口返回空表（区间 {start}~{end}）；可检查代理/东财可用性")
             elif self._hist_df_to_standard(raw, code) is None:
                 parts.append(f"列无法识别，实际列: {list(raw.columns)[:12]}…")
             return "；".join(parts) if parts else "未知"
-        finally:
-            _restore_env(saved_proxy)
 
     def write(self, conn: Any, data: Any) -> int:
         if data is None or (hasattr(data, "empty") and data.empty):
@@ -304,10 +390,17 @@ class AShareDailyKlineSource(BaseDataSource):
         def _write_chunk(start_key: Optional[str], chunk: List[str]) -> int:
             if not chunk:
                 return 0
-            data = self.fetch(start_key=start_key, end_key=end, codes=chunk, **kwargs)
-            if data is None or (hasattr(data, "empty") and data.empty):
+            if start_key and incremental_range_empty(start_key, end):
                 return 0
-            return self.write(conn, data)
+            data = self.fetch(start_key=start_key, end_key=end, codes=chunk, **kwargs)
+            n = 0
+            if data is not None and (not hasattr(data, "empty") or not data.empty):
+                n = self.write(conn, data)
+            if n == 0 and chunk and not (start_key and incremental_range_empty(start_key, end)):
+                n = _try_tushare_when_ashare_empty(
+                    conn, chunk, end, strip_proxy_env, kwargs
+                )
+            return n
 
         def _run_batches(
             label: str,
@@ -330,10 +423,15 @@ class AShareDailyKlineSource(BaseDataSource):
                         f"({lo}…{hi}) → +{n} 行，累计 {total_written} 行"
                     )
                     if n == 0 and chunk and empty_diag_left > 0:
-                        _log(
-                            f"  抽样诊断 {chunk[0]}: "
-                            f"{self._diagnose_one_code(chunk[0], start_key, end, strip_proxy_env=strip_proxy_env)}"
-                        )
+                        if start_key and incremental_range_empty(start_key, end):
+                            _log(
+                                f"  跳过抽样：无待拉取区间（截止 {end}，末交易日已对齐）"
+                            )
+                        else:
+                            _log(
+                                f"  抽样诊断 {chunk[0]}: "
+                                f"{self._diagnose_one_code(chunk[0], start_key, end, strip_proxy_env=strip_proxy_env)}"
+                            )
                         empty_diag_left -= 1
                 b += 1
 

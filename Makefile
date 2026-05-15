@@ -1,7 +1,7 @@
 # 缩短本地迭代闭环：常用入口集中在此（需在仓库根目录执行 make <target>）
 ROOT := $(abspath .)
 
-.PHONY: help dev-check gateway-restart pipeline-editable quant-readiness data-daily-ashare scheduler-backfill-restart sync-nav openclaw-iterate-ready openclaw-status openclaw-iteration-once openclaw-cursor-iterate openclaw-benign-loop check-openclaw-cursor-loop test-python-smoke
+.PHONY: help dev-check gateway-restart pipeline-editable quant-readiness data-daily-ashare scheduler-backfill-restart sync-nav openclaw-iterate-ready openclaw-status openclaw-iteration-once openclaw-cursor-iterate openclaw-benign-loop check-openclaw-cursor-loop test-python-smoke gateway-test smoke-test collector-test tunnel-health
 
 help:
 	@echo "Targets:"
@@ -19,6 +19,10 @@ help:
 	@echo "  make openclaw-benign-loop - 同上（脚本别名 openclaw_benign_loop.sh，§四 防循环）"
 	@echo "  make check-openclaw-cursor-loop - 检查 openclaw/cursor/.env 并冒烟生成规划文件"
 	@echo "  make test-python-smoke - 根目录 pytest：data_pipeline + strategy_engine + execution_engine（9 项）"
+	@echo "  make gateway-test - gateway/tests/（API 契约，OpenClaw+Cursor 改网关后建议跑）"
+	@echo "  make smoke-test   - 端到端冒烟: gateway 无 DB 启动 + 12 项 API 契约检查"
+	@echo "  make collector-test - data-pipeline 6 个 collector 单元测试 (19项)"
+	@echo "  make tunnel-health - Cloudflare Tunnel + 本机 :3000 自检（Error 1033 / 多子域）"
 
 dev-check:
 	bash $(ROOT)/scripts/restart_and_check.sh
@@ -65,3 +69,21 @@ test-python-smoke:
 	else \
 		python3 -m pytest "$(ROOT)/tests/test_data_pipeline.py" "$(ROOT)/tests/test_strategy_engine.py" "$(ROOT)/tests/test_execution_engine.py" -q; \
 	fi
+
+gateway-test:
+	@if [ -x "$(ROOT)/.venv/bin/python" ]; then \
+		"$(ROOT)/.venv/bin/python" -m pytest "$(ROOT)/gateway/tests/" -q; \
+	else \
+		python3 -m pytest "$(ROOT)/gateway/tests/" -q; \
+	fi
+
+smoke-test:
+	python3 -m pytest "$(ROOT)/gateway/tests/test_smoke.py" -q --no-header
+	@echo "---"
+	python3 -m pytest "$(ROOT)/data-pipeline/tests/test_collectors.py" -q --no-header
+
+collector-test:
+	python3 -m pytest "$(ROOT)/data-pipeline/tests/test_collectors.py" -v --no-header
+
+tunnel-health:
+	bash "$(ROOT)/scripts/cloudflare_tunnel_health.sh"

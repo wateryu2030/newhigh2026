@@ -4,9 +4,9 @@
 
 **仓库已对齐的实现**（持续迭代）：Celery `backtest_tasks`（含并行 `group` / `dispatch_parallel_backtests_async`）、`strategy_market_writer`、`pipeline_meta` / `backtest_task_errors`、`GET /api/system/health-detail` 与 **`GET /api/system/backtest-errors`**、可选 `redis_cache`、`POST /api/simulated/step` 默认风控、OpenClaw 入库门槛（`test_evolution_gate`）、首页 **HealthDetailStrip**、`AsyncState` 覆盖 **策略市场 `/strategies`、进化 `/evolution`、Alpha 工坊 `/alpha-lab`**（加载/错误/空态 + 移动端 `pb-24`）、**策略流水线** `POST /api/strategies/pipeline/*` 与前端 `api.pipeline*`（`frontend/src/api/client.ts`）。
 
-**交叉索引**：根目录 `cursor_auto_improve_plan.yaml`、`OPENCLAW_TASK_TREE.yaml`、`OPENCLAW_EVOLUTION.yaml`、`tasks/backlog.md`。
+**交叉索引**：根目录 `cursor_auto_improve_plan.yaml`、`OPENCLAW_TASK_TREE.yaml`、`OPENCLAW_EVOLUTION.yaml`、`tasks/backlog.md`。环境与路径纠偏（Next `.next`、DuckDB 锁、政策脚本路径）：**`docs/OPENCLAW_AUTONOMOUS_PROMPTS.md`**。
 
-**约定**：小步提交；`.env` 与密钥不入库；改 API 时同步 `frontend/src/api/client.ts`；前端可点击对外链接用 `https://htma.newhigh.com.cn/...`。
+**约定**：小步提交；`.env` 与密钥不入库；改 API 时同步 `frontend/src/api/client.ts`；前端可点击对外链接用 `https://htma.newhigh.com.cn/...`。**改侧栏/小程序菜单**时只编辑 `config/navigation_manifest.json`，并执行 `make sync-nav` 生成小程序 `menu.generated.js`（见 `docs/OPENCLAW_ORCHESTRATION.md` §4.5）。
 
 ---
 

@@ -3,6 +3,8 @@
 自动化填充 quant_system.duckdb，保证有足够数据量支撑情绪周期、游资席位、主线题材等分析。
 顺序：股票池 → 日K线(批量) → 涨停池/龙虎榜/资金流 → 可选实时行情。
 可单独运行或由 run_full_cycle.py 调用。
+
+写库前对 quant_system.duckdb 使用 flock（见 lib/duckdb_write_lock.py）；NEWHIGH_SKIP_DUCKDB_FLOCK=1 可跳过。
 """
 
 from __future__ import annotations
@@ -14,10 +16,17 @@ import time
 from datetime import datetime, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for d in ["data-pipeline/src", "core/src"]:
+for d in ["lib", "data-pipeline/src", "core/src"]:
     p = os.path.join(ROOT, d)
     if os.path.isdir(p) and p not in sys.path:
         sys.path.insert(0, p)
+
+try:
+    from lib.duckdb_write_lock import DuckDbFlockBusy, DuckDbFlockTimeout, duckdb_write_lock
+except ImportError:
+    DuckDbFlockBusy = Exception  # type: ignore
+    DuckDbFlockTimeout = Exception  # type: ignore
+    duckdb_write_lock = None  # type: ignore
 
 
 def _ensure_tables() -> None:
@@ -185,13 +194,27 @@ def main() -> int:
     parser.add_argument("--realtime", action="store_true", help="Also update realtime quotes")
     args = parser.parse_args()
 
-    run(
-        days_back=args.days,
-        max_symbols=args.max_symbols,
-        delay_seconds=args.delay,
-        skip_kline=args.skip_kline,
-        skip_realtime=not args.realtime,
-    )
+    def _run() -> None:
+        run(
+            days_back=args.days,
+            max_symbols=args.max_symbols,
+            delay_seconds=args.delay,
+            skip_kline=args.skip_kline,
+            skip_realtime=not args.realtime,
+        )
+
+    if duckdb_write_lock is None:
+        _run()
+    else:
+        try:
+            with duckdb_write_lock():
+                _run()
+        except DuckDbFlockBusy as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        except DuckDbFlockTimeout as e:
+            print(str(e), file=sys.stderr)
+            return 3
     print("ensure_market_data done.")
     return 0
 

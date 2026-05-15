@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 from typing import Dict, Any
+import logging
+_log = logging.getLogger(__name__)
 
 
 def update(
@@ -114,5 +116,5 @@ def update(
 
         record_pipeline_meta("data_orchestrator_last", result)
     except (ImportError, RuntimeError, ValueError, TypeError, OSError):
-        pass
+        _log.warning("Import failed, using fallback", exc_info=True)
     return result

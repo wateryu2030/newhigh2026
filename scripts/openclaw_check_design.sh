@@ -4,6 +4,16 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 source .venv/bin/activate 2>/dev/null || true
 
+# 与 Makefile / openclaw_iteration_prompt_once 一致：优先仓库 .venv，避免仅存在 python3 时 `python` 不存在
+if [[ -x "$ROOT/.venv/bin/python" ]]; then
+  PY=( "$ROOT/.venv/bin/python" )
+elif command -v python3 >/dev/null 2>&1; then
+  PY=( python3 )
+else
+  echo "未找到 Python：请安装 python3 或创建 $ROOT/.venv（见仓库 README / make pipeline-editable）" >&2
+  exit 1
+fi
+
 PASS=0
 FAIL=0
 report() { echo "[CHECK] $1"; }
@@ -14,7 +24,7 @@ echo "========== OpenClaw Design Goal Check =========="
 
 # --- OPENCLAW validation: must_compile ---
 report "must_compile (backend: Python imports)..."
-if python -c "
+if "${PY[@]}" -c "
 from core import OHLCV, Signal
 from data_engine import fetch_klines
 from feature_engine import build_feature_matrix

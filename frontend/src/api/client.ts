@@ -23,7 +23,9 @@ function getAuthHeaders(): Record<string, string> {
 
 function redirectToLogin(): void {
   if (typeof window === 'undefined') return;
-  if (window.location.pathname.startsWith('/login')) return;
+  const path = window.location.pathname || '';
+  if (path.startsWith('/login') || path.startsWith('/register')) return;
+  if (path === '/news' || path.startsWith('/news/')) return;
   const next = encodeURIComponent(window.location.pathname + window.location.search);
   window.location.href = `/login?next=${next}`;
 }
@@ -97,6 +99,28 @@ export async function apiPostJson<T>(path: string, body?: unknown): Promise<T> {
       : `/api${path}`;
   const res = await fetch(url, {
     method: 'POST',
+    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: body !== undefined ? JSON.stringify(body) : '{}',
+  });
+  if (res.status === 401) {
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+/** PATCH JSON，自动带 Bearer；401 跳转登录 */
+export async function apiPatchJson<T>(path: string, body?: unknown): Promise<T> {
+  const base = getApiBase();
+  const url = path.startsWith('http')
+    ? path
+    : base
+      ? `${base}/api${path}`
+      : `/api${path}`;
+  const res = await fetch(url, {
+    method: 'PATCH',
     cache: 'no-store',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: body !== undefined ? JSON.stringify(body) : '{}',
@@ -263,6 +287,38 @@ export interface MarketSummaryResponse {
   date_max?: string | null;
 }
 
+/** GET /api/screen/block-trade-sideways */
+export interface BlockTradeSidewaysParams {
+  block_days?: number;
+  lookback_days?: number;
+  range_ratio_max?: number;
+  trend_abs_max?: number;
+  ret_std_max?: number;
+  min_amount_wan?: number;
+  max_codes?: number;
+}
+
+export interface BlockTradeSidewaysItem {
+  code: string;
+  name: string;
+  block_amount_wan: number;
+  block_n: number;
+  range_ratio: number;
+  trend_ret: number;
+  ret_std: number;
+  hh: number;
+  ll: number;
+  last_close: number;
+  lookback_days_used: number;
+}
+
+export interface BlockTradeSidewaysResponse {
+  items: BlockTradeSidewaysItem[];
+  note?: string;
+  block_range?: { start: string; end: string };
+  params?: Record<string, unknown>;
+}
+
 export const api = {
   baseURL: () => {
     const b = getApiBase();
@@ -276,6 +332,22 @@ export const api = {
       `/data/daily-coverage${limitCodes != null ? `?limit_codes=${limitCodes}` : ''}`
     ),
   marketSummary: () => apiGet<MarketSummaryResponse>('/market/summary'),
+  /** 大宗成交 × 日 K 区间震荡筛选（AkShare 大宗 + DuckDB 日线） */
+  screenBlockTradeSideways: (p?: BlockTradeSidewaysParams) => {
+    const q = new URLSearchParams();
+    if (p?.block_days != null) q.set('block_days', String(p.block_days));
+    if (p?.lookback_days != null) q.set('lookback_days', String(p.lookback_days));
+    if (p?.range_ratio_max != null) q.set('range_ratio_max', String(p.range_ratio_max));
+    if (p?.trend_abs_max != null) q.set('trend_abs_max', String(p.trend_abs_max));
+    if (p?.ret_std_max != null) q.set('ret_std_max', String(p.ret_std_max));
+    if (p?.min_amount_wan != null) q.set('min_amount_wan', String(p.min_amount_wan));
+    if (p?.max_codes != null) q.set('max_codes', String(p.max_codes));
+    const qs = q.toString();
+    return apiGet<BlockTradeSidewaysResponse>(
+      `/screen/block-trade-sideways${qs ? `?${qs}` : ''}`,
+      { unwrapEnvelope: true, timeoutMs: 120_000 }
+    );
+  },
   marketLimitup: (limit?: number) =>
     apiGet<LimitupDrillItem[]>(`/market/limitup${limit != null ? `?limit=${limit}` : ''}`),
   marketFundflow: (limit?: number) =>
@@ -1097,10 +1169,15 @@ export interface StockQASymbolBlock {
   errors?: string[];
   quote?: {
     last_price?: number;
-    change_pct?: number;
+    change_pct?: number | null;
     volume?: number;
     amount?: number;
     snapshot_time?: string | null;
+    /** 日线基准日（优先于「当前时间」展示） */
+    trade_date?: string | null;
+    prev_trade_date?: string | null;
+    basis?: 'daily_close' | 'daily_single' | 'realtime';
+    note?: string;
   };
   financial?: {
     report_date?: string | null;
@@ -1143,6 +1220,8 @@ export interface StockQAAnalyzeRequest {
   ner_mode?: 'hybrid' | 'rules_only' | 'llm_only';
   symbols_override?: string[];
   include_lstm?: boolean;
+  /** 每只股票 LLM 差异化结论（需网关配置模型 Key） */
+  use_llm_analysis?: boolean;
 }
 
 export interface StockQAJobPayload {
@@ -1209,4 +1288,72 @@ export async function getStockQAJobReportMarkdown(jobId: string): Promise<string
   }
   if (!res.ok) throw new Error(`stock_qa job report: ${res.status}`);
   return res.text();
+}
+
+/** 用户中心（需 JWT） */
+export interface UserProfile {
+  user_id: string;
+  username: string;
+  email: string;
+  phone: string;
+  role: string;
+  status: string;
+  created_at: string | null;
+  display_name?: string;
+  avatar_url?: string;
+  wechat_bound?: boolean;
+  feishu_bound?: boolean;
+}
+
+export interface AuthOAuthUrlPayload {
+  configured: boolean;
+  authorize_url: string | null;
+  hint?: string;
+  state?: string;
+}
+
+export async function getWechatAuthUrl(): Promise<AuthOAuthUrlPayload> {
+  return apiGet<AuthOAuthUrlPayload>('/auth/wechat/url', { unwrapEnvelope: true });
+}
+
+export async function getFeishuAuthUrl(): Promise<AuthOAuthUrlPayload> {
+  return apiGet<AuthOAuthUrlPayload>('/auth/feishu/url', { unwrapEnvelope: true });
+}
+
+export async function patchUserProfile(body: {
+  display_name?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+}): Promise<void> {
+  const json = await apiPatchJson<{ ok?: boolean; data?: { updated?: boolean }; error?: string }>(
+    '/user/profile',
+    body,
+  );
+  if (json && typeof json === 'object' && json.ok === false) {
+    throw new Error((json as { error?: string }).error || '更新失败');
+  }
+}
+
+export interface QuotaPayload {
+  day: string;
+  stock_qa: { used: number; limit: number };
+  backtest: { used: number; limit: number };
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+  return apiGet<UserProfile>('/user/profile', { unwrapEnvelope: true });
+}
+
+export async function getUserQuota(): Promise<QuotaPayload> {
+  return apiGet<QuotaPayload>('/user/quota', { unwrapEnvelope: true });
+}
+
+export async function postChangePassword(body: {
+  old_password: string;
+  new_password: string;
+}): Promise<void> {
+  const json = await apiPostJson<{ ok?: boolean; error?: string }>('/user/change-password', body);
+  if (json && typeof json === 'object' && 'ok' in json && json.ok === false) {
+    throw new Error((json as { error?: string }).error || 'change password failed');
+  }
 }

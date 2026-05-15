@@ -121,6 +121,25 @@ OPENCLAW_CURSOR_PLAN_ONLY=1 bash scripts/openclaw_benign_loop.sh
 
 ---
 
+## 五、闭环验收（OpenClaw 规划 + Cursor 改代码之后）
+
+在仓库根执行（确认 **`.venv`** 已装依赖）：
+
+```bash
+make test-python-smoke          # 根目录 9 个 pytest（data/strategy/execution）
+make gateway-test               # gateway/tests/（API 契约）
+```
+
+或一行：
+
+```bash
+.venv/bin/python -m pytest tests/test_data_pipeline.py tests/test_strategy_engine.py tests/test_execution_engine.py gateway/tests/ -q
+```
+
+策略市场「去 stub」等改动以 **`gateway/tests/` 绿** 为最低验收；前端 E2E 见 `npm run test:e2e`（`frontend/`）。
+
+---
+
 ## OpenClaw 侧不要做什么
 
 - 不要依赖 **`python3 scripts/news_collector.py`** 等不存在路径（见 `docs/OPENCLAW_CRON_POLICY_COLLECTOR.md`）。  

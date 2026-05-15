@@ -1,0 +1,57 @@
+# OpenClaw：红山量化 × 实体证券能力 — 自我迭代任务定义
+# 可与 OPENCLAW_AUTONOMOUS_DEV.yaml 并列使用；执行时以仓库根为 cwd。
+
+agent:
+  name: hongshan_entity_securities_iteration
+  mode: autonomous
+  workspace_repo: /Users/apple/Ahope/newhigh
+
+objective: |
+  在保持安全与合规前提下，持续提升红山量化平台对「实体证券（A 股为主）」交易与运营的支持能力：
+  订单/持仓/资金与实盘或经纪通道可对齐、可观测、可回滚；模拟与实盘边界清晰。
+
+# 自主迭代闭环（失败即修，再测再提交）
+loop:
+  enabled: true
+  max_retries_per_step: 5
+  steps:
+    - sync_context: 读 docs/OPENCLAW_TASK_ENTITY_SECURITIES_ITERATION.md 与本文件
+    - triage: 从 evolution/ERRORS.md、pytest、Gateway /health、最近 CI 选最高优先级缺口
+    - implement: 最小可行改动，不扩大无关重构
+    - verify: pytest 相关包 + bash scripts/check_frontend_backend.sh（若改 API）
+    - record: 写 evolution/improvement_log_*.md 与 LEARNINGS 要点
+    - commit: 按模块原子提交（可选，以用户 Git 策略为准）
+
+priority_workstreams:
+  - id: execution_broker
+    focus: execution-engine brokers（SimulatedBroker / LiveBroker）、paper_trading、与 Gateway 交易/持仓 API 契约一致
+  - id: gateway_trade_api
+    focus: gateway 统一持仓/订单/模拟盘路由；JWT 与审计字段；错误码稳定
+  - id: data_and_reconcile
+    focus: DuckDB 持仓/成交与上游一致性；日 K/实时与执行层时间对齐；锁库与排程文档
+  - id: hongshan_stack
+    focus: integrations/hongshan 与主 Gateway 8010/8000 边界；小程序公开浏览与后续登录权益切换
+  - id: compliance_observability
+    focus: 免责声明、权限、审计日志占位；/api/system/* 健康与任务可观测
+
+constraints:
+  - 生产密钥与账户凭证不入库；仅用 .env.example 说明
+  - 默认不开启真实下单；EXECUTION_MODE 与经纪开关需显式配置
+  - A 股代码与交易时段规则以 core/ashare_symbol 与现有 gateway 逻辑为准
+
+success_metrics:
+  - 相关 pytest 通过；关键 API 手工 smoke 通过
+  - 文档与 evolution 有可追溯记录
+  - 无已知 P0 回归（执行 stub 行为未静默破坏）
+
+skills_suggested:
+  - ~/.agents/skills/api-and-interface-design
+  - ~/.agents/skills/security-and-hardening
+  - ~/.agents/skills/test-driven-development
+  - 仓库 .cursor/skills/a-stock-monitor-sanitized（行情与情绪）
+
+references:
+  - docs/OPENCLAW_TASK_ENTITY_SECURITIES_ITERATION.md
+  - docs/OPENCLAW_QUANT_ECOSYSTEM_AND_SAFETY.md
+  - integrations/hongshan/README.md
+  - execution-engine/src/execution_engine/brokers/

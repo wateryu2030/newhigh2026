@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 from typing import Any, Dict, List, Optional
+import logging
+_log = logging.getLogger(__name__)
 
 try:
     from system_core.celery_app import app
@@ -79,7 +81,7 @@ if app is not None:
                     strategy_id=str(payload.get("strategy_id") or ""),
                 )
             except Exception:
-                pass
+                _log.error("Strategy execution failed", exc_info=True)
             raise
 
     @app.task(name="system_core.tasks.backtest_tasks.run_parallel_backtests_group")

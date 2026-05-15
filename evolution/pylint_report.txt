@@ -1,27 +1,125 @@
-************* Module data_engine.clickhouse_storage
-data-engine/src/data_engine/clickhouse_storage.py:62:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.connector_akshare
-data-engine/src/data_engine/connector_akshare.py:37:15: W0718: Catching too general exception Exception (broad-exception-caught)
-data-engine/src/data_engine/connector_akshare.py:47:11: W0718: Catching too general exception Exception (broad-exception-caught)
-data-engine/src/data_engine/connector_akshare.py:121:11: W0718: Catching too general exception Exception (broad-exception-caught)
-data-engine/src/data_engine/connector_akshare.py:162:11: W0718: Catching too general exception Exception (broad-exception-caught)
-data-engine/src/data_engine/connector_akshare.py:192:11: W0718: Catching too general exception Exception (broad-exception-caught)
-************* Module data_engine.connector_astock_duckdb
-data-engine/src/data_engine/connector_astock_duckdb.py:41:4: C0415: Import outside toplevel (core.data_service.db.get_conn) (import-outside-toplevel)
-************* Module data_engine.connector_binance
-data-engine/src/data_engine/connector_binance.py:16:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.connector_yahoo
-data-engine/src/data_engine/connector_yahoo.py:19:0: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
-************* Module data_engine.data_pipeline
-data-engine/src/data_engine/data_pipeline.py:53:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
-data-engine/src/data_engine/data_pipeline.py:91:0: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
-************* Module data_engine.wechat_collector
-data-engine/src/data_engine/wechat_collector.py:306:17: W0511: TODO: 实现降级模式 (fixme)
+************* Module tests.test_ashare_symbol
+core/tests/test_ashare_symbol.py:3:0: E0401: Unable to import 'core.ashare_symbol' (import-error)
+************* Module tests.test_data_service
+core/tests/test_data_service.py:23:8: E0401: Unable to import 'core.data_service.base' (import-error)
+core/tests/test_data_service.py:23:8: C0415: Import outside toplevel (core.data_service.base.BaseService) (import-outside-toplevel)
+core/tests/test_data_service.py:41:26: W0212: Access to a protected member _connection of a client class (protected-access)
+core/tests/test_data_service.py:47:26: W0212: Access to a protected member _connection of a client class (protected-access)
+core/tests/test_data_service.py:59:8: E0401: Unable to import 'core.data_service.stock_service' (import-error)
+core/tests/test_data_service.py:59:8: C0415: Import outside toplevel (core.data_service.stock_service.StockService) (import-outside-toplevel)
+core/tests/test_data_service.py:117:8: E0401: Unable to import 'core.data_service.news_service' (import-error)
+core/tests/test_data_service.py:117:8: C0415: Import outside toplevel (core.data_service.news_service.NewsService) (import-outside-toplevel)
+core/tests/test_data_service.py:162:8: E0401: Unable to import 'core.data_service.signal_service' (import-error)
+core/tests/test_data_service.py:162:8: C0415: Import outside toplevel (core.data_service.signal_service.SignalService) (import-outside-toplevel)
+core/tests/test_data_service.py:204:8: E0401: Unable to import 'core.data_service.emotion_service' (import-error)
+core/tests/test_data_service.py:204:8: C0415: Import outside toplevel (core.data_service.emotion_service.EmotionService) (import-outside-toplevel)
+************* Module tests.test_types
+core/tests/test_types.py:5:0: E0401: Unable to import 'core' (import-error)
+core/tests/test_types.py:16:4: C0104: Disallowed name "bar" (disallowed-name)
+************* Module src.core.analysis.financial_analyzer
+core/src/core/analysis/financial_analyzer.py:122:8: W0613: Unused argument 'report_date' (unused-argument)
+************* Module tests.test_connector_astock_duckdb
+data-engine/tests/test_connector_astock_duckdb.py:6:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:10:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:10:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb._order_book_id_to_symbol) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:18:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:18:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb._symbol_to_order_book_id) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:30:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:31:4: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:31:4: C0415: Import outside toplevel (data_engine.connector_astock_duckdb.fetch_klines_from_astock_duckdb) (import-outside-toplevel)
+data-engine/tests/test_connector_astock_duckdb.py:57:8: E0401: Unable to import 'data_engine.connector_astock_duckdb' (import-error)
+data-engine/tests/test_connector_astock_duckdb.py:57:8: C0415: Import outside toplevel (data_engine.connector_astock_duckdb.get_astock_duckdb_available) (import-outside-toplevel)
+************* Module tests.test_connector_akshare
+data-engine/tests/test_connector_akshare.py:5:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_akshare.py:7:0: E0401: Unable to import 'core.ashare_symbol' (import-error)
+data-engine/tests/test_connector_akshare.py:9:0: E0401: Unable to import 'data_engine.connector_akshare' (import-error)
+data-engine/tests/test_connector_akshare.py:24:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_akshare.py:9:0: C0411: third party import "data_engine.connector_akshare.fetch_klines_akshare" should be placed before first party import "core.ashare_symbol.normalize_ashare_symbol"  (wrong-import-order)
+************* Module tests.test_connector_yahoo
+data-engine/tests/test_connector_yahoo.py:5:0: E0401: Unable to import 'pytest' (import-error)
+data-engine/tests/test_connector_yahoo.py:7:0: E0401: Unable to import 'data_engine' (import-error)
+data-engine/tests/test_connector_yahoo.py:8:0: E0401: Unable to import 'data_engine.connector_yahoo' (import-error)
+data-engine/tests/test_connector_yahoo.py:13:4: C0415: Import outside toplevel (pandas) (import-outside-toplevel)
+data-engine/tests/test_connector_yahoo.py:14:4: C0415: Import outside toplevel (datetime.datetime, datetime.timezone) (import-outside-toplevel)
+data-engine/tests/test_connector_yahoo.py:33:4: E0401: Unable to import 'core' (import-error)
+data-engine/tests/test_connector_yahoo.py:33:4: C0415: Import outside toplevel (core.OHLCV) (import-outside-toplevel)
+************* Module tests.test_connector_binance
+data-engine/tests/test_connector_binance.py:5:0: E0401: Unable to import 'data_engine.connector_binance' (import-error)
+************* Module src.data_engine.clickhouse_storage
+data-engine/src/data_engine/clickhouse_storage.py:8:0: E0401: Unable to import 'core' (import-error)
+************* Module src.data_engine.connector_yahoo
+data-engine/src/data_engine/connector_yahoo.py:6:0: E0401: Unable to import 'core' (import-error)
+************* Module src.data_engine.connector_akshare
+data-engine/src/data_engine/connector_akshare.py:9:0: E0401: Unable to import 'core' (import-error)
+data-engine/src/data_engine/connector_akshare.py:10:0: E0401: Unable to import 'core.ashare_symbol' (import-error)
+************* Module src.data_engine.connector_binance
+data-engine/src/data_engine/connector_binance.py:8:0: E0401: Unable to import 'core' (import-error)
+************* Module src.data_engine.connector_tushare
+data-engine/src/data_engine/connector_tushare.py:14:0: E0401: Unable to import 'core' (import-error)
+data-engine/src/data_engine/connector_tushare.py:15:0: E0401: Unable to import 'core.ashare_symbol' (import-error)
+************* Module src.data_engine.connector_astock_duckdb
+data-engine/src/data_engine/connector_astock_duckdb.py:11:0: E0401: Unable to import 'core' (import-error)
+data-engine/src/data_engine/connector_astock_duckdb.py:12:0: E0401: Unable to import 'core.ashare_symbol' (import-error)
+data-engine/src/data_engine/connector_astock_duckdb.py:16:0: E0401: Unable to import 'core.data_service.db' (import-error)
+data-engine/src/data_engine/connector_astock_duckdb.py:41:4: E0401: Unable to import 'core.data_service.db' (import-error)
+************* Module src.data_engine.realtime_stream
+data-engine/src/data_engine/realtime_stream.py:10:0: E0401: Unable to import 'core' (import-error)
+************* Module tests.test_trend_following
+strategy/tests/test_trend_following.py:5:0: E0401: Unable to import 'core' (import-error)
+strategy/tests/test_trend_following.py:6:0: E0401: Unable to import 'strategy_engine' (import-error)
+strategy/tests/test_trend_following.py:6:0: C0411: third party import "strategy_engine.trend_following_signals" should be placed before first party import "core.OHLCV"  (wrong-import-order)
+************* Module src.strategies.daily_stock_analysis.ai_decision
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:38:4: R0402: Use 'from google import genai' instead (consider-using-from-import)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:238:16: C0415: Import outside toplevel (google.genai.Client) (import-outside-toplevel)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:263:16: C0415: Import outside toplevel (google.generativeai) (import-outside-toplevel)
+strategy/src/strategies/daily_stock_analysis/ai_decision.py:574:27: W0613: Unused argument 'market_data' (unused-argument)
+************* Module src.strategies.daily_stock_analysis.data_fetcher
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:218:53: W0613: Unused argument 'symbols' (unused-argument)
+strategy/src/strategies/daily_stock_analysis/data_fetcher.py:233:51: W0613: Unused argument 'symbols' (unused-argument)
+************* Module src.strategies.daily_stock_analysis.main
+strategy/src/strategies/daily_stock_analysis/main.py:123:0: C0301: Line too long (123/120) (line-too-long)
+strategy/src/strategies/daily_stock_analysis/main.py:172:0: C0301: Line too long (126/120) (line-too-long)
+strategy/src/strategies/daily_stock_analysis/main.py:80:8: W0621: Redefining name 'results' from outer scope (line 248) (redefined-outer-name)
+************* Module src.strategies.daily_stock_analysis.news_analyzer
+strategy/src/strategies/daily_stock_analysis/news_analyzer.py:128:43: W0613: Unused argument 'markets' (unused-argument)
+************* Module src.strategy_engine.breakout
+strategy/src/strategy_engine/breakout.py:7:0: E0401: Unable to import 'core' (import-error)
+************* Module src.strategy_engine
+strategy/src/strategy_engine/__init__.py:2:0: E0401: Unable to import 'core' (import-error)
+************* Module src.strategy_engine.ai_fusion_strategy
+strategy/src/strategy_engine/ai_fusion_strategy.py:11:0: E0401: Unable to import 'strategy_engine.price_reference' (import-error)
+************* Module src.strategy_engine.trade_signal_aggregator
+strategy/src/strategy_engine/trade_signal_aggregator.py:5:0: E0401: Unable to import 'core' (import-error)
+strategy/src/strategy_engine/trade_signal_aggregator.py:6:0: E0401: Unable to import 'strategy_engine.price_reference' (import-error)
+************* Module src.strategy_engine.trend_following
+strategy/src/strategy_engine/trend_following.py:7:0: E0401: Unable to import 'core' (import-error)
+************* Module src.strategy_engine.mean_reversion
+strategy/src/strategy_engine/mean_reversion.py:7:0: E0401: Unable to import 'core' (import-error)
+************* Module tests.test_strategy_pool
+evolution-engine/tests/test_strategy_pool.py:3:0: E0401: Unable to import 'evolution_engine' (import-error)
+************* Module tests.test_alpha_scoring
+evolution-engine/tests/test_alpha_scoring.py:3:0: E0401: Unable to import 'evolution_engine' (import-error)
+************* Module src.evolution_engine.alpha_scoring
+evolution-engine/src/evolution_engine/alpha_scoring.py:15:4: W0613: Unused argument 'total_return' (unused-argument)
+************* Module src.evolution_engine.darwin_engine
+evolution-engine/src/evolution_engine/darwin_engine.py:17:4: W0613: Unused argument 'min_live_days' (unused-argument)
+************* Module src.ai_lab.strategy_generator
+ai-lab/src/ai_lab/strategy_generator.py:7:4: W0613: Unused argument 'description' (unused-argument)
+ai-lab/src/ai_lab/strategy_generator.py:9:4: W0613: Unused argument 'constraints' (unused-argument)
+************* Module src.ai_lab.rl_trader
+ai-lab/src/ai_lab/rl_trader.py:10:4: W0613: Unused argument 'df_prices' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:11:4: W0613: Unused argument 'reward_type' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:10:0: W0613: Unused argument 'kwargs' (unused-argument)
+ai-lab/src/ai_lab/rl_trader.py:29:8: C0415: Import outside toplevel (stable_baselines3.PPO) (import-outside-toplevel)
+ai-lab/src/ai_lab/rl_trader.py:50:8: C0415: Import outside toplevel (stable_baselines3.SAC) (import-outside-toplevel)
+************* Module src.ai_lab.optuna_optimizer
+ai-lab/src/ai_lab/optuna_optimizer.py:32:0: C0301: Line too long (121/120) (line-too-long)
+ai-lab/src/ai_lab/optuna_optimizer.py:5:0: E0401: Unable to import 'optuna' (import-error)
 
 
 Report
 ======
-1154 statements analysed.
+3354 statements analysed.
 
 Statistics by type
 ------------------
@@ -29,13 +127,13 @@ Statistics by type
 +---------+-------+-----------+-----------+------------+---------+
 |type     |number |old number |difference |%documented |%badname |
 +=========+=======+===========+===========+============+=========+
-|module   |15     |16         |-1.00      |86.67       |0.00     |
+|module   |65     |65         |=          |92.31       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|class    |6      |7          |-1.00      |100.00      |0.00     |
+|class    |28     |28         |=          |92.86       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|method   |19     |40         |-21.00     |94.74       |0.00     |
+|method   |158    |158        |=          |92.41       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
-|function |69     |65         |+4.00      |100.00      |0.00     |
+|function |141    |141        |=          |83.69       |0.00     |
 +---------+-------+-----------+-----------+------------+---------+
 
 
@@ -44,28 +142,49 @@ External dependencies
 ---------------------
 ::
 
-    akshare (data_engine.connector_akshare)
-    bs4 (data_engine.wechat_collector)
+    akshare (src.data_engine.connector_akshare)
+    bs4 (src.data_engine.wechat_collector)
     clickhouse_driver 
-      \-Client (data_engine.clickhouse_storage)
-    core (data_engine.clickhouse_storage,data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_binance,data_engine.connector_tushare,data_engine.connector_yahoo,data_engine.realtime_stream)
-      \-ashare_symbol (data_engine.connector_akshare,data_engine.connector_astock_duckdb,data_engine.connector_tushare)
-      \-data_service 
-        \-db (data_engine.connector_astock_duckdb)
-    data_engine 
-      \-clickhouse_storage (data_engine.data_pipeline)
-      \-connector_akshare (data_engine.data_pipeline)
-      \-connector_binance (data_engine.data_pipeline)
-      \-connector_tushare (data_engine.data_pipeline)
-    duckdb (data_engine.wechat_collector)
-    pandas (data_engine.connector_tushare)
-    requests (data_engine.connector_binance,data_engine.wechat_collector)
-    tushare (data_engine.connector_tushare)
-    websocket (data_engine.realtime_stream)
+      \-Client (src.data_engine.clickhouse_storage)
+    dashscope (src.strategies.daily_stock_analysis.ai_decision)
+    duckdb (src.core.data_service.base,src.core.data_service.db,src.core.data_service.market_service,src.data_engine.wechat_collector)
+    google 
+      \-genai (src.strategies.daily_stock_analysis.ai_decision)
+      | \-Client (src.strategies.daily_stock_analysis.ai_decision)
+      \-generativeai (src.strategies.daily_stock_analysis.ai_decision)
+    numpy (src.strategy_engine.breakout,src.strategy_engine.mean_reversion,src.strategy_engine.trend_following)
+    openai (src.strategies.daily_stock_analysis.ai_decision)
+    pandas (src.data_engine.connector_tushare,src.strategy_engine.base_strategy,tests.test_connector_akshare,tests.test_connector_astock_duckdb,tests.test_connector_yahoo)
+    requests (src.data_engine.connector_binance,src.data_engine.wechat_collector)
+    src 
+      \-core 
+      | \-ashare_symbol (src.core.data_service.market_service)
+      | \-data_service 
+      |   \-base (src.core.data_service.emotion_service,src.core.data_service.news_service,src.core.data_service.signal_service,src.core.data_service.stock_service)
+      |   \-db (src.core.data_service.market_service)
+      \-data_engine 
+      | \-clickhouse_storage (src.data_engine.data_pipeline)
+      | \-connector_akshare (src.data_engine.data_pipeline)
+      | \-connector_binance (src.data_engine.data_pipeline)
+      | \-connector_tushare (src.data_engine.data_pipeline)
+      \-evolution_engine 
+      | \-alpha_scoring (src.evolution_engine.darwin_engine)
+      | \-strategy_pool (src.evolution_engine.darwin_engine)
+      \-strategies 
+        \-daily_stock_analysis 
+          \-ai_decision (src.strategies.daily_stock_analysis.main)
+          \-config (src.strategies.daily_stock_analysis.ai_decision,src.strategies.daily_stock_analysis.data_fetcher,src.strategies.daily_stock_analysis.main,src.strategies.daily_stock_analysis.news_analyzer,src.strategies.daily_stock_analysis.notification,src.strategies.daily_stock_analysis.test_basic)
+          \-data_fetcher (src.strategies.daily_stock_analysis.main)
+          \-main (src.strategies.daily_stock_analysis.test_basic)
+          \-news_analyzer (src.strategies.daily_stock_analysis.main)
+          \-notification (src.strategies.daily_stock_analysis.main)
+    tushare (src.data_engine.connector_tushare)
+    websocket (src.data_engine.realtime_stream)
+    yaml (src.strategies.daily_stock_analysis.config)
 
 
 
-2549 lines have been analyzed
+7801 lines have been analyzed
 
 Raw metrics
 -----------
@@ -73,13 +192,13 @@ Raw metrics
 +----------+-------+------+---------+-----------+
 |type      |number |%     |previous |difference |
 +==========+=======+======+=========+===========+
-|code      |1687   |66.18 |2090     |-403.00    |
+|code      |4700   |60.25 |4701     |-1.00      |
 +----------+-------+------+---------+-----------+
-|docstring |412    |16.16 |417      |-5.00      |
+|docstring |1623   |20.81 |1623     |=          |
 +----------+-------+------+---------+-----------+
-|comment   |91     |3.57  |104      |-13.00     |
+|comment   |291    |3.73  |291      |=          |
 +----------+-------+------+---------+-----------+
-|empty     |359    |14.08 |401      |-42.00     |
+|empty     |1187   |15.22 |1187     |=          |
 +----------+-------+------+---------+-----------+
 
 
@@ -103,13 +222,13 @@ Messages by category
 +-----------+-------+---------+-----------+
 |type       |number |previous |difference |
 +===========+=======+=========+===========+
-|convention |1      |6        |6          |
+|convention |24     |23       |23         |
 +-----------+-------+---------+-----------+
-|refactor   |5      |5        |5          |
+|refactor   |1      |4        |4          |
 +-----------+-------+---------+-----------+
-|warning    |6      |9        |9          |
+|warning    |15     |19       |19         |
 +-----------+-------+---------+-----------+
-|error      |0      |8        |8          |
+|error      |44     |44       |44         |
 +-----------+-------+---------+-----------+
 
 
@@ -117,44 +236,106 @@ Messages by category
 % errors / warnings by module
 -----------------------------
 
-+------------------------------------+------+--------+---------+-----------+
-|module                              |error |warning |refactor |convention |
-+====================================+======+========+=========+===========+
-|data_engine.connector_akshare       |0.00  |83.33   |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.wechat_collector        |0.00  |16.67   |0.00     |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.data_pipeline           |0.00  |0.00    |40.00    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_yahoo         |0.00  |0.00    |20.00    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_binance       |0.00  |0.00    |20.00    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.clickhouse_storage      |0.00  |0.00    |20.00    |0.00       |
-+------------------------------------+------+--------+---------+-----------+
-|data_engine.connector_astock_duckdb |0.00  |0.00    |0.00     |100.00     |
-+------------------------------------+------+--------+---------+-----------+
++--------------------------------------------------+------+--------+---------+-----------+
+|module                                            |error |warning |refactor |convention |
++==================================================+======+========+=========+===========+
+|tests.test_data_service                           |11.36 |13.33   |0.00     |20.83      |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_astock_duckdb                |11.36 |0.00    |0.00     |20.83      |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_yahoo                        |9.09  |0.00    |0.00     |12.50      |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.connector_astock_duckdb           |9.09  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_akshare                      |6.82  |0.00    |0.00     |8.33       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_trend_following                        |4.55  |0.00    |0.00     |4.17       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.trade_signal_aggregator       |4.55  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.connector_tushare                 |4.55  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.connector_akshare                 |4.55  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_types                                  |2.27  |0.00    |0.00     |4.17       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.ai_lab.optuna_optimizer                       |2.27  |0.00    |0.00     |4.17       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_strategy_pool                          |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_connector_binance                      |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_ashare_symbol                          |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|tests.test_alpha_scoring                          |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.trend_following               |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.mean_reversion                |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.breakout                      |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.ai_fusion_strategy            |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategy_engine.__init__                      |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.realtime_stream                   |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.connector_yahoo                   |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.connector_binance                 |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.data_engine.clickhouse_storage                |2.27  |0.00    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.ai_lab.rl_trader                              |0.00  |20.00   |0.00     |8.33       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategies.daily_stock_analysis.data_fetcher  |0.00  |13.33   |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.ai_lab.strategy_generator                     |0.00  |13.33   |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategies.daily_stock_analysis.ai_decision   |0.00  |6.67    |100.00   |8.33       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategies.daily_stock_analysis.main          |0.00  |6.67    |0.00     |8.33       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.strategies.daily_stock_analysis.news_analyzer |0.00  |6.67    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.evolution_engine.darwin_engine                |0.00  |6.67    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.evolution_engine.alpha_scoring                |0.00  |6.67    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
+|src.core.analysis.financial_analyzer              |0.00  |6.67    |0.00     |0.00       |
++--------------------------------------------------+------+--------+---------+-----------+
 
 
 
 Messages
 --------
 
-+------------------------------+------------+
-|message id                    |occurrences |
-+==============================+============+
-|too-many-positional-arguments |9           |
-+------------------------------+------------+
-|broad-exception-caught        |5           |
-+------------------------------+------------+
-|import-outside-toplevel       |3           |
-+------------------------------+------------+
-|fixme                         |1           |
-+------------------------------+------------+
++---------------------------+------------+
+|message id                 |occurrences |
++===========================+============+
+|import-error               |239         |
++---------------------------+------------+
+|import-outside-toplevel    |113         |
++---------------------------+------------+
+|unused-argument            |27          |
++---------------------------+------------+
+|protected-access           |16          |
++---------------------------+------------+
+|wrong-import-order         |11          |
++---------------------------+------------+
+|disallowed-name            |11          |
++---------------------------+------------+
+|line-too-long              |3           |
++---------------------------+------------+
+|redefined-outer-name       |1           |
++---------------------------+------------+
+|consider-using-from-import |1           |
++---------------------------+------------+
 
 
 
 
 ------------------------------------------------------------------
-Your code has been rated at 9.90/10 (previous run: 9.59/10, +0.31)
+Your code has been rated at 9.22/10 (previous run: 9.21/10, +0.02)
 

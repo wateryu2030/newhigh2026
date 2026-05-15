@@ -180,6 +180,18 @@ bash scripts/install_tunnel_stack_launchagent.sh
 - [ ] **子域控制台**：若使用 `https://htma.newhigh.com.cn`，在 Tunnel 的 **Public Hostname**（或 `config.yml` 的 `ingress`）里**单独增加一条** `htma.newhigh.com.cn` → `http://127.0.0.1:3000`；仅配置 `newhigh.com.cn` 时，子域不会自动继承，常表现为 **404** 或 Cloudflare 默认错误页。  
 - [ ] **DNS**：`htma` 子域为 **CNAME** 指向隧道（与主域一致），并保持**橙色云**代理。  
 
+### Error 1033（Cloudflare Tunnel error / unable to resolve）
+
+含义：边缘认为该主机名走 **Tunnel**，但**没有可用的 cloudflared 连接器**与该隧道路由一致，或 **DNS 指向的隧道** 与本机正在跑的 `--token` **不是同一个**。
+
+常见根因：
+
+1. **本机 cloudflared 未运行**或休眠断网后未恢复 → 启动 `cloudflared`（如 `brew services start cloudflared`），见下文「一键自检」。  
+2. **Public Hostname 未包含** `htma.newhigh.com.cn`：若控制台里只有其它域名（例如别的业务子域），则 `htma.newhigh.com.cn` 的 DNS 若仍指向该隧道，可能出现 1033 或错误源站。须在 **与本机 token 对应的同一隧道** 下增加：`htma.newhigh.com.cn` → `http://127.0.0.1:3000`。  
+3. **多项目并行（htma + 小安）**：在同一隧道增加第二条 Public Hostname：`xiaoan.newhigh.com.cn` → `http://127.0.0.1:<小安监听端口>`；本机同时跑 newhigh 的 `com.newhigh.tunnel-stack`（:3000）与小安进程。**不要**为两个子域各起一个 cloudflared 却共用错误 token（除非刻意使用两条隧道并分别配置 DNS）。
+
+自检（仓库根）：`bash scripts/cloudflare_tunnel_health.sh`；带小安端口探活：`XIAOAN_LOCAL_PORT=8765 bash scripts/cloudflare_tunnel_health.sh`。
+
 ### 子域 `htma.newhigh.com.cn` 英文「This page could not be found」
 
 1. **Tunnel 路由**：在 Zero Trust → 隧道 → **Public Hostname** 中确认存在 **`htma.newhigh.com.cn`**，服务 URL 与当前本机 Next 一致（开发多为 **`http://127.0.0.1:3000`**，构建预览可为 **4173**）。  
@@ -198,6 +210,7 @@ bash scripts/install_tunnel_stack_launchagent.sh
 | `scripts/run_tunnel_stack.sh` | 上述 plist 调用的主脚本 |
 | `scripts/install_tunnel_stack_launchagent.sh` | 一键安装到 `~/Library/LaunchAgents/` |
 | `config/cloudflare/config.example.yml` | 命名隧道 + 多域名示例（需先 `cloudflared tunnel create`） |
+| `scripts/cloudflare_tunnel_health.sh` | 本机：cloudflared / tunnel-stack / 本机 :3000 + 日志中的远程 ingress 自检 |
 | `docs/NEWHIGH_COM_CLOUDFLARE.md` | 本文 |
 
 如需 **仅静态展示**，可在项目根建 `site/index.html`，内容可从 `README.md`、`OPENCLAW_PLAN.md`、`docs/ARCHITECTURE.md` 摘取，再用 Tunnel 指向 `8090`。

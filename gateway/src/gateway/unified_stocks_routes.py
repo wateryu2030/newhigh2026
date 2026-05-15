@@ -92,7 +92,7 @@ def _get_quote_core(symbol: str) -> dict:
                     if br:
                         name = str(br[0] or "")
                 except Exception:
-                    pass
+                    _log.error("Database query failed", exc_info=True)
                 row = (code_d, name, price, chg, vol, amt, snap)
         if not row:
             raise HTTPException(status_code=404, detail="股票未找到")
@@ -125,7 +125,7 @@ def _get_quote_core(symbol: str) -> dict:
         try:
             conn.close()
         except Exception:
-            pass
+            _log.error("Failed to close database connection", exc_info=True)
 
 
 def datetime_iso(snap: Any) -> str:
@@ -172,7 +172,7 @@ def build_unified_stocks_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
 
     @r.get("/quotes")
     def get_quotes(symbols: str = Query(..., description="逗号分隔代码")) -> dict:
@@ -250,7 +250,7 @@ def build_unified_stocks_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
 
     @r.get("/{symbol}/kline")
     def get_kline(
@@ -326,6 +326,6 @@ def build_unified_stocks_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Failed to close database connection", exc_info=True)
 
     return r

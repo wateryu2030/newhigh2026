@@ -11,5 +11,9 @@ export function middleware(_request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  /**
+   * 与 Next 官方模板一致：必须排除 api、/_next/static、/_next/image。
+   * 漏掉 `api` 或匹配过宽时，dev 下 chunk 请求可能异常（HTML 已引用但资源 404）。
+   */
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

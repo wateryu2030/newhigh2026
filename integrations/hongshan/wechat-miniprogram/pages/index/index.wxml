@@ -17,6 +17,11 @@
       <view class="qa-item" bindtap="goBlockTrade">徘徊大宗</view>
       <view class="qa-item" bindtap="goNewsTab">新闻</view>
     </view>
+    <view class="hub-entry" bindtap="goFeatureHub">
+      <text class="hub-entry-tit">全部功能</text>
+      <text class="hub-entry-sub">与桌面端菜单一致 · 原生 + 内嵌 Web</text>
+      <text class="hub-entry-arr">›</text>
+    </view>
     <!-- 系统提示条 -->
     <view class="alert-banner" wx:if="{{alertText}}">
       <view class="alert-ico">!</view>

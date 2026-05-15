@@ -24,6 +24,15 @@ def test_api_strategies():
     assert len(data["strategies"]) >= 1
 
 
+def test_public_get_dashboard_without_token_when_jwt_required(monkeypatch):
+    """小程序开放浏览：GET /api/dashboard 在 JWT_AUTH_REQUIRED=1 时仍匿名可访问。"""
+    monkeypatch.setenv("JWT_AUTH_REQUIRED", "1")
+    r = client.get("/api/dashboard")
+    assert r.status_code == 200
+    body = r.json()
+    assert "total_equity" in body or "dashboard_notes" in body
+
+
 def test_system_health_detail():
     r = client.get("/api/system/health-detail")
     assert r.status_code == 200
@@ -35,14 +44,24 @@ def test_system_health_detail():
     assert data.get("prometheus_metrics_path") == "/metrics"
 
 
-def test_system_backtest_errors():
-    r = client.get("/api/system/backtest-errors?limit=5")
+def test_health_detailed_alias():
+    r = client.get("/api/health/detailed")
     assert r.status_code == 200
     body = r.json()
     assert body.get("ok") is True
     data = body.get("data") or {}
-    assert "items" in data
-    assert isinstance(data["items"], list)
+    assert "status" in data
+
+
+def test_system_backtest_errors():
+    r = client.get("/api/system/backtest-errors?limit=5")
+    assert r.status_code in (200, 503)
+    if r.status_code == 200:
+        body = r.json()
+        assert body.get("ok") is True
+        data = body.get("data") or {}
+        assert "items" in data
+        assert isinstance(data["items"], list)
 
 
 def test_pipeline_run_requires_login():

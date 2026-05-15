@@ -26,6 +26,8 @@ from pathlib import Path
 from fastapi import APIRouter, Query, HTTPException
 
 import pandas as pd
+import logging
+_log = logging.getLogger(__name__)
 
 # 定位项目根目录（gateway 在 project/gateway/src/gateway/ 下）
 _THIS_DIR = Path(__file__).resolve().parent
@@ -889,7 +891,7 @@ def get_anti_quant_pool(
             ratio_chip = calc_top10_ratio(raw_chip)
             candidates = enrich_candidates_chip(raw_chip, ratio_chip, candidates)
         except Exception:
-            pass
+            _log.error("DataFrame operation failed", exc_info=True)
 
         # 关联股票名称
         from lib.database import get_connection
@@ -905,7 +907,7 @@ def get_anti_quant_pool(
                         codes,
                     ).fetchdf()
                 except Exception:
-                    pass
+                    _log.error("Operation 'names_df' failed", exc_info=True)
         finally:
             if conn:
                 conn.close()

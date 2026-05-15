@@ -4,8 +4,9 @@
   --seed   若 strategy_market 条目过少，登记 ai_fusion / market_agg / shareholder_chip 基线；
   --evolve 跑一轮 OpenClaw 进化（依赖库中已有 trade_signals 与各 strategy_id 回测可对齐标的）。
 
-典型用法（定时任务）：
+典型用法（定时任务，须在仓库根目录）：
   python scripts/strategy_automation.py --all
+若在 frontend/ 下工作，请用：bash frontend/scripts/run_strategy_automation.sh --all
   NEWHIGH_AUTO_STRATEGY_MARKET=1  # 随 system_runner 每轮自动 seed（见 strategy_orchestrator）
 """
 

@@ -21,9 +21,10 @@ while IFS= read -r path; do
   [[ -z "$path" ]] && continue
   # 去掉 query（如 ?v=）
   clean="${path%%\?*}"
-  code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE$clean")
-  echo "[verify] $clean → HTTP $code"
-  if [[ "$code" != "200" ]]; then
+  # 勿用变量名 code：在 set -u 且 curl 异常时部分 bash 下易触发 unbound；保证总有赋值
+  http_status=$(curl -sS -o /dev/null -w '%{http_code}' -- "$BASE$clean" 2>/dev/null || printf '000')
+  echo "[verify] $clean → HTTP $http_status"
+  if [[ "$http_status" != "200" ]]; then
     fail=1
   fi
 done <<< "$paths"

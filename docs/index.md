@@ -15,6 +15,7 @@
 |------|------|
 | [架构](ARCHITECTURE.md) | 系统架构与数据流 |
 | [改进计划](OPENCLAW_IMPROVEMENT_PLAN.md) | OpenClaw 阶段 0–3 任务分解 |
+| [OpenClaw 编排](OPENCLAW_ORCHESTRATION.md) | 按计划执行：文档顺序、Heartbeat 同步、验证命令 |
 | [数据与进化](DATA_AND_EVOLUTION.md) | 数据管道与进化引擎 |
 | [交接说明](PROJECT_HANDOFF_FOR_AI.md) | 供 AI 接力的状态与建议维度 |
 | [项目状态](../PROJECT_STATUS.md) | 详细模块与目录说明 |

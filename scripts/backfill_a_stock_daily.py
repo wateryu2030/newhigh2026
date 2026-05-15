@@ -32,6 +32,10 @@
 另有 collectors/tushare_daily.update_tushare_daily 可按批拉取，与 ensure_market_data 可配合使用。
 
 若东财仍 +0 行：多为代理；除 --no-proxy 外可在 macOS 系统设置里关闭「网络代理」或对东财域名直连。
+
+增量默认结束日：周末会回退到周五（见 data_sources/cn_trading_calendar.py），避免东财在 end=周六/日时整段空表。
+东财某批 0 行时可设 ASHARE_ON_EMPTY_TRY_TUSHARE=1 且配置 TUSHARE_TOKEN，由同批改走 Tushare。
+定时自动化：bash scripts/run_daily_ashare_kline.sh 或 make data-daily-ashare。
 """
 
 from __future__ import annotations

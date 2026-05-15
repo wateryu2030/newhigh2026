@@ -87,7 +87,7 @@ def build_unified_orders_routes_router() -> APIRouter:
                         [uid],
                     )
                 except Exception:
-                    pass
+                    _log.error("Database write operation failed", exc_info=True)
                 acc = conn.execute(
                     "SELECT available_cash FROM hongshan_accounts WHERE user_id = ?",
                     [uid],
@@ -177,7 +177,7 @@ def build_unified_orders_routes_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Database write operation failed", exc_info=True)
 
     @r.get("/orders")
     def list_orders(
@@ -219,7 +219,7 @@ def build_unified_orders_routes_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Database write operation failed", exc_info=True)
 
     @r.get("/orders/{order_id}")
     def get_order(order_id: str, user_id: str = Query(...)) -> dict:
@@ -243,7 +243,7 @@ def build_unified_orders_routes_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Database write operation failed", exc_info=True)
 
     @r.post("/orders/{order_id}/cancel")
     def cancel_order(order_id: str, user_id: str = Query(...)) -> dict:
@@ -291,7 +291,7 @@ def build_unified_orders_routes_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Database write operation failed", exc_info=True)
 
     @r.post("/fill-run")
     def trigger_paper_fill_run(user_id: Optional[str] = Query(None, description="仅撮合该用户，缺省为全量")) -> dict:
@@ -304,6 +304,6 @@ def build_unified_orders_routes_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Database write operation failed", exc_info=True)
 
     return r

@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Any, Optional
+import logging
+_log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from data_pipeline.storage.duckdb_manager import get_conn, ensure_tables
@@ -67,7 +69,7 @@ def write_status(
             if r:
                 ev_task_id, ev_status, ev_result = r[0], r[1], r[2]
         except (ValueError, TypeError, IndexError):
-            pass
+            _log.error("Database query failed", exc_info=True)
         try:
             r = conn.execute(
                 "SELECT call_count, last_call_time FROM skill_stats LIMIT 1"
@@ -75,7 +77,7 @@ def write_status(
             if r:
                 skill_count, skill_time = int(r[0] or 0), r[1]
         except (ValueError, TypeError, IndexError):
-            pass
+            _log.error("Database query failed", exc_info=True)
         try:
             conn.execute(
                 """INSERT INTO system_status (
@@ -103,7 +105,7 @@ def write_status(
             )
         conn.close()
     except (ImportError, ModuleNotFoundError, OSError):
-        pass
+        _log.warning("Import failed, using fallback", exc_info=True)
 
 
 def record(

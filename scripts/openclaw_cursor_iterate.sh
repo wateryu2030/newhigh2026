@@ -43,6 +43,8 @@ fi
 
 echo "=== [1/2] OpenClaw local：生成迭代规划 → $PLAN_REL ===" >&2
 TMP_PLAN="$(mktemp)"
+TMP_ERR="$(mktemp)"
+trap 'rm -f "$TMP_ERR"' EXIT
 {
   echo "# OpenClaw → Cursor 迭代规划"
   echo ""
@@ -51,12 +53,39 @@ TMP_PLAN="$(mktemp)"
   echo "---"
   echo ""
   set +e
-  bash "$ROOT/scripts/openclaw_iteration_prompt_once.sh" 2>/dev/null
+  bash "$ROOT/scripts/openclaw_iteration_prompt_once.sh" 2>"$TMP_ERR"
   OWL_RC=$?
   set -e
   if [[ "$OWL_RC" != "0" ]]; then
     echo ""
     echo "(openclaw_iteration_prompt_once 退出码: $OWL_RC)"
+    echo ""
+    echo "### OpenClaw 标准错误输出（摘要，末尾 80 行）"
+    echo ""
+    if [[ -s "$TMP_ERR" ]]; then
+      tail -n 80 "$TMP_ERR"
+    else
+      echo "(无 stderr 内容)"
+    fi
+    echo ""
+    echo "---"
+    echo ""
+    echo "## （兜底）规划生成失败时的最小可执行项"
+    echo ""
+    echo "OpenClaw 未返回规划正文。请先排查本机 \`openclaw agent --local\`（登录、网络、超时 \`OPENCLAW_ITERATION_TIMEOUT_SEC\`、模型可用性），再重试 \`OPENCLAW_CURSOR_PLAN_ONLY=1 bash scripts/openclaw_cursor_iterate.sh\`。"
+    echo ""
+    echo "在修复前，Cursor 代理可依据仓库固定上下文继续 **1 条**最小可验证 P0（稳定性/契约优先）："
+    echo ""
+    echo "1. **所选任务**：对齐 \`tasks/current_task.md\` 备注中的 OpenClaw+Cursor 闭环验收（Gateway 契约不回归）。"
+    echo "2. **涉及路径**：\`tasks/current_task.md\`、\`docs/OPENCLAW_ORCHESTRATION.md\` §2 / §4。"
+    echo "3. **验证命令**（仓库根）："
+    echo ""
+    echo '```bash'
+    echo "cd \"$ROOT\" && make test-python-smoke"
+    echo "cd \"$ROOT\" && make gateway-test"
+    echo '```'
+    echo ""
+    echo "4. **风险与回滚**：仅跑测试、不改业务逻辑时风险低；若有未提交改动，\`git checkout -- <path>\` 回滚。"
   fi
 } > "$TMP_PLAN"
 if [[ ! -s "$TMP_PLAN" ]]; then
@@ -83,19 +112,21 @@ else
   echo "=== [2/2] Cursor agent：按规划改仓库（--print，无 -f）===" >&2
 fi
 
-# 在主 shell 内拼接 PROMPT（避免 $(cat <<EOF) 子 shell + set -u 在 bash 3.2 下误报 PLAN_REL?）
-printf -v PROMPT '%s\n' \
-  '你是本仓库的自动化执行代理。工作区目录即仓库根。' \
-  '' \
-  "请阅读相对路径「${PLAN_REL}」全文（相对当前工作区根）。其中是 OpenClaw 给出的迭代规划。" \
-  '' \
-  '要求：' \
-  '1. 只落实其中 **1 条**最小可验证 P0/P1；若有多条建议，选风险最低、改动最小的一条。' \
-  '2. 直接修改代码/配置（不要只写计划）；遵守仓库风格；禁止把 token、私钥写入仓库。' \
-  '3. 若规划里写了「验证命令」，在仓库根尝试执行（失败则说明原因，不要无限重试）。' \
-  '4. 最后用中文简要说明：改了哪些文件、验证结果、是否还需人类在 Cursor 里收尾。' \
-  '' \
-  '若某文件路径不存在，先列出目录再决定替代方案，不要臆造路径。'
+# Build PROMPT via heredoc (multi-line printf + single-quoted continuations broke on some bash 3.2 / locale setups with "在: command not found").
+PROMPT="$(cat <<EOF
+你是本仓库的自动化执行代理。工作区目录即仓库根。
+
+请阅读相对路径「${PLAN_REL}」全文（相对当前工作区根）。其中是 OpenClaw 给出的迭代规划。
+
+要求：
+1. 只落实其中 **1 条**最小可验证 P0/P1；若有多条建议，选风险最低、改动最小的一条。
+2. 直接修改代码/配置（不要只写计划）；遵守仓库风格；禁止把 token、私钥写入仓库。
+3. 若规划里写了「验证命令」，在仓库根尝试执行（失败则说明原因，不要无限重试）。
+4. 最后用中文简要说明：改了哪些文件、验证结果、是否还需人类在 Cursor 里收尾。
+
+若某文件路径不存在，先列出目录再决定替代方案，不要臆造路径。
+EOF
+)"
 
 if [[ -z "${CURSOR_API_KEY:-}" ]]; then
   echo "提示：未检测到 CURSOR_API_KEY。若下一步报错 Authentication，请先执行: cursor agent login" >&2

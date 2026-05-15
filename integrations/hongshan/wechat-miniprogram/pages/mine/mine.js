@@ -8,7 +8,8 @@ const {
 const { canViewFeature } = require('../../utils/permission.js');
 const config = require('../../config.js');
 const { DESKTOP_SYNC } = require('../../config/menu.js');
-const { copyWebPath } = require('../../utils/htma.js');
+const { navigateMenuItem, openWebPath } = require('../../utils/menu-nav.js');
+const { resetApiBaseToDefault } = require('../../utils/api-base.js');
 
 Page({
   data: {
@@ -125,6 +126,11 @@ Page({
     }
   },
 
+  onResetApiBase() {
+    resetApiBaseToDefault();
+    wx.showToast({ title: '已恢复默认线路', icon: 'success' });
+  },
+
   onLogout() {
     setToken('');
     try {
@@ -189,6 +195,25 @@ Page({
     wx.showToast({ title: '敬请期待', icon: 'none' });
   },
 
+  goFeatureHub() {
+    wx.navigateTo({ url: '/pages/feature-hub/feature-hub' });
+  },
+
+  /** 组合 → Web 版持仓/组合页 */
+  openPortfolioWeb() {
+    openWebPath('/portfolio');
+  },
+
+  /** 数据 / 账务类入口 */
+  openDataWeb() {
+    openWebPath('/data');
+  },
+
+  /** 系统监控 Web */
+  openSystemMonitorWeb() {
+    openWebPath('/system-monitor');
+  },
+
   onBell() {
     wx.showToast({ title: '消息中心', icon: 'none' });
   },
@@ -201,37 +226,11 @@ Page({
     });
   },
 
-  /** 与 `frontend/src/config/menu.ts` 顺序对齐：原生页跳转，Web 仅复制公网链接 */
+  /** 与 Web 侧栏一致：Web 项优先小程序内 web-view 打开 */
   onDesktopMenu(e) {
     const idx = Number(e.currentTarget.dataset.index);
     const rows = this.data.desktopMenu;
     if (!rows || Number.isNaN(idx) || !rows[idx]) return;
-    const m = rows[idx];
-    if (m.t === 'web') {
-      copyWebPath(m.p);
-      return;
-    }
-    switch (m.p) {
-      case 'index':
-        wx.switchTab({ url: '/pages/index/index' });
-        break;
-      case 'strategy':
-        wx.switchTab({ url: '/pages/strategy/strategy' });
-        break;
-      case 'news':
-        wx.switchTab({ url: '/pages/news/news' });
-        break;
-      case 'quotes':
-        wx.navigateTo({ url: '/pages/quotes/quotes' });
-        break;
-      case 'stock-qa':
-        wx.navigateTo({ url: '/pages/stock-qa/stock-qa' });
-        break;
-      case 'block-trade':
-        wx.navigateTo({ url: '/pages/block-trade/block-trade' });
-        break;
-      default:
-        break;
-    }
+    navigateMenuItem(rows[idx]);
   },
 });

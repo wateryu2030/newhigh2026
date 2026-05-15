@@ -75,7 +75,7 @@ def _last_price_and_name(conn, code6: str) -> tuple[Optional[float], Optional[st
                 if br and br[0]:
                     nm = str(br[0])
             except Exception:
-                pass
+                _log.error("Database query failed", exc_info=True)
             return px, nm
     except Exception:
         _log.debug("last price lookup failed", exc_info=True)

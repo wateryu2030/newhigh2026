@@ -2,6 +2,16 @@
 
 以下命令可由 Cursor 或本地终端直接执行，用于进化开发循环与状态查看。
 
+## 红山量化 · 实体证券能力自我迭代（提交 OpenClaw 用）
+
+- 任务正文（可复制到会话 / HEARTBEAT / Cron）：[`OPENCLAW_TASK_ENTITY_SECURITIES_ITERATION.md`](OPENCLAW_TASK_ENTITY_SECURITIES_ITERATION.md)
+- 机器可读定义：`OPENCLAW_HONGSHAN_ENTITY_TRADING.yaml`（仓库根）
+- **编排总览（让 OpenClaw 按仓库计划执行）**：[`OPENCLAW_ORCHESTRATION.md`](OPENCLAW_ORCHESTRATION.md)
+- **同步 Heartbeat 到本机 OpenClaw**（覆盖 `~/.openclaw/workspace/HEARTBEAT.md`，会先备份）：
+  ```bash
+  bash scripts/sync_openclaw_heartbeat.sh
+  ```
+
 ## 1. OpenClaw 策略进化全流程
 
 ```bash

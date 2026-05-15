@@ -34,7 +34,7 @@ if use_git_only || ! command -v npx >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "[install] 尝试 npx skills（工作目录: $WS）…"
+echo "[install] 尝试 npx skills（工作目录: ${WS}）…"
 cd "$WS"
 if npx --yes skills add addyosmani/agent-skills --yes --global; then
   echo "[install] npx skills 完成。"

@@ -78,7 +78,14 @@ def cross_reference(
     -------
     List of alert dicts written (or previewed).
     """
-    _ensure_alerts_table(conn)
+    # Skip DDL in dry-run / read-only mode if table already exists
+    if not dry_run:
+        _ensure_alerts_table(conn)
+    else:
+        try:
+            conn.execute("SELECT COUNT(*) FROM alerts")
+        except Exception:
+            _ensure_alerts_table(conn)
     alerts_written: List[Dict[str, Any]] = []
     next_pk = _next_alert_id(conn)
 

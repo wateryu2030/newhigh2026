@@ -32,3 +32,12 @@
   color: #5c656e;
   line-height: 1.5;
 }
+.net-tools {
+  margin-top: 40rpx;
+  text-align: center;
+}
+.net-link {
+  font-size: 24rpx;
+  color: #5b8cff;
+  text-decoration: underline;
+}

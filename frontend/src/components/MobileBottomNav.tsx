@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/context/LangContext';
-import { mobilePrimaryItems } from '@/config/menu';
+import { getMobilePrimaryForUser } from '@/config/menu';
+import { useAuth } from '@/context/AuthContext';
 
 interface MobileBottomNavProps {
   onMenuClick: () => void;
@@ -13,10 +14,12 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   const pathname = usePathname();
   const { t } = useLang();
+  const { ready, isAuthenticated } = useAuth();
+  const items = getMobilePrimaryForUser(ready && isAuthenticated);
 
   return (
     <nav className="safe-area-pb fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around rounded-t-2xl border-t border-card-border bg-[color:var(--color-nav-mobile-bg)] px-2 pt-3 backdrop-blur-xl md:hidden">
-      {mobilePrimaryItems.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.path;
         return (
           <Link

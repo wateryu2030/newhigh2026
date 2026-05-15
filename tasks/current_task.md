@@ -35,3 +35,4 @@
 - 后续可深化：RL 环境与训练、更多券商对接、策略市场仅真实数据（去 stub）。
 - **迭代与数据时效**：`Makefile`（`make dev-check` / `gateway-restart` / `pipeline-editable`）；每日采集策略见 `docs/ITERATION_AND_DATA_SLA.md`（Tushare 优先、可调 `TUSHARE_DAILY_DAYS_BACK`）。
 - **E2E（2026-04-07）**：`frontend/e2e/smoke.spec.ts` 已用 `localStorage` 占位 JWT 通过 `AuthGate`；组合页补充 `h1`；仓库根可 `npm run test:e2e`。详见 `evolution/improvement_log_2026-04-07.md`。
+- **OpenClaw + Cursor CLI 闭环（2026-04-18）**：`make check-openclaw-cursor-loop` → `make openclaw-benign-loop`（规划 + `cursor agent`）；验收：`make test-python-smoke`、`make gateway-test`。勿在 `.env` 使用变量名 `PLAN=`（与脚本冲突）。详见 `docs/OPENCLAW_PLUS_CURSOR_LOOP.md` §五。

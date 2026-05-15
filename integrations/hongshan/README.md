@@ -2,6 +2,8 @@
 
 本目录由 OpenClaw 工作区 **`hongshan-backend` + `hongshan-quant-platform`** 迁入，与主工程 **共享同一 Git 仓库**，便于统一迭代；运行时与 **newhigh `gateway/`（默认 8000）** 并行，**不占用 8000**。
 
+**微信小程序「红山资讯」（鸿山咨询）**：见 `wechat-miniprogram/README.md`；**外网域名与微信公众平台手工配置**（`htma.newhigh.com.cn`、合法域名、密钥变量）见仓库根目录 **`docs/WECHAT_HONGSHAN_EXTERNAL.md`**。
+
 ## 端口（避免冲突）
 
 | 服务 | 宿主机端口 | 说明 |

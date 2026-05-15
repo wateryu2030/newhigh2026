@@ -44,7 +44,7 @@ def _seed_demo_account(conn, user_id: str) -> None:
             [user_id],
         )
     except Exception:
-        pass
+        _log.error("User data operation failed", exc_info=True)
 
 
 def _position_rows(user_id: str):
@@ -79,7 +79,7 @@ def _position_rows(user_id: str):
         try:
             conn.close()
         except Exception:
-            pass
+            _log.error("Trading operation failed", exc_info=True)
         return None, []
 
 
@@ -137,7 +137,7 @@ def _build_position_items(rows: list) -> List[dict[str, Any]]:
                 try:
                     c2.close()
                 except Exception:
-                    pass
+                    _log.error("Position operation failed", exc_info=True)
         mv = cur * qty
         profit = (cur - cost) * qty
         pr = round(100.0 * (cur - cost) / cost, 2) if cost > 1e-9 else 0.0
@@ -162,7 +162,7 @@ def positions_for_user(user_id: str) -> List[dict[str, Any]]:
         try:
             conn.close()
         except Exception:
-            pass
+            _log.error("Position operation failed", exc_info=True)
     return _build_position_items(rows)
 
 
@@ -208,7 +208,7 @@ def build_unified_positions_router() -> APIRouter:
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.error("Position operation failed", exc_info=True)
 
         pos = positions_for_user(user_id)
         mv = sum(float(p.get("market_value") or 0) for p in pos)

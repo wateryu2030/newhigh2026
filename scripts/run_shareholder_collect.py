@@ -24,6 +24,9 @@ akshare.stock_main_stock_holder 单次调用即返回该股全部历史期（约
 
 配合 LaunchAgent 每日自动执行:
   launchctl load ~/Library/LaunchAgents/com.newhigh.shareholder-collect.plist
+
+写库前自动对 data/quant_system.duckdb.writer.lock 加 flock；与其它采集冲突时会等待或退出码 2/3。
+应急跳过锁: NEWHIGH_SKIP_DUCKDB_FLOCK=1
 """
 
 from __future__ import annotations
@@ -44,8 +47,15 @@ try:
 except ImportError:
     pass
 
+try:
+    from lib.duckdb_write_lock import DuckDbFlockBusy, DuckDbFlockTimeout, duckdb_write_lock
+except ImportError:
+    DuckDbFlockBusy = Exception  # type: ignore
+    DuckDbFlockTimeout = Exception  # type: ignore
+    duckdb_write_lock = None  # type: ignore
 
-def main() -> int:
+
+def _main_locked() -> int:
     parser = argparse.ArgumentParser(
         description="十大股东多期历史采集",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -176,6 +186,20 @@ def main() -> int:
     )
     print(f"\n完成: {stats}")
     return 0
+
+
+def main() -> int:
+    if duckdb_write_lock is None:
+        return _main_locked()
+    try:
+        with duckdb_write_lock():
+            return _main_locked()
+    except DuckDbFlockBusy as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    except DuckDbFlockTimeout as e:
+        print(str(e), file=sys.stderr)
+        return 3
 
 
 if __name__ == "__main__":

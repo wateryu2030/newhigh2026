@@ -4,7 +4,9 @@
 
 **一键跑通**：环境变量、重启、自测命令见同目录 **`RUNBOOK.md`**。
 
-**菜单对齐**：侧栏顺序与 Web `frontend/src/config/menu.ts` 一致，见 **`config/menu.js`**（`DESKTOP_SYNC`）；「我的」页全量入口；无原生页的 Web 能力通过 **`utils/htma.js`** 复制 `https://htma.newhigh.com.cn` 链接。
+**侧栏以外的桌面页**：**`config/extra_web_paths.js`** 在「全部功能」页追加 Web 内嵌入口（投研/研报/交易等），与主菜单 **`config/navigation_manifest.json`** 互补。
+
+**菜单对齐（单源）**：仓库根目录 **`config/navigation_manifest.json`** → Web 由 `frontend/src/config/menu.ts` 直接引用；小程序侧运行 **`make sync-nav`**（或 `python3 scripts/gen_miniprogram_menu.py`）生成 **`config/menu.generated.js`**，**`config/menu.js`** 仅 re-export。改菜单勿只改一端；详见 **`docs/OPENCLAW_ORCHESTRATION.md` §4.5**。Web 内嵌能力见 **`utils/menu-nav.js`** / **`pages/web-page/`**。
 
 ## UI 主题
 

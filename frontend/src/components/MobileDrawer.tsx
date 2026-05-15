@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/context/LangContext';
-import { menuItems } from '@/config/menu';
+import { getDrawerMenuForUser } from '@/config/menu';
+import { useAuth } from '@/context/AuthContext';
 
 interface MobileDrawerProps {
   open: boolean;
@@ -14,6 +15,8 @@ interface MobileDrawerProps {
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
   const { t } = useLang();
+  const { ready, isAuthenticated } = useAuth();
+  const menuItems = getDrawerMenuForUser(ready && isAuthenticated);
 
   if (!open) return null;
 

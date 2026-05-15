@@ -4,6 +4,8 @@ Prometheus 指标：data_pipeline_latency、scan_latency、ai_latency、trade_la
 """
 
 from __future__ import annotations
+import logging
+_log = logging.getLogger(__name__)
 
 _latency = None
 _request_count = None
@@ -70,10 +72,10 @@ def record_request(latency_seconds: float, path: str, method: str = "GET") -> No
         try:
             h.labels(stage=stage).observe(latency_seconds)
         except Exception:
-            pass
+            _log.error("Prometheus metric recording failed", exc_info=True)
     c = _get_request_count()
     if c is not None:
         try:
             c.labels(stage=stage, method=method.upper()).inc()
         except Exception:
-            pass
+            _log.error("Prometheus metric recording failed", exc_info=True)

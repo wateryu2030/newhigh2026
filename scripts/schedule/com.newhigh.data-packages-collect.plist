@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.newhigh.data-packages-collect</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/apple/Ahope/newhigh/scripts/schedule/run_data_packages_collect.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>10</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
+            <integer>21</integer>
+            <key>Minute</key>
+            <integer>10</integer>
+        </dict>
+    </array>
+    <key>StandardOutPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/data-packages-collect-launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/apple/Ahope/newhigh/logs/data-packages-collect-launchd.err</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/apple/Ahope/newhigh</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>PYTHONPATH</key>
+        <string>packages/financial-report/src:packages/rumor-capture/src:packages/buyback-alert/src:.</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>

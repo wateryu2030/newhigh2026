@@ -1,3 +1,5 @@
+const { getWindowMetrics } = require('../../utils/window-metrics.js');
+
 Component({
   properties: {
     title: { type: String, value: '红山量化' },
@@ -11,7 +13,7 @@ Component({
   },
   lifetimes: {
     attached() {
-      const sys = wx.getSystemInfoSync();
+      const sys = getWindowMetrics();
       const menu = wx.getMenuButtonBoundingClientRect
         ? wx.getMenuButtonBoundingClientRect()
         : null;

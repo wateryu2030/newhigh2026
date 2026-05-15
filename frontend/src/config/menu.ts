@@ -3,8 +3,10 @@
  * 供 Layout/Sidebar/MobileBottomNav/MobileDrawer 使用
  * 图标使用 Material Symbols Outlined（与现有项目一致）
  *
- * 微信小程序侧栏顺序对齐：`integrations/hongshan/wechat-miniprogram/config/menu.js`（DESKTOP_SYNC）
+ * 数据源：`config/navigation_manifest.json`（与微信小程序 `config/menu.generated.js` 同源）
  */
+
+import manifest from '../../../config/navigation_manifest.json';
 
 export interface MenuItem {
   /** 显示名称（中文） */
@@ -19,26 +21,22 @@ export interface MenuItem {
   mobilePrimary?: boolean;
 }
 
+type NavRow = (typeof manifest.items)[number];
+
+function toMenuItem(row: NavRow): MenuItem {
+  return {
+    name: row.labelZh,
+    key: row.labelKey,
+    icon: row.icon,
+    path: row.webPath,
+  };
+}
+
 /** 桌面端侧边栏菜单 */
-export const menuItems: MenuItem[] = [
-  { name: '首页', key: 'nav.dashboard', icon: 'dashboard', path: '/' },
-  { name: 'Alpha工坊', key: 'nav.alphaLab', icon: 'science', path: '/alpha-lab' },
-  { name: '行情', key: 'nav.market', icon: 'query_stats', path: '/market' },
-  { name: 'AI交易', key: 'nav.aiTrading', icon: 'memory', path: '/ai-trading' },
-  { name: '策略', key: 'nav.strategies', icon: 'settings_input_component', path: '/strategies' },
-  { name: '组合', key: 'nav.portfolio', icon: 'account_balance', path: '/portfolio' },
-  { name: '大佬策略', key: 'nav.shareholderStrategy', icon: 'bar_chart', path: '/shareholder-strategy' },
-  { name: '数据', key: 'nav.data', icon: 'storage', path: '/data' },
-  { name: '系统监控', key: 'nav.systemMonitor', icon: 'monitor_heart', path: '/system-monitor' },
-  { name: '新闻', key: 'nav.news', icon: 'newspaper', path: '/news' },
-  { name: '股票问答', key: 'nav.stockQA', icon: 'chat_spark', path: '/stock-qa' },
-  { name: '徘徊大宗', key: 'nav.blockTradeScreen', icon: 'swap_horiz', path: '/screen/block-trade' },
-  { name: '账户', key: 'nav.profile', icon: 'person', path: '/profile' },
-  { name: '设置', key: 'nav.settings', icon: 'settings', path: '/settings' },
-];
+export const menuItems: MenuItem[] = manifest.items.map(toMenuItem);
 
 /** 快捷导航路径（侧边栏顶部 4 个常用入口） */
-export const quickNavPaths = ['/', '/alpha-lab', '/market', '/portfolio'];
+export const quickNavPaths = manifest.quickNavPaths as string[];
 
 /** 快捷导航菜单项 */
 export const quickNavItems: MenuItem[] = menuItems.filter((m) =>
@@ -51,7 +49,7 @@ export const fullMenuItems: MenuItem[] = menuItems.filter(
 );
 
 /** 移动端底部栏主要入口路径 */
-const mobilePrimaryPaths = ['/', '/market', '/ai-trading', '/strategies', '/portfolio'];
+const mobilePrimaryPaths = manifest.mobilePrimaryPaths as string[];
 
 /** 移动端底部栏显示的菜单项 */
 export const mobilePrimaryItems: MenuItem[] = menuItems.filter((m) =>

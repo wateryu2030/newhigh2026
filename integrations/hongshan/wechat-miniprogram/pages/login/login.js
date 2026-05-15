@@ -1,4 +1,5 @@
 const { tryMiniprogramLogin, getToken } = require('../../utils/auth.js');
+const { resetApiBaseToDefault } = require('../../utils/api-base.js');
 
 Page({
   data: {
@@ -37,5 +38,11 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  /** 清除错误的 api_base_override（如 https://127.0.0.1），恢复 config.js 默认公网地址 */
+  onResetApiBase() {
+    resetApiBaseToDefault();
+    wx.showToast({ title: '已恢复默认线路', icon: 'success' });
   },
 });

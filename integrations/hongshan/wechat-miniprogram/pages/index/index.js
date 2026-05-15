@@ -1,4 +1,5 @@
 const { request } = require('../../utils/request.js');
+const { getPixelRatio } = require('../../utils/window-metrics.js');
 const { getToken } = require('../../utils/auth.js');
 const { formatWanYuan, formatPct, formatTime } = require('../../utils/format.js');
 const config = require('../../config.js');
@@ -119,6 +120,10 @@ Page({
     wx.switchTab({ url: '/pages/news/news' });
   },
 
+  goFeatureHub() {
+    wx.navigateTo({ url: '/pages/feature-hub/feature-hub' });
+  },
+
   async loadAll() {
     const token = getToken();
     const open = isPublicBrowse();
@@ -148,11 +153,16 @@ Page({
     }
 
     const tasks = [
-      request({ url: '/api/dashboard', redirectOn401: false }).catch(() => null),
-      request({ url: '/api/market/emotion', redirectOn401: false }).catch(() => null),
-      request({ url: '/api/strategy/signals', data: { limit: 12 }, redirectOn401: false }).catch(
+      request({ url: '/api/dashboard', redirectOn401: false, timeout: 60000 }).catch(() => null),
+      request({ url: '/api/market/emotion', redirectOn401: false, timeout: 60000 }).catch(
         () => null,
       ),
+      request({
+        url: '/api/strategy/signals',
+        data: { limit: 12 },
+        redirectOn401: false,
+        timeout: 60000,
+      }).catch(() => null),
     ];
     const [dash, emotion, sigBody] = await Promise.all(tasks);
 
@@ -246,7 +256,7 @@ Page({
           const ctx = canvas.getContext('2d');
           const w = res[0].width;
           const h = res[0].height;
-          const dpr = wx.getSystemInfoSync().pixelRatio || 1;
+          const dpr = getPixelRatio();
           canvas.width = w * dpr;
           canvas.height = h * dpr;
           ctx.scale(dpr, dpr);
@@ -269,7 +279,7 @@ Page({
         const ctx = canvas.getContext('2d');
         const w = res[0].width;
         const h = res[0].height;
-        const dpr = wx.getSystemInfoSync().pixelRatio || 1;
+        const dpr = getPixelRatio();
         canvas.width = w * dpr;
         canvas.height = h * dpr;
         ctx.scale(dpr, dpr);

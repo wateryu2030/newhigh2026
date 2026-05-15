@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "description": "Web 与微信小程序菜单的唯一数据源；改菜单只改本文件后运行 scripts/gen_miniprogram_menu.py",
+  "quickNavPaths": ["/", "/alpha-lab", "/market", "/portfolio"],
+  "mobilePrimaryPaths": ["/", "/market", "/ai-trading", "/strategies", "/portfolio"],
+  "items": [
+    {
+      "labelZh": "首页",
+      "labelKey": "nav.dashboard",
+      "icon": "dashboard",
+      "webPath": "/",
+      "miniprogram": { "mode": "native", "route": "index" }
+    },
+    {
+      "labelZh": "Alpha工坊",
+      "labelKey": "nav.alphaLab",
+      "icon": "science",
+      "webPath": "/alpha-lab",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "行情",
+      "labelKey": "nav.market",
+      "icon": "query_stats",
+      "webPath": "/market",
+      "miniprogram": { "mode": "native", "route": "quotes" }
+    },
+    {
+      "labelZh": "AI交易",
+      "labelKey": "nav.aiTrading",
+      "icon": "memory",
+      "webPath": "/ai-trading",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "策略",
+      "labelKey": "nav.strategies",
+      "icon": "settings_input_component",
+      "webPath": "/strategies",
+      "miniprogram": { "mode": "native", "route": "strategy" }
+    },
+    {
+      "labelZh": "组合",
+      "labelKey": "nav.portfolio",
+      "icon": "account_balance",
+      "webPath": "/portfolio",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "大佬策略",
+      "labelKey": "nav.shareholderStrategy",
+      "icon": "bar_chart",
+      "webPath": "/shareholder-strategy",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "数据",
+      "labelKey": "nav.data",
+      "icon": "storage",
+      "webPath": "/data",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "系统监控",
+      "labelKey": "nav.systemMonitor",
+      "icon": "monitor_heart",
+      "webPath": "/system-monitor",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "新闻",
+      "labelKey": "nav.news",
+      "icon": "newspaper",
+      "webPath": "/news",
+      "miniprogram": { "mode": "native", "route": "news" }
+    },
+    {
+      "labelZh": "股票问答",
+      "labelKey": "nav.stockQA",
+      "icon": "chat_spark",
+      "webPath": "/stock-qa",
+      "miniprogram": { "mode": "native", "route": "stock-qa" }
+    },
+    {
+      "labelZh": "徘徊大宗",
+      "labelKey": "nav.blockTradeScreen",
+      "icon": "swap_horiz",
+      "webPath": "/screen/block-trade",
+      "miniprogram": { "mode": "native", "route": "block-trade" }
+    },
+    {
+      "labelZh": "账户",
+      "labelKey": "nav.profile",
+      "icon": "person",
+      "webPath": "/profile",
+      "miniprogram": { "mode": "webview" }
+    },
+    {
+      "labelZh": "设置",
+      "labelKey": "nav.settings",
+      "icon": "settings",
+      "webPath": "/settings",
+      "miniprogram": { "mode": "webview" }
+    }
+  ]
+}

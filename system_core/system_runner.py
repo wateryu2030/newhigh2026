@@ -10,6 +10,8 @@ import sys
 import time
 
 from system_core.repo_paths import prepend_repo_sources
+import logging
+_log = logging.getLogger(__name__)
 
 _ROOT = prepend_repo_sources()
 try:
@@ -17,7 +19,7 @@ try:
 
     configure_logging()
 except (ImportError, RuntimeError, OSError):
-    pass
+    _log.warning("Import failed, using fallback", exc_info=True)
 
 
 def run_once(

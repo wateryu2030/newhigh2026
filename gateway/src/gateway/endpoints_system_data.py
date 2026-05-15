@@ -3,6 +3,8 @@
 import time
 
 from fastapi import APIRouter
+import logging
+_log = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -93,7 +95,7 @@ def get_system_data_overview() -> dict:
             for sid, n in rows or []:
                 trade_signals_by_strategy[str(sid)] = int(n or 0)
         except Exception:
-            pass
+            _log.error("Signal processing failed", exc_info=True)
         counts["trade_signals_by_strategy"] = trade_signals_by_strategy
 
         # 新闻数据
@@ -149,7 +151,7 @@ def get_system_data_overview() -> dict:
             ).fetchone()
             emotion_state = result[0] if result else None
         except Exception:
-            pass
+            _log.error("Operation 'result' failed", exc_info=True)
         counts["emotion_state"] = emotion_state
 
         # 游资席位
@@ -170,7 +172,7 @@ def get_system_data_overview() -> dict:
             elif v is not None:
                 freshness["realtime_snapshot_time"] = str(v)
         except Exception:
-            pass
+            _log.error("Operation 'row' failed", exc_info=True)
         try:
             row = conn.execute(
                 "SELECT MAX(snapshot_time) FROM a_stock_limitup"
@@ -181,7 +183,7 @@ def get_system_data_overview() -> dict:
             elif v is not None:
                 freshness["limitup_snapshot_time"] = str(v)
         except Exception:
-            pass
+            _log.error("Operation 'row' failed", exc_info=True)
 
         return {
             "ok": True,
