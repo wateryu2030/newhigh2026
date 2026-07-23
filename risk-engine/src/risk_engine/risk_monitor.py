@@ -4,7 +4,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
+
+_log = logging.getLogger(__name__)
 
 
 def _get_conn():
@@ -13,9 +16,11 @@ def _get_conn():
         import os
 
         if not os.path.isfile(get_db_path()):
+            _log.debug("DuckDB not found at %s", get_db_path())
             return None
         return get_conn(read_only=False)
     except Exception:
+        _log.exception("risk monitor _get_conn failed")
         return None
 
 
@@ -60,6 +65,7 @@ def evaluate_current(
                 ).fetchone()
                 total_assets = float(row[0]) if row and row[0] is not None else 0.0
         except Exception:
+            _log.exception("Failed to read positions/assets from DB")
             positions = positions or []
             total_assets = total_assets or 0.0
 
@@ -83,7 +89,7 @@ def evaluate_current(
         try:
             conn.close()
         except Exception:
-            pass
+            _log.debug("Failed to close risk monitor connection (non-critical)")
     return {
         "pass": res.get("pass", True),
         "violations": violations,

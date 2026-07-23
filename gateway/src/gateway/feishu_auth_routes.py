@@ -119,7 +119,8 @@ def build_feishu_auth_router() -> APIRouter:
                 {
                     "configured": False,
                     "authorize_url": None,
-                    "hint": "配置 FEISHU_APP_ID、FEISHU_APP_SECRET、FEISHU_OAUTH_REDIRECT_URI（与飞书后台重定向 URL 一致）",
+                    "mock_available": True,
+                    "hint": "未配置 FEISHU_APP_ID，可使用模拟扫码登录",
                 },
                 source="feishu",
             )
@@ -276,5 +277,74 @@ def build_feishu_auth_router() -> APIRouter:
             {"token": token, "user_id": uid, "username": uname, "openid_feishu": open_id},
             source="feishu",
         )
+
+    # -- 飞书模拟扫码登录 ----------------------------------------------------
+    _FEISHU_MOCK_TICKETS: dict[str, dict] = {}
+
+    @r.get("/feishu/mock-begin")
+    def feishu_mock_begin(redirect: str = "/") -> dict[str, Any]:
+        tid = uuid.uuid4().hex[:24]
+        _FEISHU_MOCK_TICKETS[tid] = {"next": redirect, "created_at": __import__("time").time(), "used": False}
+        return json_ok(
+            {"ticket": tid, "mock_pick_url": f"/login/feishu-mock?t={tid}", "configured": False},
+            source="feishu",
+        )
+
+    @r.post("/feishu/mock-complete")
+    def feishu_mock_complete(payload: dict) -> Any:
+        ticket = (payload.get("ticket") or "").strip()
+        role = (payload.get("role") or "").strip().lower()
+        if role not in ("viewer", "operator", "admin"):
+            role = "viewer"
+        entry = _FEISHU_MOCK_TICKETS.get(ticket)
+        if not entry:
+            return json_fail("ticket 无效或已过期", status_code=400, source="feishu")
+        _FEISHU_MOCK_TICKETS.pop(ticket, None)
+        conn = _open_writable()
+        if not conn:
+            return json_fail("数据库不可用", status_code=503, source="feishu")
+        try:
+            openid = f"fs-mock:{role}:{uuid.uuid4().hex[:12]}"
+            display_name = {"admin": "管理员", "operator": "运营", "viewer": "用户"}.get(role, "用户")
+            row = conn.execute(
+                "SELECT user_id, username, role, COALESCE(user_level, 'trial') FROM hongshan_users WHERE feishu_open_id = ? LIMIT 1",
+                [openid],
+            ).fetchone()
+            if row:
+                uid, uname, urole = str(row[0]), str(row[1]), str(row[2] or role)
+                ulvl = str(row[3] or "trial").strip() if len(row) > 3 else "trial"
+            else:
+                uid = str(uuid.uuid4())
+                uname = f"fs-mock_{role}_{uuid.uuid4().hex[:6]}"
+                urole = role
+                ulvl = role
+                now = datetime.now(timezone.utc)
+                conn.execute(
+                    """INSERT INTO hongshan_users
+                       (user_id, username, email, phone, password_hash, status, role, feishu_open_id, user_level, created_at)
+                       VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)""",
+                    [uid, uname, f"{uid[:8]}@fs-mock.local", None,
+                     hash_password(uuid.uuid4().hex), role, openid, ulvl, now],
+                )
+                try:
+                    conn.execute(
+                        "INSERT INTO hongshan_accounts (user_id, available_cash, frozen_cash, total_assets, updated_at) VALUES (?, 500000, 0, 500000, ?)",
+                        [uid, now],
+                    )
+                except Exception:
+                    pass
+            token = create_access_token(subject=uid, extra_claims={"role": urole, "user_level": ulvl, "name": display_name})
+            return json_ok(
+                {"token": token, "access_token": token, "token_type": "bearer",
+                 "user_id": uid, "username": display_name, "user": display_name, "role": urole, "user_level": ulvl},
+                source="feishu",
+            )
+        except Exception as e:
+            return json_fail(str(e)[:200], status_code=500, source="feishu")
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     return r

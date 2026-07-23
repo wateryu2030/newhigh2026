@@ -327,11 +327,21 @@ def fetch_xueqiu_tweets(
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
     for mode_name in ("最热门", "本周新增"):
-        try:
-            df = ak.stock_hot_tweet_xq(symbol=mode_name)
-        except Exception as exc:
-            print(f"  [警告] 雪球 {mode_name} 采集失败: {exc}", file=sys.stderr, flush=True)
-            continue
+        retry_count = 0
+        max_retries = 3
+        df = None
+        while retry_count < max_retries:
+            try:
+                df = ak.stock_hot_tweet_xq(symbol=mode_name)
+                break
+            except Exception as exc:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    print(f"  [警告] 雪球 {mode_name} 采集失败 ({max_retries}次重试): {exc}", file=sys.stderr, flush=True)
+                else:
+                    sleep_sec = 2 ** retry_count
+                    print(f"  [重试] 雪球 {mode_name} 第{retry_count}次失败({exc})，{sleep_sec}s后重试...", file=sys.stderr, flush=True)
+                    time.sleep(sleep_sec)
 
         if df is None or df.empty:
             continue

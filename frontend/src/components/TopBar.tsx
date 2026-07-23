@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useLang } from '@/context/LangContext';
-import { useAuth } from '@/context/AuthContext';
 import { api } from '@/api/client';
 
 interface TopBarProps {
@@ -14,8 +12,6 @@ interface TopBarProps {
 /** 顶部栏：红山量化平台 + 内联新闻滚动 + 语言切换（合并为单行，节约垂直空间） */
 export function TopBar({ onMobileMenuClick }: TopBarProps) {
   const { t, lang, setLang } = useLang();
-  const router = useRouter();
-  const { ready, isAuthenticated, logout } = useAuth();
   const [banner, setBanner] = useState('');
   const [tickerHidden, setTickerHidden] = useState(false);
 
@@ -87,33 +83,7 @@ export function TopBar({ onMobileMenuClick }: TopBarProps) {
       )}
 
       <div className="flex shrink-0 items-center gap-2 md:gap-3">
-        {ready && isAuthenticated && (
-          <Link
-            href="/profile"
-            className="hidden rounded-lg px-2 py-1.5 text-sm text-text-secondary transition-colors hover:bg-card-border/50 sm:inline"
-          >
-            {t('nav.profile')}
-          </Link>
-        )}
-        {ready && isAuthenticated ? (
-          <button
-            type="button"
-            onClick={() => {
-              logout();
-              router.push('/news');
-            }}
-            className="rounded-lg px-2 py-1.5 text-sm text-text-secondary transition-colors hover:bg-card-border/50"
-          >
-            {t('auth.logout')}
-          </button>
-        ) : ready ? (
-          <Link
-            href="/login"
-            className="rounded-lg bg-primary-fixed/90 px-3 py-1.5 text-sm font-medium text-on-warm-fill transition hover:opacity-90"
-          >
-            {t('auth.login')}
-          </Link>
-        ) : null}
+        {/* 免登录模式：不显示登录/登出按钮 */}
         <button
           type="button"
           onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}

@@ -1,9 +1,21 @@
 """Order manager: fetch positions, aggregate place/cancel."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from core import Position
 from .binance_orders import place_order, cancel_order, fetch_open_orders, _signed_request
+
+
+@dataclass
+class Position:
+    """本地持仓数据类，避免对 core 模块的硬依赖。"""
+    symbol: str
+    side: str = "LONG"
+    quantity: float = 0.0
+    entry_price: float = 0.0
+    unrealized_pnl: Optional[float] = None
 
 
 def fetch_positions(

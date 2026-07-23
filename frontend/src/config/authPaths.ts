@@ -3,7 +3,7 @@
  */
 export function isAuthPublicPath(pathname: string): boolean {
   const p = pathname || '';
-  if (p === '/login' || p === '/register') return true;
+  if (p === '/login' || p.startsWith('/login/') || p === '/register') return true;
   if (p === '/news' || p.startsWith('/news/')) return true;
   return false;
 }

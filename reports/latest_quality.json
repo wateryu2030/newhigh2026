@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-12T18:05:09.198205+00:00",
+  "timestamp": "2026-05-17T18:05:19.945063+00:00",
   "checks": [
     {
       "name": "shareholder_top10",
@@ -7,7 +7,7 @@
         "ok": true,
         "database_path": "/Users/apple/Ahope/newhigh/data/quant_system.duckdb",
         "check": "top_10_shareholders",
-        "total_rows": 2855515,
+        "total_rows": 2855555,
         "distinct_stocks_with_data": 5517,
         "distinct_report_dates": 6622,
         "report_date_min": "1900-01-01",
@@ -425,7 +425,7 @@
           },
           {
             "periods": 106,
-            "stocks": 28
+            "stocks": 27
           },
           {
             "periods": 107,
@@ -433,7 +433,7 @@
           },
           {
             "periods": 108,
-            "stocks": 18
+            "stocks": 19
           },
           {
             "periods": 109,
@@ -449,11 +449,11 @@
           },
           {
             "periods": 112,
-            "stocks": 12
+            "stocks": 11
           },
           {
             "periods": 113,
-            "stocks": 9
+            "stocks": 10
           },
           {
             "periods": 114,
@@ -461,11 +461,11 @@
           },
           {
             "periods": 115,
-            "stocks": 5
+            "stocks": 4
           },
           {
             "periods": 116,
-            "stocks": 2
+            "stocks": 3
           },
           {
             "periods": 117,
@@ -517,13 +517,13 @@
           }
         ],
         "incomplete_on_latest_sample": [],
-        "a_stock_basic_count": 5513,
-        "missing_stocks_count": 1,
-        "coverage_rate_pct": 99.98,
+        "a_stock_basic_count": 5517,
+        "missing_stocks_count": 5,
+        "coverage_rate_pct": 99.91,
         "missing_sample_codes": [],
         "missing_list_truncated": false,
         "missing_stocks_file": "/Users/apple/Ahope/newhigh/reports/missing_stocks.txt",
-        "missing_stocks_file_count": 1
+        "missing_stocks_file_count": 5
       }
     }
   ]

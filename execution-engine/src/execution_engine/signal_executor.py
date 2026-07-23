@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+_log = logging.getLogger(__name__)
 
 
 def get_actionable_signals(
@@ -20,6 +23,7 @@ def get_actionable_signals(
         import os
 
         if not os.path.isfile(get_db_path()):
+            _log.debug("DuckDB not found at %s, returning empty signals", get_db_path())
             return buys, sells
         conn = get_conn(read_only=False)
         df = conn.execute(
@@ -37,7 +41,7 @@ def get_actionable_signals(
         for _, row in df.iterrows():
             code = str(row.get("code", ""))
             score = float(row.get("signal_score") or 0)
-            sig = row.get("signal") or "BUY"
+            sig = str(row.get("signal") or "BUY").upper()
             rec = {
                 "code": code,
                 "signal": sig,
@@ -50,40 +54,128 @@ def get_actionable_signals(
                 buys.append(rec)
             elif score < sell_threshold or sig == "SELL":
                 sells.append(rec)
+        _log.info("actionable signals: %d buys, %d sells", len(buys), len(sells))
         return buys[:limit], sells[:limit]
     except Exception:
+        _log.exception("Failed to read trade_signals")
         return [], []
 
 
-def execute_buy(code: str, confidence: float = 0.0, **kwargs) -> dict:
-    """执行买入（当前为占位，可接实盘/模拟）。"""
-    return {
-        "ok": True,
-        "action": "BUY",
-        "code": code,
-        "confidence": confidence,
-        "message": "stub: execute_buy (no real order)",
-        **kwargs,
-    }
+def execute_buy(
+    code: str,
+    quantity: int = 100,
+    confidence: float = 0.0,
+    price: Optional[float] = None,
+    dry_run: bool = True,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """
+    执行买入：dry_run=False 时通过 SimulatedBroker 下单到模拟盘。
+    dry_run=True 只返回意向。
+    """
+    if dry_run:
+        return {
+            "ok": True,
+            "action": "BUY",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "message": "dry_run: order not placed",
+        }
+    try:
+        from execution_engine.brokers.registry import get_broker
+
+        broker = get_broker()
+        result = broker.submit_order(
+            symbol=code,
+            side="BUY",
+            quantity=float(quantity),
+            order_type="MARKET",
+            price=price,
+        )
+        return {
+            "ok": result.ok,
+            "action": "BUY",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "order_id": result.order_id,
+            "message": result.message or ("filled" if result.ok else "rejected"),
+            **kwargs,
+        }
+    except Exception:
+        _log.exception("execute_buy failed for %s", code)
+        return {
+            "ok": False,
+            "action": "BUY",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "message": "execution error",
+            **kwargs,
+        }
 
 
-def execute_sell(code: str, confidence: float = 0.0, **kwargs) -> dict:
-    """执行卖出（占位）。"""
-    return {
-        "ok": True,
-        "action": "SELL",
-        "code": code,
-        "confidence": confidence,
-        "message": "stub: execute_sell (no real order)",
-        **kwargs,
-    }
+def execute_sell(
+    code: str,
+    quantity: int = 100,
+    confidence: float = 0.0,
+    price: Optional[float] = None,
+    dry_run: bool = True,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    """
+    执行卖出：dry_run=False 时通过 SimulatedBroker 下单到模拟盘。
+    """
+    if dry_run:
+        return {
+            "ok": True,
+            "action": "SELL",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "message": "dry_run: order not placed",
+        }
+    try:
+        from execution_engine.brokers.registry import get_broker
+
+        broker = get_broker()
+        result = broker.submit_order(
+            symbol=code,
+            side="SELL",
+            quantity=float(quantity),
+            order_type="MARKET",
+            price=price,
+        )
+        return {
+            "ok": result.ok,
+            "action": "SELL",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "order_id": result.order_id,
+            "message": result.message or ("filled" if result.ok else "rejected"),
+            **kwargs,
+        }
+    except Exception:
+        _log.exception("execute_sell failed for %s", code)
+        return {
+            "ok": False,
+            "action": "SELL",
+            "code": code,
+            "quantity": quantity,
+            "confidence": confidence,
+            "message": "execution error",
+            **kwargs,
+        }
 
 
 def run_signal_executor(
     buy_threshold: float = 0.7,
     sell_threshold: float = 0.3,
     dry_run: bool = True,
-) -> dict:
+    lot_size: int = 100,
+) -> Dict[str, Any]:
     """
     根据 signal_score 执行买卖逻辑。
     dry_run=True 只返回将要执行的动作，不实际下单。
@@ -92,9 +184,23 @@ def run_signal_executor(
     actions = []
     if not dry_run:
         for b in buys:
-            actions.append(execute_buy(b["code"], b.get("confidence", 0)))
+            res = execute_buy(
+                b["code"],
+                quantity=lot_size,
+                confidence=b.get("confidence", 0),
+                price=b.get("target_price") or None,
+                dry_run=False,
+            )
+            actions.append(res)
         for s in sells:
-            actions.append(execute_sell(s["code"], s.get("confidence", 0)))
+            res = execute_sell(
+                s["code"],
+                quantity=lot_size,
+                confidence=s.get("confidence", 0),
+                price=s.get("stop_loss") or None,
+                dry_run=False,
+            )
+            actions.append(res)
     return {
         "dry_run": dry_run,
         "buy_candidates": [{"code": b["code"], "signal_score": b["signal_score"]} for b in buys],

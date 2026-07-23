@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any, List, Optional
 
 from .base import BaseBroker, OrderResult, PositionInfo
 
 if TYPE_CHECKING:
-    from core import Position  # pylint: disable=import-error
+    pass
+
+_log = logging.getLogger(__name__)
 
 
 class LiveBroker(BaseBroker):
@@ -59,6 +62,7 @@ class LiveBroker(BaseBroker):
                 raw=out,
             )
         except Exception as e:
+            _log.exception("LiveBroker.submit_order failed for %s", symbol)
             return OrderResult(ok=False, message=str(e))
 
     def cancel_order(self, symbol: str, order_id: str, **kwargs: Any) -> OrderResult:
@@ -74,6 +78,7 @@ class LiveBroker(BaseBroker):
             )
             return OrderResult(ok=True, order_id=order_id, raw=out)
         except Exception as e:
+            _log.exception("LiveBroker.cancel_order failed for %s", symbol)
             return OrderResult(ok=False, message=str(e))
 
     def get_positions(self, **kwargs: Any) -> List[PositionInfo]:
@@ -94,4 +99,5 @@ class LiveBroker(BaseBroker):
                 for p in positions
             ]
         except Exception:
+            _log.exception("LiveBroker.get_positions failed")
             return []

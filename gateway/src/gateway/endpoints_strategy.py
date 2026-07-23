@@ -349,18 +349,63 @@ def get_backtest_result(
 
 @router.get("/portfolio/weights")
 def get_portfolio_weights() -> dict:
-    """Current portfolio weights (stub)."""
-    return {"weights": {}, "capital": 0}
+    """当前组合权重：从 sim_positions + sim_account_snapshots 计算真实持仓与总资产。"""
+    try:
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return {"weights": {}, "capital": 0}
+        conn = get_conn(read_only=False)
+        try:
+            # Total assets from latest snapshot
+            snap = conn.execute(
+                "SELECT total_assets FROM sim_account_snapshots ORDER BY snapshot_time DESC LIMIT 1"
+            ).fetchone()
+            capital = float(snap[0]) if snap and snap[0] else 0.0
+
+            # Positions with market values
+            rows = conn.execute(
+                "SELECT code, qty, avg_price FROM sim_positions WHERE qty > 0"
+            ).fetchall()
+            weights = {}
+            total_mv = 0.0
+            for code, qty, avg_price in rows:
+                mv = float(qty or 0) * float(avg_price or 0)
+                total_mv += mv
+            if total_mv > 0 and capital > 0:
+                for code, qty, avg_price in rows:
+                    mv = float(qty or 0) * float(avg_price or 0)
+                    weights[str(code)] = round(mv / capital, 4)
+            return {"weights": weights, "capital": capital}
+        finally:
+            conn.close()
+    except Exception:
+        return {"weights": {}, "capital": 0}
 
 
 @router.get("/risk/status")
 def risk_status() -> dict:
-    """Risk checks status (stub)."""
-    return {
-        "drawdown_ok": True,
-        "exposure_ok": True,
-        "volatility_ok": True,
-    }
+    """风控状态：实时检查回撤、仓位暴露、波动率。"""
+    try:
+        from risk_engine.drawdown_control import drawdown_ok
+        from risk_engine.exposure_limit import exposure_ok
+        from risk_engine.volatility_filter import volatility_ok as vol_ok
+        from data_pipeline.storage.duckdb_manager import get_conn, get_db_path
+        import os
+
+        if not os.path.isfile(get_db_path()):
+            return {"drawdown_ok": True, "exposure_ok": True, "volatility_ok": True}
+        conn = get_conn(read_only=True)
+        try:
+            dd = drawdown_ok(conn)
+            exp = exposure_ok(conn)
+            vol = vol_ok(conn)
+            return {"drawdown_ok": dd, "exposure_ok": exp, "volatility_ok": vol}
+        finally:
+            conn.close()
+    except Exception:
+        return {"drawdown_ok": True, "exposure_ok": True, "volatility_ok": True}
 
 
 @router.get("/risk/rules")

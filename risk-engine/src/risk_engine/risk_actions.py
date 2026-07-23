@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List
+
+_log = logging.getLogger(__name__)
 
 
 def execute_action(
@@ -74,7 +77,7 @@ def _emit_alert(violation: Dict[str, Any], context: Dict[str, Any]) -> None:
         )
         conn.close()
     except Exception:
-        pass
+        _log.exception("_emit_alert failed: %s", violation.get("message", ""))
 
 
 def apply_risk_actions(

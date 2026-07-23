@@ -22,8 +22,8 @@ const navItemBase =
 export function Sidebar({ hidden }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useLang();
-  const { ready, isAuthenticated } = useAuth();
-  const showMember = ready && isAuthenticated;
+  // 免登录模式：始终显示全部菜单
+  const showMember = true;
   const quickNavItems = getQuickNavForUser(showMember);
   const fullMenuItems = getFullMenuForUser(showMember);
 

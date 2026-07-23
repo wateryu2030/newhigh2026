@@ -60,11 +60,19 @@ def build_health_payload() -> Dict[str, Any]:
             checks["db"] = "unavailable"
             status = "degraded"
         else:
-            # 与 Gateway 内其他 DuckDB 访问一致须 read_only=False，否则与审计写入混用会报错：
-            # "Can't open a connection ... different configuration"
-            conn = get_conn(read_only=False)
+            # 优先用只读连接（retry 逻辑内置），避免与审计中间件的写连接竞争锁
+            conn = None
             try:
-                ensure_tables(conn)
+                conn = get_conn(read_only=True)
+            except Exception:
+                conn = get_conn(read_only=False)
+            if conn is None:
+                conn = get_conn(read_only=False)
+            try:
+                try:
+                    ensure_tables(conn)
+                except Exception:
+                    pass  # 只读连接无法 CREATE，表已存在则跳过
                 conn.execute("SELECT 1").fetchone()
                 services["duckdb"] = {"status": "ok", "path": db_path}
 
@@ -188,8 +196,11 @@ def _pipeline_meta_recent() -> list:
 
         if not os.path.isfile(get_db_path()):
             return []
-        conn = get_conn(read_only=False)
-        ensure_tables(conn)
+        conn = get_conn(read_only=True)
+        try:
+            ensure_tables(conn)
+        except Exception:
+            pass
         df = conn.execute(
             "SELECT k, v, updated_at FROM pipeline_meta ORDER BY updated_at DESC LIMIT 8"
         ).fetchdf()

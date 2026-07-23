@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/context/LangContext';
 import { getDrawerMenuForUser } from '@/config/menu';
-import { useAuth } from '@/context/AuthContext';
 
 interface MobileDrawerProps {
   open: boolean;
@@ -15,8 +14,8 @@ interface MobileDrawerProps {
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
   const { t } = useLang();
-  const { ready, isAuthenticated } = useAuth();
-  const menuItems = getDrawerMenuForUser(ready && isAuthenticated);
+  // 免登录模式：始终显示全部菜单
+  const menuItems = getDrawerMenuForUser(true);
 
   if (!open) return null;
 

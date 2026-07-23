@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any, Dict, Optional
+
+_log = logging.getLogger(__name__)
 
 
 def upsert_strategy_market_from_backtest(
@@ -41,6 +44,7 @@ def upsert_strategy_market_from_backtest(
         conn.close()
         return True
     except Exception:
+        _log.exception("upsert_strategy_market_from_backtest failed: %s", strategy_id)
         return False
 
 
@@ -66,7 +70,7 @@ def log_backtest_task_error(
         )
         conn.close()
     except Exception:
-        pass
+        _log.exception("write_backtest_error: task=%s strategy=%s", task_name, strategy_id)
 
 
 def ensure_baseline_strategy_market_rows(min_rows: int = 2) -> int:
@@ -105,6 +109,7 @@ def ensure_baseline_strategy_market_rows(min_rows: int = 2) -> int:
         conn.close()
         return n_exec
     except Exception:
+        _log.exception("ensure_baseline_strategy_market_rows failed")
         return 0
 
 
@@ -126,4 +131,4 @@ def record_pipeline_meta(key: str, value: Any) -> None:
         )
         conn.close()
     except Exception:
-        pass
+        _log.exception("record_pipeline_meta failed: key=%s", key)

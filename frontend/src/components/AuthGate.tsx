@@ -8,9 +8,15 @@ import { useLang } from '@/context/LangContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 /**
- * 未登录访问受保护路由时拦截，仅允许资讯 / 登录 / 注册等公开页直通。
+ * 认证网关 —— 当前已禁用认证检查，所有路由直接放行。
+ * 如需重新启用，取消下方注释即可。
  */
 export function AuthGate({ children }: { children: React.ReactNode }) {
+  // 直接放行所有路由（免登录模式）
+  return <>{children}</>;
+
+  /*
+  // === 原认证逻辑（已禁用）===
   const pathname = usePathname() ?? '';
   const { ready, isAuthenticated } = useAuth();
   const { t } = useLang();
@@ -33,6 +39,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+  */
 }
 
 function GuestUnlockPrompt() {

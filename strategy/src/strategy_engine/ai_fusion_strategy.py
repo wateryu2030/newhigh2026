@@ -5,10 +5,13 @@ signal_score = emotion_score * 0.4 + fund_score * 0.4 + trend_score * 0.2
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import List, Tuple
 
 from strategy_engine.price_reference import buy_target_stop_from_last, get_last_price
+
+_log = logging.getLogger(__name__)
 
 # Optional imports - handled gracefully if not available
 try:
@@ -48,6 +51,7 @@ def _get_emotion_state() -> dict:
         emotion_score = score_map.get(state, 0.5)
         return {"state": state, "emotion_score": emotion_score, "raw": latest}
     except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        _log.exception("emotion_current_state failed")
         return {"state": "—", "emotion_score": 0.5, "raw": {}}
 
 
@@ -87,6 +91,7 @@ def _get_hotmoney_signals() -> list:
                 out.append((code, min(1.0, 0.4 + wr * 0.5)))
         return out
     except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        _log.exception("global_fund_view failed")
         return []
 
 
@@ -107,6 +112,7 @@ def _get_main_theme() -> list:
             return [("全市场", 1)]
         return [(str(r["sector"]), int(r.get("rank", 0))) for _, r in df.iterrows()]
     except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        _log.exception("top_themes failed")
         return [("全市场", 1)]
 
 
@@ -130,6 +136,7 @@ def _trend_score_for_code(code: str) -> float:
             return min(1.0, max(0, float(row[0]) / 100.0))
         return 0.5
     except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        _log.exception("trend_score_for_theme failed")
         return 0.5
 
 
@@ -193,6 +200,7 @@ def _sniper_priority_codes() -> set:
             if r.get("code")
         }
     except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+        _log.exception("hot_pool_set failed")
         return set()
 
 
@@ -291,7 +299,7 @@ class AIFusionStrategy:
                 for _, r in ms.iterrows():
                     candidate_codes.add(str(r.get("code", "")))
         except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
-            pass
+            _log.exception("_get_candidate_codes_bullish fallback")
 
         return [c for c in candidate_codes if c]
 
@@ -321,7 +329,7 @@ class AIFusionStrategy:
                     str(r.get("code", "")) for _, r in ms.iterrows() if r.get("code")
                 ]
         except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
-            pass
+            _log.exception("_get_candidate_codes_normal fallback")
 
         return candidate_codes
 
@@ -349,6 +357,7 @@ class AIFusionStrategy:
             conn.close()
             return n
         except Exception:  # pylint: disable=broad-exception-caught  # strategy fusion logic
+            _log.exception("save_signals failed")
             return 0
 
 

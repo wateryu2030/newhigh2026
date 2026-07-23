@@ -20,9 +20,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
+# 单个命令超时（秒），防止网络慢或 OOM 卡死整条链
+TIMEOUT=600
+
 LOG_DIR="$ROOT/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/data-packages-collect.log"
+
+# PID 文件防并发（当 launchd 触发时，若前次仍在运行则跳过）
+PIDFILE="$ROOT/data/data_packages_collect.pid"
+if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; then
+  log "[前置] 另一采集进程仍在运行（pid=$(cat "$PIDFILE")），本次跳过"
+  exit 0
+fi
+echo $$ > "$PIDFILE"
+trap 'rm -f "$PIDFILE"' EXIT
 
 # 加载 .env（若存在）
 if [ -f "$ROOT/.env" ]; then
@@ -45,28 +57,28 @@ log() {
 
 log "=== newhigh 数据增量采集 开始 ==="
 
-# ---- 1. 财报采集（前300只A股：至少覆盖沪深300）----
+# ---- 1. 财报采集（前100只A股：逐步覆盖；固定 limit 避免 OOM）----
 log "[财报] 开始批量采集..."
-$VENV_PYTHON -m financial_report --batch --limit 300 >> "$LOG_FILE" 2>&1
+gtimeout $TIMEOUT $VENV_PYTHON -m financial_report --batch --limit 100 >> "$LOG_FILE" 2>&1 || log "[财报] ⚠️ 超时或失败（exit=$?）"
 log "[财报] 采集完成"
 
 # ---- 2. 传闻采集 ----
 log "[传闻] 开始雪球采集..."
-$VENV_PYTHON -m rumor_capture --source xueqiu --days 30 >> "$LOG_FILE" 2>&1
+gtimeout $TIMEOUT $VENV_PYTHON -m rumor_capture --source xueqiu --days 30 >> "$LOG_FILE" 2>&1 || log "[传闻] ⚠️ 雪球超时或失败（exit=$?）"
 log "[传闻] 雪球完成"
 
 log "[传闻] 开始 news_items 回溯..."
-$VENV_PYTHON -m rumor_capture --source news --days 30 >> "$LOG_FILE" 2>&1
+gtimeout $TIMEOUT $VENV_PYTHON -m rumor_capture --source news --days 30 >> "$LOG_FILE" 2>&1 || log "[传闻] ⚠️ news_items 超时或失败（exit=$?）"
 log "[传闻] news_items 完成"
 
 # ---- 3. 回购/收购事件采集 ----
 log "[回购] 开始事件采集..."
-$VENV_PYTHON -m buyback_alert --collect >> "$LOG_FILE" 2>&1
+gtimeout $TIMEOUT $VENV_PYTHON -m buyback_alert --collect >> "$LOG_FILE" 2>&1 || log "[回购] ⚠️ 超时或失败（exit=$?）"
 log "[回购] 事件采集完成"
 
 # ---- 4. 连跌 + 预警 ----
 log "[预警] 开始连跌检测 + 交叉分析..."
-$VENV_PYTHON -m buyback_alert --detect --alert >> "$LOG_FILE" 2>&1
+gtimeout $TIMEOUT $VENV_PYTHON -m buyback_alert --detect --alert >> "$LOG_FILE" 2>&1 || log "[预警] ⚠️ 超时或失败（exit=$?）"
 log "[预警] 连跌+交叉分析完成"
 
 # ---- 汇总 ----

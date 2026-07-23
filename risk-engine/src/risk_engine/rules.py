@@ -5,10 +5,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from .drawdown_control import current_drawdown, drawdown_ok
 from .exposure_limit import total_exposure_notional
+
+_log = logging.getLogger(__name__)
 
 
 def _get_conn():
@@ -17,9 +20,11 @@ def _get_conn():
         import os
 
         if not os.path.isfile(get_db_path()):
+            _log.debug("DuckDB not found at %s", get_db_path())
             return None
         return get_conn(read_only=False)
     except Exception:
+        _log.exception("_get_conn failed")
         return None
 
 
@@ -33,6 +38,7 @@ def load_rules(conn: Any) -> List[Dict[str, Any]]:
             return []
         return df.to_dict("records")
     except Exception:
+        _log.exception("load_rules failed")
         return []
 
 
@@ -63,7 +69,7 @@ def evaluate(
             try:
                 conn.close()
             except Exception:
-                pass
+                _log.debug("Failed to close rule connection (non-critical)")
     if not rules:
         return {"pass": True, "violations": []}
     pos_notional = sum(float(p.get("qty") or 0) * float(p.get("avg_price") or 0) for p in positions)
@@ -133,4 +139,5 @@ def save_rule(
         conn.close()
         return True
     except Exception:
+        _log.exception("save_rule failed: type=%s value=%s", rule_type, value)
         return False

@@ -415,11 +415,15 @@ def run_batch(
                 tqdm = lambda x, **kw: x  # type: ignore[assignment]
 
             grand_total = 0
-            for stock_code in tqdm(stocks, desc="采集进度", unit="股"):
+            BATCH_CHUNK_SIZE = 50
+            for i, stock_code in enumerate(tqdm(stocks, desc="采集进度", unit="股")):
                 total = process_single_stock(
                     stock_code, statement_types, conn, dry_run=dry_run
                 )
                 grand_total += total
+                if not dry_run and (i + 1) % BATCH_CHUNK_SIZE == 0:
+                    conn.commit()
+                    print(f"  [checkpoint] 已处理 {i+1}/{len(stocks)} 只股票，累计 {grand_total} 行")
 
             if not dry_run:
                 conn.commit()

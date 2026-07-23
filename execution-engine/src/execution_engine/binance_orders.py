@@ -1,12 +1,27 @@
 """Binance order execution: place_order, cancel_order (REST API)."""
 
+from __future__ import annotations
+
+import hashlib
+import hmac
+import logging
 import os
 import time
 from typing import Any, Dict, Optional
+from urllib.parse import urlencode
 
 import requests
 
-# from core import Position  # pylint: disable=unused-import
+_log = logging.getLogger(__name__)
+
+
+def _generate_signature(query_string: str, api_secret: str) -> str:
+    """Generate HMAC-SHA256 signature for Binance signed endpoints."""
+    return hmac.new(
+        api_secret.encode("utf-8"),
+        query_string.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
 
 
 def _signed_request(
@@ -20,15 +35,19 @@ def _signed_request(
     """Send signed request to Binance. Requires API key/secret for trading."""
     api_key = api_key or os.environ.get("BINANCE_API_KEY", "")
     api_secret = api_secret or os.environ.get("BINANCE_API_SECRET", "")
-    params = params or {}
+    params = dict(params or {})
     params["timestamp"] = int(time.time() * 1000)
-    # In production, sign with HMAC-SHA256; for stub we just pass key
+
+    query_string = urlencode(params)
+    signature = _generate_signature(query_string, api_secret) if api_secret else ""
+    signed_query = f"{query_string}&signature={signature}"
+
     headers = {"X-MBX-APIKEY": api_key} if api_key else {}
     url = f"{base_url}{path}"
     if method.upper() == "GET":
-        r = requests.get(url, params=params, headers=headers, timeout=10)
+        r = requests.get(f"{url}?{signed_query}", headers=headers, timeout=15)
     else:
-        r = requests.request(method, url, params=params, headers=headers, timeout=10)
+        r = requests.request(method, f"{url}?{signed_query}", headers=headers, timeout=15)
     r.raise_for_status()
     return r.json()
 

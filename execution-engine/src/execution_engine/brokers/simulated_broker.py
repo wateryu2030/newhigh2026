@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from .base import BaseBroker, OrderResult, PositionInfo
+
+_log = logging.getLogger(__name__)
 
 
 class SimulatedBroker(BaseBroker):
@@ -22,12 +25,12 @@ class SimulatedBroker(BaseBroker):
         try:
             from execution_engine.simulated import step_simulated, get_orders
 
-            # 模拟盘按信号步进，此处仅记录“意向”；实际成交由 step_simulated 驱动
             step = step_simulated(lot_size=int(quantity), max_buys=1, max_sells=1)
             orders = get_orders(limit=1)
             oid = str(orders[0].get("id")) if orders else None
             return OrderResult(ok=step.get("ok", False), order_id=oid, message=step.get("error"))
         except Exception as e:
+            _log.exception("SimulatedBroker.submit_order failed for %s", symbol)
             return OrderResult(ok=False, message=str(e))
 
     def cancel_order(self, symbol: str, order_id: str, **kwargs: Any) -> OrderResult:
@@ -50,6 +53,7 @@ class SimulatedBroker(BaseBroker):
                 for r in rows
             ]
         except Exception:
+            _log.exception("SimulatedBroker.get_positions failed")
             return []
 
     def get_orders(
@@ -60,4 +64,5 @@ class SimulatedBroker(BaseBroker):
 
             return get_orders(limit=limit)
         except Exception:
+            _log.exception("SimulatedBroker.get_orders failed")
             return []

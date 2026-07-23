@@ -14,18 +14,14 @@ _log = logging.getLogger(__name__)
 
 
 def _norm_code(symbol: str) -> str:
-    """6 位代码或 600519.SH -> 统一为带后缀的 code（与 a_stock_daily 一致）。"""
+    """6 位代码或 600519.SH -> 统一为纯 6 位代码（与 a_stock_daily / trade_signals 一致）。"""
     s = (symbol or "").strip()
     if not s:
         return ""
     code = s.split(".", maxsplit=1)[0]
     if len(code) == 6 and code.isdigit():
-        if code.startswith("6"):
-            return f"{code}.SH"
-        if code.startswith(("0", "3")):
-            return f"{code}.SZ"
-        return f"{code}.SH"
-    return s if "." in s else f"{code}.SH"
+        return code
+    return code
 
 
 def _to_ts(d) -> datetime:
@@ -110,15 +106,16 @@ def load_ohlcv_from_db(
 
     if conn is None:
         try:
-            from data_pipeline.storage.duckdb_manager import get_conn
-            conn = get_conn(read_only=False)
+            import duckdb
+            from data_pipeline.storage.duckdb_manager import get_db_path
+            conn = duckdb.connect(get_db_path(), read_only=True)
             close_conn = True
         except Exception as e:
             _log.warning("load_ohlcv_from_db: no db: %s", e)
             return pd.DataFrame(), []
 
-    start = start_date.replace("-", "")[:8]
-    end = end_date.replace("-", "")[:8]
+    start = start_date[:10]
+    end = end_date[:10]
     out_df = pd.DataFrame()
     ohlcv_list: List[Any] = []
 
@@ -215,15 +212,16 @@ def load_signals_from_db(
 
     if conn is None:
         try:
-            from data_pipeline.storage.duckdb_manager import get_conn
-            conn = get_conn(read_only=False)
+            import duckdb
+            from data_pipeline.storage.duckdb_manager import get_db_path
+            conn = duckdb.connect(get_db_path(), read_only=True)
             close_conn = True
         except Exception as e:
             _log.warning("load_signals_from_db: no db: %s", e)
             return {}, {}
 
-    start = start_date.replace("-", "")[:8]
-    end = end_date.replace("-", "")[:8]
+    start = start_date[:10]
+    end = end_date[:10]
     entries: dict = {}
     exits: dict = {}
     lag = int(execution_lag_bdays) if execution_lag_bdays is not None else _execution_lag_bdays()

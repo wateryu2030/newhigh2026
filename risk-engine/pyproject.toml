@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "risk-engine"
-version = "0.1.0"
-description = "Risk checks for newhigh"
+version = "0.2.0"
+description = "Risk management engine for newhigh — drawdown, exposure, daily loss, industry concentration, volatility"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
+    "loguru>=0.7.0",
 ]
 
 [tool.setuptools.packages.find]

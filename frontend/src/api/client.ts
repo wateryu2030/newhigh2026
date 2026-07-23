@@ -22,12 +22,8 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 function redirectToLogin(): void {
-  if (typeof window === 'undefined') return;
-  const path = window.location.pathname || '';
-  if (path.startsWith('/login') || path.startsWith('/register')) return;
-  if (path === '/news' || path.startsWith('/news/')) return;
-  const next = encodeURIComponent(window.location.pathname + window.location.search);
-  window.location.href = `/login?next=${next}`;
+  // 免登录模式：不跳转
+  return;
 }
 
 export function getApiBase(): string {

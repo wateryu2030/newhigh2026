@@ -2,8 +2,27 @@
 
 from typing import Any, Dict, Optional
 
+import numpy as np
 import pandas as pd
 import vectorbt as vbt
+
+
+def _safe_float(val: Any) -> Optional[float]:
+    """安全转换为 float，处理 ndarray / Series 等类型。Timedelta 返回 None（需用 fallback）。"""
+    if val is None:
+        return None
+    if isinstance(val, pd.Timedelta):
+        return None  # Timedelta 不是数值，交给 fallback 处理
+    if isinstance(val, (pd.Series, np.ndarray)):
+        v = val.iloc[0] if hasattr(val, "iloc") else val[0] if len(val) > 0 else None
+        return _safe_float(v)
+    try:
+        f = float(val)
+        if pd.isna(f):
+            return None
+        return f
+    except (ValueError, TypeError):
+        return None
 
 
 def compute_metrics(
@@ -34,33 +53,30 @@ def compute_metrics(
     for name, val in s.items():
         n = str(name).lower()
         if "sharpe" in n:
-            sharpe = float(val) if pd.notna(val) else None
+            sharpe = _safe_float(val)
         elif "sortino" in n:
-            sortino = float(val) if pd.notna(val) else None
+            sortino = _safe_float(val)
         elif "max drawdown" in n or "max_drawdown" in n:
-            max_dd = float(val) if pd.notna(val) else None
+            max_dd = _safe_float(val)
         elif "win rate" in n or "win_rate" in n:
-            win_rate = float(val) if pd.notna(val) else None
+            win_rate = _safe_float(val)
         elif "profit factor" in n or "profit_factor" in n:
-            profit_factor = float(val) if pd.notna(val) else None
+            profit_factor = _safe_float(val)
 
     # Fallbacks: use portfolio methods if available
     if sharpe is None and hasattr(pf, "sharpe_ratio"):
         try:
-            sr = pf.sharpe_ratio()
-            sharpe = float(sr.iloc[0]) if hasattr(sr, "iloc") else float(sr)
+            sharpe = _safe_float(pf.sharpe_ratio())
         except Exception:
             pass
     if sortino is None and hasattr(pf, "sortino_ratio"):
         try:
-            sor = pf.sortino_ratio()
-            sortino = float(sor.iloc[0]) if hasattr(sor, "iloc") else float(sor)
+            sortino = _safe_float(pf.sortino_ratio())
         except Exception:
             pass
     if max_dd is None and hasattr(pf, "max_drawdown"):
         try:
-            md = pf.max_drawdown()
-            max_dd = float(md.iloc[0]) if hasattr(md, "iloc") else float(md)
+            max_dd = _safe_float(pf.max_drawdown())
         except Exception:
             pass
 
@@ -76,9 +92,9 @@ def compute_metrics(
                 gross_profit = trades.loc[trades["PnL"] > 0, "PnL"].sum()
                 gross_loss = abs(trades.loc[trades["PnL"] < 0, "PnL"].sum())
                 if gross_loss != 0:
-                    profit_factor = float(gross_profit / gross_loss)
+                    profit_factor = _safe_float(gross_profit / gross_loss)
                 else:
-                    profit_factor = float(gross_profit) if gross_profit != 0 else None
+                    profit_factor = _safe_float(gross_profit) if gross_profit != 0 else None
     except Exception:
         pass
 
@@ -88,6 +104,6 @@ def compute_metrics(
         "max_drawdown": max_dd,
         "win_rate_pct": win_rate,
         "profit_factor": profit_factor,
-        "total_return": float(pf.total_return()) if hasattr(pf, "total_return") else None,
-        "total_profit": float(pf.total_profit()) if hasattr(pf, "total_profit") else None,
+        "total_return": _safe_float(pf.total_return()) if hasattr(pf, "total_return") else None,
+        "total_profit": _safe_float(pf.total_profit()) if hasattr(pf, "total_profit") else None,
     }
